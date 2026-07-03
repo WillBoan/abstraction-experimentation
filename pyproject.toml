@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "arc-lab"
+version = "0.1.0"
+description = "A sandbox for experimenting with the ARC-AGI benchmarks and abstraction formation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Will Boan", email = "waboan@gmail.com" }]
+dependencies = [
+    "numpy>=2.0",
+    "matplotlib>=3.9",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.40"]
+
+[project.scripts]
+arc-lab = "arc_lab.cli:app"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/arc_lab"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+target-version = "py311"
+
+[tool.ruff.lint]
+# A sensible, strict-ish default. E/F pyflakes+pycodestyle, I isort, UP pyupgrade,
+# B bugbear, SIM simplify, RUF ruff-specific, N naming, PL pylint subset.
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "N", "PLC", "PLE", "PLW"]
+ignore = [
+    "E501",     # line length handled by the formatter
+    "PLC0415",  # we deliberately lazy-import heavy/optional deps (anthropic, pyplot)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Typer requires function-call defaults (typer.Option/Argument) for its options.
+"src/arc_lab/cli.py" = ["B008"]
+
+[tool.mypy]
+# 3.12 so mypy can parse numpy 2.5's PEP 695 type stubs; runtime still supports 3.11.
+python_version = "3.12"
+strict = true
+files = ["src", "tests"]
+plugins = []
+
+[[tool.mypy.overrides]]
+module = ["matplotlib.*", "anthropic.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
