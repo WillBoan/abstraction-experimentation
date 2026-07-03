@@ -42,7 +42,9 @@ _PRIMITIVES: dict[str, Transform] = {
 
 
 class GeometricSearchSolver(Solver):
-    """Search whole-grid geometric transforms for one consistent with training."""
+    """
+    Search whole-grid geometric transforms for one consistent with training.
+    """
 
     name = "dsl"
 
