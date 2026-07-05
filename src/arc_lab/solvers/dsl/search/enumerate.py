@@ -39,7 +39,13 @@ Signature: TypeAlias = tuple[Value, ...]
 class Enumerate(Search):
     """Bottom-up, type-directed enumeration up to a bounded composition depth."""
 
-    def __init__(self, *, max_depth: int = 2, max_pool: int = 600, max_grid_args: int = 16) -> None:
+    def __init__(
+        self,
+        *,
+        max_depth: int = 2,
+        max_pool: int = 600,
+        max_grid_args: int = 16,
+    ) -> None:
         self.max_depth = max_depth
         self.max_pool = max_pool
         # Cap on how many grid programs feed a composition round. Distinct grid

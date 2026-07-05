@@ -65,6 +65,11 @@ class Primitive:
         return self.variadic_param is not None
 
     @property
+    def is_unary(self) -> bool:
+        """True if this is a fixed-arity unary primitive (one argument)."""
+        return self.arity == 1 and not self.is_variadic
+
+    @property
     def is_unary_grid_primitive(self) -> bool:
         """True if this is a fixed-arity ``(GRID,) -> GRID`` primitive."""
         return (

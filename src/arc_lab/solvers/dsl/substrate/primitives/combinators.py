@@ -47,7 +47,10 @@ def _tile(rows: int, cols: int, *cells: Grid) -> Grid:
     out = np.zeros((rows * bh, cols * bw), dtype=np.int8)
     for index, cell in enumerate(cells):
         r, c = divmod(index, cols)
-        out[r * bh : (r + 1) * bh, c * bw : (c + 1) * bw] = cell.array
+        out[
+            r * bh : (r + 1) * bh,  # noqa: E203, RUF100
+            c * bw : (c + 1) * bw,  # noqa: E203, RUF100
+        ] = cell.array
     return Grid(out)
 
 

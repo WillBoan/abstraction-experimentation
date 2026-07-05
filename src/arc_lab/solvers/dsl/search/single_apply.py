@@ -1,9 +1,10 @@
 """The simplest search: apply one primitive to the input.
 
 For each unary ``GRID -> GRID`` primitive in the library, form the program
-``primitive(Input)`` and keep it if it reproduces every training output. This is
-the whole search space of the seed geometric solver; richer strategies (bounded
-composition, combinator search, learned guidance) subclass :class:`Search`
+``primitive(Input)`` and keep it if it reproduces every training output.
+
+This is the whole search space of the seed geometric solver; richer strategies
+(bounded composition, combinator search, learned guidance) subclass :class:`Search`
 alongside it.
 """
 

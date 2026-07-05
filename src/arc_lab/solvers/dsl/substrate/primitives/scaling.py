@@ -20,7 +20,7 @@ _MAX_SIDE = 30
 def _scale(grid: Grid, factor: int) -> Grid:
     """Upsample ``grid`` by an integer ``factor`` (nearest-neighbour block expand)."""
     if factor < 1 or factor * max(grid.shape) > _MAX_SIDE:
-        return grid  # out of range -> no-op, so search discards it via consistency
+        return grid  # out of range -> no-op (which search likely discards via consistency)
     block = np.ones((factor, factor), dtype=np.int8)
     return Grid(np.kron(grid.array, block))
 

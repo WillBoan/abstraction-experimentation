@@ -51,7 +51,7 @@ def _anti_transpose(g: Grid) -> Grid:
     return Grid(np.rot90(g.array, 2).T)
 
 
-def _unary(name: str, fn: Callable[[Grid], Grid]) -> Primitive:
+def _create_unary_grid_primitive(name: str, fn: Callable[[Grid], Grid]) -> Primitive:
     """Wrap a unary grid transform as a primitive."""
 
     return Primitive(
@@ -66,13 +66,13 @@ def _unary(name: str, fn: Callable[[Grid], Grid]) -> Primitive:
 D4_LIBRARY = Library(
     name="d4",
     primitives=(
-        _unary("identity", _identity),
-        _unary("rot90", _rot90),
-        _unary("rot180", _rot180),
-        _unary("rot270", _rot270),
-        _unary("flip_h", _flip_h),
-        _unary("flip_v", _flip_v),
-        _unary("transpose", _transpose),
-        _unary("anti_transpose", _anti_transpose),
+        _create_unary_grid_primitive("identity", _identity),
+        _create_unary_grid_primitive("rot90", _rot90),
+        _create_unary_grid_primitive("rot180", _rot180),
+        _create_unary_grid_primitive("rot270", _rot270),
+        _create_unary_grid_primitive("flip_h", _flip_h),
+        _create_unary_grid_primitive("flip_v", _flip_v),
+        _create_unary_grid_primitive("transpose", _transpose),
+        _create_unary_grid_primitive("anti_transpose", _anti_transpose),
     ),
 )

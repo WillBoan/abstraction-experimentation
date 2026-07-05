@@ -68,7 +68,10 @@ class TileSearch(Search):
         cells: list[str] = []
         for r in range(rows):
             for c in range(cols):
-                block = out_arr[r * ih : (r + 1) * ih, c * iw : (c + 1) * iw]
+                block = out_arr[
+                    r * ih : (r + 1) * ih,  # noqa: E203, RUF100
+                    c * iw : (c + 1) * iw,  # noqa: E203, RUF100
+                ]
                 match = self._match_block(inp, block, transforms, library)
                 if match is None:
                     return None

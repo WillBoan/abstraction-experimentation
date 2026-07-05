@@ -3,6 +3,17 @@
 Enumerates a mask color and a set of shape-preserving D4 symmetries, forming the
 program ``overlay(mask, identity(Input), s1(Input), …)``, and keeps the most
 constrained configuration consistent with every training pair.
+
+ELI5 explanation: the output is a copy of the input, but with some pixels replaced by
+the result of applying a symmetry to the input. The mask color tells us which pixels
+to replace, and the symmetries tell us how to transform the input to get the replacement
+pixels. The search finds the best combination of mask and symmetries that works for all
+training examples.
+
+EXAMPLE: if the input is a square and the output is a square with the top-left corner
+replaced by the bottom-right corner, the search will find the mask color of the corner
+and the symmetry that flips the square diagonally, and produce the program
+``overlay(mask, identity(Input), flip_diagonal(Input))``.
 """
 
 from __future__ import annotations
