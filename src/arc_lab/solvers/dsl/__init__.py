@@ -1,11 +1,27 @@
 """DSL / program-search solvers.
 
-This package holds solvers that build a candidate program from a small vocabulary
-of grid operations and search for one consistent with the training examples. It
-starts intentionally tiny (whole-grid geometric transforms) so the *search over
-a DSL* pattern is legible; the vocabulary is meant to grow.
+Solvers here build a program from a typed vocabulary (a *library* of primitives)
+and search for one consistent with the training examples. The reusable machinery
+lives in :mod:`~arc_lab.solvers.dsl.substrate` (types, programs-as-data, libraries,
+combinators) and :mod:`~arc_lab.solvers.dsl.search` (search strategies); a concrete
+solver is just a *(library, search)* pairing.
+
+It starts small — whole-grid geometric transforms searched by single application
+(:class:`GeometricSearchSolver`) — and grows by *combinators over the same
+vocabulary*: :class:`SymmetrySearchSolver` adds overlay-based symmetry repair and
+mosaic tiling without introducing any new grid transform.
 """
 
-from arc_lab.solvers.dsl.geometric import GeometricSearchSolver
+from arc_lab.solvers.dsl.solver import (
+    GeometricSearchSolver,
+    ProgramSearchSolver,
+    SymmetrySearchSolver,
+    SynthesisSolver,
+)
 
-__all__ = ["GeometricSearchSolver"]
+__all__ = [
+    "GeometricSearchSolver",
+    "ProgramSearchSolver",
+    "SymmetrySearchSolver",
+    "SynthesisSolver",
+]

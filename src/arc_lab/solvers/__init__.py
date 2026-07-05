@@ -11,13 +11,19 @@ from collections.abc import Callable
 
 from arc_lab.solvers.base import Solver
 from arc_lab.solvers.baseline import IdentitySolver
-from arc_lab.solvers.dsl import GeometricSearchSolver
+from arc_lab.solvers.dsl import (
+    GeometricSearchSolver,
+    SymmetrySearchSolver,
+    SynthesisSolver,
+)
 
 # name -> zero-argument factory. Kept as factories so constructing the registry
 # never imports optional dependencies (e.g. the LLM solver needs `anthropic`).
 REGISTRY: dict[str, Callable[[], Solver]] = {
     "identity": IdentitySolver,
     "dsl": GeometricSearchSolver,
+    "dsl-sym": SymmetrySearchSolver,
+    "dsl-synth": SynthesisSolver,
 }
 
 
