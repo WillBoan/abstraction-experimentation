@@ -1,10 +1,15 @@
 """DSL / program-search solvers.
 
 Solvers here build a program from a typed vocabulary (a *library* of primitives)
-and search for one consistent with the training examples. The reusable machinery
-lives in :mod:`~arc_lab.solvers.dsl.substrate` (types, programs-as-data, libraries,
-combinators) and :mod:`~arc_lab.solvers.dsl.search` (search strategies); a concrete
-solver is just a *(library, search)* pairing.
+and search for one consistent with the training examples.
+
+The reusable machinery lives in:
+
+- :mod:`~arc_lab.solvers.dsl.substrate` (types, programs-as-data, libraries,
+combinators)
+- :mod:`~arc_lab.solvers.dsl.search` (search strategies)
+
+A concrete solver is just a *(library, search)* pairing.
 
 It starts small — whole-grid geometric transforms searched by single application
 (:class:`GeometricSearchSolver`) — and grows by *combinators over the same

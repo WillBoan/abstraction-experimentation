@@ -52,6 +52,8 @@ def _anti_transpose(g: Grid) -> Grid:
 
 
 def _unary(name: str, fn: Callable[[Grid], Grid]) -> Primitive:
+    """Wrap a unary grid transform as a primitive."""
+
     return Primitive(
         name=name,
         param_types=(ValueType.GRID,),

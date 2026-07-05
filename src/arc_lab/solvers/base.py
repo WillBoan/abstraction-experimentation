@@ -13,12 +13,13 @@ or CLI knowing which is which.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TypeAlias
 
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 
 # For each test input, a ranked list of candidate outputs (best first).
-Prediction = list[list[Grid]]
+Prediction: TypeAlias = list[list[Grid]]
 
 
 class Solver(ABC):

@@ -35,7 +35,10 @@ ATOMIC_LIBRARY = D4_LIBRARY.extended(name="atomic", extra=(MAP_COLOR, SCALE))
 
 
 class ProgramSearchSolver(Solver):
-    """Solve a task by searching a library for a consistent program."""
+    """
+    A program-search solver is defined entirely by a *(library, search)* pair.
+    The harness contract (:meth:`predict`) is satisfied automatically.
+    """
 
     def __init__(self, *, library: Library, search: Search, name: str = "program-search") -> None:
         self.library = library

@@ -22,6 +22,7 @@ fixed-arity, atomic vocabulary.
 from __future__ import annotations
 
 import itertools
+from typing import TypeAlias
 
 import numpy as np
 
@@ -32,7 +33,7 @@ from arc_lab.solvers.dsl.substrate.library import Library, Value
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program, evaluate
 from arc_lab.solvers.dsl.substrate.types import ValueType
 
-Signature = tuple[Value, ...]
+Signature: TypeAlias = tuple[Value, ...]
 
 
 class Enumerate(Search):

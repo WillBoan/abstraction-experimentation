@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, assert_never
+from typing import TYPE_CHECKING, TypeAlias, assert_never
 
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.types import ValueType
@@ -49,7 +49,7 @@ class Apply:
 
 
 #: A program is one of these node types. (Grows as new node kinds are added.)
-Program = Input | Const | Apply
+Program: TypeAlias = Input | Const | Apply
 
 
 def evaluate(program: Program, grid: Grid, library: Library) -> Value:
@@ -88,9 +88,15 @@ def program_to_dict(program: Program) -> dict[str, object]:
     """Serialise a program to a plain JSON-compatible dict."""
     match program:
         case Input():
-            return {"op": "input"}
+            return {
+                "op": "input",
+            }
         case Const(value, value_type):
-            return {"op": "const", "value": value, "value_type": value_type.value}
+            return {
+                "op": "const",
+                "value": value,
+                "value_type": value_type.value,
+            }
         case Apply(primitive, args):
             return {
                 "op": "apply",
