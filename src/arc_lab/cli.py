@@ -9,6 +9,9 @@ Examples
 
 from __future__ import annotations
 
+import logging
+import os
+import sys
 from pathlib import Path
 
 import typer
@@ -18,6 +21,44 @@ from arc_lab.eval.runner import run
 from arc_lab.solvers import REGISTRY, make_solver
 
 app = typer.Typer(add_completion=False, help="ARC-AGI experimentation sandbox.")
+
+#: Logger subtree the search strategies emit their code-level trace under.
+_SEARCH_LOGGER = "arc_lab.solvers.dsl"
+_LOG_FORMAT = "%(name)s %(levelname)s %(message)s"
+
+
+def _configure_logging(verbosity: int) -> None:
+    """Enable search tracing on stderr. ``ARC_LAB_LOG`` overrides the ``-v`` count.
+
+    Off by default (no handler installed, so tracing costs nothing). ``-v`` shows
+    INFO per-strategy summaries; ``-vv`` shows the DEBUG per-candidate trace. Only
+    the ``arc_lab.solvers.dsl`` subtree is lowered, so third-party loggers stay quiet.
+    """
+    env = os.environ.get("ARC_LAB_LOG")
+    if env:
+        level = logging.getLevelNamesMapping().get(env.upper(), logging.INFO)
+    elif verbosity >= 2:
+        level = logging.DEBUG
+    elif verbosity == 1:
+        level = logging.INFO
+    else:
+        return
+    logging.basicConfig(level=logging.WARNING, format=_LOG_FORMAT, stream=sys.stderr)
+    logging.getLogger(_SEARCH_LOGGER).setLevel(level)
+
+
+@app.callback()
+def main(
+    verbose: int = typer.Option(
+        0,
+        "--verbose",
+        "-v",
+        count=True,
+        help="-v: INFO search summaries, -vv: DEBUG per-candidate trace (or set ARC_LAB_LOG).",
+    ),
+) -> None:
+    """ARC-AGI experimentation sandbox."""
+    _configure_logging(verbose)
 
 
 @app.command()

@@ -8,6 +8,8 @@ Inference beats blind enumeration here: the output tells us the layout directly.
 
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import numpy.typing as npt
 
@@ -21,9 +23,12 @@ from arc_lab.solvers.dsl.substrate.program import (
     Input,
     Program,
     evaluate_grid,
+    format_program,
     is_consistent,
 )
 from arc_lab.solvers.dsl.substrate.types import ValueType
+
+logger = logging.getLogger(__name__)
 
 
 class TileSearch(Search):
@@ -35,6 +40,7 @@ class TileSearch(Search):
     def find(self, task: Task, library: Library) -> list[Program]:
         pairs = [(ex.input, ex.output) for ex in task.train]
         if any(out is None for _, out in pairs):
+            logger.debug("Tile reject: task has missing outputs")
             return []
         transforms = [prim.name for prim in library.unary_grid_primitives()]
         first_in, first_out = pairs[0]
@@ -50,7 +56,10 @@ class TileSearch(Search):
                 *(Apply(name, (Input(),)) for name in cells),
             ),
         )
-        return [program] if is_consistent(program, task, library) else []
+        if is_consistent(program, task, library):
+            logger.debug("Tile accept %s", format_program(program))
+            return [program]
+        return []
 
     def _infer_layout(
         self, inp: Grid, out: Grid, transforms: list[str], library: Library
@@ -58,11 +67,14 @@ class TileSearch(Search):
         ih, iw = inp.shape
         oh, ow = out.shape
         if oh % ih or ow % iw:
+            logger.debug("Tile reject: output %s not divisible by input %s", out.shape, inp.shape)
             return None
         rows, cols = oh // ih, ow // iw
         if not (1 <= rows <= self.max_factor and 1 <= cols <= self.max_factor):
+            logger.debug("Tile reject: factor (%d, %d) out of range", rows, cols)
             return None
         if (rows, cols) == (1, 1):
+            logger.debug("Tile reject: trivial 1x1 layout")
             return None
         out_arr = out.array
         cells: list[str] = []
@@ -74,6 +86,7 @@ class TileSearch(Search):
                 ]
                 match = self._match_block(inp, block, transforms, library)
                 if match is None:
+                    logger.debug("Tile reject: block (r=%d, c=%d) matches no transform", r, c)
                     return None
                 cells.append(match)
         return rows, cols, tuple(cells)

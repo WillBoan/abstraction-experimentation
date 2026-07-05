@@ -15,6 +15,7 @@ are useful" possible; it is impossible if a program is an opaque lambda.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias, assert_never
@@ -25,6 +26,8 @@ from arc_lab.solvers.dsl.substrate.types import ValueType
 if TYPE_CHECKING:
     from arc_lab.core.task import Task
     from arc_lab.solvers.dsl.substrate.library import Library, Value
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,12 +79,37 @@ def evaluate_grid(program: Program, grid: Grid, library: Library) -> Grid:
 
 def is_consistent(program: Program, task: Task, library: Library) -> bool:
     """True if ``program`` reproduces the output of *every* training example."""
-    for example in task.train:
+    for i, example in enumerate(task.train):
         if example.output is None:
             return False
-        if evaluate_grid(program, example.input, library) != example.output:
+        produced = evaluate_grid(program, example.input, library)
+        if produced != example.output:
+            logger.debug(
+                "inconsistent %s at train[%d]: got %r want %r",
+                format_program(program),
+                i,
+                produced,
+                example.output,
+            )
             return False
     return True
+
+
+def format_program(program: Program) -> str:
+    """Render a program as compact DSL-like source, for logs and debugging.
+
+    Example: ``overlay(0, identity(input), rot90(input))``. This is a lossy,
+    human-readable view (constant types are dropped); use :func:`program_to_dict`
+    when a faithful, round-trippable representation is needed.
+    """
+    match program:
+        case Input():
+            return "input"
+        case Const(value, _):
+            return str(value)
+        case Apply(primitive, args):
+            return f"{primitive}({', '.join(format_program(arg) for arg in args)})"
+    assert_never(program)  # pragma: no cover - exhaustive match above
 
 
 def program_to_dict(program: Program) -> dict[str, object]:

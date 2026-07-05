@@ -22,6 +22,7 @@ fixed-arity, atomic vocabulary.
 from __future__ import annotations
 
 import itertools
+import logging
 from typing import TypeAlias
 
 import numpy as np
@@ -30,10 +31,31 @@ from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.substrate.library import Library, Value
-from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program, evaluate
+from arc_lab.solvers.dsl.substrate.program import (
+    Apply,
+    Const,
+    Input,
+    Program,
+    evaluate,
+    format_program,
+)
 from arc_lab.solvers.dsl.substrate.types import ValueType
 
+logger = logging.getLogger(__name__)
+
 Signature: TypeAlias = tuple[Value, ...]
+
+
+def _format_value(value: Value) -> str:
+    """Compact rendering of a single behaviour value (grids never materialise)."""
+    if isinstance(value, Grid):
+        return f"grid{value.height}x{value.width}#{hash(value) & 0xFFFFFF:06x}"
+    return str(value)
+
+
+def _format_signature(sig: Signature) -> str:
+    """Compact rendering of a program's behaviour signature across training inputs."""
+    return "(" + ", ".join(_format_value(v) for v in sig) + ")"
 
 
 class Enumerate(Search):
@@ -54,6 +76,7 @@ class Enumerate(Search):
         self.max_grid_args = max_grid_args
 
     def find(self, task: Task, library: Library) -> list[Program]:
+        debug = logger.isEnabledFor(logging.DEBUG)
         inputs = [ex.input for ex in task.train]
         outputs = [ex.output for ex in task.train]
         if any(out is None for out in outputs):
@@ -70,13 +93,33 @@ class Enumerate(Search):
         def consider(program: Program, expected: ValueType) -> None:
             try:
                 sig = tuple(evaluate(program, inp, library) for inp in inputs)
-            except Exception:
+            except Exception as exc:
+                if debug:
+                    logger.debug(
+                        "enumerate reject (eval error) %s: %s", format_program(program), exc
+                    )
                 return
             if expected == ValueType.GRID and not all(isinstance(v, Grid) for v in sig):
+                if debug:
+                    logger.debug("enumerate reject (non-grid) %s", format_program(program))
                 return
             bucket = pools[expected]
-            if sig not in bucket:
+            existing = bucket.get(sig)
+            if existing is None:
+                if debug:
+                    logger.debug(
+                        "enumerate accept [%s] %s sig=%s",
+                        expected.value,
+                        format_program(program),
+                        _format_signature(sig),
+                    )
                 bucket[sig] = program
+            elif debug:
+                logger.debug(
+                    "enumerate reject (dup of %s) %s",
+                    format_program(existing),
+                    format_program(program),
+                )
 
         # Leaves: the input grid, and task-relevant color/int constants.
         consider(Input(), ValueType.GRID)
@@ -104,6 +147,13 @@ class Enumerate(Search):
             if sum(len(b) for b in pools.values()) > self.max_pool:
                 break
 
+        if debug:
+            logger.debug(
+                "enumerate pools: grid=%d color=%d int=%d",
+                len(pools[ValueType.GRID]),
+                len(pools[ValueType.COLOR]),
+                len(pools[ValueType.INT]),
+            )
         found = pools[ValueType.GRID].get(target)
         return [found] if found is not None else []
 

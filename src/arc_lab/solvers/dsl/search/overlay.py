@@ -19,6 +19,7 @@ and the symmetry that flips the square diagonally, and produce the program
 from __future__ import annotations
 
 import itertools
+import logging
 
 import numpy as np
 
@@ -34,6 +35,8 @@ from arc_lab.solvers.dsl.substrate.program import (
     is_consistent,
 )
 from arc_lab.solvers.dsl.substrate.types import ValueType
+
+logger = logging.getLogger(__name__)
 
 
 class OverlaySearch(Search):
@@ -77,6 +80,15 @@ class OverlaySearch(Search):
                             *(Apply(name, (Input(),)) for name in subset),
                         ),
                     )
-                    if len(subset) > best_size and is_consistent(program, task, library):
+                    if len(subset) <= best_size:
+                        logger.debug(
+                            "Overlay skip (not more constrained than best=%d) mask=%d subset=%s",
+                            best_size,
+                            mask,
+                            subset,
+                        )
+                        continue
+                    if is_consistent(program, task, library):
+                        logger.debug("Overlay accept mask=%d subset=%s", mask, subset)
                         best, best_size = program, len(subset)
         return [best] if best is not None else []
