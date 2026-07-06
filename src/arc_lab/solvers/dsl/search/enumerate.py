@@ -60,6 +60,7 @@ class Enumerate(Search):
         max_depth: int = 2,
         max_pool: int = 600,
         max_grid_args: int = 16,
+        coord_ints: bool = False,
     ) -> None:
         # Enumerate enforces consistency implicitly (a program is kept only if its
         # behaviour signature equals the training outputs), so it does not take or
@@ -71,6 +72,10 @@ class Enumerate(Search):
         # *behaviours* are few; this bounds the map_color(grid, color, color)
         # blow-up (grids x colors^2) without losing the simple, early programs.
         self.max_grid_args = max_grid_args
+        # Mine coordinate INT leaves (0..max grid dimension) for cell-level primitives
+        # (read/set_cell). Off by default so the existing INT-consuming vocabularies
+        # (scale) are unaffected — keeping the dsl-synth lock intact.
+        self.coord_ints = coord_ints
 
     def find(self, task: Task, library: Library) -> SearchResult:
         debug = logger.isEnabledFor(logging.DEBUG)
@@ -132,7 +137,7 @@ class Enumerate(Search):
 
         # Leaves: the input grid, and task-relevant color/int constants.
         consider(Input(), ValueType.GRID)
-        colors, ints = _leaf_constants(task)
+        colors, ints = _leaf_constants(task, coord_ints=self.coord_ints)
         for color in colors:
             consider(Const(color, ValueType.COLOR), ValueType.COLOR)
         for value in ints:
@@ -182,8 +187,8 @@ class Enumerate(Search):
         return SearchResult(programs=programs, stats=stats)
 
 
-def _leaf_constants(task: Task) -> tuple[list[int], list[int]]:
-    """Task-relevant constants: colors that appear, and a consistent scale factor."""
+def _leaf_constants(task: Task, *, coord_ints: bool = False) -> tuple[list[int], list[int]]:
+    """Task-relevant constants: colors, a consistent scale factor, and (opt) coordinates."""
     grids: list[Grid] = []
     for ex in task.train:
         grids.append(ex.input)
@@ -202,8 +207,12 @@ def _leaf_constants(task: Task) -> tuple[list[int], list[int]]:
             ratios.append(oh // ih)
         else:
             ratios.append(None)
-    ints: list[int] = []
+    ints: set[int] = set()
     if ratios and all(r is not None and r == ratios[0] for r in ratios):
         assert ratios[0] is not None
-        ints.append(ratios[0])
-    return colors, ints
+        ints.add(ratios[0])
+    if coord_ints:
+        # Every in-bounds row/col index of the input grids, for read/set_cell.
+        max_dim = max((max(ex.input.shape) for ex in task.train), default=0)
+        ints.update(range(max_dim))
+    return colors, sorted(ints)
