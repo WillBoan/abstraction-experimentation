@@ -10,14 +10,17 @@ from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.analysis import (
     CompressionMetric,
     RunSummary,
+    TwoPartMDL,
     analyze,
     compression_ratio,
 )
 from arc_lab.solvers.dsl.analysis.artifact import SUMMARY_FILE, TRACE_FILE
 from arc_lab.solvers.dsl.search import SearchStats
 from arc_lab.solvers.dsl.solver import GeometricSearchSolver
+from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
-from arc_lab.solvers.dsl.substrate.program import Apply, Input
+from arc_lab.solvers.dsl.substrate.program import Apply, Input, Param
+from arc_lab.solvers.dsl.substrate.types import ValueType
 
 
 def _flip_task(task_id: str = "flip") -> Task:
@@ -93,6 +96,16 @@ def test_compression_ratio_direction() -> None:
     # A more compact (smaller) description of the same corpus scores > 1.
     assert compression_ratio(20.0, 10.0) == 2.0
     assert compression_ratio(10.0, 0.0) == float("inf")
+
+
+def test_two_part_mdl_charges_learned_template_size() -> None:
+    # A learned abstraction pays its definition size on top of the flat name cost;
+    # base primitives (no template) do not, so the two metrics agree until one is learned.
+    template = Apply("transpose", (Apply("flip_h", (Param(0, ValueType.GRID),)),))  # size 3
+    learned = make_abstraction("learned_rot90", template, D4_LIBRARY)
+    library = D4_LIBRARY.extended(name="d4+learned", extra=(learned,))
+    assert CompressionMetric().library_bits(D4_LIBRARY) == TwoPartMDL().library_bits(D4_LIBRARY)
+    assert TwoPartMDL().library_bits(library) == CompressionMetric().library_bits(library) + 3.0
 
 
 # -- The run artifact: end-to-end, caching, resume ----------------------

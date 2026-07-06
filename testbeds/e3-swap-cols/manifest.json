@@ -1,0 +1,47 @@
+{
+  "name": "e3-swap-cols",
+  "note": "E3: general swap((0,X),(1,Y)) from {read, set_cell}, flat MDL. Variable-sharing works; flat library cost causes bloat (many marginal specialisations).",
+  "content_hash": "4d0369ffbea3d733",
+  "tasks": [
+    {
+      "task_id": "swapcol-00-00",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-01-01",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-02-10",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-03-11",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-04-00",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-05-01",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-06-10",
+      "label": "swap_cols",
+      "split": "heldout"
+    },
+    {
+      "task_id": "swapcol-07-11",
+      "label": "swap_cols",
+      "split": "heldout"
+    }
+  ]
+}

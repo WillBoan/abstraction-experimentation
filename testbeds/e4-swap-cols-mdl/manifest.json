@@ -1,0 +1,47 @@
+{
+  "name": "e4-swap-cols-mdl",
+  "note": "E4: E3's environment under two-part MDL (definition cost) to test the anti-bloat term.",
+  "content_hash": "baf44a648b495de5",
+  "tasks": [
+    {
+      "task_id": "swapcol-00-00",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-01-01",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-02-10",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-03-11",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-04-00",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-05-01",
+      "label": "swap_cols",
+      "split": "train"
+    },
+    {
+      "task_id": "swapcol-06-10",
+      "label": "swap_cols",
+      "split": "heldout"
+    },
+    {
+      "task_id": "swapcol-07-11",
+      "label": "swap_cols",
+      "split": "heldout"
+    }
+  ]
+}

@@ -3,10 +3,19 @@
 from __future__ import annotations
 
 import itertools
+from collections.abc import Callable
 from pathlib import Path
 
 from arc_lab.solvers.dsl.learn.antiunify import AntiunifyPairs, _antiunify, _close_template, match
-from arc_lab.solvers.dsl.learn.experiments import e1_rot90, run_experiment
+from arc_lab.solvers.dsl.learn.experiments import (
+    Experiment,
+    ExperimentReport,
+    e1_rot90,
+    e2_swap_cells,
+    e3_swap_cols,
+    e4_swap_cols_mdl,
+    run_experiment,
+)
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Param, Program
@@ -29,8 +38,17 @@ def test_antiunify_holes_a_differing_position() -> None:
     # Same shape, differing leaf -> a hole there; shared structure kept.
     a = Apply("flip_h", (Const(1, _C),))
     b = Apply("flip_h", (Const(2, _C),))
-    template = _close_template(_antiunify(a, b, _GEN, itertools.count()))
+    template = _close_template(_antiunify(a, b, _GEN, {}, itertools.count()))
     assert template == Apply("flip_h", (Param(0, _C),))
+
+
+def test_antiunify_shares_a_repeated_difference() -> None:
+    # The same differing pair (0 vs 1) at two positions -> ONE shared Param (the E3 case).
+    i = ValueType.INT
+    a = Apply("read", (Input(), Const(0, i), Const(0, i)))
+    b = Apply("read", (Input(), Const(1, i), Const(1, i)))
+    template = _close_template(_antiunify(a, b, _GEN, {}, itertools.count()))
+    assert template == Apply("read", (Param(0, _G), Param(1, i), Param(1, i)))
 
 
 def test_match_binds_and_rejects() -> None:
@@ -72,3 +90,32 @@ def test_e1_testbed_is_written(tmp_path: Path) -> None:
     testbed = tmp_path / "testbeds" / "e1-rot90"
     assert (testbed / "manifest.json").exists()
     assert list((testbed / "tasks").glob("*.json"))
+
+
+def _run(exp_fn: Callable[[], Experiment], tmp_path: Path) -> ExperimentReport:
+    return run_experiment(
+        exp_fn(), testbeds_root=tmp_path / "testbeds", runs_root=tmp_path / "runs"
+    )
+
+
+def test_e2_learns_fixed_cell_swap(tmp_path: Path) -> None:
+    report = _run(e2_swap_cells, tmp_path)
+    assert report.check.matched == ("swap_cells",)
+    assert len(report.learned) == 1  # no variable-sharing needed, no bloat
+    assert report.compare["L2"].considered_total < report.compare["L1"].considered_total
+    assert len(report.enablement) > 0
+
+
+def test_e3_variable_sharing_works_but_flat_mdl_bloats(tmp_path: Path) -> None:
+    report = _run(e3_swap_cols, tmp_path)
+    # Variable-sharing produced the correct general swap (behaviorally matched)...
+    assert "swap_cols" in report.check.matched
+    # ...but the flat library cost admits marginal specialisations -> bloat (the finding).
+    assert len(report.check.novel) > 0
+
+
+def test_e4_two_part_mdl_eliminates_bloat(tmp_path: Path) -> None:
+    report = _run(e4_swap_cols_mdl, tmp_path)
+    assert report.check.matched == ("swap_cols",)
+    assert report.check.novel == ()  # bloat gone
+    assert len(report.learned) == 1

@@ -1,0 +1,114 @@
+{
+  "name": "cells+targets",
+  "version": 2,
+  "primitives": [
+    {
+      "name": "read",
+      "param_types": [
+        "grid",
+        "int",
+        "int"
+      ],
+      "return_type": "color",
+      "variadic_param": null
+    },
+    {
+      "name": "set_cell",
+      "param_types": [
+        "grid",
+        "int",
+        "int",
+        "color"
+      ],
+      "return_type": "grid",
+      "variadic_param": null
+    },
+    {
+      "name": "swap_cells",
+      "param_types": [
+        "grid"
+      ],
+      "return_type": "grid",
+      "variadic_param": null,
+      "template": {
+        "op": "apply",
+        "primitive": "set_cell",
+        "args": [
+          {
+            "op": "apply",
+            "primitive": "set_cell",
+            "args": [
+              {
+                "op": "param",
+                "index": 0,
+                "value_type": "grid"
+              },
+              {
+                "op": "const",
+                "value": 0,
+                "value_type": "int"
+              },
+              {
+                "op": "const",
+                "value": 0,
+                "value_type": "int"
+              },
+              {
+                "op": "apply",
+                "primitive": "read",
+                "args": [
+                  {
+                    "op": "param",
+                    "index": 0,
+                    "value_type": "grid"
+                  },
+                  {
+                    "op": "const",
+                    "value": 1,
+                    "value_type": "int"
+                  },
+                  {
+                    "op": "const",
+                    "value": 1,
+                    "value_type": "int"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "const",
+            "value": 1,
+            "value_type": "int"
+          },
+          {
+            "op": "const",
+            "value": 1,
+            "value_type": "int"
+          },
+          {
+            "op": "apply",
+            "primitive": "read",
+            "args": [
+              {
+                "op": "param",
+                "index": 0,
+                "value_type": "grid"
+              },
+              {
+                "op": "const",
+                "value": 0,
+                "value_type": "int"
+              },
+              {
+                "op": "const",
+                "value": 0,
+                "value_type": "int"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

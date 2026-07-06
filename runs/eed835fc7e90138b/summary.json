@@ -1,0 +1,197 @@
+{
+  "run_id": "eed835fc7e90138b",
+  "coordinates": {
+    "solver": "L2",
+    "dataset": "e2-swap-cells",
+    "library": {
+      "name": "cells+abs0",
+      "version": 2,
+      "primitives": [
+        {
+          "name": "read",
+          "param_types": [
+            "grid",
+            "int",
+            "int"
+          ],
+          "return_type": "color",
+          "variadic_param": null
+        },
+        {
+          "name": "set_cell",
+          "param_types": [
+            "grid",
+            "int",
+            "int",
+            "color"
+          ],
+          "return_type": "grid",
+          "variadic_param": null
+        },
+        {
+          "name": "abs0",
+          "param_types": [
+            "grid"
+          ],
+          "return_type": "grid",
+          "variadic_param": null,
+          "template": {
+            "op": "apply",
+            "primitive": "set_cell",
+            "args": [
+              {
+                "op": "apply",
+                "primitive": "set_cell",
+                "args": [
+                  {
+                    "op": "param",
+                    "index": 0,
+                    "value_type": "grid"
+                  },
+                  {
+                    "op": "const",
+                    "value": 0,
+                    "value_type": "int"
+                  },
+                  {
+                    "op": "const",
+                    "value": 0,
+                    "value_type": "int"
+                  },
+                  {
+                    "op": "apply",
+                    "primitive": "read",
+                    "args": [
+                      {
+                        "op": "param",
+                        "index": 0,
+                        "value_type": "grid"
+                      },
+                      {
+                        "op": "const",
+                        "value": 1,
+                        "value_type": "int"
+                      },
+                      {
+                        "op": "const",
+                        "value": 1,
+                        "value_type": "int"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "const",
+                "value": 1,
+                "value_type": "int"
+              },
+              {
+                "op": "const",
+                "value": 1,
+                "value_type": "int"
+              },
+              {
+                "op": "apply",
+                "primitive": "read",
+                "args": [
+                  {
+                    "op": "param",
+                    "index": 0,
+                    "value_type": "grid"
+                  },
+                  {
+                    "op": "const",
+                    "value": 0,
+                    "value_type": "int"
+                  },
+                  {
+                    "op": "const",
+                    "value": 0,
+                    "value_type": "int"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "commit": "86e9a2e"
+  },
+  "metrics": {
+    "solved": 8,
+    "total": 8,
+    "search_solved": 8,
+    "considered_total": 304,
+    "library_bits": 3.0,
+    "program_bits": 16.0,
+    "description_length": 19.0
+  },
+  "tasks": [
+    {
+      "task_id": "swap-00",
+      "solved": true,
+      "search_solved": true,
+      "considered": 38,
+      "program": "abs0(input)",
+      "program_size": 2
+    },
+    {
+      "task_id": "swap-01",
+      "solved": true,
+      "search_solved": true,
+      "considered": 38,
+      "program": "abs0(input)",
+      "program_size": 2
+    },
+    {
+      "task_id": "swap-02",
+      "solved": true,
+      "search_solved": true,
+      "considered": 38,
+      "program": "abs0(input)",
+      "program_size": 2
+    },
+    {
+      "task_id": "swap-03",
+      "solved": true,
+      "search_solved": true,
+      "considered": 38,
+      "program": "abs0(input)",
+      "program_size": 2
+    },
+    {
+      "task_id": "swap-04",
+      "solved": true,
+      "search_solved": true,
+      "considered": 38,
+      "program": "abs0(input)",
+      "program_size": 2
+    },
+    {
+      "task_id": "swap-05",
+      "solved": true,
+      "search_solved": true,
+      "considered": 38,
+      "program": "abs0(input)",
+      "program_size": 2
+    },
+    {
+      "task_id": "swap-06",
+      "solved": true,
+      "search_solved": true,
+      "considered": 38,
+      "program": "abs0(input)",
+      "program_size": 2
+    },
+    {
+      "task_id": "swap-07",
+      "solved": true,
+      "search_solved": true,
+      "considered": 38,
+      "program": "abs0(input)",
+      "program_size": 2
+    }
+  ]
+}

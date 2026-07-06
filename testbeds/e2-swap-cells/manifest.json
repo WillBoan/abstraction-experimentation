@@ -1,0 +1,47 @@
+{
+  "name": "e2-swap-cells",
+  "note": "E2: re-derive fixed-cell swap_cells((0,0),(1,1)) from {read, set_cell}.",
+  "content_hash": "4c5f6d1a4c7251a0",
+  "tasks": [
+    {
+      "task_id": "swap-00",
+      "label": "swap_cells",
+      "split": "train"
+    },
+    {
+      "task_id": "swap-01",
+      "label": "swap_cells",
+      "split": "train"
+    },
+    {
+      "task_id": "swap-02",
+      "label": "swap_cells",
+      "split": "train"
+    },
+    {
+      "task_id": "swap-03",
+      "label": "swap_cells",
+      "split": "train"
+    },
+    {
+      "task_id": "swap-04",
+      "label": "swap_cells",
+      "split": "train"
+    },
+    {
+      "task_id": "swap-05",
+      "label": "swap_cells",
+      "split": "train"
+    },
+    {
+      "task_id": "swap-06",
+      "label": "swap_cells",
+      "split": "heldout"
+    },
+    {
+      "task_id": "swap-07",
+      "label": "swap_cells",
+      "split": "heldout"
+    }
+  ]
+}

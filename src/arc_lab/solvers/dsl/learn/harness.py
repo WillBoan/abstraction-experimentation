@@ -20,6 +20,7 @@ from pathlib import Path
 
 from arc_lab.core.dataset import Dataset
 from arc_lab.core.grid import Grid
+from arc_lab.solvers.dsl.analysis.compression import CompressionMetric
 from arc_lab.solvers.dsl.analysis.runner import RunSummary, analyze
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.cost import Cost
@@ -104,12 +105,13 @@ def compare_libraries(
     cost: Cost,
     dataset: Dataset,
     out_dir: Path,
+    metric: CompressionMetric | None = None,
 ) -> dict[str, RunSummary]:
     """Run each named library as a solver over ``dataset`` and return the run summaries."""
     summaries: dict[str, RunSummary] = {}
     for name, library in libraries.items():
         solver = ProgramSearchSolver(library=library, search=search, cost=cost, name=name)
-        summary, _ = analyze(solver, dataset, out_dir=out_dir)
+        summary, _ = analyze(solver, dataset, out_dir=out_dir, metric=metric)
         summaries[name] = summary
     return summaries
 
