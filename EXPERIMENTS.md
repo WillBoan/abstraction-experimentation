@@ -93,3 +93,23 @@ Entry template:
 - **Result:** learned `abs0 = transpose(flip_h($0))`, behaviorally **== target rot90** (matched, 0 missed, 0 novel). Compression DL 35→27 (**×1.30**); search effort `considered` 143→101 (**×1.42**); under a depth-1 budget the learned library **enables 9 solves** the generators cannot reach. Locks (7/19/11) unchanged; `make check` green.
 - **Interpretation:** the loop forms a real, transferable abstraction on a known-answer microworld — the depth-2 word `transpose(flip_h)` collapses to a depth-1 primitive, and the collapse shows up in *both* compression and speedup. Targets stayed pure observables (never guided learning), so the anti-teleological design holds. Caveats: the abstractor is v1 (recurring-identical programs, no variable-sharing), and the MDL library term is still flat (undercharges an abstraction's definition size).
 - **Next:** E2 (cell-level `{read, set_cell}` → fixed-cell `swap_cells`), then E3 (varied-cell → earns LGG variable-sharing). Then richer testbeds and the low-primitive-floor.
+
+---
+
+## 2026-07-06 — E2: re-derive fixed-cell swap_cells from {read, set_cell}
+
+- **Commit:** 0946c25
+- **Question:** Does the loop form a genuinely *cell-level* abstraction — a multi-step composition of `read`/`set_cell` — and how large is the search-collapse payoff at a lower floor?
+- **Ran:** New primitives `read (Grid,Int,Int)→Color`, `set_cell (Grid,Int,Int,Color)→Grid`; `Enumerate(coord_ints=True)` mines coordinate `Int` leaves. Testbed: 8 tasks each swapping cells (0,0)↔(1,1) on 2×2 grids, **3 train demos each** (so a literal-colour program can't fit — the solution must `read`). `arc-lab learn e2-swap-cells`.
+- **Result:** learned `abs0 = set_cell(set_cell($0,0,0,read($0,1,1)),1,1,read($0,0,0))`, behaviorally **== target swap_cells**. Compression **×6.42** (DL 122→19); search speedup **×104** (`considered` 31624→304); all 8 tasks enabled at depth 1. `make check` green.
+- **Interpretation:** the mechanism works unchanged at the cell floor — no AST lambda needed, `read`/`set_cell` compose as ordinary typed transforms. The payoff is far larger than E1 because the raw solution is a depth-4 composition (11 nodes) collapsed to a single call: the deeper the gap the abstraction bridges, the bigger the compression/speedup. Fixed cells → identical solved programs → the simplest abstractor (no variable-sharing) suffices.
+- **Next:** E3 — vary the cells so coordinates must generalise (variable-sharing).
+
+## 2026-07-06 — E3 / E4: variable-sharing works; flat MDL bloats, two-part MDL fixes it
+
+- **Commit:** 0946c25
+- **Question:** With coordinates that recur across positions (a coord feeds both a `read` and a `set_cell`), does antiunification produce the *correct shared-variable* abstraction — and does the governance keep the library clean?
+- **Ran:** E3 testbed: 8 tasks swapping `(0,X)↔(1,Y)` for varied `(X,Y)` on 2×2 grids. Added variable-sharing to `AntiunifyPairs` (a memo mapping a differing subterm pair to one shared `Param`). **E3** under the flat `CompressionMetric`; **E4** the *same* environment under `TwoPartMDL` (charges each abstraction its definition size).
+- **Result:** both learned the correct general `abs0 = set_cell(set_cell($0,0,$1,read($0,1,$2)),1,$2,read($0,0,$1))` — `$1`,`$2` each shared across two positions, behaviorally **== target swap_cols**. **E3 (flat): 16 abstractions** — abs0 plus **15 marginal specialisations** (`abs0($0,0,0)`, …): *library bloat*. **E4 (two-part MDL): exactly 1 abstraction**, no bloat.
+- **Interpretation:** two findings. (1) **Variable-sharing is correct** — the memo gives the least-general-generalization that keeps a swap sound. (2) **The flat library cost is a broken governance objective**: a specialisation that saves 2 nodes still nets negative, so the loop hoards them. Charging the *definition size* (two-part MDL) makes a marginal specialisation cost more than it saves → it is rejected. This is the "abstraction governance" problem made concrete, and the cheapest principled fix. Kept both metrics (flat baseline + `TwoPartMDL`) so the regimes stay comparable.
+- **Next:** richer testbeds (perceive→transform, masks), and the low-primitive-floor — where governance pressure will matter far more.
