@@ -78,6 +78,20 @@ class Primitive:
             and not self.is_variadic
         )
 
+    def to_dict(self) -> dict[str, object]:
+        """Serialise the primitive's *signature* (name + types), not its Python impl.
+
+        The impl is code, looked up by name from the substrate; what identifies a
+        primitive for an artifact is its typed interface. A future *learned* primitive
+        would additionally carry its defining sub-program here.
+        """
+        return {
+            "name": self.name,
+            "param_types": [t.value for t in self.param_types],
+            "return_type": self.return_type.value,
+            "variadic_param": None if self.variadic_param is None else self.variadic_param.value,
+        }
+
 
 @dataclass(frozen=True, slots=True)
 class Library:
@@ -106,6 +120,19 @@ class Library:
 
     def names(self) -> tuple[str, ...]:
         return tuple(prim.name for prim in self.primitives)
+
+    def to_dict(self) -> dict[str, object]:
+        """Serialise the library's identity: name, version, and primitive signatures.
+
+        This is the ``floor`` coordinate recorded in a run artifact — enough to say
+        *which vocabulary* a run used (and to detect when it changes), without the
+        (unserialisable) primitive implementations.
+        """
+        return {
+            "name": self.name,
+            "version": self.version,
+            "primitives": [prim.to_dict() for prim in self.primitives],
+        }
 
     def unary_grid_primitives(self) -> Iterator[Primitive]:
         """Fixed-arity ``(GRID,) -> GRID`` primitives, in library order (no combinators)."""
