@@ -1,0 +1,44 @@
+"""Library learning: the wake-sleep loop that invents abstractions from solved programs.
+
+This package sits atop `search` (wake) and `analysis` (the compression governance + run
+artifacts), and grows a `Library` via `Library.extended`. It never touches the narrow
+`Solver.predict` contract — learning is a meta-process over solvers, not a solver.
+
+* :mod:`antiunify` — propose abstraction candidates (least-general-generalization).
+* :mod:`loop` — the wake-sleep generations, greedy-MDL governance.
+* :mod:`harness` — the three-library comparison + behavioral (observational) checker.
+* :mod:`taskgen` — deterministic synthetic testbeds (tasks + recipe manifest).
+"""
+
+from arc_lab.solvers.dsl.learn.antiunify import AbstractionProposer, AntiunifyPairs
+from arc_lab.solvers.dsl.learn.harness import (
+    CheckResult,
+    check_abstractions,
+    compare_libraries,
+    enablement_transfer,
+)
+from arc_lab.solvers.dsl.learn.loop import (
+    EachGeneration,
+    GenerationRecord,
+    LearnResult,
+    LearnTrigger,
+    learn,
+)
+from arc_lab.solvers.dsl.learn.taskgen import GeneratedTask, make_task, write_testbed
+
+__all__ = [
+    "AbstractionProposer",
+    "AntiunifyPairs",
+    "CheckResult",
+    "EachGeneration",
+    "GeneratedTask",
+    "GenerationRecord",
+    "LearnResult",
+    "LearnTrigger",
+    "check_abstractions",
+    "compare_libraries",
+    "enablement_transfer",
+    "learn",
+    "make_task",
+    "write_testbed",
+]
