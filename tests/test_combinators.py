@@ -94,13 +94,13 @@ def _tile_task() -> Task:
 
 
 def test_overlay_search_finds_symmetry_repair() -> None:
-    found = OverlaySearch().find(_overlay_task(), SYMMETRY_LIBRARY)
+    found = OverlaySearch().find(_overlay_task(), SYMMETRY_LIBRARY).programs
     assert len(found) == 1
     assert isinstance(found[0], Apply) and found[0].primitive == "overlay"
 
 
 def test_tile_search_finds_mosaic() -> None:
-    found = TileSearch().find(_tile_task(), SYMMETRY_LIBRARY)
+    found = TileSearch().find(_tile_task(), SYMMETRY_LIBRARY).programs
     assert len(found) == 1
     assert isinstance(found[0], Apply) and found[0].primitive == "tile"
 
@@ -113,7 +113,7 @@ def test_overlay_search_returns_nothing_on_geometry_task() -> None:
             "test": [{"input": [[3, 4]], "output": [[4, 3]]}],
         },
     )
-    assert OverlaySearch().find(flip, SYMMETRY_LIBRARY) == []
+    assert OverlaySearch().find(flip, SYMMETRY_LIBRARY).programs == ()
 
 
 def test_composite_search_dedups_and_concatenates() -> None:
@@ -126,8 +126,8 @@ def test_composite_search_dedups_and_concatenates() -> None:
             "test": [{"input": [[5, 6], [7, 8]], "output": [[6, 8], [5, 7]]}],
         },
     )
-    combined = CompositeSearch([SingleApply(), SingleApply()]).find(task, SYMMETRY_LIBRARY)
-    assert combined == [Apply("rot90", (Input(),))]
+    combined = CompositeSearch([SingleApply(), SingleApply()]).find(task, SYMMETRY_LIBRARY).programs
+    assert combined == (Apply("rot90", (Input(),)),)
 
 
 # -- the composed solver ------------------------------------------------

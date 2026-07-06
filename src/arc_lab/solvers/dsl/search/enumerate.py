@@ -29,7 +29,7 @@ import numpy as np
 
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
-from arc_lab.solvers.dsl.search.base import Search
+from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.substrate.library import Library, Value
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
 from arc_lab.solvers.dsl.substrate.types import ValueType
@@ -72,12 +72,14 @@ class Enumerate(Search):
         # blow-up (grids x colors^2) without losing the simple, early programs.
         self.max_grid_args = max_grid_args
 
-    def find(self, task: Task, library: Library) -> list[Program]:
+    def find(self, task: Task, library: Library) -> SearchResult:
         debug = logger.isEnabledFor(logging.DEBUG)
         inputs = [ex.input for ex in task.train]
         outputs = [ex.output for ex in task.train]
         if any(out is None for out in outputs):
-            return []
+            stats = SearchStats(strategy="Enumerate", considered=0, returned=0)
+            logger.info(stats.summary())
+            return SearchResult(programs=(), stats=stats)
         target: Signature = tuple(out for out in outputs if out is not None)
 
         # pools[type][behaviour-signature] = smallest program with that behaviour.
@@ -138,6 +140,12 @@ class Enumerate(Search):
 
         fixed = [prim for prim in library.primitives if not prim.is_variadic]
 
+        # TODO(checkpointing, deferred): the run artifact checkpoints at *task* grain
+        # (streaming trace + resume, see analysis/runner.py), which is the right grain
+        # while a single task's search is fast. If a lower primitive floor ever makes one
+        # task's enumeration take minutes, add *intra-task* checkpointing here — serialise
+        # the frozen pools between rounds so an interrupted search resumes mid-task. Not
+        # worth the coupling to engine internals until that cost is actually observed.
         for _ in range(self.max_depth):
             if target in pools[ValueType.GRID]:
                 break
@@ -155,20 +163,23 @@ class Enumerate(Search):
                 break
 
         found = pools[ValueType.GRID].get(target)
-        logger.info(
-            "Enumerate: considered=%d kept=%d dup=%d err=%d nongrid=%d solved=%s "
-            "pools(g=%d,c=%d,i=%d)",
-            counts["considered"],
-            counts["kept"],
-            counts["dup"],
-            counts["err"],
-            counts["nongrid"],
-            found is not None,
-            len(pools[ValueType.GRID]),
-            len(pools[ValueType.COLOR]),
-            len(pools[ValueType.INT]),
+        programs: tuple[Program, ...] = (found,) if found is not None else ()
+        stats = SearchStats(
+            strategy="Enumerate",
+            considered=counts["considered"],
+            returned=len(programs),
+            extra={
+                "kept": counts["kept"],
+                "deduped": counts["dup"],
+                "errored": counts["err"],
+                "nongrid": counts["nongrid"],
+                "pool_grid": len(pools[ValueType.GRID]),
+                "pool_color": len(pools[ValueType.COLOR]),
+                "pool_int": len(pools[ValueType.INT]),
+            },
         )
-        return [found] if found is not None else []
+        logger.info(stats.summary())
+        return SearchResult(programs=programs, stats=stats)
 
 
 def _leaf_constants(task: Task) -> tuple[list[int], list[int]]:

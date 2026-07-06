@@ -113,7 +113,7 @@ def test_enumerate_logs_summary(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.INFO, logger=_DSL_LOGGER)
     Enumerate(max_depth=1).find(_symmetric_task(), ATOMIC_LIBRARY)
     summaries = [r.message for r in caplog.records if r.message.startswith("Enumerate:")]
-    assert summaries and "dup=" in summaries[0] and "solved=" in summaries[0]
+    assert summaries and "deduped=" in summaries[0] and "solved=" in summaries[0]
 
 
 # -- task-id trace context ----------------------------------------------

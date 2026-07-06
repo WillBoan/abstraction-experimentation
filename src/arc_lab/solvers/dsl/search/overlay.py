@@ -24,7 +24,7 @@ import logging
 import numpy as np
 
 from arc_lab.core.task import Task
-from arc_lab.solvers.dsl.search.base import Search
+from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
 from arc_lab.solvers.dsl.substrate.types import ValueType
@@ -38,13 +38,17 @@ class OverlaySearch(Search):
     #: Cap on how many non-identity symmetries to combine (keeps enumeration small).
     max_symmetries: int = 3
 
-    def find(self, task: Task, library: Library) -> list[Program]:
+    def find(self, task: Task, library: Library) -> SearchResult:
         pairs = [(ex.input, ex.output) for ex in task.train]
         if any(out is None for _, out in pairs):
-            return []
+            stats = SearchStats(strategy="OverlaySearch", considered=0, returned=0)
+            logger.info(stats.summary())
+            return SearchResult(programs=(), stats=stats)
         # Overlay is same-shape by construction.
         if any(inp.shape != out.shape for inp, out in pairs):  # type: ignore[union-attr]
-            return []
+            stats = SearchStats(strategy="OverlaySearch", considered=0, returned=0)
+            logger.info(stats.summary())
+            return SearchResult(programs=(), stats=stats)
         inputs = [inp for inp, _ in pairs]
 
         # Symmetries usable here: non-identity D4 transforms that preserve the shape
@@ -90,11 +94,12 @@ class OverlaySearch(Search):
                         accepted += 1
                         logger.debug("Overlay accept mask=%d subset=%s", mask, subset)
                         best, best_size = program, len(subset)
-        logger.info(
-            "OverlaySearch: considered=%d skipped=%d accepted=%d found=%s",
-            considered,
-            skipped,
-            accepted,
-            best is not None,
+        programs: tuple[Program, ...] = (best,) if best is not None else ()
+        stats = SearchStats(
+            strategy="OverlaySearch",
+            considered=considered,
+            returned=len(programs),
+            extra={"skipped": skipped, "accepted": accepted},
         )
-        return [best] if best is not None else []
+        logger.info(stats.summary())
+        return SearchResult(programs=programs, stats=stats)

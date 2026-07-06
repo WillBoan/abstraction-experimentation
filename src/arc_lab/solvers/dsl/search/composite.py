@@ -11,7 +11,7 @@ import logging
 from collections.abc import Sequence
 
 from arc_lab.core.task import Task
-from arc_lab.solvers.dsl.search.base import Search
+from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.program import Program
 
@@ -26,19 +26,25 @@ class CompositeSearch(Search):
         super().__init__()
         self.strategies = tuple(strategies)
 
-    def find(self, task: Task, library: Library) -> list[Program]:
+    def find(self, task: Task, library: Library) -> SearchResult:
         # Each wrapped strategy logs its own INFO summary; here we report the
-        # deduplicated total. (The task id is supplied by TaskIdFilter as a prefix.)
+        # deduplicated total and the summed search effort across strategies.
+        # (The task id is supplied by TaskIdFilter as a prefix.)
         seen: set[Program] = set()
         combined: list[Program] = []
+        considered = 0
         for strategy in self.strategies:
-            for program in strategy.find(task, library):
+            result = strategy.find(task, library)
+            considered += result.stats.considered
+            for program in result.programs:
                 if program not in seen:
                     seen.add(program)
                     combined.append(program)
-        logger.info(
-            "CompositeSearch: %d unique candidate(s) from %d strategies",
-            len(combined),
-            len(self.strategies),
+        stats = SearchStats(
+            strategy="CompositeSearch",
+            considered=considered,
+            returned=len(combined),
+            extra={"strategies": len(self.strategies)},
         )
-        return combined
+        logger.info(stats.summary())
+        return SearchResult(programs=tuple(combined), stats=stats)

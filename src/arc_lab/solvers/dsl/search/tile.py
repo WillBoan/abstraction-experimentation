@@ -15,12 +15,19 @@ import numpy.typing as npt
 
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
-from arc_lab.solvers.dsl.search.base import Search
+from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
 from arc_lab.solvers.dsl.substrate.types import ValueType
 
 logger = logging.getLogger(__name__)
+
+
+def _no_layout() -> SearchResult:
+    """The empty result when no tiling layout can be inferred."""
+    stats = SearchStats(strategy="TileSearch", considered=0, returned=0)
+    logger.info(stats.summary())
+    return SearchResult(programs=(), stats=stats)
 
 
 class TileSearch(Search):
@@ -29,18 +36,16 @@ class TileSearch(Search):
     #: Largest tiling factor to consider per axis.
     max_factor: int = 3
 
-    def find(self, task: Task, library: Library) -> list[Program]:
+    def find(self, task: Task, library: Library) -> SearchResult:
         pairs = [(ex.input, ex.output) for ex in task.train]
         if any(out is None for _, out in pairs):
             logger.debug("Tile reject: task has missing outputs")
-            logger.info("TileSearch: no layout (missing outputs)")
-            return []
+            return _no_layout()
         transforms = [prim.name for prim in library.unary_grid_primitives()]
         first_in, first_out = pairs[0]
         layout = self._infer_layout(first_in, first_out, transforms, library)  # type: ignore[arg-type]
         if layout is None:
-            logger.info("TileSearch: no layout inferred")
-            return []
+            return _no_layout()
         rows, cols, cells = layout
         program: Program = Apply(
             "tile",
@@ -51,11 +56,17 @@ class TileSearch(Search):
             ),
         )
         found = self.accepts(program, task, library)
-        logger.info("TileSearch: layout=%dx%d found=%s", rows, cols, found)
+        programs: tuple[Program, ...] = (program,) if found else ()
+        stats = SearchStats(
+            strategy="TileSearch",
+            considered=1,
+            returned=len(programs),
+            extra={"rows": rows, "cols": cols},
+        )
+        logger.info(stats.summary())
         if found:
             logger.debug("Tile accept %s", program)
-            return [program]
-        return []
+        return SearchResult(programs=programs, stats=stats)
 
     def _infer_layout(
         self, inp: Grid, out: Grid, transforms: list[str], library: Library

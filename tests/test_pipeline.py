@@ -10,7 +10,7 @@ from arc_lab.solvers.dsl.search import (
     ProgramSize,
     SingleApply,
 )
-from arc_lab.solvers.dsl.search.base import Search
+from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate import Apply, Input, Library, Program
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
@@ -45,10 +45,10 @@ class _RejectAll(Constraint):
 def test_constraints_compose_all_must_hold() -> None:
     task = _flip_task()
     # Baseline: the default (consistency) constraint accepts flip_h.
-    assert SingleApply().find(task, D4_LIBRARY)
+    assert SingleApply().find(task, D4_LIBRARY).programs
     # Adding a reject-all constraint makes the same search find nothing.
     blocked = SingleApply(constraints=[ConsistentWithTraining(), _RejectAll()])
-    assert blocked.find(task, D4_LIBRARY) == []
+    assert blocked.find(task, D4_LIBRARY).programs == ()
 
 
 # -- Cost (the rank step) -----------------------------------------------
@@ -67,8 +67,12 @@ class _StubSearch(Search):
         super().__init__()
         self._programs = programs
 
-    def find(self, task: Task, library: Library) -> list[Program]:
-        return list(self._programs)
+    def find(self, task: Task, library: Library) -> SearchResult:
+        programs = tuple(self._programs)
+        return SearchResult(
+            programs=programs,
+            stats=SearchStats(strategy="StubSearch", returned=len(programs)),
+        )
 
 
 def test_solver_ranks_candidates_by_cost() -> None:

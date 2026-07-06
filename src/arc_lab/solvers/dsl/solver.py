@@ -60,7 +60,7 @@ class ProgramSearchSolver(Solver):
     def predict(self, task: Task) -> Prediction:
         # Bind the task id so the strategies' trace lines can be attributed to it.
         with task_context(task.task_id):
-            candidates = self.search.find(task, self.library) or [_FALLBACK]
+            candidates = list(self.search.find(task, self.library).programs) or [_FALLBACK]
             ranked = sorted(
                 candidates, key=lambda program: self.cost.of(program, task, self.library)
             )

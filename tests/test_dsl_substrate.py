@@ -115,7 +115,7 @@ def test_single_apply_finds_flip() -> None:
             "test": [{"input": [[3, 4]], "output": [[4, 3]]}],
         },
     )
-    found = SingleApply().find(task, D4_LIBRARY)
+    found = SingleApply().find(task, D4_LIBRARY).programs
     assert Apply("flip_h", (Input(),)) in found
 
 

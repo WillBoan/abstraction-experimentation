@@ -63,12 +63,12 @@ def _scale_task() -> Task:
 
 
 def test_enumerate_solves_recolor() -> None:
-    found = Enumerate(max_depth=1).find(_recolor_task(), ATOMIC_LIBRARY)
+    found = Enumerate(max_depth=1).find(_recolor_task(), ATOMIC_LIBRARY).programs
     assert len(found) == 1
 
 
 def test_enumerate_solves_scale() -> None:
-    found = Enumerate(max_depth=1).find(_scale_task(), ATOMIC_LIBRARY)
+    found = Enumerate(max_depth=1).find(_scale_task(), ATOMIC_LIBRARY).programs
     assert len(found) == 1
 
 
@@ -81,7 +81,7 @@ def test_enumerate_returns_nothing_when_unsolvable() -> None:
             "test": [{"input": [[5, 6], [7, 8]], "output": [[9, 0], [0, 9]]}],
         },
     )
-    assert Enumerate(max_depth=2).find(task, ATOMIC_LIBRARY) == []
+    assert Enumerate(max_depth=2).find(task, ATOMIC_LIBRARY).programs == ()
 
 
 # -- enumeration: composition (depth matters) ---------------------------

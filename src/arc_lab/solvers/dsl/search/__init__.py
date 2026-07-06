@@ -7,7 +7,7 @@ compose strategies (single application, combinator search, learned-prior guidanc
 LLM-proposed programs, ...) without touching the vocabulary.
 """
 
-from arc_lab.solvers.dsl.search.base import Search
+from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.search.composite import CompositeSearch
 from arc_lab.solvers.dsl.search.constraints import ConsistentWithTraining, Constraint
 from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
@@ -25,6 +25,8 @@ __all__ = [
     "OverlaySearch",
     "ProgramSize",
     "Search",
+    "SearchResult",
+    "SearchStats",
     "SingleApply",
     "TileSearch",
 ]
