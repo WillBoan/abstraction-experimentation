@@ -136,5 +136,32 @@ def eval(
     typer.echo(report.summary())
 
 
+@app.command()
+def analyze(
+    solver: str = typer.Argument(..., help=f"Program-search solver: {', '.join(sorted(REGISTRY))}"),
+    dataset: str = typer.Option("arc1-train", help="Dataset name."),
+    out: Path = typer.Option(Path("runs"), help="Directory to write run artifacts under."),
+    limit: int | None = typer.Option(None, help="Only run the first N tasks."),
+    force: bool = typer.Option(False, "--force", help="Ignore any cached run and recompute."),
+) -> None:
+    """Run a program-search solver and write a durable run artifact (programs + metrics).
+
+    Unlike ``eval`` (solver-agnostic, solve-count only), this introspects the DSL solver
+    to record the program found per task and the search effort spent, then computes the
+    run's description length. Runs are content-addressed, cached, and resumable.
+    """
+    from arc_lab.solvers.dsl.analysis import analyze as run_analysis
+    from arc_lab.solvers.dsl.solver import ProgramSearchSolver
+
+    solver_obj = make_solver(solver)
+    if not isinstance(solver_obj, ProgramSearchSolver):
+        raise typer.BadParameter(f"{solver!r} is not a program-search solver (analyze needs one)")
+    ds = load_dataset(dataset, limit=limit)
+    typer.echo(f"Analyzing {solver_obj.name} on {ds.name} ({len(ds)} tasks)...")
+    summary, run_dir = run_analysis(solver_obj, ds, out_dir=out, force=force, progress=True)
+    typer.echo(summary.summary_line())
+    typer.echo(f"wrote {run_dir}")
+
+
 if __name__ == "__main__":  # pragma: no cover
     app()

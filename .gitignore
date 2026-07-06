@@ -38,5 +38,11 @@ build/
 # Logs
 *.log
 
+# Run artifacts: the raw per-task trace is large and deterministically regenerable
+# (run = pure function of its coordinates), so it is a local cache — gitignored. The
+# small summary.json + library.json under each runs/<id>/ ARE committed (the durable,
+# self-contained record). See src/arc_lab/solvers/dsl/analysis/artifact.py.
+runs/*/trace.jsonl
+
 # Private working notes (also denied to Claude via .claude/settings.json)
 _notes/
