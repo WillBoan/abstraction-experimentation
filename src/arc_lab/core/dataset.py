@@ -17,6 +17,8 @@ from arc_lab.core.task import Task, load_tasks
 # Repo root: this file is <root>/src/arc_lab/core/dataset.py
 _REPO_ROOT: Final = Path(__file__).resolve().parents[3]
 _DATA_ROOT: Final = _REPO_ROOT / "data"
+#: Synthetic learning testbeds (generated + committed) live here, not under data/.
+_TESTBED_ROOT: Final = _REPO_ROOT / "testbeds"
 
 # Friendly name -> path relative to the data root.
 DATASETS: Final[dict[str, str]] = {
@@ -73,3 +75,29 @@ def load_dataset(name: str, *, limit: int | None = None) -> Dataset:
     if limit is not None:
         tasks = tasks[:limit]
     return Dataset(name=name, tasks=tasks)
+
+
+def load_testbed(name: str) -> Dataset:
+    """Load a generated synthetic testbed from ``testbeds/<name>/tasks/``.
+
+    Testbeds are ARC-format task directories, so they load exactly like a real dataset;
+    the sibling ``manifest.json`` records how they were generated (see ``learn/taskgen.py``).
+    """
+    path = _TESTBED_ROOT / name / "tasks"
+    if not path.is_dir():
+        raise FileNotFoundError(f"testbed {name!r} not found at {path}; generate it first")
+    return Dataset(name=name, tasks=load_tasks(path))
+
+
+def split_dataset(
+    dataset: Dataset, *, name_a: str | None = None, name_b: str | None = None
+) -> tuple[Dataset, Dataset]:
+    """Deterministic disjoint parity split (even / odd index) into two named halves.
+
+    Distinct names matter: the name feeds ``RunCoordinates`` (and the ``run_id`` hash),
+    so the two halves' run artifacts never collide. Used for held-out transfer.
+    """
+    return (
+        Dataset(name=name_a or f"{dataset.name}:A", tasks=dataset.tasks[0::2]),
+        Dataset(name=name_b or f"{dataset.name}:B", tasks=dataset.tasks[1::2]),
+    )

@@ -86,3 +86,12 @@ def compression_ratio(baseline: float, candidate: float) -> float:
     ``baseline`` (the win we want from a learned library). ``inf`` if ``candidate`` is 0.
     """
     return baseline / candidate if candidate else float("inf")
+
+
+def speedup_ratio(baseline_considered: float, candidate_considered: float) -> float:
+    """Search speedup: ``baseline / candidate`` nodes considered (same shape as compression).
+
+    ``> 1`` means the candidate library reached the solutions with less search effort — the
+    bootstrap payoff, where a learned abstraction collapses depth. ``inf`` if candidate is 0.
+    """
+    return baseline_considered / candidate_considered if candidate_considered else float("inf")

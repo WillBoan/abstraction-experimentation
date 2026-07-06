@@ -80,6 +80,11 @@ class RunSummary:
         return sum(r.considered for r in self.records)
 
     @property
+    def solved_ids(self) -> frozenset[str]:
+        """Task ids solved (test-level) in this run — the set for transfer diffs."""
+        return frozenset(r.task_id for r in self.records if r.solved)
+
+    @property
     def description_length(self) -> float:
         return self.library_bits + self.program_bits
 
