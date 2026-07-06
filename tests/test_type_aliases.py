@@ -50,9 +50,7 @@ def _is_union_operand(node: ast.expr) -> bool:
         return _is_union_operand(node.left) and _is_union_operand(node.right)
     if isinstance(node, ast.Name) or _is_generic(node):
         return True
-    return isinstance(node, ast.Constant) and (
-        node.value is None or isinstance(node.value, str)
-    )
+    return isinstance(node, ast.Constant) and (node.value is None or isinstance(node.value, str))
 
 
 def _is_alias_rhs(node: ast.expr) -> bool:
@@ -65,7 +63,9 @@ def _is_alias_rhs(node: ast.expr) -> bool:
     """
     if _is_generic(node):
         return True
-    return isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr) and _is_union_operand(node)
+    return (
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr) and _is_union_operand(node)
+    )
 
 
 def _module_level_statements(tree: ast.Module) -> list[ast.stmt]:
@@ -100,6 +100,5 @@ def test_type_aliases_are_annotated() -> None:
     ]
     assert not violations, (
         "Module-level type aliases must be annotated `: TypeAlias` (Python 3.11 "
-        "can't use the 3.12 `type` statement). Offenders:\n  "
-        + "\n  ".join(violations)
+        "can't use the 3.12 `type` statement). Offenders:\n  " + "\n  ".join(violations)
     )

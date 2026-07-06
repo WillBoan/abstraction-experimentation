@@ -12,6 +12,7 @@ from arc_lab.core.task import Task
 from arc_lab.solvers.base import Prediction, Solver
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.composite import CompositeSearch
+from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
 from arc_lab.solvers.dsl.search.enumerate import Enumerate
 from arc_lab.solvers.dsl.search.overlay import OverlaySearch
 from arc_lab.solvers.dsl.search.single_apply import SingleApply
@@ -21,7 +22,7 @@ from arc_lab.solvers.dsl.substrate.primitives.color import MAP_COLOR
 from arc_lab.solvers.dsl.substrate.primitives.combinators import COMBINATORS
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.scaling import SCALE
-from arc_lab.solvers.dsl.substrate.program import Input, Program, evaluate_grid
+from arc_lab.solvers.dsl.substrate.program import Input, Program
 
 # When search finds nothing consistent, fall back to the identity program so we
 # always return a well-formed (if usually wrong) grid rather than crashing.
@@ -40,15 +41,26 @@ class ProgramSearchSolver(Solver):
     The harness contract (:meth:`predict`) is satisfied automatically.
     """
 
-    def __init__(self, *, library: Library, search: Search, name: str = "program-search") -> None:
+    def __init__(
+        self,
+        *,
+        library: Library,
+        search: Search,
+        cost: Cost | None = None,
+        name: str = "program-search",
+    ) -> None:
         self.library = library
         self.search = search
+        # The rank step: order candidate programs (lower cost first). Default is an
+        # Occam prior (program size). A stable sort keeps proposal order on ties.
+        self.cost = ProgramSize() if cost is None else cost
         self.name = name
 
     def predict(self, task: Task) -> Prediction:
-        programs = self.search.find(task, self.library) or [_FALLBACK]
+        candidates = self.search.find(task, self.library) or [_FALLBACK]
+        ranked = sorted(candidates, key=lambda program: self.cost.of(program, task, self.library))
         return [
-            [evaluate_grid(program, example.input, self.library) for program in programs]
+            [program.evaluate_grid(example.input, self.library) for program in ranked]
             for example in task.test
         ]
 

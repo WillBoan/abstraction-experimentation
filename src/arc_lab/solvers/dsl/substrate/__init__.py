@@ -16,18 +16,7 @@ A concrete solver is a choice of *(library, search strategy)* — see
 """
 
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive, Value
-from arc_lab.solvers.dsl.substrate.program import (
-    Apply,
-    Const,
-    Input,
-    Program,
-    evaluate,
-    evaluate_grid,
-    format_program,
-    is_consistent,
-    program_from_dict,
-    program_to_dict,
-)
+from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
 from arc_lab.solvers.dsl.substrate.types import ValueType
 
 __all__ = [
@@ -39,10 +28,4 @@ __all__ = [
     "Program",
     "Value",
     "ValueType",
-    "evaluate",
-    "evaluate_grid",
-    "format_program",
-    "is_consistent",
-    "program_from_dict",
-    "program_to_dict",
 ]

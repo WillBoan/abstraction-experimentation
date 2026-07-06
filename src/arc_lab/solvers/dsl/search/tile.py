@@ -17,15 +17,7 @@ from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.substrate.library import Library
-from arc_lab.solvers.dsl.substrate.program import (
-    Apply,
-    Const,
-    Input,
-    Program,
-    evaluate_grid,
-    format_program,
-    is_consistent,
-)
+from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
 from arc_lab.solvers.dsl.substrate.types import ValueType
 
 logger = logging.getLogger(__name__)
@@ -56,8 +48,8 @@ class TileSearch(Search):
                 *(Apply(name, (Input(),)) for name in cells),
             ),
         )
-        if is_consistent(program, task, library):
-            logger.debug("Tile accept %s", format_program(program))
+        if self.accepts(program, task, library):
+            logger.debug("Tile accept %s", program)
             return [program]
         return []
 
@@ -96,7 +88,7 @@ class TileSearch(Search):
         inp: Grid, block: npt.NDArray[np.int8], transforms: list[str], library: Library
     ) -> str | None:
         for name in transforms:
-            transformed = evaluate_grid(Apply(name, (Input(),)), inp, library).array
+            transformed = Apply(name, (Input(),)).evaluate_grid(inp, library).array
             if transformed.shape == block.shape and np.array_equal(transformed, block):
                 return name
         return None

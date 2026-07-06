@@ -15,13 +15,7 @@ import logging
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.substrate.library import Library
-from arc_lab.solvers.dsl.substrate.program import (
-    Apply,
-    Input,
-    Program,
-    format_program,
-    is_consistent,
-)
+from arc_lab.solvers.dsl.substrate.program import Apply, Input, Program
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +27,7 @@ class SingleApply(Search):
         programs: list[Program] = []
         for prim in library.unary_grid_primitives():
             program: Program = Apply(prim.name, (Input(),))
-            if is_consistent(program, task, library):
-                logger.debug("SingleApply accept %s", format_program(program))
+            if self.accepts(program, task, library):
+                logger.debug("SingleApply accept %s", program)
                 programs.append(program)
         return programs

@@ -9,6 +9,8 @@ LLM-proposed programs, ...) without touching the vocabulary.
 
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.composite import CompositeSearch
+from arc_lab.solvers.dsl.search.constraints import ConsistentWithTraining, Constraint
+from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
 from arc_lab.solvers.dsl.search.enumerate import Enumerate
 from arc_lab.solvers.dsl.search.overlay import OverlaySearch
 from arc_lab.solvers.dsl.search.single_apply import SingleApply
@@ -16,8 +18,12 @@ from arc_lab.solvers.dsl.search.tile import TileSearch
 
 __all__ = [
     "CompositeSearch",
+    "ConsistentWithTraining",
+    "Constraint",
+    "Cost",
     "Enumerate",
     "OverlaySearch",
+    "ProgramSize",
     "Search",
     "SingleApply",
     "TileSearch",

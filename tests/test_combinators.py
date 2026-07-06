@@ -10,16 +10,7 @@ from arc_lab.core.task import Task
 from arc_lab.eval.scoring import score_task
 from arc_lab.solvers.dsl.search import CompositeSearch, OverlaySearch, SingleApply, TileSearch
 from arc_lab.solvers.dsl.solver import SYMMETRY_LIBRARY, SymmetrySearchSolver
-from arc_lab.solvers.dsl.substrate import (
-    Apply,
-    Const,
-    Input,
-    ValueType,
-    evaluate,
-    evaluate_grid,
-    program_from_dict,
-    program_to_dict,
-)
+from arc_lab.solvers.dsl.substrate import Apply, Const, Input, Program, ValueType
 
 _G = Grid.from_list
 
@@ -28,17 +19,17 @@ _G = Grid.from_list
 
 
 def test_const_evaluates_to_its_value() -> None:
-    assert evaluate(Const(7, ValueType.COLOR), _G([[0]]), SYMMETRY_LIBRARY) == 7
+    assert Const(7, ValueType.COLOR).evaluate(_G([[0]]), SYMMETRY_LIBRARY) == 7
 
 
 def test_evaluate_grid_rejects_non_grid() -> None:
     with pytest.raises(TypeError):
-        evaluate_grid(Const(3, ValueType.INT), _G([[0]]), SYMMETRY_LIBRARY)
+        Const(3, ValueType.INT).evaluate_grid(_G([[0]]), SYMMETRY_LIBRARY)
 
 
 def test_program_roundtrip_with_const() -> None:
-    prog: object = Apply("overlay", (Const(0, ValueType.COLOR), Apply("identity", (Input(),))))
-    assert program_from_dict(program_to_dict(prog)) == prog  # type: ignore[arg-type]
+    prog = Apply("overlay", (Const(0, ValueType.COLOR), Apply("identity", (Input(),))))
+    assert Program.from_dict(prog.to_dict()) == prog
 
 
 # -- combinator primitives directly ------------------------------------
@@ -52,7 +43,7 @@ def test_overlay_repairs_masked_symmetry() -> None:
         "overlay",
         (Const(0, ValueType.COLOR), Apply("identity", (Input(),)), Apply("rot180", (Input(),))),
     )
-    assert evaluate_grid(prog, occluded, SYMMETRY_LIBRARY) == _G([[1, 2, 3], [4, 5, 4], [3, 2, 1]])
+    assert prog.evaluate_grid(occluded, SYMMETRY_LIBRARY) == _G([[1, 2, 3], [4, 5, 4], [3, 2, 1]])
 
 
 def test_tile_builds_vertical_mirror_mosaic() -> None:
@@ -65,7 +56,7 @@ def test_tile_builds_vertical_mirror_mosaic() -> None:
             Apply("flip_v", (Input(),)),
         ),
     )
-    out = evaluate_grid(prog, _G([[1, 2], [3, 4]]), SYMMETRY_LIBRARY)
+    out = prog.evaluate_grid(_G([[1, 2], [3, 4]]), SYMMETRY_LIBRARY)
     assert out == _G([[1, 2], [3, 4], [3, 4], [1, 2]])
 
 

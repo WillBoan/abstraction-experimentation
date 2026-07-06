@@ -8,14 +8,12 @@ from arc_lab.solvers.dsl.search import SingleApply
 from arc_lab.solvers.dsl.solver import GeometricSearchSolver, ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate import (
     Apply,
+    Const,
     Input,
     Library,
     Primitive,
+    Program,
     ValueType,
-    evaluate,
-    is_consistent,
-    program_from_dict,
-    program_to_dict,
 )
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 
@@ -55,41 +53,55 @@ def test_unary_grid_primitives_are_all_eight() -> None:
 
 def test_evaluate_input_is_identity() -> None:
     g = _G([[1, 2], [3, 4]])
-    assert evaluate(Input(), g, D4_LIBRARY) == g
+    assert Input().evaluate(g, D4_LIBRARY) == g
 
 
 def test_evaluate_apply_transpose() -> None:
     prog = Apply("transpose", (Input(),))
-    assert evaluate(prog, _G([[1, 2], [3, 4]]), D4_LIBRARY) == _G([[1, 3], [2, 4]])
+    assert prog.evaluate(_G([[1, 2], [3, 4]]), D4_LIBRARY) == _G([[1, 3], [2, 4]])
 
 
-def test_is_consistent() -> None:
-    task = Task.from_dict(
-        "t",
-        {
-            "train": [
-                {"input": [[1, 2, 3]], "output": [[3, 2, 1]]},
-                {"input": [[4, 5, 6]], "output": [[6, 5, 4]]},
-            ],
-            "test": [{"input": [[7, 8, 9]], "output": [[9, 8, 7]]}],
-        },
-    )
-    assert is_consistent(Apply("flip_h", (Input(),)), task, D4_LIBRARY) is True
-    assert is_consistent(Apply("rot90", (Input(),)), task, D4_LIBRARY) is False
+# -- structural methods -------------------------------------------------
+
+
+def test_children() -> None:
+    assert Input().children() == ()
+    assert Const(5, ValueType.INT).children() == ()
+    inner = Apply("rot90", (Input(),))
+    assert Apply("flip_v", (inner,)).children() == (inner,)
+
+
+def test_size_and_depth() -> None:
+    prog = Apply("flip_v", (Apply("rot90", (Input(),)),))
+    assert prog.size() == 3  # flip_v, rot90, input
+    assert prog.depth() == 3
+    assert Input().size() == 1
+    assert Input().depth() == 1
+
+
+def test_walk_yields_every_node() -> None:
+    inner = Apply("rot90", (Input(),))
+    prog = Apply("flip_v", (inner,))
+    assert list(prog.walk()) == [prog, inner, Input()]
+
+
+def test_result_type() -> None:
+    assert Input().result_type(D4_LIBRARY) == ValueType.GRID
+    assert Const(3, ValueType.COLOR).result_type(D4_LIBRARY) == ValueType.COLOR
+    assert Apply("rot90", (Input(),)).result_type(D4_LIBRARY) == ValueType.GRID
 
 
 # -- serialisation (programs are data) ---------------------------------
 
 
 def test_program_roundtrip() -> None:
-    prog: object = Apply("flip_v", (Apply("rot90", (Input(),)),))
-    restored = program_from_dict(program_to_dict(prog))  # type: ignore[arg-type]
-    assert restored == prog
+    prog = Apply("flip_v", (Apply("rot90", (Input(),)),))
+    assert Program.from_dict(prog.to_dict()) == prog
 
 
-def test_program_from_dict_rejects_garbage() -> None:
+def test_from_dict_rejects_garbage() -> None:
     with pytest.raises(ValueError):
-        program_from_dict({"op": "nonsense"})
+        Program.from_dict({"op": "nonsense"})
 
 
 # -- search + solver ----------------------------------------------------

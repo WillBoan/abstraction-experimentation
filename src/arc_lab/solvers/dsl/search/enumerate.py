@@ -31,14 +31,7 @@ from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.substrate.library import Library, Value
-from arc_lab.solvers.dsl.substrate.program import (
-    Apply,
-    Const,
-    Input,
-    Program,
-    evaluate,
-    format_program,
-)
+from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
 from arc_lab.solvers.dsl.substrate.types import ValueType
 
 logger = logging.getLogger(__name__)
@@ -68,6 +61,10 @@ class Enumerate(Search):
         max_pool: int = 600,
         max_grid_args: int = 16,
     ) -> None:
+        # Enumerate enforces consistency implicitly (a program is kept only if its
+        # behaviour signature equals the training outputs), so it does not take or
+        # apply Constraint objects; the default keeps the base contract satisfied.
+        super().__init__()
         self.max_depth = max_depth
         self.max_pool = max_pool
         # Cap on how many grid programs feed a composition round. Distinct grid
@@ -92,16 +89,14 @@ class Enumerate(Search):
 
         def consider(program: Program, expected: ValueType) -> None:
             try:
-                sig = tuple(evaluate(program, inp, library) for inp in inputs)
+                sig = tuple(program.evaluate(inp, library) for inp in inputs)
             except Exception as exc:
                 if debug:
-                    logger.debug(
-                        "enumerate reject (eval error) %s: %s", format_program(program), exc
-                    )
+                    logger.debug("enumerate reject (eval error) %s: %s", program, exc)
                 return
             if expected == ValueType.GRID and not all(isinstance(v, Grid) for v in sig):
                 if debug:
-                    logger.debug("enumerate reject (non-grid) %s", format_program(program))
+                    logger.debug("enumerate reject (non-grid) %s", program)
                 return
             bucket = pools[expected]
             existing = bucket.get(sig)
@@ -110,16 +105,12 @@ class Enumerate(Search):
                     logger.debug(
                         "enumerate accept [%s] %s sig=%s",
                         expected.value,
-                        format_program(program),
+                        program,
                         _format_signature(sig),
                     )
                 bucket[sig] = program
             elif debug:
-                logger.debug(
-                    "enumerate reject (dup of %s) %s",
-                    format_program(existing),
-                    format_program(program),
-                )
+                logger.debug("enumerate reject (dup of %s) %s", existing, program)
 
         # Leaves: the input grid, and task-relevant color/int constants.
         consider(Input(), ValueType.GRID)

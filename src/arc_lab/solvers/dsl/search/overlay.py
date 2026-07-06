@@ -26,14 +26,7 @@ import numpy as np
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.substrate.library import Library
-from arc_lab.solvers.dsl.substrate.program import (
-    Apply,
-    Const,
-    Input,
-    Program,
-    evaluate_grid,
-    is_consistent,
-)
+from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
 from arc_lab.solvers.dsl.substrate.types import ValueType
 
 logger = logging.getLogger(__name__)
@@ -61,7 +54,7 @@ class OverlaySearch(Search):
             for prim in library.unary_grid_primitives()
             if prim.name != "identity"
             and all(
-                evaluate_grid(Apply(prim.name, (Input(),)), inp, library).shape == inp.shape
+                Apply(prim.name, (Input(),)).evaluate_grid(inp, library).shape == inp.shape
                 for inp in inputs
             )
         ]
@@ -88,7 +81,7 @@ class OverlaySearch(Search):
                             subset,
                         )
                         continue
-                    if is_consistent(program, task, library):
+                    if self.accepts(program, task, library):
                         logger.debug("Overlay accept mask=%d subset=%s", mask, subset)
                         best, best_size = program, len(subset)
         return [best] if best is not None else []

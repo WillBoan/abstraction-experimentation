@@ -22,6 +22,8 @@ class CompositeSearch(Search):
     """Concatenate the results of several search strategies."""
 
     def __init__(self, strategies: Sequence[Search]) -> None:
+        # Constraints live on the wrapped strategies; the composite only concatenates.
+        super().__init__()
         self.strategies = tuple(strategies)
 
     def find(self, task: Task, library: Library) -> list[Program]:

@@ -7,7 +7,7 @@ from arc_lab.core.task import Task
 from arc_lab.eval.scoring import score_task
 from arc_lab.solvers.dsl.search import Enumerate
 from arc_lab.solvers.dsl.solver import ATOMIC_LIBRARY, SynthesisSolver
-from arc_lab.solvers.dsl.substrate import Apply, Const, Input, ValueType, evaluate_grid
+from arc_lab.solvers.dsl.substrate import Apply, Const, Input, ValueType
 
 _G = Grid.from_list
 
@@ -17,12 +17,12 @@ _G = Grid.from_list
 
 def test_map_color_recolors_one_color() -> None:
     prog = Apply("map_color", (Input(), Const(2, ValueType.COLOR), Const(5, ValueType.COLOR)))
-    assert evaluate_grid(prog, _G([[1, 2], [2, 3]]), ATOMIC_LIBRARY) == _G([[1, 5], [5, 3]])
+    assert prog.evaluate_grid(_G([[1, 2], [2, 3]]), ATOMIC_LIBRARY) == _G([[1, 5], [5, 3]])
 
 
 def test_scale_expands_by_factor() -> None:
     prog = Apply("scale", (Input(), Const(2, ValueType.INT)))
-    out = evaluate_grid(prog, _G([[1, 2]]), ATOMIC_LIBRARY)
+    out = prog.evaluate_grid(_G([[1, 2]]), ATOMIC_LIBRARY)
     assert out == _G([[1, 1, 2, 2], [1, 1, 2, 2]])
 
 
@@ -30,7 +30,7 @@ def test_scale_out_of_range_is_noop() -> None:
     # A factor that would exceed the max ARC side returns the grid unchanged.
     prog = Apply("scale", (Input(), Const(9, ValueType.INT)))
     big = _G([[c % 10 for c in range(5)] for _ in range(5)])
-    assert evaluate_grid(prog, big, ATOMIC_LIBRARY) == big
+    assert prog.evaluate_grid(big, ATOMIC_LIBRARY) == big
 
 
 # -- enumeration: single primitives -------------------------------------
