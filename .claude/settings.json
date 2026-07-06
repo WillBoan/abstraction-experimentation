@@ -12,7 +12,9 @@
       "Bash(make format:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(ARC_LAB_LOG=DEBUG uv run pytest:*)",
+      "Bash(gh run watch:*)"
     ],
     "deny": [
       "Read(./_notes/**)"
