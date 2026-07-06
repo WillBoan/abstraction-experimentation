@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run pytest:*)",
+      "Bash(uv run mypy:*)",
+      "Bash(uv run ruff:*)",
+      "Bash(uv run arc-lab:*)",
+      "Bash(make check:*)",
+      "Bash(make test:*)",
+      "Bash(make lint:*)",
+      "Bash(make typecheck:*)",
+      "Bash(make format:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Read(./_notes/**)"
+    ]
+  }
+}
