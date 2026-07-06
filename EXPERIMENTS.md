@@ -82,3 +82,14 @@ Entry template:
 - **Result:** 11/400 — _exactly_ the locked ids (7 D4 + 4 atomic). `program_bits=28` (verified = summed node counts), `library_bits=10`, `considered=283184`. All locks (7/19/11) preserved; `make check` green.
 - **Interpretation:** the instrument reproduces the known object, so the metrics are trustworthy. Measuring the ruler first immediately paid off — it corrects the entry above: the 4 atomic solves are **2 scale + 2 map_color**, not "1 scale + 3 map_color".
 - **Next:** transfer metric + the library-learning loop, then the low-primitive-floor experiment — does a minimal basis + learned abstractions re-derive D4? **[primary open direction]**
+
+---
+
+## 2026-07-06 — E1: the abstraction loop re-derives rot90 from the D4 generators
+
+- **Commit:** 3538005
+- **Question:** Does the library-learning loop actually *form abstractions* — discover a useful factoring from solved programs, compress, and speed up search — on a controlled testbed with a known-reachable target?
+- **Ran:** Built the mechanism (a `Param` hole node + closed-template learned primitives, `make_abstraction`), the wake-sleep loop (antiunify → greedy-MDL governance over the existing `CompressionMetric` → `Library.extended`), a three-library harness + a *behavioral* (observational-equivalence) checker, and a deterministic testbed generator. **E1:** starting primitives `{flip_h, transpose}`, target `rot90` **withheld**; `arc-lab learn e1-rot90`.
+- **Result:** learned `abs0 = transpose(flip_h($0))`, behaviorally **== target rot90** (matched, 0 missed, 0 novel). Compression DL 35→27 (**×1.30**); search effort `considered` 143→101 (**×1.42**); under a depth-1 budget the learned library **enables 9 solves** the generators cannot reach. Locks (7/19/11) unchanged; `make check` green.
+- **Interpretation:** the loop forms a real, transferable abstraction on a known-answer microworld — the depth-2 word `transpose(flip_h)` collapses to a depth-1 primitive, and the collapse shows up in *both* compression and speedup. Targets stayed pure observables (never guided learning), so the anti-teleological design holds. Caveats: the abstractor is v1 (recurring-identical programs, no variable-sharing), and the MDL library term is still flat (undercharges an abstraction's definition size).
+- **Next:** E2 (cell-level `{read, set_cell}` → fixed-cell `swap_cells`), then E3 (varied-cell → earns LGG variable-sharing). Then richer testbeds and the low-primitive-floor.
