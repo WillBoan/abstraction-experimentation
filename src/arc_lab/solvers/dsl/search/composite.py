@@ -27,18 +27,18 @@ class CompositeSearch(Search):
         self.strategies = tuple(strategies)
 
     def find(self, task: Task, library: Library) -> list[Program]:
+        # Each wrapped strategy logs its own INFO summary; here we report the
+        # deduplicated total. (The task id is supplied by TaskIdFilter as a prefix.)
         seen: set[Program] = set()
         combined: list[Program] = []
         for strategy in self.strategies:
-            found = strategy.find(task, library)
-            logger.info(
-                "%s produced %d candidate(s) for %s",
-                type(strategy).__name__,
-                len(found),
-                task.task_id,
-            )
-            for program in found:
+            for program in strategy.find(task, library):
                 if program not in seen:
                     seen.add(program)
                     combined.append(program)
+        logger.info(
+            "CompositeSearch: %d unique candidate(s) from %d strategies",
+            len(combined),
+            len(self.strategies),
+        )
         return combined

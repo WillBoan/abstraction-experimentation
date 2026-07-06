@@ -16,15 +16,17 @@ from pathlib import Path
 
 import typer
 
-from arc_lab.core.dataset import DATASETS, load_dataset
+from arc_lab.core.dataset import DATASETS, Dataset, load_dataset
 from arc_lab.eval.runner import run
 from arc_lab.solvers import REGISTRY, make_solver
+from arc_lab.solvers.dsl.trace import TaskIdFilter
 
 app = typer.Typer(add_completion=False, help="ARC-AGI experimentation sandbox.")
 
 #: Logger subtree the search strategies emit their code-level trace under.
 _SEARCH_LOGGER = "arc_lab.solvers.dsl"
-_LOG_FORMAT = "%(name)s %(levelname)s %(message)s"
+#: ``task_id`` is supplied by :class:`TaskIdFilter`; it reads ``-`` outside a solve.
+_LOG_FORMAT = "%(task_id)s %(name)s %(levelname)s %(message)s"
 
 
 def _configure_logging(verbosity: int) -> None:
@@ -33,6 +35,17 @@ def _configure_logging(verbosity: int) -> None:
     Off by default (no handler installed, so tracing costs nothing). ``-v`` shows
     INFO per-strategy summaries; ``-vv`` shows the DEBUG per-candidate trace. Only
     the ``arc_lab.solvers.dsl`` subtree is lowered, so third-party loggers stay quiet.
+    Every line is prefixed with the task id (via :class:`TaskIdFilter`) so a
+    multi-task trace can be grepped by task.
+
+    # TODO(trace-as-data, optional): for offline search-space analysis — dedup
+    # ratios, behaviours-per-task, depth-to-solve — add a `--trace-file run.jsonl`
+    # option here that installs a second handler emitting one JSON object per event
+    # (task_id, event, program, sig, depth). Worth doing once you start *studying*
+    # the search (e.g. to mine observational-equivalence collisions for library
+    # learning) rather than debugging it; until then the console trace suffices.
+    # `structlog` (bound context + JSON renderer) would be the clean way to do both
+    # this and the task-id prefix above, at the cost of one dependency.
     """
     env = os.environ.get("ARC_LAB_LOG")
     if env:
@@ -44,6 +57,9 @@ def _configure_logging(verbosity: int) -> None:
     else:
         return
     logging.basicConfig(level=logging.WARNING, format=_LOG_FORMAT, stream=sys.stderr)
+    for handler in logging.getLogger().handlers:
+        if not any(isinstance(existing, TaskIdFilter) for existing in handler.filters):
+            handler.addFilter(TaskIdFilter())
     logging.getLogger(_SEARCH_LOGGER).setLevel(level)
 
 
@@ -102,9 +118,18 @@ def eval(
     solver: str = typer.Argument(..., help=f"Solver name: {', '.join(sorted(REGISTRY))}"),
     dataset: str = typer.Option("arc1-eval", help="Dataset name."),
     limit: int | None = typer.Option(None, help="Only run the first N tasks."),
+    task: str | None = typer.Option(
+        None, "--task", help="Run only this task id (ignores --limit). Ideal with -vv."
+    ),
 ) -> None:
     """Run a solver over a dataset and print the score."""
-    ds = load_dataset(dataset, limit=limit)
+    # A single --task overrides --limit: load the whole dataset, then narrow to it.
+    ds = load_dataset(dataset, limit=None if task else limit)
+    if task is not None:
+        try:
+            ds = Dataset(name=ds.name, tasks=(ds.get(task),))
+        except KeyError as exc:
+            raise typer.BadParameter(str(exc)) from exc
     solver_obj = make_solver(solver)
     typer.echo(f"Running {solver_obj.name} on {ds.name} ({len(ds)} tasks)...")
     report = run(solver_obj, ds, progress=True)

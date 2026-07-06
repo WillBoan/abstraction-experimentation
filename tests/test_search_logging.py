@@ -16,6 +16,7 @@ from arc_lab.solvers.dsl.search import ConsistentWithTraining, Enumerate, Single
 from arc_lab.solvers.dsl.solver import ATOMIC_LIBRARY
 from arc_lab.solvers.dsl.substrate import Apply, Const, Input, ValueType
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
+from arc_lab.solvers.dsl.trace import TaskIdFilter, task_context
 
 _DSL_LOGGER = "arc_lab.solvers.dsl"
 
@@ -97,3 +98,41 @@ def test_silent_by_default(caplog: pytest.LogCaptureFixture) -> None:
     SingleApply().find(_flip_task(), D4_LIBRARY)
     Enumerate(max_depth=1).find(_symmetric_task(), ATOMIC_LIBRARY)
     assert caplog.records == []
+
+
+# -- per-search INFO summaries ------------------------------------------
+
+
+def test_single_apply_logs_summary(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.INFO, logger=_DSL_LOGGER)
+    SingleApply().find(_flip_task(), D4_LIBRARY)
+    assert any(r.message.startswith("SingleApply: considered=") for r in caplog.records)
+
+
+def test_enumerate_logs_summary(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.INFO, logger=_DSL_LOGGER)
+    Enumerate(max_depth=1).find(_symmetric_task(), ATOMIC_LIBRARY)
+    summaries = [r.message for r in caplog.records if r.message.startswith("Enumerate:")]
+    assert summaries and "dup=" in summaries[0] and "solved=" in summaries[0]
+
+
+# -- task-id trace context ----------------------------------------------
+
+
+def _record() -> logging.LogRecord:
+    return logging.LogRecord("t", logging.INFO, __file__, 1, "msg", None, None)
+
+
+def test_task_context_stamps_record() -> None:
+    filt = TaskIdFilter()
+    record = _record()
+    with task_context("abc123"):
+        assert filt.filter(record) is True
+    assert record.__dict__["task_id"] == "abc123"
+
+
+def test_task_id_defaults_outside_context() -> None:
+    filt = TaskIdFilter()
+    record = _record()
+    filt.filter(record)
+    assert record.__dict__["task_id"] == "-"

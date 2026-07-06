@@ -62,9 +62,13 @@ class OverlaySearch(Search):
 
         best: Program | None = None
         best_size = 0
+        considered = 0
+        skipped = 0
+        accepted = 0
         for mask in colors:
             for size in range(1, self.max_symmetries + 1):
                 for subset in itertools.combinations(candidates, size):
+                    considered += 1
                     program: Program = Apply(
                         "overlay",
                         (
@@ -74,6 +78,7 @@ class OverlaySearch(Search):
                         ),
                     )
                     if len(subset) <= best_size:
+                        skipped += 1
                         logger.debug(
                             "Overlay skip (not more constrained than best=%d) mask=%d subset=%s",
                             best_size,
@@ -82,6 +87,14 @@ class OverlaySearch(Search):
                         )
                         continue
                     if self.accepts(program, task, library):
+                        accepted += 1
                         logger.debug("Overlay accept mask=%d subset=%s", mask, subset)
                         best, best_size = program, len(subset)
+        logger.info(
+            "OverlaySearch: considered=%d skipped=%d accepted=%d found=%s",
+            considered,
+            skipped,
+            accepted,
+            best is not None,
+        )
         return [best] if best is not None else []

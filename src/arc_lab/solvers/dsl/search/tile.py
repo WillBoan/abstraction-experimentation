@@ -33,11 +33,13 @@ class TileSearch(Search):
         pairs = [(ex.input, ex.output) for ex in task.train]
         if any(out is None for _, out in pairs):
             logger.debug("Tile reject: task has missing outputs")
+            logger.info("TileSearch: no layout (missing outputs)")
             return []
         transforms = [prim.name for prim in library.unary_grid_primitives()]
         first_in, first_out = pairs[0]
         layout = self._infer_layout(first_in, first_out, transforms, library)  # type: ignore[arg-type]
         if layout is None:
+            logger.info("TileSearch: no layout inferred")
             return []
         rows, cols, cells = layout
         program: Program = Apply(
@@ -48,7 +50,9 @@ class TileSearch(Search):
                 *(Apply(name, (Input(),)) for name in cells),
             ),
         )
-        if self.accepts(program, task, library):
+        found = self.accepts(program, task, library)
+        logger.info("TileSearch: layout=%dx%d found=%s", rows, cols, found)
+        if found:
             logger.debug("Tile accept %s", program)
             return [program]
         return []

@@ -25,9 +25,12 @@ class SingleApply(Search):
 
     def find(self, task: Task, library: Library) -> list[Program]:
         programs: list[Program] = []
+        considered = 0
         for prim in library.unary_grid_primitives():
+            considered += 1
             program: Program = Apply(prim.name, (Input(),))
             if self.accepts(program, task, library):
                 logger.debug("SingleApply accept %s", program)
                 programs.append(program)
+        logger.info("SingleApply: considered=%d accepted=%d", considered, len(programs))
         return programs

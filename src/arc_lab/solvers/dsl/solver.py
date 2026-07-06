@@ -23,6 +23,7 @@ from arc_lab.solvers.dsl.substrate.primitives.combinators import COMBINATORS
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.scaling import SCALE
 from arc_lab.solvers.dsl.substrate.program import Input, Program
+from arc_lab.solvers.dsl.trace import task_context
 
 # When search finds nothing consistent, fall back to the identity program so we
 # always return a well-formed (if usually wrong) grid rather than crashing.
@@ -57,12 +58,16 @@ class ProgramSearchSolver(Solver):
         self.name = name
 
     def predict(self, task: Task) -> Prediction:
-        candidates = self.search.find(task, self.library) or [_FALLBACK]
-        ranked = sorted(candidates, key=lambda program: self.cost.of(program, task, self.library))
-        return [
-            [program.evaluate_grid(example.input, self.library) for program in ranked]
-            for example in task.test
-        ]
+        # Bind the task id so the strategies' trace lines can be attributed to it.
+        with task_context(task.task_id):
+            candidates = self.search.find(task, self.library) or [_FALLBACK]
+            ranked = sorted(
+                candidates, key=lambda program: self.cost.of(program, task, self.library)
+            )
+            return [
+                [program.evaluate_grid(example.input, self.library) for program in ranked]
+                for example in task.test
+            ]
 
 
 class GeometricSearchSolver(ProgramSearchSolver):

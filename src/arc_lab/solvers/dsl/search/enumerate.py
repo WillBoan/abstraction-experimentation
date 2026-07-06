@@ -87,20 +87,34 @@ class Enumerate(Search):
             ValueType.INT: {},
         }
 
+        # Per-search tallies for the INFO summary (cheap; maintained unconditionally).
+        counts = {"considered": 0, "kept": 0, "dup": 0, "err": 0, "nongrid": 0}
+
+        # TODO(trace-volume, optional): the four `logger.debug` sites below are the
+        # firehose (~600 lines/task today, and it grows with max_depth and library
+        # size). If it becomes unwieldy, split them onto child loggers
+        # (`{__name__}.accept` / `.reject`) so you can keep accepts and mute the
+        # dedup stream independently, e.g. set `...enumerate.reject` to WARNING while
+        # the parent stays at DEBUG. Not worth the indirection until the volume
+        # actually gets in the way — the `if debug:` guard already makes it free when off.
         def consider(program: Program, expected: ValueType) -> None:
+            counts["considered"] += 1
             try:
                 sig = tuple(program.evaluate(inp, library) for inp in inputs)
             except Exception as exc:
+                counts["err"] += 1
                 if debug:
                     logger.debug("enumerate reject (eval error) %s: %s", program, exc)
                 return
             if expected == ValueType.GRID and not all(isinstance(v, Grid) for v in sig):
+                counts["nongrid"] += 1
                 if debug:
                     logger.debug("enumerate reject (non-grid) %s", program)
                 return
             bucket = pools[expected]
             existing = bucket.get(sig)
             if existing is None:
+                counts["kept"] += 1
                 if debug:
                     logger.debug(
                         "enumerate accept [%s] %s sig=%s",
@@ -109,8 +123,10 @@ class Enumerate(Search):
                         _format_signature(sig),
                     )
                 bucket[sig] = program
-            elif debug:
-                logger.debug("enumerate reject (dup of %s) %s", existing, program)
+            else:
+                counts["dup"] += 1
+                if debug:
+                    logger.debug("enumerate reject (dup of %s) %s", existing, program)
 
         # Leaves: the input grid, and task-relevant color/int constants.
         consider(Input(), ValueType.GRID)
@@ -138,14 +154,20 @@ class Enumerate(Search):
             if sum(len(b) for b in pools.values()) > self.max_pool:
                 break
 
-        if debug:
-            logger.debug(
-                "enumerate pools: grid=%d color=%d int=%d",
-                len(pools[ValueType.GRID]),
-                len(pools[ValueType.COLOR]),
-                len(pools[ValueType.INT]),
-            )
         found = pools[ValueType.GRID].get(target)
+        logger.info(
+            "Enumerate: considered=%d kept=%d dup=%d err=%d nongrid=%d solved=%s "
+            "pools(g=%d,c=%d,i=%d)",
+            counts["considered"],
+            counts["kept"],
+            counts["dup"],
+            counts["err"],
+            counts["nongrid"],
+            found is not None,
+            len(pools[ValueType.GRID]),
+            len(pools[ValueType.COLOR]),
+            len(pools[ValueType.INT]),
+        )
         return [found] if found is not None else []
 
 
