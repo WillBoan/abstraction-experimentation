@@ -1,0 +1,22 @@
+{
+  "name": "generators",
+  "version": 1,
+  "primitives": [
+    {
+      "name": "flip_h",
+      "param_types": [
+        "grid"
+      ],
+      "return_type": "grid",
+      "variadic_param": null
+    },
+    {
+      "name": "transpose",
+      "param_types": [
+        "grid"
+      ],
+      "return_type": "grid",
+      "variadic_param": null
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "name": "e1-rot90",
+  "note": "E1 smoke: re-derive rot90 from the D4 generators {flip_h, transpose}.",
+  "content_hash": "40483e6f9065096d",
+  "tasks": [
+    {
+      "task_id": "rot90-00",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-01",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-02",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-03",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-04",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-05",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-06",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-07",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-08",
+      "label": "rot90",
+      "split": "heldout"
+    },
+    {
+      "task_id": "rot90-09",
+      "label": "rot90",
+      "split": "heldout"
+    },
+    {
+      "task_id": "rot90-10",
+      "label": "rot90",
+      "split": "heldout"
+    },
+    {
+      "task_id": "rot90-11",
+      "label": "rot90",
+      "split": "heldout"
+    }
+  ]
+}

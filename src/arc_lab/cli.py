@@ -163,5 +163,28 @@ def analyze(
     typer.echo(f"wrote {run_dir}")
 
 
+@app.command()
+def learn(
+    experiment: str = typer.Argument(..., help="Experiment name, e.g. e1-rot90"),
+    testbeds: Path = typer.Option(Path("testbeds"), help="Where to write generated testbeds."),
+    runs: Path = typer.Option(Path("runs"), help="Where to write run artifacts."),
+) -> None:
+    """Run an abstraction-formation experiment: generate a testbed, learn a library, report.
+
+    The system learns blind on the train split; the hand-authored target abstractions are
+    used only to *observe* (behavioral checker + library 3), never to guide learning.
+    """
+    from arc_lab.solvers.dsl.learn.experiments import make_experiment, run_experiment
+
+    try:
+        exp = make_experiment(experiment)
+    except KeyError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Running experiment {exp.name}...")
+    report = run_experiment(exp, testbeds_root=testbeds, runs_root=runs)
+    for line in report.summary_lines():
+        typer.echo(line)
+
+
 if __name__ == "__main__":  # pragma: no cover
     app()
