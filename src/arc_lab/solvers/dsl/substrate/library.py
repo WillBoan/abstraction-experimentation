@@ -21,10 +21,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.types import ValueType
+
+if TYPE_CHECKING:
+    from arc_lab.solvers.dsl.substrate.program import Program
 
 #: A value flowing through a program: a grid, or a scalar (a color or a small int).
 #: Widens further as new value types are introduced.
@@ -55,6 +58,11 @@ class Primitive:
     return_type: ValueType
     impl: PrimitiveImpl
     variadic_param: ValueType | None = None
+    #: For a *learned* abstraction: its defining template (a closed :class:`Program`
+    #: with :class:`~arc_lab.solvers.dsl.substrate.program.Param` holes). ``None`` for a
+    #: hand-coded primitive. ``impl`` evaluates this template; carrying it here keeps a
+    #: learned entry inspectable data, not an opaque closure.
+    template: Program | None = None
 
     @property
     def arity(self) -> int:
@@ -85,12 +93,15 @@ class Primitive:
         primitive for an artifact is its typed interface. A future *learned* primitive
         would additionally carry its defining sub-program here.
         """
-        return {
+        data: dict[str, object] = {
             "name": self.name,
             "param_types": [t.value for t in self.param_types],
             "return_type": self.return_type.value,
             "variadic_param": None if self.variadic_param is None else self.variadic_param.value,
         }
+        if self.template is not None:
+            data["template"] = self.template.to_dict()
+        return data
 
 
 @dataclass(frozen=True, slots=True)

@@ -41,8 +41,13 @@ class Program(ABC):
     # -- node-specific operations (each subclass implements) ------------
 
     @abstractmethod
-    def evaluate(self, grid: Grid, library: Library) -> Value:
-        """Compute this program's value on an input ``grid``."""
+    def evaluate(self, grid: Grid, library: Library, env: tuple[Value, ...] = ()) -> Value:
+        """Compute this program's value on an input ``grid``.
+
+        ``env`` binds positional parameters: a :class:`Param` node reads ``env[index]``.
+        It is empty for ordinary programs and defaulted so every existing call site is
+        unaffected; a learned abstraction's template is evaluated with ``env`` = its args.
+        """
 
     @abstractmethod
     def result_type(self, library: Library) -> ValueType:
@@ -58,9 +63,9 @@ class Program(ABC):
 
     # -- derived helpers, shared across node kinds ----------------------
 
-    def evaluate_grid(self, grid: Grid, library: Library) -> Grid:
+    def evaluate_grid(self, grid: Grid, library: Library, env: tuple[Value, ...] = ()) -> Grid:
         """Evaluate a program expected to produce a grid (raise otherwise)."""
-        result = self.evaluate(grid, library)
+        result = self.evaluate(grid, library, env)
         if not isinstance(result, Grid):
             raise TypeError(f"program evaluated to {type(result).__name__}, expected a grid")
         return result
@@ -90,6 +95,11 @@ class Program(ABC):
             if not isinstance(value, int) or not isinstance(value_type, str):
                 raise ValueError(f"malformed const node: {data!r}")
             return Const(value=value, value_type=ValueType(value_type))
+        if op == "param":
+            index, param_type = data["index"], data["value_type"]
+            if not isinstance(index, int) or not isinstance(param_type, str):
+                raise ValueError(f"malformed param node: {data!r}")
+            return Param(index=index, value_type=ValueType(param_type))
         if op == "apply":
             primitive, raw_args = data["primitive"], data["args"]
             if not isinstance(primitive, str) or not isinstance(raw_args, list):
@@ -107,7 +117,7 @@ class Program(ABC):
 class Input(Program):
     """The program's single free variable: the task input grid."""
 
-    def evaluate(self, grid: Grid, library: Library) -> Value:
+    def evaluate(self, grid: Grid, library: Library, env: tuple[Value, ...] = ()) -> Value:
         return grid
 
     def result_type(self, library: Library) -> ValueType:
@@ -124,13 +134,41 @@ class Input(Program):
 
 
 @dataclass(frozen=True, slots=True)
+class Param(Program):
+    """A positional hole in an abstraction template: the value of argument ``index``.
+
+    A learned abstraction's definition is a *closed* template (no :class:`Input`) whose
+    holes are ``Param`` nodes; evaluating it binds ``env[index]`` here. Carries its own
+    ``value_type`` (like :class:`Const`) because :meth:`result_type` gets no type environment.
+    """
+
+    index: int
+    value_type: ValueType
+
+    def evaluate(self, grid: Grid, library: Library, env: tuple[Value, ...] = ()) -> Value:
+        return env[self.index]
+
+    def result_type(self, library: Library) -> ValueType:
+        return self.value_type
+
+    def to_dict(self) -> dict[str, object]:
+        return {"op": "param", "index": self.index, "value_type": self.value_type.value}
+
+    def children(self) -> tuple[Program, ...]:
+        return ()
+
+    def __str__(self) -> str:
+        return f"${self.index}"
+
+
+@dataclass(frozen=True, slots=True)
 class Const(Program):
     """A literal scalar value, tagged with its type (e.g. a COLOR or an INT)."""
 
     value: int
     value_type: ValueType
 
-    def evaluate(self, grid: Grid, library: Library) -> Value:
+    def evaluate(self, grid: Grid, library: Library, env: tuple[Value, ...] = ()) -> Value:
         return self.value
 
     def result_type(self, library: Library) -> ValueType:
@@ -153,9 +191,9 @@ class Apply(Program):
     primitive: str
     args: tuple[Program, ...]
 
-    def evaluate(self, grid: Grid, library: Library) -> Value:
+    def evaluate(self, grid: Grid, library: Library, env: tuple[Value, ...] = ()) -> Value:
         prim = library.get(self.primitive)
-        return prim.impl(*(arg.evaluate(grid, library) for arg in self.args))
+        return prim.impl(*(arg.evaluate(grid, library, env) for arg in self.args))
 
     def result_type(self, library: Library) -> ValueType:
         return library.get(self.primitive).return_type
