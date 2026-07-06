@@ -37,3 +37,6 @@ build/
 
 # Logs
 *.log
+
+# Private working notes (also denied to Claude via .claude/settings.json)
+_notes/
