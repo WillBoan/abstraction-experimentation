@@ -15,7 +15,9 @@ from arc_lab.solvers.dsl.analysis.artifact import RunCoordinates, TaskRecord
 from arc_lab.solvers.dsl.analysis.compression import (
     CompressionMetric,
     DescriptionLength,
+    TwoPartMDL,
     compression_ratio,
+    speedup_ratio,
 )
 from arc_lab.solvers.dsl.analysis.runner import RunSummary, analyze
 
@@ -25,6 +27,8 @@ __all__ = [
     "RunCoordinates",
     "RunSummary",
     "TaskRecord",
+    "TwoPartMDL",
     "analyze",
     "compression_ratio",
+    "speedup_ratio",
 ]

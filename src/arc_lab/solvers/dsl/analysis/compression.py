@@ -59,11 +59,16 @@ class CompressionMetric:
     """Two-part MDL of a solved corpus, parameterised by a per-program :class:`Cost`."""
 
     cost: Cost = field(default_factory=ProgramSize)
-    #: Flat code length charged per primitive carried in the library (v1 proxy).
+    #: Flat code length charged per primitive carried in the library.
     bits_per_primitive: float = 1.0
 
     def library_bits(self, library: Library) -> float:
-        """The cost of *carrying* the vocabulary (the anti-memorisation term)."""
+        """The cost of *carrying* the vocabulary — a flat name cost per primitive.
+
+        This baseline ignores an abstraction's *definition* size, which lets the loop hoard
+        marginal specialisations (observed in E3). :class:`TwoPartMDL` charges the definition
+        and is the anti-bloat variant; kept separate so the two governance regimes compare.
+        """
         return self.bits_per_primitive * len(library.primitives)
 
     def program_bits(self, entries: Iterable[CorpusEntry], library: Library) -> float:
@@ -77,6 +82,25 @@ class CompressionMetric:
             library_bits=self.library_bits(library),
             program_bits=self.program_bits(corpus, library),
         )
+
+
+@dataclass(frozen=True)
+class TwoPartMDL(CompressionMetric):
+    """Compression that also charges each learned abstraction its template's definition size.
+
+    Proper two-part code: ``DL(library) = flat names + Σ (learned) template sizes``. That
+    definition term is the **anti-bloat** force — a marginal specialisation (an existing
+    abstraction applied to constants) must save more than it costs to define, so the loop
+    stops hoarding them. Base primitives have no template and pay only the flat cost (they are
+    the prior). Compare against the flat :class:`CompressionMetric` to see the effect (E3→E4).
+    """
+
+    def library_bits(self, library: Library) -> float:
+        flat = super().library_bits(library)
+        definitions = sum(
+            p.template.size() for p in library.primitives if p.template is not None
+        )
+        return flat + definitions
 
 
 def compression_ratio(baseline: float, candidate: float) -> float:
