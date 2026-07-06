@@ -48,9 +48,9 @@ class AntiunifyPairs(AbstractionProposer):
         for program, n in counts.items():
             if n >= 2:
                 self._offer(_close_template(program), candidates)
-        # Distinct programs generalise via pairwise antiunification.
+        # Distinct programs generalise via pairwise antiunification (with variable-sharing).
         for a, b in itertools.combinations(counts, 2):
-            template = _close_template(_antiunify(a, b, library, itertools.count()))
+            template = _close_template(_antiunify(a, b, library, {}, itertools.count()))
             self._offer(template, candidates)
         return list(candidates)
 
@@ -60,8 +60,20 @@ class AntiunifyPairs(AbstractionProposer):
             candidates.setdefault(template, None)
 
 
-def _antiunify(p: Program, q: Program, library: Library, counter: Iterator[int]) -> Program:
-    """Most-specific common generalisation of ``p`` and ``q`` (no variable-sharing)."""
+def _antiunify(
+    p: Program,
+    q: Program,
+    library: Library,
+    memo: dict[tuple[Program, Program], Param],
+    counter: Iterator[int],
+) -> Program:
+    """Most-specific common generalisation of ``p`` and ``q``, with variable-sharing.
+
+    ``memo`` maps a *differing* subterm pair ``(p_sub, q_sub)`` to the hole standing for it,
+    so the same difference recurring at several positions reuses **one** ``Param`` — the
+    least-general-generalization semantics needed for e.g. `swap_cells`, where one coordinate
+    feeds both a ``read`` and a ``set_cell``.
+    """
     if p == q:
         return p
     if isinstance(p, Param):  # already maximally general at this position
@@ -76,9 +88,15 @@ def _antiunify(p: Program, q: Program, library: Library, counter: Iterator[int])
     ):
         return Apply(
             p.primitive,
-            tuple(_antiunify(pa, qa, library, counter) for pa, qa in zip(p.args, q.args, strict=True)),
+            tuple(
+                _antiunify(pa, qa, library, memo, counter)
+                for pa, qa in zip(p.args, q.args, strict=True)
+            ),
         )
-    return Param(next(counter), p.result_type(library))
+    key = (p, q)
+    if key not in memo:
+        memo[key] = Param(next(counter), p.result_type(library))
+    return memo[key]
 
 
 def _close_template(program: Program) -> Program:
