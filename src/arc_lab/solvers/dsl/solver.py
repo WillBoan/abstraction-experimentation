@@ -13,7 +13,7 @@ from arc_lab.solvers.base import Prediction, Solver
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.composite import CompositeSearch
 from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
-from arc_lab.solvers.dsl.search.enumerate import Enumerate
+from arc_lab.solvers.dsl.search.enumerate import BeamSearch, Enumerate
 from arc_lab.solvers.dsl.search.overlay import OverlaySearch
 from arc_lab.solvers.dsl.search.single_apply import SingleApply
 from arc_lab.solvers.dsl.search.tile import TileSearch
@@ -105,4 +105,23 @@ class SynthesisSolver(ProgramSearchSolver):
             library=ATOMIC_LIBRARY,
             search=Enumerate(max_depth=max_depth),
             name="dsl-synth",
+        )
+
+
+class BeamSynthesisSolver(ProgramSearchSolver):
+    """Cost-guided beam over the atomic vocabulary — ``dsl-synth``'s library and engine, but the
+    per-round grid frontier is ranked by program size (an injected ``Cost``) and truncated to a
+    beam, rather than cut in insertion order.
+
+    Deliberately *unlocked*: it exists to drive the F1 beam mechanism on real tasks, and its
+    solved set is not pinned as a regression — a beam-width choice is a knob to explore, not a
+    contract. The payoff proper arrives with a vocabulary whose grid pool actually explodes
+    (objects / cell-floor); over the atomic library the beam is wide enough to be near-lossless.
+    """
+
+    def __init__(self, *, beam_width: int = 16, max_depth: int = 2) -> None:
+        super().__init__(
+            library=ATOMIC_LIBRARY,
+            search=BeamSearch(cost=ProgramSize(), beam_width=beam_width, max_depth=max_depth),
+            name="dsl-beam",
         )

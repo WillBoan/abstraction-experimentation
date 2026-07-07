@@ -5,9 +5,11 @@ from __future__ import annotations
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 from arc_lab.eval.scoring import score_task
-from arc_lab.solvers.dsl.search import Enumerate
+from arc_lab.solvers.dsl.search import BeamSearch, Enumerate, ProgramSize
 from arc_lab.solvers.dsl.solver import ATOMIC_LIBRARY, SynthesisSolver
 from arc_lab.solvers.dsl.substrate import Apply, Const, Input, ValueType
+from arc_lab.solvers.dsl.substrate.library import Library, Primitive
+from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 
 _G = Grid.from_list
 
@@ -72,6 +74,29 @@ def test_enumerate_solves_scale() -> None:
     assert len(found) == 1
 
 
+def test_enumerate_keeps_the_smallest_program_per_behavior() -> None:
+    # Within one round a larger equivalent can be formed before a smaller one, so keep-smallest
+    # must return the minimal witness. `flip_pair` (binary: flips its first arg, ignores the
+    # second) is ordered BEFORE `flip_h`, so under first-considered dedup the size-3
+    # `flip_pair(input, input)` would be stored; keep-smallest replaces it with `flip_h(input)`.
+    flip_impl = D4_LIBRARY.get("flip_h").impl
+    flip_pair = Primitive(
+        name="flip_pair",
+        param_types=(ValueType.GRID, ValueType.GRID),
+        return_type=ValueType.GRID,
+        impl=lambda a, b: flip_impl(a),
+    )
+    library = Library(name="ks", primitives=(flip_pair, D4_LIBRARY.get("flip_h")))
+    rows = [[1, 2], [3, 4]]
+    out = Apply("flip_h", (Input(),)).evaluate_grid(Grid.from_list(rows), library)
+    task = Task.from_dict(
+        "ks", {"train": [{"input": rows, "output": out.array.tolist()}], "test": [{"input": rows}]}
+    )
+
+    found = Enumerate(max_depth=1).find(task, library).programs
+    assert found == (Apply("flip_h", (Input(),)),)  # size 2, not flip_pair(input, input) size 3
+
+
 def test_enumerate_returns_nothing_when_unsolvable() -> None:
     # No composition of geometry/color/scale maps this input to this output.
     task = Task.from_dict(
@@ -123,3 +148,31 @@ def test_synthesis_solver_still_solves_geometry() -> None:
     )
     solved, _ = score_task(flip, SynthesisSolver(max_depth=1).predict(flip))
     assert solved is True
+
+
+# -- cost-guided beam (the F1 frontier policy) --------------------------
+
+
+def test_beam_search_solves_like_enumerate() -> None:
+    # A wide-enough beam is near-lossless: it finds what plain enumeration finds.
+    found = (
+        BeamSearch(cost=ProgramSize(), beam_width=16, max_depth=1)
+        .find(_recolor_task(), ATOMIC_LIBRARY)
+        .programs
+    )
+    assert len(found) == 1
+
+
+def test_beam_width_bounds_and_cost_ranks_the_frontier() -> None:
+    # The depth-2 solution needs `rot180(input)` as its intermediate grid.
+    task = _composition_task()
+    # beam_width=1 keeps only the single cheapest grid (`input`) as the round-2 frontier, which
+    # cannot form `map_color(rot180(input), ...)`: the cap is real, so the task goes unsolved.
+    narrow = BeamSearch(cost=ProgramSize(), beam_width=1, max_depth=2).find(task, ATOMIC_LIBRARY)
+    assert narrow.programs == ()
+    # A wider beam keeps `rot180(input)` among the cheapest grids by cost, so it solves — and
+    # still considers fewer programs than unbounded enumeration.
+    wide = BeamSearch(cost=ProgramSize(), beam_width=10, max_depth=2).find(task, ATOMIC_LIBRARY)
+    full = Enumerate(max_depth=2).find(task, ATOMIC_LIBRARY)
+    assert len(wide.programs) == 1
+    assert wide.stats.considered < full.stats.considered

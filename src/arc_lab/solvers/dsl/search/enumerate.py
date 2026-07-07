@@ -8,10 +8,10 @@ toward. It grows programs from the leaves up, one composition round at a time:
   never formed. This is what keeps an atomic vocabulary tractable.
 * **Observational equivalence collapses it further.** Two programs that produce
   identical results on every training input are interchangeable; we keep only the
-  first (smallest) representative of each behaviour. The number of distinct
-  *behaviours* is far smaller than the number of syntactic programs, and this
-  dedup is the same signal a future library-learning step will mine for reusable
-  abstractions.
+  *smallest* representative of each behaviour (a later, smaller-node-count equivalent
+  replaces an earlier one). The number of distinct *behaviours* is far smaller than
+  the number of syntactic programs, and this dedup is the same signal a future
+  library-learning step will mine for reusable abstractions.
 
 Constant leaves (colors, integers) are drawn from the task itself, so the search
 never enumerates values that could not possibly appear. Variadic primitives (the
@@ -30,6 +30,7 @@ import numpy as np
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
+from arc_lab.solvers.dsl.search.cost import Cost
 from arc_lab.solvers.dsl.substrate.library import Library, Value
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
 from arc_lab.solvers.dsl.substrate.types import ValueType
@@ -130,6 +131,18 @@ class Enumerate(Search):
                         _format_signature(sig),
                     )
                 bucket[sig] = program
+            elif program.size() < existing.size():
+                # Same behaviour, fewer nodes: keep the *smallest* witness per behaviour, not
+                # merely the first considered. Discovery order tracks size loosely (later rounds
+                # are deeper) but not exactly — within a round a multi-arity primitive can form a
+                # larger equivalent before a smaller one, and library order decides which lands
+                # first. Keeping the smaller one hands the sleep step minimal programs, removing
+                # the latent bloat root cause. The *set* of reachable behaviours is unchanged —
+                # only the representative shrinks — so which tasks solve is invariant.
+                counts["dup"] += 1
+                if debug:
+                    logger.debug("enumerate replace (smaller than %s) %s", existing, program)
+                bucket[sig] = program
             else:
                 counts["dup"] += 1
                 if debug:
@@ -155,9 +168,9 @@ class Enumerate(Search):
             if target in pools[ValueType.GRID]:
                 break
             # Freeze the current pools so this round composes only prior programs.
-            # Grid options are capped (simplest first) to bound the combination count.
+            # The grid frontier is capped (the overridable F1 frontier policy) to bound the count.
             frozen = {vtype: list(bucket.values()) for vtype, bucket in pools.items()}
-            frozen[ValueType.GRID] = frozen[ValueType.GRID][: self.max_grid_args]
+            frozen[ValueType.GRID] = self._grid_frontier(frozen[ValueType.GRID], task, library)
             for prim in fixed:
                 options = [frozen[t] for t in prim.param_types]
                 if any(not opt for opt in options):
@@ -185,6 +198,57 @@ class Enumerate(Search):
         )
         logger.info(stats.summary())
         return SearchResult(programs=programs, stats=stats)
+
+    def _grid_frontier(
+        self, candidates: list[Program], task: Task, library: Library
+    ) -> list[Program]:
+        """The grid programs that feed the next composition round — the frontier policy.
+
+        The default is a blind insertion-order cut (``max_grid_args``): it keeps the
+        earliest-found — and, post keep-smallest, smallest — grids. ``task``/``library`` are
+        unused here but are the inputs a *cost*-ranked policy needs, so a subclass
+        (:class:`BeamSearch`) can override this one seam without touching the search loop.
+        """
+        return candidates[: self.max_grid_args]
+
+
+class BeamSearch(Enumerate):
+    """Cost-guided enumeration: keep the top-``beam_width`` grid programs per round by ``Cost``.
+
+    Identical to :class:`Enumerate` except the per-round grid frontier is *ranked by an injected*
+    :class:`~arc_lab.solvers.dsl.search.cost.Cost` and truncated to ``beam_width``, rather than
+    cut in insertion order. This is the first search to actually *consume* a ``Cost`` — the rank
+    the substrate defines but the frontier never used — turning ``max_grid_args`` from
+    'simplest-by-arrival' into 'cheapest-by-cost'. That is what a richer (object / cell-floor)
+    vocabulary needs to stay tractable once the grid pool would otherwise explode. The accumulated
+    behaviour pools are unchanged; only *which* grids feed the next round is cost-selected.
+    """
+
+    def __init__(
+        self,
+        *,
+        cost: Cost,
+        beam_width: int = 16,
+        max_depth: int = 2,
+        max_pool: int = 600,
+        coord_ints: bool = False,
+    ) -> None:
+        super().__init__(
+            max_depth=max_depth,
+            max_pool=max_pool,
+            max_grid_args=beam_width,
+            coord_ints=coord_ints,
+        )
+        self.cost = cost
+        self.beam_width = beam_width
+
+    def _grid_frontier(
+        self, candidates: list[Program], task: Task, library: Library
+    ) -> list[Program]:
+        # Rank the whole grid pool by cost (lower first) and keep the cheapest beam_width. A
+        # stable sort preserves insertion (smallest-first) order among cost ties.
+        ranked = sorted(candidates, key=lambda program: self.cost.of(program, task, library))
+        return ranked[: self.beam_width]
 
 
 def _leaf_constants(task: Task, *, coord_ints: bool = False) -> tuple[list[int], list[int]]:

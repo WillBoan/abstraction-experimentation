@@ -18,6 +18,7 @@ mosaic tiling without introducing any new grid transform.
 """
 
 from arc_lab.solvers.dsl.solver import (
+    BeamSynthesisSolver,
     GeometricSearchSolver,
     ProgramSearchSolver,
     SymmetrySearchSolver,
@@ -25,6 +26,7 @@ from arc_lab.solvers.dsl.solver import (
 )
 
 __all__ = [
+    "BeamSynthesisSolver",
     "GeometricSearchSolver",
     "ProgramSearchSolver",
     "SymmetrySearchSolver",

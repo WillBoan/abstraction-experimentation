@@ -12,6 +12,7 @@ from collections.abc import Callable
 from arc_lab.solvers.base import Solver
 from arc_lab.solvers.baseline import IdentitySolver
 from arc_lab.solvers.dsl import (
+    BeamSynthesisSolver,
     GeometricSearchSolver,
     SymmetrySearchSolver,
     SynthesisSolver,
@@ -24,6 +25,7 @@ REGISTRY: dict[str, Callable[[], Solver]] = {
     "dsl": GeometricSearchSolver,
     "dsl-sym": SymmetrySearchSolver,
     "dsl-synth": SynthesisSolver,
+    "dsl-beam": BeamSynthesisSolver,
 }
 
 

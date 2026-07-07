@@ -11,12 +11,13 @@ from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.search.composite import CompositeSearch
 from arc_lab.solvers.dsl.search.constraints import ConsistentWithTraining, Constraint
 from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
-from arc_lab.solvers.dsl.search.enumerate import Enumerate
+from arc_lab.solvers.dsl.search.enumerate import BeamSearch, Enumerate
 from arc_lab.solvers.dsl.search.overlay import OverlaySearch
 from arc_lab.solvers.dsl.search.single_apply import SingleApply
 from arc_lab.solvers.dsl.search.tile import TileSearch
 
 __all__ = [
+    "BeamSearch",
     "CompositeSearch",
     "ConsistentWithTraining",
     "Constraint",
