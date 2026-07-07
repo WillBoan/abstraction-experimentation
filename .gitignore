@@ -38,6 +38,9 @@ build/
 # Logs
 *.log
 
+# Task renders: `arc-lab show <id>` writes <task_id>.png to the CWD by default
+/*.png
+
 # Run artifacts: a local cache, gitignored. A run is a pure function of its coordinates
 # (deterministic, no RNG), so artifacts regenerate exactly via `arc-lab analyze`/`learn`
 # and would otherwise churn on every code change. The durable record lives elsewhere: the
