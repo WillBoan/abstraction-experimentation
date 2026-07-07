@@ -9,14 +9,18 @@ A shared human+AI **event log** of experiments and findings for arc-lab. Append-
 - **Anchor to a commit** so the numbers stay reproducible.
 - **Events, not state.** "On date X, measured Y" never goes stale; "current best is Y" does.
 
-Entry template:
+Entry template (tier the bullets; put the numbers in an explicit **Metrics** block so they're scannable):
 
 ```
 ## YYYY-MM-DD — <short title>
 - **Commit:** <hash>
 - **Question:** ...
 - **Ran:** ...
-- **Result:** ...
+- **Result:**
+  - <one-line what-happened>
+  - **Metrics:**
+    - <metric>: <value> (<from → to>)
+    - ...
 - **Interpretation:** ...
 - **Next:** ...
 ```
@@ -90,7 +94,13 @@ Entry template:
 - **Commit:** 3538005
 - **Question:** Does the library-learning loop actually *form abstractions* — discover a useful factoring from solved programs, compress, and speed up search — on a controlled testbed with a known-reachable target?
 - **Ran:** Built the mechanism (a `Param` hole node + closed-template learned primitives, `make_abstraction`), the wake-sleep loop (antiunify → greedy-MDL governance over the existing `CompressionMetric` → `Library.extended`), a three-library harness + a *behavioral* (observational-equivalence) checker, and a deterministic testbed generator. **E1:** starting primitives `{flip_h, transpose}`, target `rot90` **withheld**; `arc-lab learn e1-rot90`.
-- **Result:** learned `abs0 = transpose(flip_h($0))`, behaviorally **== target rot90** (matched, 0 missed, 0 novel). Compression DL 35→27 (**×1.30**); search effort `considered` 143→101 (**×1.42**); under a depth-1 budget the learned library **enables 9 solves** the generators cannot reach. Locks (7/19/11) unchanged; `make check` green.
+- **Result:**
+  - Learned `abs0 = transpose(flip_h($0))`, behaviorally **== target rot90** (matched; 0 missed, 0 novel).
+  - **Metrics:**
+    - compression: **×1.30** (DL 35→27)
+    - speedup: **×1.42** (considered 143→101)
+    - enablement: **9 tasks** solved only by the learned library (depth-1 budget)
+    - locks 7/19/11 unchanged; `make check` green
 - **Interpretation:** the loop forms a real, transferable abstraction on a known-answer microworld — the depth-2 word `transpose(flip_h)` collapses to a depth-1 primitive, and the collapse shows up in *both* compression and speedup. Targets stayed pure observables (never guided learning), so the anti-teleological design holds. Caveats: the abstractor is v1 (recurring-identical programs, no variable-sharing), and the MDL library term is still flat (undercharges an abstraction's definition size).
 - **Next:** E2 (cell-level `{read, set_cell}` → fixed-cell `swap_cells`), then E3 (varied-cell → earns LGG variable-sharing). Then richer testbeds and the low-primitive-floor.
 
@@ -101,7 +111,12 @@ Entry template:
 - **Commit:** 0946c25
 - **Question:** Does the loop form a genuinely *cell-level* abstraction — a multi-step composition of `read`/`set_cell` — and how large is the search-collapse payoff at a lower floor?
 - **Ran:** New primitives `read (Grid,Int,Int)→Color`, `set_cell (Grid,Int,Int,Color)→Grid`; `Enumerate(coord_ints=True)` mines coordinate `Int` leaves. Testbed: 8 tasks each swapping cells (0,0)↔(1,1) on 2×2 grids, **3 train demos each** (so a literal-colour program can't fit — the solution must `read`). `arc-lab learn e2-swap-cells`.
-- **Result:** learned `abs0 = set_cell(set_cell($0,0,0,read($0,1,1)),1,1,read($0,0,0))`, behaviorally **== target swap_cells**. Compression **×6.42** (DL 122→19); search speedup **×104** (`considered` 31624→304); all 8 tasks enabled at depth 1. `make check` green.
+- **Result:**
+  - Learned `abs0 = set_cell(set_cell($0,0,0,read($0,1,1)),1,1,read($0,0,0))`, behaviorally **== target swap_cells**.
+  - **Metrics:**
+    - compression: **×6.42** (DL 122→19)
+    - speedup: **×104** (considered 31624→304) — the depth-4 solution collapses to depth-1
+    - enablement: **8 tasks** (all, depth-1 budget)
 - **Interpretation:** the mechanism works unchanged at the cell floor — no AST lambda needed, `read`/`set_cell` compose as ordinary typed transforms. The payoff is far larger than E1 because the raw solution is a depth-4 composition (11 nodes) collapsed to a single call: the deeper the gap the abstraction bridges, the bigger the compression/speedup. Fixed cells → identical solved programs → the simplest abstractor (no variable-sharing) suffices.
 - **Next:** E3 — vary the cells so coordinates must generalise (variable-sharing).
 
@@ -110,6 +125,26 @@ Entry template:
 - **Commit:** 0946c25
 - **Question:** With coordinates that recur across positions (a coord feeds both a `read` and a `set_cell`), does antiunification produce the *correct shared-variable* abstraction — and does the governance keep the library clean?
 - **Ran:** E3 testbed: 8 tasks swapping `(0,X)↔(1,Y)` for varied `(X,Y)` on 2×2 grids. Added variable-sharing to `AntiunifyPairs` (a memo mapping a differing subterm pair to one shared `Param`). **E3** under the flat `CompressionMetric`; **E4** the *same* environment under `TwoPartMDL` (charges each abstraction its definition size).
-- **Result:** both learned the correct general `abs0 = set_cell(set_cell($0,0,$1,read($0,1,$2)),1,$2,read($0,0,$1))` — `$1`,`$2` each shared across two positions, behaviorally **== target swap_cols**. **E3 (flat): 16 abstractions** — abs0 plus **15 marginal specialisations** (`abs0($0,0,0)`, …): *library bloat*. **E4 (two-part MDL): exactly 1 abstraction**, no bloat.
+- **Result:**
+  - Both learned the correct general `abs0 = set_cell(set_cell($0,0,$1,read($0,1,$2)),1,$2,read($0,0,$1))` — `$1`,`$2` each shared across two positions, behaviorally **== target swap_cols**.
+  - **Metrics:**
+    - E3 (flat MDL): **16 abstractions** — abs0 + 15 marginal specialisations (`abs0($0,0,0)`, …): *library bloat*
+    - E4 (two-part MDL): **1 abstraction**, no bloat
 - **Interpretation:** two findings. (1) **Variable-sharing is correct** — the memo gives the least-general-generalization that keeps a swap sound. (2) **The flat library cost is a broken governance objective**: a specialisation that saves 2 nodes still nets negative, so the loop hoards them. Charging the *definition size* (two-part MDL) makes a marginal specialisation cost more than it saves → it is rejected. This is the "abstraction governance" problem made concrete, and the cheapest principled fix. Kept both metrics (flat baseline + `TwoPartMDL`) so the regimes stay comparable.
 - **Next:** richer testbeds (perceive→transform, masks), and the low-primitive-floor — where governance pressure will matter far more.
+
+---
+
+## 2026-07-06 — E3 analysis → loop hardening (dedup + DL-stop)
+
+- **Commit:** 3ccc2b1
+- **Question:** *Why* did E3's flat-MDL run bloat to 16 abstractions — and is two-part MDL the only thing keeping the loop honest?
+- **Ran:** Inspected E3's learned library + per-generation history, then added two loop safeguards — library-dedup (never re-mint a template already a primitive) and a DL-monotonicity stop (discard a generation that doesn't lower total DL) — and re-ran E3.
+- **Result:**
+  - The 16 were only **4 distinct** abstractions (abs0 + 3 specialisations); the 3 were **re-minted every generation** under new names, and total DL *climbed* 20→23→26→29→32.
+  - **Metrics (E3, before → after hardening):**
+    - abstractions: 16 → **4**
+    - generations run: 5 → **1**
+    - E1 / E2 / E4: unchanged
+- **Interpretation:** the bloat had **three** causes, not one. (1) greedy over-abstraction *within* a generation [flat MDL — the one two-part MDL/E4 fixes]; (2) no dedup against the library, so duplicates get re-minted; (3) no convergence guard, so DL climbs to the generation cap. Two-part MDL *masked* (2) and (3) by removing the incentive, but they were latent — the hardening addresses them directly, independent of the metric. A deeper root cause remains noted: `Enumerate` keeps the *first-considered* program per behaviour (library order), not the smallest, so the wake can return a longer program the next sleep then "compresses" — a keep-smallest fix is worth doing later.
+- **Next:** richer testbeds and the low-primitive-floor.
