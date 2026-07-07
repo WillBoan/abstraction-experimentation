@@ -29,9 +29,36 @@ from arc_lab.solvers.dsl.substrate.types import ValueType
 if TYPE_CHECKING:
     from arc_lab.solvers.dsl.substrate.program import Program
 
-#: A value flowing through a program: a grid, or a scalar (a color or a small int).
-#: Widens further as new value types are introduced.
-Value: TypeAlias = Grid | int
+
+@dataclass(frozen=True, slots=True)
+class Closure:
+    """A function value: a :class:`~...program.Lam`'s body captured with its environment.
+
+    Produced when a ``Lam`` node is evaluated; consumed by higher-order primitives
+    (``build_grid`` today; ``map``/``fold`` later) that apply it. This is a *runtime*
+    value only — never part of a program AST and never serialised (unlike the ``Lam``
+    node, which is frozen, inspectable data) — so programs stay frozen, hashable, and
+    deterministic, and closures never enter the observational-equivalence pools.
+
+    Applying it pushes ``arg`` onto the De Bruijn ``scope`` (so the body's ``$0`` sees the
+    most-recently-bound variable) and evaluates the body. ``env`` (the abstraction-argument
+    channel, read by ``Param``) is carried through unchanged — the two binder namespaces
+    (``$i`` bound vars vs. ``#j`` abstraction vars) stay separate.
+    """
+
+    body: Program
+    grid: Grid
+    library: Library
+    env: tuple[Value, ...]
+    scope: tuple[Value, ...]
+
+    def __call__(self, arg: Value) -> Value:
+        return self.body.evaluate(self.grid, self.library, self.env, (*self.scope, arg))
+
+
+#: A value flowing through a program: a grid, a scalar (color / small int), or a function
+#: value (a lambda's closure). Widens further as new value types are introduced.
+Value: TypeAlias = Grid | int | Closure
 
 #: A primitive implementation: takes value arguments, returns a value.
 PrimitiveImpl: TypeAlias = Callable[..., Value]

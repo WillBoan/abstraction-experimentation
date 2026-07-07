@@ -24,7 +24,7 @@ _GENERATORS = Library(
 
 
 def _rot90_template() -> Program:
-    """rot90 as a closed template over the generators: transpose(flip_h($0))."""
+    """rot90 as a closed template over the generators: transpose(flip_h(#0))."""
     return Apply("transpose", (Apply("flip_h", (Param(0, _G),)),))
 
 
@@ -53,7 +53,7 @@ def test_param_reads_from_env() -> None:
 def test_template_round_trips_through_dict() -> None:
     template = _rot90_template()
     assert Program.from_dict(template.to_dict()) == template
-    assert str(template) == "transpose(flip_h($0))"
+    assert str(template) == "transpose(flip_h(#0))"
 
 
 # -- make_abstraction ---------------------------------------------------

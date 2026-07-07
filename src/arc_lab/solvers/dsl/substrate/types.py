@@ -25,4 +25,5 @@ class ValueType(Enum):
     GRID = "grid"
     COLOR = "color"  # a cell color, integer 0-9
     INT = "int"  # a small non-negative integer (e.g. a tiling dimension)
-    # Future: MASK, OBJECTS, ...
+    FN = "fn"  # a function value (a lambda's closure) — opaque for now, no arrow types yet
+    # Future (maybe): COORD, BOOL, MASK, OBJECTS, ...
