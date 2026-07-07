@@ -1,6 +1,6 @@
 # MACHINERY.md
 
-A living catalog of the **machinery** — the mechanisms that search, score, match, and learn — that are, or might be, at play in this system. Sibling to [ONTOLOGY.md](ONTOLOGY.md): that file maps the **primitives / abstractions** the solver _knows_ (lever 1, the Floor); this file maps _how the solver works_ (lever 3, the Machinery). Together they cover the solver; [EXPERIMENTS.md](EXPERIMENTS.md) logs what we tried, and [RESEARCH-2026-07-06.md](RESEARCH-2026-07-06.md) is the frame both are read against.
+A living catalog of the **machinery** — the mechanisms that search, score, match, and learn — that are, or might be, at play in this system. Sibling to [ONTOLOGY.md](ONTOLOGY.md): that file maps the **primitives / abstractions** the solver _knows_ (lever 1, the Floor); this file maps _how the solver works_ (lever 3, the Machinery). Together they cover the solver; [EXPERIMENTS.md](EXPERIMENTS.md) logs what we tried, and [RESEARCH-2026-07-07.md](RESEARCH-2026-07-07.md) is the frame both are read against.
 
 It exists because the machinery is not one thing. A flat label like "abstraction governance" hides **≥4 distinct mechanisms** (the E3 bloat had that many causes), and — the load-bearing fact — **machinery components gate each other**: objects need a beam search; real-corpus compression needs subtree-matching; the cell floor needs cost-guided search; the whole low-floor thesis needs a lambda binding. You can't see the critical path or the gaps without a map. This is the map.
 
@@ -57,14 +57,14 @@ Two axes organize everything below.
 
 ## F0 — substrate / representation
 
-_"What is a program, and how is it run?"_ The physics both loops run on (`substrate/`). Mostly `baked` — it's the ground, not a plug point — which is why the one `unbuilt` binding row (lambda-index) is so load-bearing: it's the floor under the whole low-primitive direction.
+_"What is a program, and how is it run?"_ The physics both loops run on (`substrate/`). Mostly `baked` — it's the ground, not a plug point. The load-bearing lambda-index binding row (the floor under the whole low-primitive direction) is now built as a Stitch-compatible De Bruijn lambda; what remains unbuilt in F0 are only search-holes (a top-down concern).
 
 | Mechanism | What | Interface | Status | Gates |
 | --- | --- | --- | --- | --- |
 | Program AST (`Input`/`Const`/`Apply`/`Param`) | programs as typed, inspectable data (`program.py`) | `baked` | ✅ | everything |
 | Evaluation / interpreter (`env`-threaded) | virtual-dispatch `evaluate(grid, library, env)` | `baked` | ✅ | — |
 | Variable binding — `Param`/`env` | positional holes for abstraction args | `baked` | ✅ | learned abstractions |
-| Variable binding — lambda-index (`build_grid`) | a bound index inside a function argument | `unbuilt` | 🔜 | **size-general geometry from cells; pixels→D4** |
+| Variable binding — lambda-index (`build_grid`) | a bound index inside a function argument — built as a **De Bruijn** bound var (`Var` = Stitch's `$i`; `Param` = `#j`) + a `Lam` binder evaluating to a `Closure`; env-based interp, no index-shifting. Stitch-compatible representation | `baked` | ✅ | **size-general geometry from cells; pixels→D4** (search + experiment deferred) |
 | Variable binding — search-holes | an unfilled node the search expands | `unbuilt` | ⚪ | top-down search (F1) |
 | Type system (`ValueType`, typed dispatch) | GRID/COLOR/INT tags; MASK/OBJECT reserved | `baked` | ✅ | search pruning |
 | Library structure (`extended` / versioning) | the typed vocabulary as a first-class value | `baked` | ✅ | library learning (F4) |
@@ -89,7 +89,7 @@ MCTS and beam are _frontier policies_, not paradigms; bottom-up/top-down is the 
 | Cost-guided **beam** (`BeamSearch`) | keep top-K grids by cost per round vs. the blind `max_grid_args` cut; overrides one `_grid_frontier` seam on `Enumerate` | `ABC` | ✅ | **objects (F4-scale), cell-floor at scale** — the first search to consume `Cost` (near-lossless on the atomic floor; payoff lands with a pool that explodes) |
 | Cost-ordered / priority enumeration | expand cheapest-first, anytime stop | `unbuilt` | ⚪ | anytime budgets |
 | Top-down / A\* over holes | goal-directed refinement of partial programs | `unbuilt` | ⚪ | needs F0 search-holes |
-| MCTS | tree search + rollouts over program construction | `unbuilt` | ⚪ | needs learned guidance |
+| MCTS | tree search + rollouts over program construction | `unbuilt` | ⚪ | learned guidance _or_ an MDL-guided refinement space (Ferré/MADIL runs MCTS over models, MDL-guided, no net) |
 | Neurally-guided search | learned policy/value proposes expansions | `learned` | ⚪ | the bootstrap speedup at scale |
 
 ## F2 — scoring
@@ -124,7 +124,7 @@ _"How does the vocabulary grow?"_ (`learn/`.) The wake–sleep loop: **invention
 | Mechanism | What | Interface | Status | Gates |
 | --- | --- | --- | --- | --- |
 | `AntiunifyPairs` proposer (LGG, var-sharing) | mine recurring structure into closed templates | `ABC` | ✅ | — |
-| Frequent-subtree / e-graph / version-space proposer | DreamCoder-grade invention | `unbuilt` | ⚪ | richer abstractions |
+| Frequent-subtree / e-graph / version-space proposer | DreamCoder-grade invention — **adopt Stitch/babble, don't hand-build** (Stitch: 3–4 orders faster than DreamCoder's version spaces; see MACHINERY-STRATEGY) | `unbuilt` | ⚪ | richer abstractions |
 | Greedy-MDL selection | add the single best-compressing candidate, repeat | `baked` | ✅ | (bloat source under flat MDL) |
 | Governance as a plug point (`AbstractionSelector` ABC) | selection lifted out of `learn()` (`GreedyMDL` default) so strategies swap/compare | `ABC` | ✅ | testable governance (E3 proved it's plural) |
 | Library-dedup guard | never re-mint an existing primitive | `baked` | ✅ | anti-re-mint (E3 hardening) |
@@ -153,12 +153,13 @@ _"How do we know it's working?"_ (`analysis/`, `learn/harness.py`, `learn/taskge
 
 ## What the map shows
 
-- **The critical path (what gates what) [H].** Largely cleared. Of the five mechanisms that gated the downstream, **four have shipped**:
+- **The critical path (what gates what) [H].** Cleared. All five mechanisms that gated the downstream have shipped:
   - **cost-guided beam** (F1, `BeamSearch`) → objects at scale, the cell floor on real grids — _done_; the first search to consume `Cost` (near-lossless on the atomic floor, `dsl-beam` = `dsl-synth` at 11/400).
   - **subtree-match rewrite** (F3) → real, measurable compression on any heterogeneous corpus — _done_.
   - **governance as a plug point + keep-smallest wake** (F4, `AbstractionSelector`/`GreedyMDL`) → testable governance, and the latent-bloat root cause removed — _done_ (behavior-preserving on E1–E4).
   - **two-part MDL + the two hardening guards** (F2/F4) → clean governance — _done_ (E4 + the E3 hardening), which is why the loop stays honest today.
-  - **lambda-index binding** (F0) → size-general geometry from cells, i.e. the pixels→D4 keystone — **the one gate still open**, and now the sole thing between here and a real test of the low-floor thesis.
+  - **lambda-index binding** (F0) → size-general geometry from cells, the pixels→D4 keystone — _done_ (the Stitch-compatible De Bruijn `$i` / `Lam` / `Closure` substrate + the `build_grid`/`width`/`height`/`sub` clique, hand-verified: one program re-derives `rot90`/`flip_h`/`transpose` on any shape). The remaining blocker for pixels→D4 is now the **bespoke `build_grid` search** (open-term body enumeration — an F1 concern), not the binding.
 - **The experiment surface today** is the `ABC`/`param` rows: `Search` (incl. `BeamSearch`), `Cost`, `Constraint`, `AbstractionProposer`, `AbstractionSelector`, `LearnTrigger`, and the `CompressionMetric` family. That is where you can swap-and-compare _right now_.
 - **`baked`-in that arguably should still be pluggable:** observational equivalence (inside `Enumerate`, F3). Governance has now been lifted behind `AbstractionSelector`, so the E3 argument there is discharged.
-- **Emptiest / highest-leverage families:** F1's remaining frontier gap (A\*/MCTS/stochastic — the top-down / learned-guidance corner) and F0 lambda-binding (the single `unbuilt` row under the entire low-floor thesis).
+- **Emptiest / highest-leverage families:** with F0's lambda-binding shipped, F0 is essentially complete (only search-holes remain, a top-down concern). The live frontier is F1: the bespoke **open-term `build_grid` search** that would actually exercise the new substrate, and the wider A\*/MCTS/stochastic corner — plus, per the strategy, pointing the loop at real ARC tasks rather than another microworld.
+- **Build vs. adopt vs. defer:** which of these rows to build ourselves, adopt from a mature tool (Stitch/babble/egg), or defer until a real task demands them is a _strategy_ question, not a map question — see [MACHINERY-STRATEGY-2026-07-07.md](MACHINERY-STRATEGY-2026-07-07.md), read against [RESEARCH-2026-07-07.md](RESEARCH-2026-07-07.md).

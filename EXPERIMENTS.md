@@ -164,3 +164,32 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
     - `dsl-beam` (beam_width=16): **11/400 == `dsl-synth` 11/400** (same task ids).
 - **Interpretation:** All four are behaviour-preserving everywhere we can measure today — as predicted, a **null result with a reason**. Subtree-match and keep-smallest are no-ops on E1–E4 (templates match at the whole-program root; the cell-swap solutions are already unique-shaped minimal programs), and the beam is near-lossless on the atomic floor (its grid pool never exceeds the width, so the cost-ranked frontier keeps everything the blind cut kept). The value is **latent**: subtree-match bites on heterogeneous corpora, keep-smallest on libraries with size-varying equivalents, the beam once a vocabulary's grid pool actually explodes (objects / cell-floor) — none of which exist yet. What _did_ change structurally: governance is now a swappable `AbstractionSelector` (`GreedyMDL` default), and `Cost` is finally consumed by a search (`BeamSearch`). Net: the critical path collapses to a single remaining keystone, **lambda-index binding (F0)**.
 - **Next:** the runnable-today queue (perceive→transform, layered abstraction) exercises the loop on real abstractions with zero new machinery; the low-primitive-floor keystone now waits only on lambda-index.
+
+---
+
+## 2026-07-07 — Landscape & build-strategy review (Ferré/MADIL · Stitch · CompressARC · the field)
+
+- **Commit:** 091d717 (docs only — no code touched)
+- **Question:** Where does this project sit vs. prior art, and how should we balance building machinery ourselves vs. adopting third-party tools (YAGNI-vs-rework, in service of the research not the score)?
+- **Reviewed:** Ferré's ARC-MDL / MADIL (object-centric _descriptive_ MDL, `L(M)+L(E|M)`, MDL-guided refinement, OCaml/GPLv3, single-CPU, **2%→7% ARC-1**, _no cross-task library learning_); Stitch (top-down library-learning compression, 3–4 orders faster than DreamCoder) + babble/egg + LILO + AbstractBeam; CompressARC (pure-MDL neural, no pretraining, **~20% eval / ~4% ARC-2**); the LLM-TTT / evolutionary frontier (ARChitects 53.5%, SOAR; "fast search still beats smart search"; ARC-2 collapse).
+- **Findings:**
+  - Pure symbolic/MDL ARC solving lands single-digit→~20% _as a score_ — not our deliverable; understanding is. We sit **deliberately off the LLM-TTT frontier** (it trades away the determinism/inspectability that make findings mean anything).
+  - The **descriptive (perceive/render) half** is the identified highest-leverage empty region — Ferré is a worked existence proof. The **unoccupied position:** descriptive representation × cross-task library learning.
+  - **Adopt don't rebuild:** Stitch for F4 invention-at-scale, egg/babble for equivalence-at-scale, Hodel's `arc-dsl` as vocabulary reference; own the substrate + instrumentation. Build the lambda-index keystone as a **Stitch-compatible De Bruijn index** (serves the low-floor thesis _and_ cheap future adoption).
+- **Interpretation / strategy:** captured in [MACHINERY-STRATEGY-2026-07-07.md](MACHINERY-STRATEGY-2026-07-07.md) (the build methodology); frame updated in [RESEARCH-2026-07-07.md](RESEARCH-2026-07-07.md) (supersedes 07-06); [MACHINERY.md](MACHINERY.md) / [ONTOLOGY.md](ONTOLOGY.md) annotated surgically.
+- **Next:** the F0 substrate keystone (De Bruijn λ-index); then shift the workload from synthetic microworlds toward real ARC tasks so reality writes the build queue.
+
+---
+
+## 2026-07-07 — F0 keystone: the Stitch-compatible De Bruijn lambda substrate (`build_grid`)
+
+- **Commit:** a490432
+- **Question:** Build the lambda-index binding — the one `unbuilt` F0 row under the low-floor thesis — as a general, Stitch-compatible substrate, and verify a single size-general `build_grid` program can express D4 geometry. (Substrate only; the search + pixels→D4 experiment are the deferred follow-on, per the barbell + Principle 5.)
+- **Ran:** Added two AST nodes — `Var` (De Bruijn `$i`, distinct from `Param` = Stitch's `#j`) and `Lam` (unary `(lam …)`) — plus a `scope` channel on `evaluate` (env-based/closure interp → no index-shifting), a runtime `Closure` value, an opaque `FN` type, and the `build_grid`/`width`/`height`/`sub` clique (`BUILD_LIBRARY`, wired into no locked solver). Hand-verified by construction (no search).
+- **Result:**
+  - A single program `build_grid(width(input), height(input), lam(lam(read(input, $0, sub(sub(width(input),1), $1)))))` re-derives `rot90` on grids of **any shape** (drove 2×3→3×2, 4×2→2×4, all == `np.rot90`); likewise `flip_h`, `transpose`.
+  - **Metrics:**
+    - `make check` green (121 tests, +7 new); locks 7/19/11 unchanged; mypy `--strict` clean.
+    - De Bruijn correctness, `to_dict` round-trip, and `make_abstraction` over a `build_grid` template (arity 1 — loop vars stay internal) all pass.
+- **Interpretation:** The keystone lands as a *representation*, not yet a capability — the substrate is proven by hand, but nothing *searches* for `build_grid` programs yet. Two-channel binding (`env`=`#j` abstraction args vs. `scope`=`$i` bound vars) is what lets a size-general geometry program mint cleanly as an abstraction, and env/closure evaluation sidestepped De Bruijn's index-shifting entirely. Cost was modest and contained (one `FN` tag, a runtime `Closure`, ~physics-only churn in `program.py`), and it's Stitch-shaped so future invention-engine adoption is near-drop-in. Also renamed `Param`'s display `$0`→`#0` to match Stitch's `#j` and free `$i` for `Var`.
+- **Next:** the bespoke `build_grid` search (open-term body enumeration — "where does search break?"), then pixels→D4 through the loop (does a learned `mirror_index` bootstrap the deep D4 members?). Or, per the strategy, point the loop at a real ARC slice instead of another microworld.

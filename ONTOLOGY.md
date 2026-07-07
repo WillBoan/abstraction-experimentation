@@ -1,6 +1,6 @@
 # ONTOLOGY.md
 
-A living catalog of the **primitives / abstractions** that are — or might be — at play in this system and the ARC task space. Sibling to [EXPERIMENTS.md](EXPERIMENTS.md): that file logs _what we tried_; this file maps _the space of things there are to try_. This maps lever 1 (the primitive vocabulary / Floor); its sibling [MACHINERY.md](MACHINERY.md) maps lever 3 (the search / scoring / learning Machinery); [RESEARCH-2026-07-06.md](RESEARCH-2026-07-06.md) is the frame both are read against.
+A living catalog of the **primitives / abstractions** that are — or might be — at play in this system and the ARC task space. Sibling to [EXPERIMENTS.md](EXPERIMENTS.md): that file logs _what we tried_; this file maps _the space of things there are to try_. This maps lever 1 (the primitive vocabulary / Floor); its sibling [MACHINERY.md](MACHINERY.md) maps lever 3 (the search / scoring / learning Machinery); [RESEARCH-2026-07-07.md](RESEARCH-2026-07-07.md) is the frame both are read against.
 
 It exists because the substrate today is a tiny, coarse slice of that space (almost everything shipped is a whole-grid transform), and the research direction is to descend to **more fundamental primitives** and study how the machinery composes them into higher abstractions. You can't chart that climb without a map of the terrain. This is the map.
 
@@ -57,13 +57,13 @@ Three axes organize everything below.
     - `Grid`
     - `Color`
     - `Int`
+    - `Fn`
+      - the lambda lift; live but **opaque** (one enum tag, no arrow types yet) — a `Lam` closure, consumed by `build_grid`
   - Not yet implemented:
     - `Bool`
     - `Coord`
       - costs one enum member
       - = `(Int,Int)`
-    - `Fn`
-      - `Fn` is the lambda lift.
     - `Mask`
     - `Object`
     - `ObjectSet`
@@ -79,7 +79,7 @@ The "gifted" machinery — control abstractions, not domain content. A human get
 | --- | --- | --- | --- | --- | --- | --- |
 | const_int | Literal integer value (task-mined constant). | `→ Int` | L0 | — | — | ✅ done |
 | const_color | Literal color value (task-mined constant). | `→ Color` | L0 | — | — | ✅ done |
-| add / sub / mul | Integer arithmetic on two ints. | `(Int,Int)→Int` | L0 | — | — | ⚪ cand |
+| add / sub / mul | Integer arithmetic on two ints. `sub` **✅ done** (coordinate math for `build_grid`); add/mul ⚪ cand. | `(Int,Int)→Int` | L0 | — | — | ✅ done |
 | floordiv / mod | Integer division & remainder — for coordinate math. | `(Int,Int)→Int` | L0 | — | — | ⚪ cand |
 | min / max / abs | Elementary integer functions. | `(Int,Int)→Int` | L0 | — | — | ⚪ cand |
 | eq / lt / gt | Compare two values; color eq = symbol match. | `(a,a)→Bool` | L0 | — | — | ⚪ cand |
@@ -94,11 +94,11 @@ The "gifted" machinery — control abstractions, not domain content. A human get
 
 ## L1 — cell / coordinate
 
-The pixel level: a grid _is_ a function `Coord→Color`. `read`/`build_grid` are the intension↔extension pair — the crux of the "set_cell vs build_grid" question. The **stateful half shipped first** (E2/E3): `read`/`set_cell` take plain `Int` coords — no `Coord` type — with literals task-mined via `Enumerate(coord_ints=True)`, and compose as ordinary typed transforms, **no lambda needed** (`substrate/primitives/cells.py`). The **pure half still needs the AST to support bound indices (a lambda node)**; today the only variables are `Input()` and abstraction `Param`s. That extension is the load-bearing lift for size-general geometry: a `build_grid` lambda expresses geometry through coordinate arithmetic (rot90 = `read` at a transposed, reflected coord), so `make_coord`, `row`/`col`, and L0 `sub` sit in the D4-rederivation clique.
+The pixel level: a grid _is_ a function `Coord→Color`. `read`/`build_grid` are the intension↔extension pair — the crux of the "set_cell vs build_grid" question. The **stateful half shipped first** (E2/E3): `read`/`set_cell` take plain `Int` coords — no `Coord` type — with literals task-mined via `Enumerate(coord_ints=True)`, and compose as ordinary typed transforms, **no lambda needed** (`substrate/primitives/cells.py`). The **pure half is now shipped too**: the AST gained a De Bruijn bound variable (`Var` = `$i`) and a `Lam` binder (Stitch-compatible; `substrate/program.py`), and `build_grid` (`substrate/primitives/build.py`) expresses geometry through coordinate arithmetic — a single size-general program re-derives each D4 member (rot90 = `read` at a reflected coord). Coords stay two `Int`s (no `Coord` type yet), so `width`/`height` and L0 `sub` are the shipped D4-rederivation clique; `make_coord`, `row`/`col` remain candidates. What's still missing is the *search* that finds these programs (a bespoke `build_grid` enumeration — deferred).
 
 | Name | Description | Signature | Lvl | Prior | Role | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| width / height | The grid's dimensions. | `Grid→Int` | L1 | G | P | 🔜 next |
+| width / height | The grid's dimensions. | `Grid→Int` | L1 | G | P | ✅ done |
 | shape | The grid's (rows, cols) together. | `Grid→(Int,Int)` | L1 | G | P | 🔜 next |
 | make_coord | Pair two ints into a coordinate (Coord intro; monomorphic face of a generic `pair`). | `(Int,Int)→Coord` | L1 | — | — | 🔜 next |
 | row / col | A coordinate's components (Coord elim — what makes `shape` and lambda-bound coords consumable). | `Coord→Int` | L1 | — | — | 🔜 next |
@@ -107,7 +107,7 @@ The pixel level: a grid _is_ a function `Coord→Color`. `read`/`build_grid` are
 | neighbors4 / neighbors8 | The adjacent coordinates (4- or 8-connectivity). | `Coord→[Coord]` | L1 | G | P | ⚪ cand |
 | set_cell | Grid with one cell recolored (functional set-cell; stateful when folded); shipped on plain `Int` coords. | `(Grid,Int,Int,Color)→Grid` | L1 | — | T | ✅ done |
 | swap_cells | Exchange the colors of two cells (a transposition — derivable from read+set_cell by re-reading the original grid; E2 *re-derived it* as a learned abstraction, never hand-shipped). | `(Grid,Coord,Coord)→Grid` | L1 | — | T | ⚪ cand |
-| build_grid | Construct a grid from a coordinate→color function (regenerates D4 as small programs). | `(Int,Int,Fn)→Grid` | L1 | — | R | 🔜 next |
+| build_grid | Construct a grid from a coordinate→color function (regenerates D4 as small programs); the `Fn` is a curried `Lam(Lam(body))`. | `(Int,Int,Fn)→Grid` | L1 | — | R | ✅ done |
 | blank / fill | A uniform grid of a single color. | `(Int,Int,Color)→Grid` | L1 | — | R | ⚪ cand |
 
 ## L2 — whole-grid (≈ everything shipped today)
@@ -285,8 +285,8 @@ The most abstract layer: recurring whole-task _strategies_. These are the abstra
 
 ## What the map shows
 
-- **Almost everything `done` is L2** (+ two L6 schemas built as bespoke searches, + task-mined L0 leaves, + L1's stateful pair `read`/`set_cell` — the E2/E3 cell floor). Whole layers — L3, L4, L5 — are empty, and L1 has only its stateful half. `Mask`/`OBJECTS` are IOUs in the type enum.
-- **The vocabulary is transform-heavy, perception-poor, render-poor.** Count the `Role` column: `done` rows are almost all `T`. The object half of ARC is gated behind one missing intro (`segment`) and one missing elim (`render_objects`).
+- **Almost everything `done` is L2** (+ two L6 schemas built as bespoke searches, + task-mined L0 leaves, + the L1 cell floor). L1 now has **both halves**: the stateful pair `read`/`set_cell` (E2/E3) and the pure render `build_grid` (+ `width`/`height`/`sub` and the `Lam`/`Var` substrate) — though the *search* that finds `build_grid` programs is still deferred. Whole layers — L3, L4, L5 — remain empty. `Mask`/`OBJECTS` are IOUs in the type enum.
+- **The vocabulary is transform-heavy, perception-poor, render-poor.** Count the `Role` column: `done` rows are almost all `T`. The object half of ARC is gated behind one missing intro (`segment`) and one missing elim (`render_objects`). Ferré's ARC-MDL/MADIL is a worked existence proof that the _descriptive_ (perceive/render) paradigm — a single model that both parses and generates — is viable and human-legible; this is now read as the **highest-leverage empty region** (see [RESEARCH-2026-07-07.md](RESEARCH-2026-07-07.md) §Where we sit).
 - **Cheapest high-value moves** (fit the current engine, low regression risk): the L2 _perceivers_ (`most_common_color`, `count_color`, …) that turn constants into derived values, and the L3 `Mask` intro/elim pair (esp. `crop_to_content`).
 - **Biggest unlock, biggest cost**: L4 objects — needs a beam/frontier search before the vocabulary, or the Cartesian `Enumerate` truncates and risks the regression locks.
 - **Highest abstraction, hand-code least**: L6 schemas are what we want the machinery to _invent_.
