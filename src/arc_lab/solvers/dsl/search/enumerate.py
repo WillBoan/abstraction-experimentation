@@ -107,7 +107,7 @@ class Enumerate(Search):
         def consider(program: Program, expected: ValueType) -> None:
             counts["considered"] += 1
             try:
-                sig = tuple(program.evaluate(inp, library) for inp in inputs)
+                sig: Signature = tuple(program.evaluate(inp, library) for inp in inputs)
             except Exception as exc:
                 counts["err"] += 1
                 if debug:

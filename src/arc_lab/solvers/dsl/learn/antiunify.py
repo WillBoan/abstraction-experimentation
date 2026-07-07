@@ -36,8 +36,9 @@ class AbstractionProposer(ABC):
 class AntiunifyPairs(AbstractionProposer):
     """Antiunify recurring identical programs and distinct pairs into closed templates.
 
-    TODO(alternatives): frequent-subtree mining; version-space / e-graph compression
-    (the DreamCoder-grade proposer). TODO(variable-sharing): reuse one Param when the same
+    - TODO(alternatives): frequent-subtree mining; version-space / e-graph compression
+    (the DreamCoder-grade proposer).
+    - TODO(variable-sharing): reuse one Param when the same
     differing subterm recurs across positions — required for E3 `swap_cells`.
     """
 
