@@ -110,8 +110,11 @@ def test_e3_variable_sharing_works_but_flat_mdl_bloats(tmp_path: Path) -> None:
     report = _run(e3_swap_cols, tmp_path)
     # Variable-sharing produced the correct general swap (behaviorally matched)...
     assert "swap_cols" in report.check.matched
-    # ...but the flat library cost admits marginal specialisations -> bloat (the finding).
+    # ...but the flat library cost still admits a few marginal specialisations (the finding).
     assert len(report.check.novel) > 0
+    # The loop hardening (library-dedup + DL-stop) caps the runaway: no cross-generation
+    # re-minting, so a handful of specialisations, not the pre-hardening 16.
+    assert len(report.learned) <= 5
 
 
 def test_e4_two_part_mdl_eliminates_bloat(tmp_path: Path) -> None:

@@ -76,23 +76,33 @@ def learn(
     added: list[Primitive] = []
     history: list[GenerationRecord] = []
 
+    prev_dl: float | None = None
     for generation in range(max_generations):
         corpus = _solve_corpus(search, cost, library, tasks)
         if not trigger.should_learn(generation, corpus):
             break
-        grown, new_prims, corpus = _sleep(corpus, library, proposer, metric, name_prefix, len(added))
-        history.append(
-            GenerationRecord(
-                generation=generation,
-                solved=len(corpus),
-                description_length=metric.describe(corpus, grown).total,
-                learned=tuple(p.name for p in new_prims),
-            )
+        grown, new_prims, grown_corpus = _sleep(
+            corpus, library, proposer, metric, name_prefix, len(added)
         )
-        if not new_prims:  # dry: nothing new to learn
+        if not new_prims:
+            break  # dry: nothing new to learn
+        dl = metric.describe(grown_corpus, grown).total
+        # Convergence guard: a generation that does not *lower* total DL is discarded and
+        # ends the loop. Without it, re-waking each round can re-inflate the corpus and the
+        # library grows while DL climbs (observed in E3).
+        if prev_dl is not None and dl >= prev_dl:
             break
         library = grown
         added.extend(new_prims)
+        history.append(
+            GenerationRecord(
+                generation=generation,
+                solved=len(grown_corpus),
+                description_length=dl,
+                learned=tuple(p.name for p in new_prims),
+            )
+        )
+        prev_dl = dl
 
     return LearnResult(library=library, abstractions=tuple(added), history=tuple(history))
 
@@ -143,7 +153,14 @@ def _best_candidate(
     metric: CompressionMetric,
 ) -> Program | None:
     """The candidate template whose adoption most reduces corpus DL, or None if none does."""
-    candidates = proposer.propose([program for _, program in corpus], library)
+    # Dedup against the library: never re-mint a template we already have as a primitive
+    # (the cross-generation duplication observed in E3, e.g. abs4 identical to abs1).
+    existing = {p.template for p in library.primitives if p.template is not None}
+    candidates = [
+        template
+        for template in proposer.propose([program for _, program in corpus], library)
+        if template not in existing
+    ]
     best_template: Program | None = None
     best_dl = metric.describe(corpus, library).total
     for i, template in enumerate(candidates):
