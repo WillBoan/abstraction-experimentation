@@ -18,10 +18,14 @@ src/arc_lab/
   eval/      scoring.py · runner.py           ARC top-2 scoring + experiment runner
   solvers/   base.py (the interface)
              baseline.py                      identity (the scoring floor)
-             dsl/                             program search over grid transforms
+             dsl/                             program search: substrate · search ·
+                                              analysis (run artifacts, MDL metrics) ·
+                                              learn (abstraction-learning loop)
              llm/                             Claude-backed rule induction (optional)
-  cli.py                                      datasets · show · eval
+  cli.py                                      datasets · show · eval · analyze · learn · runs
 data/        arc-agi-1, arc-agi-2             the datasets, as git submodules
+testbeds/    committed synthetic task sets for the learn experiments
+runs/        run artifacts — a gitignored, regenerable cache
 tests/                                        unit + end-to-end tests
 ```
 
@@ -43,6 +47,9 @@ uv run arc-lab datasets                 # list datasets and task counts
 uv run arc-lab show 007bbfb7 --dataset arc1-train   # render a task to PNG
 uv run arc-lab eval dsl --dataset arc1-eval         # score a solver
 uv run arc-lab solvers                  # list registered solvers
+uv run arc-lab analyze dsl-synth --dataset arc1-train   # run artifact: programs + metrics
+uv run arc-lab learn e1-rot90           # run an abstraction-formation experiment
+uv run arc-lab runs                     # list recorded run artifacts
 ```
 
 The **LLM solver** needs the optional `anthropic` dependency and credentials
@@ -70,12 +77,26 @@ The ARC-AGI-1 repo ships its official testing interface, vendored here at
 [`data/arc-agi-1/apps/testing_interface.html`](data/arc-agi-1/apps/testing_interface.html).
 Open it in Chrome and load any task JSON from `data/` to solve it by hand.
 
-## Adding a solver
+## Extending
 
-Subclass [`Solver`](src/arc_lab/solvers/base.py), implement `predict(task)`
-(return a ranked list of candidate grids per test input), and register it in
-[`solvers/__init__.py`](src/arc_lab/solvers/__init__.py). The scorer, runner, and
-CLI pick it up automatically.
+Solvers are pluggable: subclass [`Solver`](src/arc_lab/solvers/base.py) and
+register it in [`solvers/__init__.py`](src/arc_lab/solvers/__init__.py) — the
+scorer, runner, and CLI pick it up automatically. Recipes for adding
+primitives, searches, constraints/costs, and learn experiments live in
+[CLAUDE.md](CLAUDE.md).
+
+## Documentation
+
+Details live in the canonical files, not here:
+
+| File | What it holds |
+| --- | --- |
+| [CLAUDE.md](CLAUDE.md) | working conventions: commands, definition of done, mental model, recipes |
+| [EXPERIMENTS.md](EXPERIMENTS.md) | the experiment event log — findings, including dead ends |
+| [EXPERIMENT_QUEUE.md](EXPERIMENT_QUEUE.md) | planned experiments (drain-only queue) |
+| [ONTOLOGY.md](ONTOLOGY.md) | map of the primitive / abstraction space (the vocabulary lever) |
+| [MACHINERY.md](MACHINERY.md) | map of the search / scoring / learning mechanisms (the machinery lever) |
+| [RESEARCH-2026-07-06.md](RESEARCH-2026-07-06.md) | the research frame — a dated snapshot the maps are read against |
 
 ## Development
 

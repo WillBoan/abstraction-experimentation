@@ -23,7 +23,7 @@ make format     # auto-fix ruff lint + format
 
 ## Experiment log
 
-When you run a meaningful experiment or reach a finding — **including dead ends** — append a terse, commit-anchored entry to [EXPERIMENTS.md](EXPERIMENTS.md). It's the shared human+AI record of what's been tried and what it meant. It's an *event log, not a state mirror* — read its header for the discipline before adding to it.
+When you run a meaningful experiment or reach a finding — **including dead ends** — append a terse, commit-anchored entry to [EXPERIMENTS.md](EXPERIMENTS.md). It's the shared human+AI record of what's been tried and what it meant. It's an *event log, not a state mirror* — read its header for the discipline before adding to it. Planned experiments queue in [EXPERIMENT_QUEUE.md](EXPERIMENT_QUEUE.md) (drain-only; see its header) — when you log a run, delete its queue entry.
 
 ## Mental model
 
@@ -33,12 +33,19 @@ A solver is **`(library × search × constraints × cost)`**. Search is a **prop
 - **constraints** — the filter; `ConsistentWithTraining` is the spec (`search/constraints.py`).
 - **cost** — the rank; `ProgramSize` is the Occam prior (`search/cost.py`).
 
-Programs are **data**: a `Program` ABC with virtual-dispatch nodes `Input | Const | Apply` (`substrate/program.py`). Layers: `core/` (grid·task·dataset) · `viz/` · `eval/` (scoring·runner) · `solvers/` (`base.py`, `dsl/`, `llm/`).
+Programs are **data**: a `Program` ABC with virtual-dispatch nodes `Input | Param | Const | Apply` (`substrate/program.py`); `Param` is the hole that makes learned abstractions possible (`substrate/abstraction.py`).
+
+**Library learning** (`solvers/dsl/learn/`) is a meta-process over solvers, not a solver: wake (solve the corpus) → sleep (antiunify proposals → greedy-MDL governance) → `Library.extended` → repeat. Targets in experiments are **observables** (behavioral checker), never a training signal. `analysis/` is the instrument: content-hashed run artifacts + MDL compression metrics.
+
+Layers: `core/` (grid·task·dataset) · `viz/` · `eval/` (scoring·runner) · `solvers/` (`base.py`, `dsl/`, `llm/`); inside `dsl/`: `substrate/` · `search/` · `analysis/` · `learn/`.
 
 ## Key commands
 
 ```
 uv run arc-lab datasets | solvers | show <id> --dataset <ds> | eval <solver> --dataset <ds>
+uv run arc-lab analyze <solver> --dataset <ds>   # run artifact: per-task programs + search effort + DL (cached under runs/)
+uv run arc-lab learn <experiment>                # abstraction-formation experiment (names: learn/experiments.py)
+uv run arc-lab runs                              # list recorded run artifacts
 uv run arc-lab -vv eval <solver> ...     # -v INFO / -vv DEBUG search trace (stderr, silent by default)
 ARC_LAB_LOG=DEBUG uv run pytest -k <x>   # same trace under pytest
 ```
@@ -59,10 +66,15 @@ ARC_LAB_LOG=DEBUG uv run pytest -k <x>   # same trace under pytest
 - **Add a search strategy** → subclass `Search` (`search/base.py`); export in `search/__init__.py`.
 - **Add a solver** → subclass `ProgramSearchSolver` (or `Solver`); register it in `solvers/__init__.py` `REGISTRY`.
 - **Add a constraint / cost** → `search/constraints.py` / `search/cost.py`.
+- **Add a learn experiment** → generate tasks via `learn/taskgen.py`, define + register it in `learn/experiments.py` (`make_experiment`); drive with `uv run arc-lab learn <name>`. Testbeds are committed under `testbeds/`; run artifacts are a gitignored cache under `runs/`.
 
 ## Sources of truth (don't duplicate — point here)
 
 - Solver registry: `src/arc_lab/solvers/__init__.py`
+- Learn-experiment registry: `src/arc_lab/solvers/dsl/learn/experiments.py`
 - Behavior locks: `tests/test_integration.py`
 - Commands: `Makefile`
 - Experiment history & findings: `EXPERIMENTS.md`
+- Planned experiments: `EXPERIMENT_QUEUE.md`
+- Lever maps (primitives / machinery): `ONTOLOGY.md` / `MACHINERY.md`
+- Research frame (dated snapshot the maps are read against): `RESEARCH-2026-07-06.md`
