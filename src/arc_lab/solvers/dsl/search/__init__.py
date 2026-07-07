@@ -8,6 +8,7 @@ LLM-proposed programs, ...) without touching the vocabulary.
 """
 
 from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
+from arc_lab.solvers.dsl.search.build_grid_search import BuildGridSearch
 from arc_lab.solvers.dsl.search.composite import CompositeSearch
 from arc_lab.solvers.dsl.search.constraints import ConsistentWithTraining, Constraint
 from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
@@ -18,6 +19,7 @@ from arc_lab.solvers.dsl.search.tile import TileSearch
 
 __all__ = [
     "BeamSearch",
+    "BuildGridSearch",
     "CompositeSearch",
     "ConsistentWithTraining",
     "Constraint",

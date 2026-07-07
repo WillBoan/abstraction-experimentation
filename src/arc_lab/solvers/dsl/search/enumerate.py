@@ -172,7 +172,9 @@ class Enumerate(Search):
             frozen = {vtype: list(bucket.values()) for vtype, bucket in pools.items()}
             frozen[ValueType.GRID] = self._grid_frontier(frozen[ValueType.GRID], task, library)
             for prim in fixed:
-                options = [frozen[t] for t in prim.param_types]
+                # A primitive whose arg type this engine doesn't pool (e.g. build_grid's FN, which
+                # only a lambda produces) has no options and is skipped — never a KeyError.
+                options = [frozen.get(t, []) for t in prim.param_types]
                 if any(not opt for opt in options):
                     continue
                 for combo in itertools.product(*options):
