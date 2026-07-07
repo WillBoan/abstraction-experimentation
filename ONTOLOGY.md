@@ -1,6 +1,6 @@
 # ONTOLOGY.md
 
-A living catalog of the **primitives / abstractions** that are — or might be — at play in this system and the ARC task space. Sibling to [EXPERIMENTS.md](EXPERIMENTS.md): that file logs _what we tried_; this file maps _the space of things there are to try_.
+A living catalog of the **primitives / abstractions** that are — or might be — at play in this system and the ARC task space. Sibling to [EXPERIMENTS.md](EXPERIMENTS.md): that file logs _what we tried_; this file maps _the space of things there are to try_. This maps lever 1 (the primitive vocabulary / Floor); its sibling [MACHINERY.md](MACHINERY.md) maps lever 3 (the search / scoring / learning Machinery); [RESEARCH-2026-07-06.md](RESEARCH-2026-07-06.md) is the frame both are read against.
 
 It exists because the substrate today is a tiny, coarse slice of that space (almost everything shipped is a whole-grid transform), and the research direction is to descend to **more fundamental primitives** and study how the machinery composes them into higher abstractions. You can't chart that climb without a map of the terrain. This is the map.
 
@@ -22,7 +22,7 @@ It exists because the substrate today is a tiny, coarse slice of that space (alm
 
 ## Mental model
 
-Two axes organize everything below.
+Three axes organize everything below.
 
 **Level** — the low→high spine. Each level is a **new representational type**, and climbing a level means _inventing the type_ plus its **constructor** (`grid → type`, a _perceive_) and **eliminator** (`type → grid`, a _render_), plus an algebra over it. Abstraction ≈ richness of the type you hold.
 
@@ -94,7 +94,7 @@ The "gifted" machinery — control abstractions, not domain content. A human get
 
 ## L1 — cell / coordinate
 
-The pixel level: a grid _is_ a function `Coord→Color`. `read`/`build_grid` are the intension↔extension pair — the crux of the "set_cell vs build_grid" question. `Coord` needs its own intro/elim (`make_coord`, `row`/`col`): coordinate arithmetic is how a `build_grid` lambda expresses geometry (rot90 = `read` at a transposed, reflected coord), so they sit in the D4-rederivation clique with L0 `sub`. **Needs the AST to support bound indices (a lambda node); today the only free variable is `Input()`.** That extension is the load-bearing lift for the low-floor direction.
+The pixel level: a grid _is_ a function `Coord→Color`. `read`/`build_grid` are the intension↔extension pair — the crux of the "set_cell vs build_grid" question. The **stateful half shipped first** (E2/E3): `read`/`set_cell` take plain `Int` coords — no `Coord` type — with literals task-mined via `Enumerate(coord_ints=True)`, and compose as ordinary typed transforms, **no lambda needed** (`substrate/primitives/cells.py`). The **pure half still needs the AST to support bound indices (a lambda node)**; today the only variables are `Input()` and abstraction `Param`s. That extension is the load-bearing lift for size-general geometry: a `build_grid` lambda expresses geometry through coordinate arithmetic (rot90 = `read` at a transposed, reflected coord), so `make_coord`, `row`/`col`, and L0 `sub` sit in the D4-rederivation clique.
 
 | Name | Description | Signature | Lvl | Prior | Role | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -102,11 +102,11 @@ The pixel level: a grid _is_ a function `Coord→Color`. `read`/`build_grid` are
 | shape | The grid's (rows, cols) together. | `Grid→(Int,Int)` | L1 | G | P | 🔜 next |
 | make_coord | Pair two ints into a coordinate (Coord intro; monomorphic face of a generic `pair`). | `(Int,Int)→Coord` | L1 | — | — | 🔜 next |
 | row / col | A coordinate's components (Coord elim — what makes `shape` and lambda-bound coords consumable). | `Coord→Int` | L1 | — | — | 🔜 next |
-| read | Sample the color at a coordinate (intension). | `(Grid,Coord)→Color` | L1 | — | P | 🔜 next |
+| read | Sample the color at a coordinate (intension); shipped on plain `Int` coords. | `(Grid,Int,Int)→Color` | L1 | — | P | ✅ done |
 | in_bounds | Whether a coordinate lies inside the grid. | `(Grid,Coord)→Bool` | L1 | G | P | ⚪ cand |
 | neighbors4 / neighbors8 | The adjacent coordinates (4- or 8-connectivity). | `Coord→[Coord]` | L1 | G | P | ⚪ cand |
-| with_cell / set_cell | Grid with one cell recolored (functional set-cell; stateful when folded). | `(Grid,Coord,Color)→Grid` | L1 | — | T | ⚪ cand |
-| swap_cells | Exchange the colors of two cells (a transposition — derivable from read+with_cell by re-reading the original grid). | `(Grid,Coord,Coord)→Grid` | L1 | — | T | ⚪ cand |
+| set_cell | Grid with one cell recolored (functional set-cell; stateful when folded); shipped on plain `Int` coords. | `(Grid,Int,Int,Color)→Grid` | L1 | — | T | ✅ done |
+| swap_cells | Exchange the colors of two cells (a transposition — derivable from read+set_cell by re-reading the original grid; E2 *re-derived it* as a learned abstraction, never hand-shipped). | `(Grid,Coord,Coord)→Grid` | L1 | — | T | ⚪ cand |
 | build_grid | Construct a grid from a coordinate→color function (regenerates D4 as small programs). | `(Int,Int,Fn)→Grid` | L1 | — | R | 🔜 next |
 | blank / fill | A uniform grid of a single color. | `(Int,Int,Color)→Grid` | L1 | — | R | ⚪ cand |
 
@@ -285,7 +285,7 @@ The most abstract layer: recurring whole-task _strategies_. These are the abstra
 
 ## What the map shows
 
-- **Everything `done` is L2** (+ two L6 schemas built as bespoke searches, + task-mined L0 leaves). Whole layers — L1, L3, L4, L5 — are essentially empty. `Mask`/`OBJECTS` are IOUs in the type enum.
+- **Almost everything `done` is L2** (+ two L6 schemas built as bespoke searches, + task-mined L0 leaves, + L1's stateful pair `read`/`set_cell` — the E2/E3 cell floor). Whole layers — L3, L4, L5 — are empty, and L1 has only its stateful half. `Mask`/`OBJECTS` are IOUs in the type enum.
 - **The vocabulary is transform-heavy, perception-poor, render-poor.** Count the `Role` column: `done` rows are almost all `T`. The object half of ARC is gated behind one missing intro (`segment`) and one missing elim (`render_objects`).
 - **Cheapest high-value moves** (fit the current engine, low regression risk): the L2 _perceivers_ (`most_common_color`, `count_color`, …) that turn constants into derived values, and the L3 `Mask` intro/elim pair (esp. `crop_to_content`).
 - **Biggest unlock, biggest cost**: L4 objects — needs a beam/frontier search before the vocabulary, or the Cartesian `Enumerate` truncates and risks the regression locks.
