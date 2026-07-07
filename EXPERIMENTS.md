@@ -149,3 +149,18 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
     - E1 / E2 / E4: unchanged
 - **Interpretation:** the bloat had **three** causes, not one. (1) greedy over-abstraction _within_ a generation [flat MDL — the one two-part MDL/E4 fixes]; (2) no dedup against the library, so duplicates get re-minted; (3) no convergence guard, so DL climbs to the generation cap. Two-part MDL _masked_ (2) and (3) by removing the incentive, but they were latent — the hardening addresses them directly, independent of the metric. A deeper root cause remains noted: `Enumerate` keeps the _first-considered_ program per behaviour (library order), not the smallest, so the wake can return a longer program the next sleep then "compresses" — a keep-smallest fix is worth doing later.
 - **Next:** richer testbeds and the low-primitive-floor.
+
+---
+
+## 2026-07-07 — Machinery bundle: governance ABC · subtree-match · keep-smallest · cost-guided beam
+
+- **Commit:** aa8e5df (search: keep-smallest + beam; learn plug points in 4461a9f)
+- **Question:** Ship the four tractable `🔜` MACHINERY mechanisms — F1 cost-guided beam, F3 subtree-match rewrite, F4 governance-as-a-plug-point + keep-smallest wake — without disturbing the E1–E4 objects or the 7/19/11 locks. Does anything move?
+- **Ran:** Implemented all four (MACHINERY.md rows flipped ✅; lambda-index F0 deferred). Re-ran E1–E4 (`arc-lab learn`, incl. a fresh-cache E1) and `arc-lab eval dsl-beam / dsl-synth --dataset arc1-train`.
+- **Result:**
+  - `make check` green (114 tests, +8 new); locks 7/19/11 unchanged.
+  - **Metrics:**
+    - E1–E4 identical to baseline: E1 ×1.30 / ×1.42, E2 ×6.42 / ×104, E3 4 abstractions / novel=[abs1,abs2,abs3], E4 1 abstraction / no bloat.
+    - `dsl-beam` (beam_width=16): **11/400 == `dsl-synth` 11/400** (same task ids).
+- **Interpretation:** All four are behaviour-preserving everywhere we can measure today — as predicted, a **null result with a reason**. Subtree-match and keep-smallest are no-ops on E1–E4 (templates match at the whole-program root; the cell-swap solutions are already unique-shaped minimal programs), and the beam is near-lossless on the atomic floor (its grid pool never exceeds the width, so the cost-ranked frontier keeps everything the blind cut kept). The value is **latent**: subtree-match bites on heterogeneous corpora, keep-smallest on libraries with size-varying equivalents, the beam once a vocabulary's grid pool actually explodes (objects / cell-floor) — none of which exist yet. What _did_ change structurally: governance is now a swappable `AbstractionSelector` (`GreedyMDL` default), and `Cost` is finally consumed by a search (`BeamSearch`). Net: the critical path collapses to a single remaining keystone, **lambda-index binding (F0)**.
+- **Next:** the runnable-today queue (perceive→transform, layered abstraction) exercises the loop on real abstractions with zero new machinery; the low-primitive-floor keystone now waits only on lambda-index.

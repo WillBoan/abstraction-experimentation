@@ -36,7 +36,7 @@ Two axes organize everything below.
 | F1 | search | which candidate programs do we consider? | `ABC` |
 | F2 | scoring | how good is a program / a library? | `ABC` / `param` |
 | F3 | matching / equivalence | when are two programs "the same" / does a pattern apply? | `fn` / `baked` |
-| F4 | abstraction learning | how does the vocabulary grow? | `ABC` (invention) + `baked` (governance) |
+| F4 | abstraction learning | how does the vocabulary grow? | `ABC` (invention + governance) |
 | F5 | instrumentation / science | how do we know it's working? | `fn` |
 
 **Coupling — the doc's real content [H].** Unlike ONTOLOGY, whose primitives are mostly _independent_ rows on a Level spine (you can add `crop_to_content` without touching `rot90`), machinery components **gate each other**, and every recent finding lives in that coupling. So the **Gates column is where the value is**, and the closing section reads the critical path off it.
@@ -75,7 +75,7 @@ _"What is a program, and how is it run?"_ The physics both loops run on (`substr
 _"Which candidate programs do we consider?"_ (`search/`, behind the `Search` ABC.) A concrete search is a point in **four axes** — and only one corner of each is populated:
 
 - **direction:** bottom-up ✅ · top-down ✗ · bidirectional ✗
-- **frontier policy:** breadth-first ✅ · beam ✗ · A\* ✗ · MCTS ✗ · stochastic ✗
+- **frontier policy:** breadth-first ✅ · beam ✅ · A\* ✗ · MCTS ✗ · stochastic ✗
 - **pruning:** observational-equivalence ✅ · type-directed ✅ · deductive ✗
 - **guidance:** blind ✅ · heuristic ✗ · learned ✗
 
@@ -86,7 +86,7 @@ MCTS and beam are _frontier policies_, not paradigms; bottom-up/top-down is the 
 | `SingleApply` / `Overlay` / `Tile` | bespoke depth-1 and combinator searches | `ABC` | ✅ | — |
 | `Enumerate` | bottom-up, typed, obs-equiv dedup, `max_pool` cap | `ABC` | ✅ | — |
 | `CompositeSearch` | run strategies in sequence, dedup | `ABC` | ✅ | — |
-| Cost-guided **beam** | keep top-K by cost per round vs. the hard `max_pool` cut | `unbuilt` | 🔜 | **objects (F4-scale), cell-floor at scale**; needs `Cost` injected into `Search` |
+| Cost-guided **beam** (`BeamSearch`) | keep top-K grids by cost per round vs. the blind `max_grid_args` cut; overrides one `_grid_frontier` seam on `Enumerate` | `ABC` | ✅ | **objects (F4-scale), cell-floor at scale** — the first search to consume `Cost` (near-lossless on the atomic floor; payoff lands with a pool that explodes) |
 | Cost-ordered / priority enumeration | expand cheapest-first, anytime stop | `unbuilt` | ⚪ | anytime budgets |
 | Top-down / A\* over holes | goal-directed refinement of partial programs | `unbuilt` | ⚪ | needs F0 search-holes |
 | MCTS | tree search + rollouts over program construction | `unbuilt` | ⚪ | needs learned guidance |
@@ -114,22 +114,22 @@ _"When are two programs the same, or does this pattern apply?"_ One family that 
 | Observational equivalence | dedup by behavior-signature over train inputs | `baked` (Enumerate) | ✅ | search dedup, the checker |
 | Structural antiunify / match (LGG + var-sharing) | most-specific common template; shared subterm → shared `Param` | `fn` | ✅ | abstraction proposal (E3) |
 | `rewrite_with` (root-match) | replace a whole program with an abstraction call | `fn` | ✅ | — |
-| Subtree-match rewrite | rewrite any matching subtree, not just the root | `unbuilt` | 🔜 | **compression on heterogeneous / real corpora** |
+| Subtree-match rewrite | fold any matching subtree (and nested occurrences), not just the root | `fn` | ✅ | **compression on heterogeneous / real corpora** |
 | Partial / soft match scoring | graded "how close" rather than exact | `unbuilt` | ⚪ | fuzzy reuse |
 
 ## F4 — abstraction learning
 
-_"How does the vocabulary grow?"_ (`learn/`.) The wake–sleep loop: **invention** (propose candidates), **governance** (select which earn a name), **trigger** (when to sleep), and **library management**. Invention and trigger are `ABC`s; **governance is still `baked` into `learn()`** — the E3 finding proved it's plural, and it isn't a plug point yet.
+_"How does the vocabulary grow?"_ (`learn/`.) The wake–sleep loop: **invention** (propose candidates), **governance** (select which earn a name), **trigger** (when to sleep), and **library management**. Invention, trigger, and now **governance** (`AbstractionSelector`, `GreedyMDL` default — lifted out of `learn()` into `learn/selection.py` after E3 proved it's plural) are all `ABC`s; only library management stays `baked`.
 
 | Mechanism | What | Interface | Status | Gates |
 | --- | --- | --- | --- | --- |
 | `AntiunifyPairs` proposer (LGG, var-sharing) | mine recurring structure into closed templates | `ABC` | ✅ | — |
 | Frequent-subtree / e-graph / version-space proposer | DreamCoder-grade invention | `unbuilt` | ⚪ | richer abstractions |
 | Greedy-MDL selection | add the single best-compressing candidate, repeat | `baked` | ✅ | (bloat source under flat MDL) |
-| Governance as a plug point (`AbstractionSelector` ABC) | lift selection out of `learn()` so strategies swap/compare | `unbuilt` | 🔜 | testable governance (E3 proved it's plural) |
+| Governance as a plug point (`AbstractionSelector` ABC) | selection lifted out of `learn()` (`GreedyMDL` default) so strategies swap/compare | `ABC` | ✅ | testable governance (E3 proved it's plural) |
 | Library-dedup guard | never re-mint an existing primitive | `baked` | ✅ | anti-re-mint (E3 hardening) |
 | DL-monotonicity stop | discard a generation that doesn't lower DL | `baked` | ✅ | convergence (E3 hardening) |
-| Keep-smallest wake | `Enumerate` returns smallest, not first-considered, per behavior | `unbuilt` | 🔜 | removes the latent bloat root cause |
+| Keep-smallest wake | `Enumerate` keeps the smallest, not first-considered, program per behavior | `baked` | ✅ | removes the latent bloat root cause |
 | Beam / joint selection | non-greedy abstraction _sets_ | `unbuilt` | ⚪ | jointly-compressing abstractions |
 | `LearnTrigger` (`EachGeneration` ✅; plateau / freq / online ⚪) | when to run the sleep step | `ABC` | ✅ | — |
 | Library retirement / pruning | drop abstractions that stop paying | `unbuilt` | ⚪ | long-run library health |
@@ -153,11 +153,12 @@ _"How do we know it's working?"_ (`analysis/`, `learn/harness.py`, `learn/taskge
 
 ## What the map shows
 
-- **The critical path (what gates what) [H].** Four `unbuilt` mechanisms gate almost everything downstream:
-  - **cost-guided beam** (F1) → objects at scale, and the cell floor on real (non-toy) grids.
-  - **subtree-match rewrite** (F3) → real, measurable compression on any heterogeneous corpus.
-  - **lambda-index binding** (F0) → size-general geometry from cells, i.e. the pixels→D4 keystone — the experiment that would actually test the low-floor thesis.
-  - **two-part MDL + the two hardening guards** (F2/F4) → clean governance — _already done_ (E4 + the E3 hardening), which is why the loop stays honest today.
-- **The experiment surface today** is the `ABC`/`param` rows: `Search`, `Cost`, `Constraint`, `AbstractionProposer`, `LearnTrigger`, and the `CompressionMetric` family. That is where you can swap-and-compare _right now_.
-- **`baked`-in that arguably should be pluggable:** observational equivalence (inside `Enumerate`, F3) and the whole **governance/selection** step (inside `learn()`, F4) — the E3 finding is the argument for lifting governance behind an ABC so its knobs are testable in isolation.
-- **Emptiest / highest-leverage families:** F1 frontier policies (only breadth-first exists — three of four axes are one-corner) and F0 lambda-binding (a single `unbuilt` row under the entire low-floor thesis).
+- **The critical path (what gates what) [H].** Largely cleared. Of the five mechanisms that gated the downstream, **four have shipped**:
+  - **cost-guided beam** (F1, `BeamSearch`) → objects at scale, the cell floor on real grids — _done_; the first search to consume `Cost` (near-lossless on the atomic floor, `dsl-beam` = `dsl-synth` at 11/400).
+  - **subtree-match rewrite** (F3) → real, measurable compression on any heterogeneous corpus — _done_.
+  - **governance as a plug point + keep-smallest wake** (F4, `AbstractionSelector`/`GreedyMDL`) → testable governance, and the latent-bloat root cause removed — _done_ (behavior-preserving on E1–E4).
+  - **two-part MDL + the two hardening guards** (F2/F4) → clean governance — _done_ (E4 + the E3 hardening), which is why the loop stays honest today.
+  - **lambda-index binding** (F0) → size-general geometry from cells, i.e. the pixels→D4 keystone — **the one gate still open**, and now the sole thing between here and a real test of the low-floor thesis.
+- **The experiment surface today** is the `ABC`/`param` rows: `Search` (incl. `BeamSearch`), `Cost`, `Constraint`, `AbstractionProposer`, `AbstractionSelector`, `LearnTrigger`, and the `CompressionMetric` family. That is where you can swap-and-compare _right now_.
+- **`baked`-in that arguably should still be pluggable:** observational equivalence (inside `Enumerate`, F3). Governance has now been lifted behind `AbstractionSelector`, so the E3 argument there is discharged.
+- **Emptiest / highest-leverage families:** F1's remaining frontier gap (A\*/MCTS/stochastic — the top-down / learned-guidance corner) and F0 lambda-binding (the single `unbuilt` row under the entire low-floor thesis).
