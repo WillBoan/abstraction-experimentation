@@ -77,4 +77,5 @@ ARC_LAB_LOG=DEBUG uv run pytest -k <x>   # same trace under pytest
 - Experiment history & findings: `EXPERIMENTS.md`
 - Planned experiments: `EXPERIMENT_QUEUE.md`
 - Lever maps (primitives / machinery): `ONTOLOGY.md` / `MACHINERY.md`
-- Research frame (dated snapshot the maps are read against): `RESEARCH-2026-07-06.md`
+- Research frame (dated snapshot the maps are read against): `RESEARCH-2026-07-07.md` (supersedes `RESEARCH-2026-07-06.md`)
+- Machinery build strategy (build vs. adopt vs. defer; dated): `MACHINERY-STRATEGY-2026-07-07.md`

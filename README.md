@@ -96,7 +96,8 @@ Details live in the canonical files, not here:
 | [EXPERIMENT_QUEUE.md](EXPERIMENT_QUEUE.md) | planned experiments (drain-only queue) |
 | [ONTOLOGY.md](ONTOLOGY.md) | map of the primitive / abstraction space (the vocabulary lever) |
 | [MACHINERY.md](MACHINERY.md) | map of the search / scoring / learning mechanisms (the machinery lever) |
-| [RESEARCH-2026-07-06.md](RESEARCH-2026-07-06.md) | the research frame — a dated snapshot the maps are read against |
+| [RESEARCH-2026-07-07.md](RESEARCH-2026-07-07.md) | the research frame — a dated snapshot the maps are read against (supersedes 2026-07-06) |
+| [MACHINERY-STRATEGY-2026-07-07.md](MACHINERY-STRATEGY-2026-07-07.md) | build strategy — how we decide what machinery to build, adopt, or defer (dated) |
 
 ## Development
 
