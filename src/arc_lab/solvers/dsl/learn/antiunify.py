@@ -22,8 +22,12 @@ from collections import Counter
 from collections.abc import Iterator
 
 from arc_lab.solvers.dsl.substrate.library import Library
-from arc_lab.solvers.dsl.substrate.program import Apply, Input, Param, Program
+from arc_lab.solvers.dsl.substrate.program import Apply, Input, Lam, Param, Program, Var
 from arc_lab.solvers.dsl.substrate.types import ValueType
+
+
+class _BoundVarEscapeError(Exception):
+    """Antiunification would lift a bound ``$i`` out of its binder -- unsound; abort this pair."""
 
 
 class AbstractionProposer(ABC):
@@ -37,11 +41,22 @@ class AbstractionProposer(ABC):
 class AntiunifyPairs(AbstractionProposer):
     """Antiunify recurring identical programs and distinct pairs into closed templates.
 
+    ``bound_var_safe`` (default ``False`` — the historical behaviour): when a pairwise
+    antiunification would hole a differing subterm that contains a lambda-bound ``$i``, that is a
+    **scope violation** (lifting a per-cell bound var into a per-call abstraction arg), so with the
+    flag set that pairwise candidate is dropped. Off, the loop happily mints such unsound
+    abstractions and — since they "compress" by covering several members — governance prefers them
+    (the E6 finding). E1-E4 never hit this (they hole ``Const``s, not ``Var``s), so the flag is inert
+    there; it only bites on ``build_grid`` corpora with multiple distinct programs (E6 vs E7).
+
     - TODO(alternatives): frequent-subtree mining; version-space / e-graph compression
-    (the DreamCoder-grade proposer).
+    (the DreamCoder-grade proposer) — what a `mirror_index`-style cross-member idiom would need.
     - TODO(variable-sharing): reuse one Param when the same
     differing subterm recurs across positions — required for E3 `swap_cells`.
     """
+
+    def __init__(self, *, bound_var_safe: bool = False) -> None:
+        self.bound_var_safe = bound_var_safe
 
     def propose(self, programs: list[Program], library: Library) -> list[Program]:
         candidates: dict[Program, None] = {}  # ordered set (dedup by structure)
@@ -52,8 +67,11 @@ class AntiunifyPairs(AbstractionProposer):
                 self._offer(_close_template(program), candidates)
         # Distinct programs generalise via pairwise antiunification (with variable-sharing).
         for a, b in itertools.combinations(counts, 2):
-            template = _close_template(_antiunify(a, b, library, {}, itertools.count()))
-            self._offer(template, candidates)
+            try:
+                generalised = _antiunify(a, b, library, {}, itertools.count(), self.bound_var_safe)
+            except _BoundVarEscapeError:
+                continue  # would hoist a bound var out of its binder — skip this pair
+            self._offer(_close_template(generalised), candidates)
         return list(candidates)
 
     @staticmethod
@@ -62,19 +80,27 @@ class AntiunifyPairs(AbstractionProposer):
             candidates.setdefault(template, None)
 
 
+def _contains_var(program: Program) -> bool:
+    """Whether a subterm references a lambda-bound variable (``$i``) — i.e. is not closed."""
+    return any(isinstance(node, Var) for node in program.walk())
+
+
 def _antiunify(
     p: Program,
     q: Program,
     library: Library,
     memo: dict[tuple[Program, Program], Param],
     counter: Iterator[int],
+    bound_var_safe: bool = False,
 ) -> Program:
     """Most-specific common generalisation of ``p`` and ``q``, with variable-sharing.
 
     ``memo`` maps a *differing* subterm pair ``(p_sub, q_sub)`` to the hole standing for it,
     so the same difference recurring at several positions reuses **one** ``Param`` — the
     least-general-generalization semantics needed for e.g. `swap_cells`, where one coordinate
-    feeds both a ``read`` and a ``set_cell``.
+    feeds both a ``read`` and a ``set_cell``. With ``bound_var_safe``, holing a differing subterm
+    that references a bound ``$i`` raises :class:`_BoundVarEscapeError` (you cannot lift a bound var out
+    of its binder — see :class:`AntiunifyPairs`).
     """
     if p == q:
         return p
@@ -91,10 +117,14 @@ def _antiunify(
         return Apply(
             p.primitive,
             tuple(
-                _antiunify(pa, qa, library, memo, counter)
+                _antiunify(pa, qa, library, memo, counter, bound_var_safe)
                 for pa, qa in zip(p.args, q.args, strict=True)
             ),
         )
+    if isinstance(p, Lam) and isinstance(q, Lam):  # generalise under the binder; scope is shared
+        return Lam(_antiunify(p.body, q.body, library, memo, counter, bound_var_safe))
+    if bound_var_safe and (_contains_var(p) or _contains_var(q)):
+        raise _BoundVarEscapeError  # cannot lift a per-cell bound var into a per-call abstraction arg
     key = (p, q)
     if key not in memo:
         memo[key] = Param(next(counter), p.result_type(library))
@@ -116,7 +146,9 @@ def _close_template(program: Program) -> Program:
             return Param(index_of.setdefault(("param", node.index), len(index_of)), node.value_type)
         if isinstance(node, Apply):
             return Apply(node.primitive, tuple(rebuild(arg) for arg in node.args))
-        return node  # Const: an invariant literal, kept concrete
+        if isinstance(node, Lam):  # descend so an Input inside a lambda body is lifted too
+            return Lam(rebuild(node.body))
+        return node  # Const / Var: an invariant leaf, kept concrete
 
     return rebuild(program)
 
@@ -153,6 +185,8 @@ def _match_into(template: Program, program: Program, bindings: dict[int, Program
         return all(
             _match_into(t, p, bindings) for t, p in zip(template.args, program.args, strict=True)
         )
+    if isinstance(template, Lam) and isinstance(program, Lam):
+        return _match_into(template.body, program.body, bindings)
     return template == program
 
 

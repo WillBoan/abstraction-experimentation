@@ -10,7 +10,7 @@ search-effort / enablement deltas across the three libraries.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -25,7 +25,7 @@ from arc_lab.solvers.dsl.analysis.compression import (
     speedup_ratio,
 )
 from arc_lab.solvers.dsl.analysis.runner import RunSummary
-from arc_lab.solvers.dsl.learn.antiunify import AntiunifyPairs
+from arc_lab.solvers.dsl.learn.antiunify import AbstractionProposer, AntiunifyPairs
 from arc_lab.solvers.dsl.learn.harness import (
     CheckResult,
     check_abstractions,
@@ -35,13 +35,15 @@ from arc_lab.solvers.dsl.learn.harness import (
 from arc_lab.solvers.dsl.learn.loop import LearnResult, learn
 from arc_lab.solvers.dsl.learn.taskgen import GeneratedTask, Solution, make_task, write_testbed
 from arc_lab.solvers.dsl.search.base import Search
+from arc_lab.solvers.dsl.search.build_grid_search import BuildGridSearch
 from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
 from arc_lab.solvers.dsl.search.enumerate import Enumerate
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
+from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.cells import CELL_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
-from arc_lab.solvers.dsl.substrate.program import Apply, Const, Param, Program
+from arc_lab.solvers.dsl.substrate.program import Apply, Const, Lam, Param, Program, Var
 from arc_lab.solvers.dsl.substrate.types import ValueType
 
 _G = ValueType.GRID
@@ -58,6 +60,7 @@ class Experiment:
     cost: Cost
     note: str = ""
     metric: CompressionMetric | None = None  # governance objective (None -> flat baseline)
+    proposer: AbstractionProposer = field(default_factory=AntiunifyPairs)  # the invention plug point
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,7 +107,7 @@ def run_experiment(
         library=experiment.starting_library,
         search=experiment.search,
         tasks=train,
-        proposer=AntiunifyPairs(),
+        proposer=experiment.proposer,
         cost=experiment.cost,
         metric=experiment.metric,
     )
@@ -360,12 +363,169 @@ def e4_swap_cols_mdl() -> Experiment:
     )
 
 
+# -- E5 / E6: re-derive D4 as build_grid programs (pixels->D4) -----------
+#
+# Starting from the cell-render floor (no D4 primitive), does the loop re-derive geometry as
+# *size-general* build_grid programs? E5 targets rot90 alone (the minimal re-derivation); E6 the
+# full D4 ladder (and whether a shared `mirror_index` idiom is invented — the bootstrap).
+
+_I = ValueType.INT
+_C0, _C1 = Var(0, _I), Var(1, _I)  # De Bruijn: $0 = column j (inner), $1 = row i (outer)
+
+
+def _w(g: Program) -> Program:
+    return Apply("width", (g,))
+
+
+def _h(g: Program) -> Program:
+    return Apply("height", (g,))
+
+
+def _mirror(n: Program, k: Program) -> Program:
+    return Apply("sub", (Apply("sub", (n, k)), Const(1, _I)))  # (n - k) - 1, the reflection idiom
+
+
+def _bg(g: Program, dh: Program, dw: Program, row: Program, col: Program) -> Program:
+    """build_grid(dh, dw, lam(lam(read(g, row, col)))) — a coordinate-lambda geometry program."""
+    return Apply("build_grid", (dh, dw, Lam(Lam(Apply("read", (g, row, col))))))
+
+
+def _d4_targets(g: Program) -> dict[str, Program]:
+    """Each D4 member as a size-general build_grid template over grid ``g`` (observables only)."""
+    return {
+        "transpose": _bg(g, _w(g), _h(g), _C0, _C1),
+        "flip_h": _bg(g, _h(g), _w(g), _C1, _mirror(_w(g), _C0)),
+        "flip_v": _bg(g, _h(g), _w(g), _mirror(_h(g), _C1), _C0),
+        "rot90": _bg(g, _w(g), _h(g), _C0, _mirror(_w(g), _C1)),
+        "rot180": _bg(g, _h(g), _w(g), _mirror(_h(g), _C1), _mirror(_w(g), _C0)),
+        "rot270": _bg(g, _w(g), _h(g), _mirror(_h(g), _C0), _C1),
+    }
+
+
+def _d4_solutions() -> dict[str, Solution]:
+    return {
+        "transpose": lambda g: Grid(g.array.T),
+        "flip_h": lambda g: Grid(np.fliplr(g.array)),
+        "flip_v": lambda g: Grid(np.flipud(g.array)),
+        "rot90": lambda g: Grid(np.rot90(g.array, 1)),
+        "rot180": lambda g: Grid(np.rot90(g.array, 2)),
+        "rot270": lambda g: Grid(np.rot90(g.array, 3)),
+    }
+
+
+def _nonsquare_grids() -> list[Grid]:
+    """Non-square grids, both dims >= 2, so a *single* demo pins the size-general program.
+
+    Non-square rules out width/height ambiguity; both dims >= 2 rules out *degenerate* grids
+    (a dim of 1 makes a bound coordinate constant, so the search would fit a literal where the
+    general program uses a variable — different programs per grid, which antiunify over-generalises).
+    """
+    rows_pool = [
+        [[1, 2, 3], [4, 5, 6]],  # 2x3
+        [[5, 0], [0, 5], [1, 2]],  # 3x2
+        [[2, 0, 1], [3, 4, 5]],  # 2x3
+        [[4, 5], [6, 7], [8, 9]],  # 3x2
+        [[1, 1, 2], [2, 3, 3]],  # 2x3
+        [[7, 8, 9, 0], [1, 2, 3, 4]],  # 2x4
+        [[1, 2], [3, 4], [5, 6], [7, 8]],  # 4x2
+        [[9, 8, 7], [6, 5, 4]],  # 2x3
+    ]
+    return [Grid.from_list(rows) for rows in rows_pool]
+
+
+def _d4_tasks(
+    members: tuple[str, ...], *, n_train: int, n_heldout: int
+) -> tuple[GeneratedTask, ...]:
+    """Multi-shape demo tasks: each shows a member on **three varied shapes**, so the solved
+    program must be *size-general* (one coordinate formula fitting every shape). A single grid
+    can't pin it — many formulas coincide on one grid's cells — but three shapes force the true
+    program, which is then identical across tasks: the recurrence antiunify mines and mints.
+    """
+    solutions = _d4_solutions()
+    grids = _nonsquare_grids()
+    n = len(grids)
+    tasks: list[GeneratedTask] = []
+    for member in members:
+        for k in range(n_train + n_heldout):
+            demos = [grids[(k + off) % n] for off in range(3)]  # a window of 3 varied shapes
+            tasks.append(
+                make_task(
+                    f"{member}-{k:02d}",
+                    label=member,
+                    split="train" if k < n_train else "heldout",
+                    solution=solutions[member],
+                    train_inputs=demos,
+                    test_inputs=[grids[(k + 3) % n]],
+                )
+            )
+    return tuple(tasks)
+
+
+def e5_rederive_rot90() -> Experiment:
+    """E5: re-derive rot90 as a build_grid program from the cell floor (no D4 primitive)."""
+    return Experiment(
+        name="e5-rederive-rot90",
+        starting_library=BUILD_LIBRARY,
+        targets=(("rot90", _d4_targets(Param(0, _G))["rot90"]),),
+        tasks=_d4_tasks(("rot90",), n_train=4, n_heldout=2),
+        search=BuildGridSearch(),
+        enablement_search=Enumerate(max_depth=1),
+        cost=ProgramSize(),
+        note="E5: re-derive rot90 as a size-general build_grid program from the cell-render floor.",
+    )
+
+
+_D4_MEMBERS = ("transpose", "flip_h", "flip_v", "rot90", "rot180", "rot270")
+
+
+def _d4_ladder_experiment(name: str, proposer: AbstractionProposer, note: str) -> Experiment:
+    """The full-D4-ladder environment; e6 and e7 differ only in the antiunify proposer."""
+    targets = _d4_targets(Param(0, _G))
+    return Experiment(
+        name=name,
+        starting_library=BUILD_LIBRARY,
+        targets=tuple((m, targets[m]) for m in _D4_MEMBERS),
+        tasks=_d4_tasks(_D4_MEMBERS, n_train=3, n_heldout=1),
+        search=BuildGridSearch(),
+        enablement_search=Enumerate(max_depth=1),
+        cost=ProgramSize(),
+        metric=TwoPartMDL(),  # charge each abstraction its definition size — keep the D4 library clean
+        proposer=proposer,
+        note=note,
+    )
+
+
+def e6_rederive_d4() -> Experiment:
+    """E6: full D4 ladder with the naive proposer — antiunify hoists bound vars, so re-derivation breaks."""
+    return _d4_ladder_experiment(
+        "e6-rederive-d4",
+        AntiunifyPairs(),  # naive: pairwise antiunification lifts $i coords into abstraction params
+        "E6: re-derive the full D4 ladder as build_grid programs. Whole-program antiunification "
+        "over-generalises across members (a bound-var scope violation); governance prefers the "
+        "broken abstraction. The negative that motivates E7.",
+    )
+
+
+def e7_rederive_d4_safe() -> Experiment:
+    """E7: E6's environment with the **lambda-safe** proposer — clean full-D4 re-derivation."""
+    return _d4_ladder_experiment(
+        "e7-rederive-d4-safe",
+        AntiunifyPairs(bound_var_safe=True),  # refuse to hole subterms containing a bound $i
+        "E7: E6 under a bound-var-safe proposer (won't lift $i into an abstraction arg). Only the "
+        "sound per-member recurrences mint, so the D4 ladder re-derives cleanly. mirror_index still "
+        "does not emerge — that needs a frequent-subtree proposer.",
+    )
+
+
 #: Experiment registry for the CLI (`arc-lab learn <name>`).
 _REGISTRY = {
     "e1-rot90": e1_rot90,
     "e2-swap-cells": e2_swap_cells,
     "e3-swap-cols": e3_swap_cols,
     "e4-swap-cols-mdl": e4_swap_cols_mdl,
+    "e5-rederive-rot90": e5_rederive_rot90,
+    "e6-rederive-d4": e6_rederive_d4,
+    "e7-rederive-d4-safe": e7_rederive_d4_safe,
 }
 
 

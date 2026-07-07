@@ -1,0 +1,37 @@
+{
+  "name": "e5-rederive-rot90",
+  "note": "E5: re-derive rot90 as a size-general build_grid program from the cell-render floor.",
+  "content_hash": "0610fc30e1f345a9",
+  "tasks": [
+    {
+      "task_id": "rot90-00",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-01",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-02",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-03",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-04",
+      "label": "rot90",
+      "split": "heldout"
+    },
+    {
+      "task_id": "rot90-05",
+      "label": "rot90",
+      "split": "heldout"
+    }
+  ]
+}

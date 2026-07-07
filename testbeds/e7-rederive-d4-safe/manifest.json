@@ -1,0 +1,127 @@
+{
+  "name": "e7-rederive-d4-safe",
+  "note": "E7: E6 under a bound-var-safe proposer (won't lift $i into an abstraction arg). Only the sound per-member recurrences mint, so the D4 ladder re-derives cleanly. mirror_index still does not emerge \u2014 that needs a frequent-subtree proposer.",
+  "content_hash": "48a85d62722ac300",
+  "tasks": [
+    {
+      "task_id": "transpose-00",
+      "label": "transpose",
+      "split": "train"
+    },
+    {
+      "task_id": "transpose-01",
+      "label": "transpose",
+      "split": "train"
+    },
+    {
+      "task_id": "transpose-02",
+      "label": "transpose",
+      "split": "train"
+    },
+    {
+      "task_id": "transpose-03",
+      "label": "transpose",
+      "split": "heldout"
+    },
+    {
+      "task_id": "flip_h-00",
+      "label": "flip_h",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_h-01",
+      "label": "flip_h",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_h-02",
+      "label": "flip_h",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_h-03",
+      "label": "flip_h",
+      "split": "heldout"
+    },
+    {
+      "task_id": "flip_v-00",
+      "label": "flip_v",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_v-01",
+      "label": "flip_v",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_v-02",
+      "label": "flip_v",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_v-03",
+      "label": "flip_v",
+      "split": "heldout"
+    },
+    {
+      "task_id": "rot90-00",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-01",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-02",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-03",
+      "label": "rot90",
+      "split": "heldout"
+    },
+    {
+      "task_id": "rot180-00",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-01",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-02",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-03",
+      "label": "rot180",
+      "split": "heldout"
+    },
+    {
+      "task_id": "rot270-00",
+      "label": "rot270",
+      "split": "train"
+    },
+    {
+      "task_id": "rot270-01",
+      "label": "rot270",
+      "split": "train"
+    },
+    {
+      "task_id": "rot270-02",
+      "label": "rot270",
+      "split": "train"
+    },
+    {
+      "task_id": "rot270-03",
+      "label": "rot270",
+      "split": "heldout"
+    }
+  ]
+}

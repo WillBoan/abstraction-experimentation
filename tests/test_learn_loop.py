@@ -22,12 +22,17 @@ from arc_lab.solvers.dsl.learn.experiments import (
     e2_swap_cells,
     e3_swap_cols,
     e4_swap_cols_mdl,
+    e5_rederive_rot90,
+    e6_rederive_d4,
+    e7_rederive_d4_safe,
     run_experiment,
 )
 from arc_lab.solvers.dsl.learn.selection import GreedyMDL
+from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
+from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
-from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Param, Program
+from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, Param, Program, Var
 from arc_lab.solvers.dsl.substrate.types import ValueType
 
 _G = ValueType.GRID
@@ -86,6 +91,58 @@ def test_rewrite_folds_nested_occurrences() -> None:
     template: Program = Apply("flip_h", (Param(0, _G),))
     program: Program = Apply("flip_h", (Apply("flip_h", (Input(),)),))
     assert rewrite_with(program, "abs", template) == Apply("abs", (Apply("abs", (Input(),)),))
+
+
+# -- antiunify learns the lambda-index nodes (Lam / Var) -----------------
+
+
+def _transpose_build_grid(g: Program) -> Program:
+    # build_grid(width(g), height(g), lam(lam(read(g, $0, $1)))) over a grid sub-program `g`.
+    body = Apply("read", (g, Var(0, ValueType.INT), Var(1, ValueType.INT)))
+    return Apply("build_grid", (Apply("width", (g,)), Apply("height", (g,)), Lam(Lam(body))))
+
+
+def test_close_template_lifts_input_inside_a_lambda_body() -> None:
+    # Every Input (including the one *inside* the lam body) lifts to one grid Param, so the
+    # build_grid template closes and mints as an arity-1 abstraction — loop vars ($i) stay internal.
+    template = _close_template(_transpose_build_grid(Input()))
+    assert not any(isinstance(n, Input) for n in template.walk())
+    assert make_abstraction("t", template, BUILD_LIBRARY).param_types == (_G,)
+
+
+def test_rewrite_folds_a_build_grid_program() -> None:
+    # match/rewrite descend through Lam, so a whole build_grid program collapses to abs(input).
+    program = _transpose_build_grid(Input())
+    template = _close_template(program)
+    assert rewrite_with(program, "abs", template) == Apply("abs", (Input(),))
+
+
+def _build_grid_with_col(col: Program) -> Program:
+    g = Input()
+    body = Apply("read", (g, Var(0, ValueType.INT), col))
+    return Apply("build_grid", (Apply("width", (g,)), Apply("height", (g,)), Lam(Lam(body))))
+
+
+def test_bound_var_safe_proposer_refuses_to_hoist_a_bound_var() -> None:
+    # Two build_grid programs differing only in a *bound-var* coordinate. The naive proposer holes
+    # the $i into an abstraction param (unsound — the E6 break); the bound-var-safe one refuses, so
+    # no sound cross-member generalisation exists and it offers nothing (E7's fix).
+    p = _build_grid_with_col(Var(1, ValueType.INT))  # col = $1
+    q = _build_grid_with_col(  # col = width - $1 - 1 (a reflection, contains $1)
+        Apply("sub", (Apply("sub", (Apply("width", (Input(),)), Var(1, ValueType.INT))), Const(1, ValueType.INT)))
+    )
+    assert len(AntiunifyPairs().propose([p, q], BUILD_LIBRARY)) >= 1
+    assert AntiunifyPairs(bound_var_safe=True).propose([p, q], BUILD_LIBRARY) == []
+
+
+def test_e6_and_e7_target_the_full_d4_ladder() -> None:
+    ladder = ("transpose", "flip_h", "flip_v", "rot90", "rot180", "rot270")
+    for factory in (e6_rederive_d4, e7_rederive_d4_safe):
+        assert tuple(name for name, _ in factory().targets) == ladder
+    # The whole point of the pair: e7 swaps in the bound-var-safe proposer, e6 does not.
+    e6_proposer, e7_proposer = e6_rederive_d4().proposer, e7_rederive_d4_safe().proposer
+    assert isinstance(e6_proposer, AntiunifyPairs) and e6_proposer.bound_var_safe is False
+    assert isinstance(e7_proposer, AntiunifyPairs) and e7_proposer.bound_var_safe is True
 
 
 def test_propose_recurring_program_yields_lifted_template() -> None:
@@ -177,3 +234,13 @@ def test_e4_two_part_mdl_eliminates_bloat(tmp_path: Path) -> None:
     assert report.check.matched == ("swap_cols",)
     assert report.check.novel == ()  # bloat gone
     assert len(report.learned) == 1
+
+
+def test_e5_rederives_rot90_as_build_grid(tmp_path: Path) -> None:
+    # The keystone payoff: starting from the cell-render floor (no D4 primitive), the loop learns
+    # a single size-general build_grid program behaviorally == rot90 — pixels->D4, via BuildGridSearch.
+    report = _run(e5_rederive_rot90, tmp_path)
+    assert report.check.matched == ("rot90",)
+    assert report.check.missed == ()
+    assert len(report.learned) == 1  # the size-general build_grid program, no bloat
+    assert len(report.enablement) > 0  # with the abstraction, a depth-1 apply solves; without, it can't
