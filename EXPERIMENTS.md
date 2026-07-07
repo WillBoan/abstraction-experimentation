@@ -193,3 +193,32 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
     - De Bruijn correctness, `to_dict` round-trip, and `make_abstraction` over a `build_grid` template (arity 1 — loop vars stay internal) all pass.
 - **Interpretation:** The keystone lands as a *representation*, not yet a capability — the substrate is proven by hand, but nothing *searches* for `build_grid` programs yet. Two-channel binding (`env`=`#j` abstraction args vs. `scope`=`$i` bound vars) is what lets a size-general geometry program mint cleanly as an abstraction, and env/closure evaluation sidestepped De Bruijn's index-shifting entirely. Cost was modest and contained (one `FN` tag, a runtime `Closure`, ~physics-only churn in `program.py`), and it's Stitch-shaped so future invention-engine adoption is near-drop-in. Also renamed `Param`'s display `$0`→`#0` to match Stitch's `#j` and free `$i` for `Var`.
 - **Next:** the bespoke `build_grid` search (open-term body enumeration — "where does search break?"), then pixels→D4 through the loop (does a learned `mirror_index` bootstrap the deep D4 members?). Or, per the strategy, point the loop at a real ARC slice instead of another microworld.
+
+---
+
+## 2026-07-07 — BuildGridSearch: open-term body enumeration + the "where does search break?" sweep
+
+- **Commit:** 8b0819b
+- **Question:** Can a bespoke search find size-general `build_grid` programs (whose bodies are *open terms* — free `$i` — that `Enumerate` can't pool), and *where does it break*?
+- **Ran:** Built `BuildGridSearch` (`search/build_grid_search.py`): enumerate INT coordinate-expressions over `{$0, $1, width, height, 0, 1}` composed with `sub`, deduped by a *per-cell* battery signature (obs-equivalence lifted to cells), cost-beam bounded; assemble `build_grid(dh, dw, lam(lam(read(input, row, col))))` over dims that match the output shape, cost-ordered early-exit on the first (min-cost) consistent program. Swept depth × beam over the seven D4 members.
+- **Result:**
+  - Finds `rot90`/`flip_h`/`transpose` as single size-general programs that generalise to unseen shapes; the whole ladder is reachable at `max_coord_depth=2, beam=128`.
+  - **Metrics (the ladder):**
+    - depth: `transpose` solvable at depth 0 (bare `$0`/`$1`); every reflection/rotation needs depth **2** (a reflection `n-k-1` is inherently two `sub`s — nothing new at depth 1). Program size ladder 11 (transpose) → 16 (single reflection) → 21 (rot180 / anti_transpose).
+    - **beam cliff:** at depth 2, all reflection members are found *only* at beam **128**, and fail sharply at beam ≤ 64 — the reflection expression sits at rank 64-128 in the cost-ranked pool, so a tighter beam *silently* drops it.
+    - effort (beam 128, early-exit): `rot90` ~700 candidate-checks / ~130ms; `rot180` ~15k / ~270ms.
+- **Interpretation:** open-term enumeration works, generate-and-test over *behaviours* (out-of-bounds `read` + cell-battery dedup prune the space). But it does **not** degrade gracefully — there is a hard beam cliff, because the correct coordinate formula is buried deep in the cost ranking. This is the concrete "where search breaks", and it predicts the bootstrap: a learned `mirror_index` would collapse the reflection to a depth-1 call, moving it to the *top* of the ranking → findable at tiny beam.
+- **Next:** run it through the loop (pixels→D4).
+
+## 2026-07-07 — pixels→D4: the loop re-derives D4 (E5/E6/E7), and a bound-var scope bug
+
+- **Commit:** 73af6e5
+- **Question:** Starting from the cell-render floor (`{read, set_cell, width, height, sub, build_grid}`, **no D4 primitive**), does the wake-sleep loop re-derive geometry as size-general `build_grid` abstractions — and does a shared `mirror_index` bootstrap the ladder?
+- **Ran:** `E5` (rot90 alone), `E6` (full D4 ladder, naive proposer), `E7` (same ladder, a **bound-var-safe** proposer). Tasks are multi-shape demo sets (three varied shapes) so the solved program must be size-general. Taught antiunify to descend `Lam`/`Var`; `search = BuildGridSearch`, `enablement = Enumerate(depth 1)` (which now skips `FN`-typed prims instead of `KeyError`-ing).
+- **Result:**
+  - **E5:** learned exactly `abs0 = build_grid(width(#0), height(#0), lam(lam(read(#0, $0, sub(sub(width(#0), $1), 1)))))`, behaviorally **== rot90**. matched=[rot90], 0 novel, enablement=6. Clean re-derivation.
+  - **E6 (naive):** matched=**['flip_v']**, missed 5, **6 novel** broken abstractions. Whole-program pairwise antiunification generalises *across* members by holing bound-var-containing coordinate subterms into abstraction params (`read(#0, #1, #2)`) — a **scope violation** (`$i` is per-cell; `#j` is per-call). Worse, two-part MDL *prefers* the broken abstraction (it "compresses" by covering several members) — compression and correctness diverge.
+  - **E7 (bound-var-safe proposer):** matched=**all 6** D4 members, 0 missed, 0 novel, enablement=24. The fix: refuse to hole a differing subterm that contains a bound `$i`; only the sound per-member recurrences mint.
+  - **Metrics:** `make check` green (130 tests, +9); locks 7/19/11 + E1-E4 unchanged. E7 DL L1→L2 = 390→492 (compression **×0.79**, i.e. *worse*).
+- **Interpretation:** the low-floor thesis holds — the machinery re-derives the entire dihedral group from pixels, size-generally, blind. Two findings fall out: (1) a real **antiunification soundness bug** — it must respect the `$i`/`#j` boundary (now a swappable `bound_var_safe` flag; E6/E7 are the flat-vs-fixed contrast, à la E3/E4); (2) **`mirror_index` does not bootstrap** — E7's DL *rises* because the six members are six separate large abstractions with no shared reflection idiom. Whole-program antiunification can't mine a recurring *subterm*; that needs a **frequent-subtree proposer** (MACHINERY F4, unbuilt) — the concrete next machinery the compression signal is pointing at.
+- **Next:** a frequent-subtree / e-graph proposer (to invent `mirror_index` and actually compress the ladder); or, per the strategy, point the loop at a real ARC slice.
