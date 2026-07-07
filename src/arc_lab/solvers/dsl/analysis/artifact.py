@@ -30,6 +30,11 @@ SUMMARY_FILE = "summary.json"
 LIBRARY_FILE = "library.json"
 
 
+def _slug(text: str) -> str:
+    """Filesystem-safe rendering of a name (alphanumerics, hyphen, underscore kept)."""
+    return "".join(c if (c.isalnum() or c in "-_") else "-" for c in text)
+
+
 def git_commit() -> str | None:
     """Best-effort short commit SHA of the working tree, or ``None`` outside a repo."""
     try:
@@ -60,6 +65,15 @@ class RunCoordinates:
             sort_keys=True,
         )
         return hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+    def dir_name(self) -> str:
+        """A legible, still-unique run directory: ``<solver>_<dataset>_<hash>``.
+
+        Solver + dataset are part of the hashed coordinates, so prefixing with them stays
+        deterministic (same coordinates → same directory → the cache still hits) while making
+        ``runs/`` navigable by eye instead of an opaque hash.
+        """
+        return f"{_slug(self.solver)}_{_slug(self.dataset)}_{self.run_id()}"
 
     def to_dict(self) -> dict[str, object]:
         return {

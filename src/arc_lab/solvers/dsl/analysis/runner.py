@@ -186,7 +186,7 @@ def analyze(
         library=solver.library.to_dict(),
         commit=git_commit(),
     )
-    run_dir = out_dir / coordinates.run_id()
+    run_dir = out_dir / coordinates.dir_name()
     summary_path = run_dir / SUMMARY_FILE
     trace_path = run_dir / TRACE_FILE
 
@@ -289,3 +289,13 @@ def _emit_progress(record: TaskRecord, index: int, total: int) -> None:
     print(mark, end="", flush=True)
     if index % 50 == 0:
         print(f"  {index}/{total}", flush=True)
+
+
+def iter_run_summaries(runs_dir: Path) -> list[RunSummary]:
+    """Load every run summary under ``runs_dir`` (``<run>/summary.json``), for listing."""
+    if not runs_dir.is_dir():
+        return []
+    return [
+        RunSummary.from_dict(json.loads(path.read_text(encoding="utf-8")))
+        for path in sorted(runs_dir.glob("*/summary.json"))
+    ]

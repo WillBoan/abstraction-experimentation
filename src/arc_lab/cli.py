@@ -163,6 +163,24 @@ def analyze(
     typer.echo(f"wrote {run_dir}")
 
 
+@app.command(name="runs")
+def list_runs(directory: Path = typer.Option(Path("runs"), "--dir", help="Runs directory.")) -> None:
+    """List recorded run artifacts (solver, dataset, solved, description length)."""
+    from arc_lab.solvers.dsl.analysis.runner import iter_run_summaries
+
+    summaries = iter_run_summaries(directory)
+    if not summaries:
+        typer.echo(f"no runs under {directory}")
+        return
+    for summary in summaries:
+        coords = summary.coordinates
+        typer.echo(
+            f"{coords.solver:18s} {coords.dataset:16s} "
+            f"solved={summary.solved}/{summary.total:<3d} "
+            f"DL={summary.description_length:7.1f} considered={summary.considered_total}"
+        )
+
+
 @app.command()
 def learn(
     experiment: str = typer.Argument(..., help="Experiment name, e.g. e1-rot90"),
