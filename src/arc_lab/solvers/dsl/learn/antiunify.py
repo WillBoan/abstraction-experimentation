@@ -10,7 +10,8 @@ case — it antiunifies with itself, so lifting its input already yields a candi
 This v1 has **no variable-sharing**: distinct differing positions get distinct holes even
 when they hold the same subterm. That's sound for identical-program recurrence (E1/E2) but
 over-generalises when correctness needs a shared variable (E3 `swap_cells`) — the
-`LGG variable-sharing` upgrade is TODO. Also v1: root-match rewriting only (TODO: subtree-match).
+`LGG variable-sharing` upgrade is TODO. Rewriting folds any matching *subtree* (not just the
+program root), so a recurring idiom compresses even inside larger, otherwise-distinct programs.
 """
 
 from __future__ import annotations
@@ -156,11 +157,22 @@ def _match_into(template: Program, program: Program, bindings: dict[int, Program
 
 
 def rewrite_with(program: Program, name: str, template: Program) -> Program:
-    """Replace ``program`` with a call to ``name`` if it is an instance of ``template``.
+    """Fold every subtree that is an instance of ``template`` into a call to ``name``.
 
-    v1: root-match only. TODO(subtree-match): rewrite any matching subtree, not just the root.
+    Matches top-down: a subtree matching ``template`` collapses to ``Apply(name, args)``, and its
+    bound arguments are themselves rewritten so *nested* occurrences fold too; a non-matching
+    ``Apply`` is rebuilt with its children rewritten; leaves are returned unchanged. This is a
+    strict superset of root-only matching — it reduces to the old behaviour when only the root
+    matches — and it is what makes compression bite on heterogeneous corpora, where a shared
+    idiom recurs *inside* larger, otherwise-distinct programs rather than as a whole program.
+
+    Terminates because ``name`` never appears in ``template``, so a folded call can never re-match.
     """
     args = match(template, program)
-    if args is None:
-        return program
-    return Apply(name, args)
+    if args is not None:
+        return Apply(name, tuple(rewrite_with(arg, name, template) for arg in args))
+    if isinstance(program, Apply):
+        return Apply(
+            program.primitive, tuple(rewrite_with(arg, name, template) for arg in program.args)
+        )
+    return program

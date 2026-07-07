@@ -6,7 +6,15 @@ import itertools
 from collections.abc import Callable
 from pathlib import Path
 
-from arc_lab.solvers.dsl.learn.antiunify import AntiunifyPairs, _antiunify, _close_template, match
+from arc_lab.core.task import Task
+from arc_lab.solvers.dsl.analysis.compression import CompressionMetric
+from arc_lab.solvers.dsl.learn.antiunify import (
+    AntiunifyPairs,
+    _antiunify,
+    _close_template,
+    match,
+    rewrite_with,
+)
 from arc_lab.solvers.dsl.learn.experiments import (
     Experiment,
     ExperimentReport,
@@ -16,6 +24,7 @@ from arc_lab.solvers.dsl.learn.experiments import (
     e4_swap_cols_mdl,
     run_experiment,
 )
+from arc_lab.solvers.dsl.learn.selection import GreedyMDL
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Param, Program
@@ -58,10 +67,56 @@ def test_match_binds_and_rejects() -> None:
     assert match(template, Apply("flip_h", (Input(),))) is None
 
 
+def test_rewrite_folds_the_whole_program_when_the_root_matches() -> None:
+    # The original root-only behaviour is preserved as a special case.
+    template: Program = Apply("flip_h", (Param(0, _G),))
+    program: Program = Apply("flip_h", (Input(),))
+    assert rewrite_with(program, "abs", template) == Apply("abs", (Input(),))
+
+
+def test_rewrite_folds_a_matching_subtree() -> None:
+    # The template matches a proper *subtree*, not the root — the capability root-only lacked.
+    template: Program = Apply("flip_h", (Param(0, _G),))
+    program: Program = Apply("transpose", (Apply("flip_h", (Input(),)),))
+    assert rewrite_with(program, "abs", template) == Apply("transpose", (Apply("abs", (Input(),)),))
+
+
+def test_rewrite_folds_nested_occurrences() -> None:
+    # A match's own arguments are rewritten, so stacked occurrences all fold.
+    template: Program = Apply("flip_h", (Param(0, _G),))
+    program: Program = Apply("flip_h", (Apply("flip_h", (Input(),)),))
+    assert rewrite_with(program, "abs", template) == Apply("abs", (Apply("abs", (Input(),)),))
+
+
 def test_propose_recurring_program_yields_lifted_template() -> None:
     program = Apply("transpose", (Apply("flip_h", (Input(),)),))
     candidates = AntiunifyPairs().propose([program, program, program], _GEN)
     assert Apply("transpose", (Apply("flip_h", (Param(0, _G),)),)) in candidates
+
+
+# -- governance (the AbstractionSelector plug point) --------------------
+
+
+def _dummy_task(task_id: str) -> Task:
+    return Task.from_dict(
+        task_id, {"train": [{"input": [[0]], "output": [[0]]}], "test": [{"input": [[0]]}]}
+    )
+
+
+def test_greedy_mdl_selects_the_compressing_template() -> None:
+    # Two tasks solved by the same depth-2 word: folding both into one abstraction lowers DL,
+    # so GreedyMDL must pick the closed template (the seam _sleep now delegates to).
+    program: Program = Apply("transpose", (Apply("flip_h", (Input(),)),))
+    corpus = [(_dummy_task("t1"), program), (_dummy_task("t2"), program)]
+    chosen = GreedyMDL().select(corpus, _GEN, AntiunifyPairs(), CompressionMetric())
+    assert chosen == Apply("transpose", (Apply("flip_h", (Param(0, _G),)),))
+
+
+def test_greedy_mdl_returns_none_when_nothing_compresses() -> None:
+    # A single non-recurring program yields no useful candidate, so nothing is minted.
+    program: Program = Apply("flip_h", (Input(),))
+    corpus = [(_dummy_task("t1"), program)]
+    assert GreedyMDL().select(corpus, _GEN, AntiunifyPairs(), CompressionMetric()) is None
 
 
 # -- E1 end-to-end (the mechanism DoD gate) -----------------------------

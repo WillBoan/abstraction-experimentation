@@ -6,10 +6,11 @@ greedily adds the one that most reduces the corpus's two-part description length
 the corpus to use it, until no candidate compresses further). Adding an abstraction bumps
 the library version, so the next generation searches a shorter/shallower space.
 
-Governance is the existing :class:`CompressionMetric` (swappable via the ``Cost`` family).
-TODO(trigger alternatives): DL-plateau, frequency-threshold, online. TODO(selection):
-beam / joint instead of greedy. TODO(library cost): charge a learned abstraction its
-template size, not the flat ``bits_per_primitive`` (see `analysis/compression.py`).
+Governance — which candidate earns a name — is an :class:`~...selection.AbstractionSelector`
+(default :class:`~...selection.GreedyMDL`), scored by the :class:`CompressionMetric` family.
+TODO(trigger alternatives): DL-plateau, frequency-threshold, online. TODO(library cost):
+charge a learned abstraction its template size, not the flat ``bits_per_primitive`` (see
+`analysis/compression.py`).
 """
 
 from __future__ import annotations
@@ -20,11 +21,11 @@ from dataclasses import dataclass
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, CorpusEntry
 from arc_lab.solvers.dsl.learn.antiunify import AbstractionProposer, rewrite_with
+from arc_lab.solvers.dsl.learn.selection import AbstractionSelector, GreedyMDL
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive
-from arc_lab.solvers.dsl.substrate.program import Program
 from arc_lab.solvers.dsl.trace import task_context
 
 
@@ -66,6 +67,7 @@ def learn(
     cost: Cost | None = None,
     metric: CompressionMetric | None = None,
     trigger: LearnTrigger | None = None,
+    selector: AbstractionSelector | None = None,
     max_generations: int = 5,
     name_prefix: str = "abs",
 ) -> LearnResult:
@@ -73,6 +75,7 @@ def learn(
     cost = cost or ProgramSize()
     metric = metric or CompressionMetric()
     trigger = trigger or EachGeneration()
+    selector = selector or GreedyMDL()
     added: list[Primitive] = []
     history: list[GenerationRecord] = []
 
@@ -82,7 +85,7 @@ def learn(
         if not trigger.should_learn(generation, corpus):
             break
         grown, new_prims, grown_corpus = _sleep(
-            corpus, library, proposer, metric, name_prefix, len(added)
+            corpus, library, proposer, metric, selector, name_prefix, len(added)
         )
         if not new_prims:
             break  # dry: nothing new to learn
@@ -127,6 +130,7 @@ def _sleep(
     library: Library,
     proposer: AbstractionProposer,
     metric: CompressionMetric,
+    selector: AbstractionSelector,
     name_prefix: str,
     start_index: int,
 ) -> tuple[Library, list[Primitive], list[CorpusEntry]]:
@@ -134,7 +138,7 @@ def _sleep(
     added: list[Primitive] = []
     index = start_index
     while True:
-        best = _best_candidate(corpus, library, proposer, metric)
+        best = selector.select(corpus, library, proposer, metric)
         if best is None:
             break
         name = f"{name_prefix}{index}"
@@ -144,33 +148,3 @@ def _sleep(
         corpus = [(task, rewrite_with(program, name, best)) for task, program in corpus]
         added.append(primitive)
     return library, added, corpus
-
-
-def _best_candidate(
-    corpus: list[CorpusEntry],
-    library: Library,
-    proposer: AbstractionProposer,
-    metric: CompressionMetric,
-) -> Program | None:
-    """The candidate template whose adoption most reduces corpus DL, or None if none does."""
-    # Dedup against the library: never re-mint a template we already have as a primitive
-    # (the cross-generation duplication observed in E3, e.g. abs4 identical to abs1).
-    existing = {p.template for p in library.primitives if p.template is not None}
-    candidates = [
-        template
-        for template in proposer.propose([program for _, program in corpus], library)
-        if template not in existing
-    ]
-    best_template: Program | None = None
-    best_dl = metric.describe(corpus, library).total
-    for i, template in enumerate(candidates):
-        name = f"__probe{i}"
-        probe_lib = library.extended(
-            name="probe", extra=(make_abstraction(name, template, library),)
-        )
-        rewritten = [(task, rewrite_with(program, name, template)) for task, program in corpus]
-        dl = metric.describe(rewritten, probe_lib).total
-        if dl < best_dl:
-            best_dl = dl
-            best_template = template
-    return best_template
