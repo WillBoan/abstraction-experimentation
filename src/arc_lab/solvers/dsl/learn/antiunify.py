@@ -185,9 +185,11 @@ class SearchScopedFrequentSubtree(FrequentSubtree):
     """Signature-scoped invention with the composable signature **derived from the search** — STOPGAP.
 
     Keeps only candidates whose *closed signature* the consuming search can actually reuse: pass the
-    search's own composition rule (e.g. ``BuildGridSearch.composes_signature``). Non-cheating (nothing
-    is hand-declared) and precise (filters the full ``(param_types, return_type)`` signature, so it
-    also drops ``(GRID, INT) -> INT`` candidates a bare result-type filter would admit).
+    search's own composition rule (e.g. ``BuildGridSearch.composes_signature``).
+
+    - Non-cheating (nothing is hand-declared)
+    - Precise (filters the full ``(param_types, return_type)`` signature, so it also drops
+      ``(GRID, INT) -> INT`` candidates a bare result-type filter would admit).
 
     **Flag — still anti-open-ended.** It can only invent what the current search *already* composes,
     so it can't grow non-composable / higher-level / new-type vocabulary (the read-body idioms, ``GRID``
