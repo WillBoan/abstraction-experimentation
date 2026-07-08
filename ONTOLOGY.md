@@ -1,6 +1,6 @@
 # ONTOLOGY.md
 
-A living catalog of the **primitives / abstractions** that are — or might be — at play in this system and the ARC task space. Sibling to [EXPERIMENTS.md](EXPERIMENTS.md): that file logs _what we tried_; this file maps _the space of things there are to try_. This maps lever 1 (the primitive vocabulary / Floor); its sibling [MACHINERY.md](MACHINERY.md) maps lever 3 (the search / scoring / learning Machinery); [RESEARCH-2026-07-07.md](RESEARCH-2026-07-07.md) is the frame both are read against.
+A living catalog of the **primitives / abstractions** that are — or might be — at play in this system and the ARC task space. Sibling to [EXPERIMENTS.md](EXPERIMENTS.md): that file logs _what we tried_; this file maps _the space of things there are to try_. This maps lever 1 (the primitive vocabulary / Floor); its sibling [MACHINERY.md](MACHINERY.md) maps lever 3 (the search / scoring / learning Machinery); [RESEARCH-2026-07-08.md](RESEARCH-2026-07-08.md) is the frame both are read against.
 
 It exists because the substrate today is a tiny, coarse slice of that space (almost everything shipped is a whole-grid transform), and the research direction is to descend to **more fundamental primitives** and study how the machinery composes them into higher abstractions. You can't chart that climb without a map of the terrain. This is the map.
 
@@ -73,7 +73,7 @@ Three axes organize everything below.
 
 ## L0 — substrate / control (domain-agnostic)
 
-The "gifted" machinery — control abstractions, not domain content. A human gets these free from embodiment; withholding them just cripples the substrate, so they're fair to provide. The recursion schemes (`map`/`fold`) are the reified _quantifier_ — the thing that lifts a per-cell step to a whole-grid transform and makes programs size-general.
+The "gifted" machinery — control abstractions, not domain content. A human gets these free from embodiment; withholding them just cripples the substrate, so they're fair to provide. The recursion schemes (`map`/`fold`) are the reified _quantifier_ — the thing that lifts a per-cell step to a whole-grid transform and makes programs size-general. The `Lam`/`Var` binder they need now exists (shipped for `build_grid`), so `map`/`fold` are **no longer gated on binding** — only on sequence types (`[a]`), which remain unbuilt. **The completeness-completing block [RESEARCH-08]:** `build_grid + read` + this level's still-`⚪` control ops (`if`, `eq`/`lt`/`gt`, `and`/`or`/`not`) is a _universal grid constructor_ — output at a computed size, each cell an arbitrary decision tree over the input — so activating them reaches **global expressive completeness**, the _zero-cheating complete floor_ at the bottom of the ablation ladder. It's a **prerequisite / control**, not the operating point (see the floor-lattice note in _What the map shows_); coordinate substrate changes with the Stitch track.
 
 | Name | Description | Signature | Lvl | Prior | Role | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -107,6 +107,7 @@ The pixel level: a grid _is_ a function `Coord→Color`. `read`/`build_grid` are
 | neighbors4 / neighbors8 | The adjacent coordinates (4- or 8-connectivity). | `Coord→[Coord]` | L1 | G | P | ⚪ cand |
 | set_cell | Grid with one cell recolored (functional set-cell; stateful when folded); shipped on plain `Int` coords. | `(Grid,Int,Int,Color)→Grid` | L1 | — | T | ✅ done |
 | swap_cells | Exchange the colors of two cells (a transposition — derivable from read+set_cell by re-reading the original grid; E2 *re-derived it* as a learned abstraction, never hand-shipped). | `(Grid,Coord,Coord)→Grid` | L1 | — | T | ⚪ cand |
+| move_cell | Relocate a cell's color from one coordinate to another, clearing the source (derivable from read+set_cell; sibling to `swap_cells` — likewise a candidate to *re-derive*, not hand-ship). | `(Grid,Coord,Coord)→Grid` | L1 | — | T | ⚪ cand |
 | build_grid | Construct a grid from a coordinate→color function (regenerates D4 as small programs); the `Fn` is a curried `Lam(Lam(body))`. | `(Int,Int,Fn)→Grid` | L1 | — | R | ✅ done |
 | blank / fill | A uniform grid of a single color. | `(Int,Int,Color)→Grid` | L1 | — | R | ⚪ cand |
 
@@ -185,7 +186,7 @@ The bridge from "grid" to "object". Cheap, high-value, small search cost — lik
 
 ## L4 — object (types: **Object, ObjectSet** — reserved, unbuilt)
 
-Where most of ARC lives. The big unlock — and the big search cost: `ObjectSet` is a variable-length collection the current Cartesian `Enumerate` will choke on, so this layer likely needs a beam / frontier search _first_ (see the search notes in `EXPERIMENTS.md`).
+Where most of ARC lives. The big unlock — and the big search cost: `ObjectSet` is a variable-length collection the current Cartesian `Enumerate` will choke on, so this layer likely needs a beam / frontier search _first_ — **that prerequisite is now shipped** (`BeamSearch`, MACHINERY F1); what remains is the `ObjectSet` type + `segment` (intro) / `render_objects` (elim) and the algebra between (see the search notes in `EXPERIMENTS.md`).
 
 **Intro — segmentation (`Grid → ObjectSet`)**
 
@@ -286,7 +287,8 @@ The most abstract layer: recurring whole-task _strategies_. These are the abstra
 ## What the map shows
 
 - **Almost everything `done` is L2** (+ two L6 schemas built as bespoke searches, + task-mined L0 leaves, + the L1 cell floor). L1 now has **both halves**: the stateful pair `read`/`set_cell` (E2/E3) and the pure render `build_grid` (+ `width`/`height`/`sub`/`add`/`mul` and the `Lam`/`Var` substrate), found by the primitive-driven `BuildGridSearch` — which now *reuses* learned coordinate idioms, so the loop compresses the D4 ladder (E8/E9). Whole layers — L3, L4, L5 — remain empty. `Mask`/`OBJECTS` are IOUs in the type enum.
-- **The vocabulary is transform-heavy, perception-poor, render-poor.** Count the `Role` column: `done` rows are almost all `T`. The object half of ARC is gated behind one missing intro (`segment`) and one missing elim (`render_objects`). Ferré's ARC-MDL/MADIL is a worked existence proof that the _descriptive_ (perceive/render) paradigm — a single model that both parses and generates — is viable and human-legible; this is now read as the **highest-leverage empty region** (see [RESEARCH-2026-07-07.md](RESEARCH-2026-07-07.md) §Where we sit).
+- **The vocabulary is transform-heavy, perception-poor, render-poor.** Count the `Role` column: `done` rows are almost all `T`. The object half of ARC is gated behind one missing intro (`segment`) and one missing elim (`render_objects`). Ferré's ARC-MDL/MADIL is a worked existence proof that the _descriptive_ (perceive/render) paradigm — a single model that both parses and generates — is viable and human-legible; this is now read as the **highest-leverage empty region** (see [RESEARCH-2026-07-08.md](RESEARCH-2026-07-08.md) §Where we sit).
 - **Cheapest high-value moves** (fit the current engine, low regression risk): the L2 _perceivers_ (`most_common_color`, `count_color`, …) that turn constants into derived values, and the L3 `Mask` intro/elim pair (esp. `crop_to_content`).
-- **Biggest unlock, biggest cost**: L4 objects — needs a beam/frontier search before the vocabulary, or the Cartesian `Enumerate` truncates and risks the regression locks.
+- **Biggest unlock, biggest cost**: L4 objects — the beam/frontier search prerequisite is now shipped (`BeamSearch`), so the remaining gate is the `ObjectSet` type + `segment`/`render_objects` intro/elim; still the big search cost, and the Cartesian `Enumerate` would truncate (and risk the regression locks) without the beam.
 - **Highest abstraction, hand-code least**: L6 schemas are what we want the machinery to _invent_.
+- **The floor is a lattice; completeness is the control (RESEARCH-08) [H].** Among _complete_ bases (each expresses everything), grain varies — and the **grain axis is a search-cost graph**, the real object of study. The lowest complete floor (domain-general atoms: L0 control + L1 substrate) is the **zero-cheating control**, and it will be _intractable_ for the higher tiers (the E5–E9 beam cliff is the canary) — which is the point: lowering the floor is the pressure test that surfaces better machinery, and the bootstrap is meant to _re-derive_ the tractability-critical mid-level primitives rather than have them gifted. "Cheating" ≈ the compositional height of the gifted set above those atoms (_gift control, withhold domain_ draws the line at L0/L1 vs. L2+).
