@@ -1,0 +1,38 @@
+=== wake corpus (min-cost program per train task) ===
+transpose-00   build_grid(width(input), height(input), lam(lam(read(input, $0, $1))))
+transpose-01   build_grid(width(input), height(input), lam(lam(read(input, $0, $1))))
+transpose-02   build_grid(width(input), height(input), lam(lam(read(input, $0, $1))))
+flip_h-00      build_grid(height(input), width(input), lam(lam(read(input, $1, sub(sub(width(input), $0), 1)))))
+flip_h-01      build_grid(height(input), width(input), lam(lam(read(input, $1, sub(sub(width(input), $0), 1)))))
+flip_h-02      build_grid(height(input), width(input), lam(lam(read(input, $1, sub(sub(width(input), $0), 1)))))
+flip_v-00      build_grid(height(input), width(input), lam(lam(read(input, sub(sub(height(input), $1), 1), $0))))
+flip_v-01      build_grid(height(input), width(input), lam(lam(read(input, sub(sub(height(input), $1), 1), $0))))
+flip_v-02      build_grid(height(input), width(input), lam(lam(read(input, sub(sub(height(input), $1), 1), $0))))
+rot90-00       build_grid(width(input), height(input), lam(lam(read(input, $0, sub(sub(width(input), $1), 1)))))
+rot90-01       build_grid(width(input), height(input), lam(lam(read(input, $0, sub(sub(width(input), $1), 1)))))
+rot90-02       build_grid(width(input), height(input), lam(lam(read(input, $0, sub(sub(width(input), $1), 1)))))
+rot180-00      build_grid(height(input), width(input), lam(lam(read(input, sub(sub(height(input), $1), 1), sub(sub(width(input), $0), 1)))))
+rot180-01      build_grid(height(input), width(input), lam(lam(read(input, sub(sub(height(input), $1), 1), sub(sub(width(input), $0), 1)))))
+rot180-02      build_grid(height(input), width(input), lam(lam(read(input, sub(sub(height(input), $1), 1), sub(sub(width(input), $0), 1)))))
+rot270-00      build_grid(width(input), height(input), lam(lam(read(input, sub(sub(height(input), $0), 1), $1))))
+rot270-01      build_grid(width(input), height(input), lam(lam(read(input, sub(sub(height(input), $0), 1), $1))))
+rot270-02      build_grid(width(input), height(input), lam(lam(read(input, sub(sub(height(input), $0), 1), $1))))
+
+solved 18/18
+distinct programs: 6
+
+=== proposals ===
+   width(#0)   (matches 27 subtrees)
+   height(#0)   (matches 27 subtrees)
+   read(#0, #1, #2)   (matches 18 subtrees)
+   read(#0, #1, sub(sub(width(#0), #2), 1))   (matches 9 subtrees)
+   sub(#0, #1)   (matches 36 subtrees)
+   sub(sub(#0, #1), 1)   (matches 18 subtrees)
+   sub(sub(width(#0), #1), 1)   (matches 9 subtrees)
+   sub(width(#0), #1)   (matches 9 subtrees)
+   read(#0, sub(sub(height(#0), #1), 1), #2)   (matches 9 subtrees)
+   sub(sub(height(#0), #1), 1)   (matches 9 subtrees)
+   sub(height(#0), #1)   (matches 9 subtrees)
+
+=== GreedyMDL.select ===
+chosen: read(#0, #1, sub(sub(width(#0), #2), 1))

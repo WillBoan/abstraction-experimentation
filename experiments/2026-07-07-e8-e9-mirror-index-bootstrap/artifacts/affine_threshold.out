@@ -1,0 +1,21 @@
+--- affine rot90 ---
+   beam= 128 solved=False considered= 16384    731ms
+   beam= 160 solved=False considered= 25600    872ms
+   beam= 192 solved=False considered= 36864   1024ms
+   beam= 224 solved=True considered=  1607    739ms
+   beam= 256 solved=True considered=  1607    820ms
+   beam= 320 solved=True considered=  1607   1056ms
+--- affine flip_h ---
+   beam= 128 solved=False considered= 16384    695ms
+   beam= 160 solved=False considered= 25600    846ms
+   beam= 192 solved=False considered= 36864   1010ms
+   beam= 224 solved=True considered=  1696    739ms
+   beam= 256 solved=True considered=  1728    858ms
+   beam= 320 solved=True considered=  1781   1055ms
+--- affine rot180 ---
+   beam= 128 solved=False considered= 16384    697ms
+   beam= 160 solved=False considered= 25600    848ms
+   beam= 192 solved=False considered= 36864   1019ms
+   beam= 224 solved=True considered= 48599   1210ms
+   beam= 256 solved=True considered= 59447   1413ms
+   beam= 320 solved=True considered= 79405   1862ms

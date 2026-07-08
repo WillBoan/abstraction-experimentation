@@ -9,6 +9,7 @@ A shared human+AI **event log** of experiments and findings for arc-lab. Append-
 - **Anchor to a commit** so the numbers stay reproducible.
 - **Events, not state.** "On date X, measured Y" never goes stale; "current best is Y" does.
 - **Planned work lives in `EXPERIMENT_QUEUE.md`.** When you log a run here, drain its queue entry there. `Next:` lines are events (what seemed next at the time); the queue is the canonical current list.
+- **This is the abstract; the appendix is `experiments/`.** For a non-trivial investigation, the full write-up + the probe scripts and their outputs live in a [experiments/](experiments/) lab notebook (see [experiments/README.md](experiments/README.md)); link it from the entry. Keep the entry here terse.
 
 Entry template (tier the bullets; put the numbers in an explicit **Metrics** block so they're scannable):
 
@@ -226,6 +227,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 ## 2026-07-07 — pixels→D4 compresses: a frequent-subtree proposer + primitive-driven search (E8/E9)
 
 - **Commit:** 8051ad4
+- **Notebook:** [experiments/2026-07-07-e8-e9-mirror-index-bootstrap/](experiments/2026-07-07-e8-e9-mirror-index-bootstrap/) — full write-up + probe artifacts
 - **Question:** Does a **frequent-subtree proposer** invent `mirror_index` and finally *compress* the D4 ladder (inverting E7's ×0.79) *and* speed the search past its beam cliff? Run as a **grammar × learning matrix**: `{sub}` (E8) vs the honest affine `{sub,add,mul}` (E9).
 - **Ran:** Added `add`/`mul` (the affine family); made `BuildGridSearch` **primitive-driven** (composes every library `INT^n→INT` op, so it can *reuse* a learned coordinate); a `FrequentSubtree` proposer (mine Lam-free proper subtrees; sound Var-holing — the mirror image of `bound_var_safe`). E8 = sub-only (beam 128); E9 = affine (beam **224**, the threshold to solve a reflection at all — ≤192 fails). `enablement = BuildGridSearch` at a *tight* beam (the cliff).
 - **Result:**

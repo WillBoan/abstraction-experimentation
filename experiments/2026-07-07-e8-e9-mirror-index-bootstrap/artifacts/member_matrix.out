@@ -1,0 +1,24 @@
+=== beam=48 ===   transp  flip_h  flip_v   rot90  rot180  rot270
+sub                 Y     .     .     .     .     .   
+sub+mir             Y     Y     Y     Y     Y     Y   
+affine              Y     .     .     .     .     .   
+aff+mir             Y     .     .     .     .     .   
+
+=== beam=64 ===   transp  flip_h  flip_v   rot90  rot180  rot270
+sub                 Y     .     .     .     .     .   
+sub+mir             Y     Y     Y     Y     Y     Y   
+affine              Y     .     .     .     .     .   
+aff+mir             Y     Y     .     Y     .     .   
+
+=== beam=96 ===   transp  flip_h  flip_v   rot90  rot180  rot270
+sub                 Y     .     .     .     .     .   
+sub+mir             Y     Y     Y     Y     Y     Y   
+affine              Y     .     .     .     .     .   
+aff+mir             Y     Y     Y     Y     Y     Y   
+
+=== beam=128 ===   transp  flip_h  flip_v   rot90  rot180  rot270
+sub                 Y     Y     Y     Y     Y     Y   
+sub+mir             Y     Y     Y     Y     Y     Y   
+affine              Y     .     .     .     .     .   
+aff+mir             Y     Y     Y     Y     Y     Y   
+

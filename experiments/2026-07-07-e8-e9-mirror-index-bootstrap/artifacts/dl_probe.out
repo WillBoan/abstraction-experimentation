@@ -1,0 +1,17 @@
+baseline: lib=6.0 prog=288.0 total=294.0
+
+template                                              libbits  progbits   total  folds?
+width(#0)                                                   9       288     297    18
+height(#0)                                                  9       288     297    18
+read(#0, #1, #2)                                           11       288     299     0
+read(#0, #1, sub(sub(width(#0), #2), 1))                   16       288     304     0
+sub(#0, #1)                                                10       288     298     0
+sub(sub(#0, #1), 1)                                        12       288     300     0
+sub(sub(width(#0), #1), 1)                                 13       288     301     0
+sub(width(#0), #1)                                         11       288     299     0
+read(#0, sub(sub(height(#0), #1), 1), #2)                  16       288     304     0
+sub(sub(height(#0), #1), 1)                                13       288     301     0
+sub(height(#0), #1)                                        11       288     299     0
+
+rot90 before: build_grid(width(input), height(input), lam(lam(read(input, $0, sub(sub(width(input), $1), 1))))) size 16
+rot90 after : build_grid(width(input), height(input), lam(lam(read(input, $0, sub(sub(width(input), $1), 1))))) size 16

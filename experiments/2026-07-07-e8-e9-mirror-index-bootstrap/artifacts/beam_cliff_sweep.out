@@ -1,0 +1,32 @@
+sub-only     beam= 16 solved=False considered=256
+sub-only     beam= 32 solved=False considered=1024
+sub-only     beam= 64 solved=False considered=4096
+sub-only     beam=128 solved=True considered=14896
+
+sub+mirror   beam= 16 solved=False considered=256
+sub+mirror   beam= 32 solved=False considered=1024
+sub+mirror   beam= 64 solved=True considered=2721
+sub+mirror   beam=128 solved=True considered=4297
+
+affine       beam= 16 solved=False considered=256
+affine       beam= 32 solved=False considered=1024
+affine       beam= 64 solved=False considered=4096
+affine       beam=128 solved=False considered=16384
+
+sub+mirror beam=16 pool size=16; exprs:
+    $0   cost 1
+    $1   cost 1
+    0   cost 1
+    1   cost 1
+    width(input)   cost 2
+    height(input)   cost 2
+    sub($0, $1)   cost 3
+    sub($0, 1)   cost 3
+    sub($1, $0)   cost 3
+    sub($1, 1)   cost 3
+    sub(0, $0)   cost 3
+    sub(0, $1)   cost 3
+    sub(0, 1)   cost 3
+    sub(1, $0)   cost 3
+    sub(1, $1)   cost 3
+    mirror_index($0, $1)   cost 3

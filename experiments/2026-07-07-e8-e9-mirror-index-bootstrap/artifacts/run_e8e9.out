@@ -1,0 +1,25 @@
+$ uv run python run_e8e9.py e8
+
+===== e8 (53.8s) =====
+learned: (('abs0', 'sub(sub(#0, #1), 1)'),)
+matched: ('mirror_index',) missed: () novel: ()
+[e8-mirror-index-sub] learned 1 abstraction(s): abs0 = sub(sub(#0, #1), 1)
+  behavioral check vs targets: matched=['mirror_index'] missed=[] novel=[]
+  solved   L1=24 L2=24 L3=24 (of 24)
+  DL       L1=390.0 L2=348.0 (compression x1.12)
+  considered L1=77148 L2=22204 (speedup x3.47)
+  enablement (depth-1, L2 solves, L1 cannot): 20 tasks
+enablement tasks: ['flip_h-00', 'flip_h-01', 'flip_h-02', 'flip_h-03', 'flip_v-00', 'flip_v-01', 'flip_v-02', 'flip_v-03', 'rot180-00', 'rot180-01', 'rot180-02', 'rot180-03', 'rot270-00', 'rot270-01', 'rot270-02', 'rot270-03', 'rot90-00', 'rot90-01', 'rot90-02', 'rot90-03']
+
+$ uv run python run_e8e9.py e9
+
+===== e9 (224.2s) =====
+learned: (('abs0', 'sub(#0, add(#1, 1))'),)
+matched: ('mirror_index',) missed: () novel: ()
+[e9-mirror-index-affine] learned 1 abstraction(s): abs0 = sub(#0, add(#1, 1))
+  behavioral check vs targets: matched=['mirror_index'] missed=[] novel=[]
+  solved   L1=24 L2=24 L3=24 (of 24)
+  DL       L1=392.0 L2=350.0 (compression x1.12)
+  considered L1=234828 L2=46948 (speedup x5.00)
+  enablement (depth-1, L2 solves, L1 cannot): 20 tasks
+enablement tasks: ['flip_h-00', 'flip_h-01', 'flip_h-02', 'flip_h-03', 'flip_v-00', 'flip_v-01', 'flip_v-02', 'flip_v-03', 'rot180-00', 'rot180-01', 'rot180-02', 'rot180-03', 'rot270-00', 'rot270-01', 'rot270-02', 'rot270-03', 'rot90-00', 'rot90-01', 'rot90-02', 'rot90-03']
