@@ -14,8 +14,11 @@ import numpy.typing as npt
 
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search import BuildGridSearch
-from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
-from arc_lab.solvers.dsl.substrate.program import Program
+from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
+from arc_lab.solvers.dsl.substrate.library import Library
+from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_AFFINE_LIBRARY, BUILD_LIBRARY
+from arc_lab.solvers.dsl.substrate.program import Apply, Const, Param, Program
+from arc_lab.solvers.dsl.substrate.types import ValueType
 
 _Ref = Callable[[npt.NDArray[np.int_]], npt.NDArray[np.int_]]
 
@@ -68,3 +71,50 @@ def test_difficulty_ladder_depth() -> None:
     # rot90's column is `width-1-i`, a depth-2 sub-expression: out of reach at depth 0, found at 2.
     assert not BuildGridSearch(max_coord_depth=0).find(rot90, BUILD_LIBRARY).programs
     assert BuildGridSearch(max_coord_depth=2).find(rot90, BUILD_LIBRARY).programs
+
+
+# -- primitive-driven coordinate grammar (composes learned/affine INT ops) ----------
+
+
+def test_composes_signature() -> None:
+    # The search's declared composition rule: it composes INT^n -> INT coordinate primitives only.
+    s = BuildGridSearch()
+    _int, _grid, _color = ValueType.INT, ValueType.GRID, ValueType.COLOR
+    assert s.composes_signature((_int, _int), _int)  # sub / add / mul / a learned mirror_index
+    assert s.composes_signature((_int,), _int)
+    assert not s.composes_signature((_grid, _int), _int)  # a GRID param is not a coordinate op
+    assert not s.composes_signature((_int, _int), _color)  # a COLOR result is not a coordinate
+    assert not s.composes_signature((), _int)  # nullary
+
+
+def test_affine_grammar_composes_add_and_mul() -> None:
+    # The pool is primitive-driven: on the affine library it gains add/mul; sub-only composes neither.
+    rot90 = _task(lambda a: np.rot90(a, 1))
+    pairs = [(ex.input, ex.output) for ex in rot90.train if ex.output is not None]
+    battery = [
+        (inp, i, j) for inp, out in pairs for i in range(out.height) for j in range(out.width)
+    ]
+
+    def composed_ops(library: Library) -> set[str]:
+        pool = BuildGridSearch()._coordinate_pool(battery, rot90, library)
+        return {n.primitive for expr in pool for n in expr.walk() if isinstance(n, Apply)}
+
+    assert not {"add", "mul"} & composed_ops(BUILD_LIBRARY)
+    assert {"add", "mul"} <= composed_ops(BUILD_AFFINE_LIBRARY)
+
+
+def _mirror_index_library() -> Library:
+    _int = ValueType.INT
+    mirror = Apply("sub", (Apply("sub", (Param(0, _int), Param(1, _int))), Const(1, _int)))
+    return BUILD_LIBRARY.extended(
+        name="build+mirror", extra=(make_abstraction("mirror_index", mirror, BUILD_LIBRARY),)
+    )
+
+
+def test_search_reuses_a_learned_mirror_index() -> None:
+    # At a tight beam the raw depth-2 reflection `sub(sub(width,$1),1)` is cut, but a learned
+    # mirror_index is a depth-1 coordinate the search composes -> the reflection becomes reachable
+    # again (the beam-cliff dissolution, in miniature).
+    rot90 = _task(lambda a: np.rot90(a, 1))
+    assert not BuildGridSearch(beam_width=64).find(rot90, BUILD_LIBRARY).programs
+    assert BuildGridSearch(beam_width=64).find(rot90, _mirror_index_library()).programs

@@ -7,9 +7,10 @@ handle their bespoke combinators:
 
 1. **Enumerate INT coordinate-expressions** over the body-context leaves — the two bound coords
    (``$0`` = col ``j``, ``$1`` = row ``i``), the ``width``/``height`` perceivers, and small consts —
-   composed with ``sub``, bottom-up to a bounded depth. Two programs are equivalent iff they agree
-   at every ``(train input, output cell)`` sample (observational equivalence lifted to cells); a
-   cost-beam bounds the pool each round.
+   composed with every ``INT^n -> INT`` primitive the library carries (``sub``/``add``/``mul``, and
+   any *learned* coordinate abstraction such as ``mirror_index``), bottom-up to a bounded depth. Two
+   programs are equivalent iff they agree at every ``(train input, output cell)`` sample
+   (observational equivalence lifted to cells); a cost-beam bounds the pool each round.
 2. **Assemble + verify.** For each dimension pair (from ``width``/``height``) and each ordered pair
    of coordinate expressions, form ``build_grid(dh, dw, lam(lam(read(input, row, col))))`` and keep
    the smallest program consistent with every training pair.
@@ -60,6 +61,16 @@ class BuildGridSearch(Search):
         self.beam_width = beam_width
         self.consts = consts
 
+    def composes_signature(
+        self, param_types: tuple[ValueType, ...], return_type: ValueType
+    ) -> bool:
+        """Whether the coordinate enumeration composes a primitive of this signature (``INT^n -> INT``).
+
+        The search's own composition rule, exposed so a ``SearchScopedFrequentSubtree`` can mine
+        exactly the coordinate idioms this search can *reuse* (e.g. a learned ``mirror_index``).
+        """
+        return return_type == _INT and bool(param_types) and all(pt == _INT for pt in param_types)
+
     def find(self, task: Task, library: Library) -> SearchResult:
         pairs: list[tuple[Grid, Grid]] = []
         for ex in task.train:
@@ -67,7 +78,9 @@ class BuildGridSearch(Search):
                 return self._result(strategy_extra={}, programs=(), considered=0)
             pairs.append((ex.input, ex.output))
         # The cells a body must reproduce: every coordinate of every training output.
-        battery = [(inp, i, j) for inp, out in pairs for i in range(out.height) for j in range(out.width)]
+        battery = [
+            (inp, i, j) for inp, out in pairs for i in range(out.height) for j in range(out.width)
+        ]
         if not battery:
             return self._result(strategy_extra={}, programs=(), considered=0)
 
@@ -105,12 +118,24 @@ class BuildGridSearch(Search):
         ]
         for leaf in leaves:
             consider(leaf)
+        # Composition is *primitive-driven*: every INT^n -> INT primitive the library carries (sub,
+        # add, mul, and any *learned* coordinate abstraction like mirror_index). This is what makes
+        # a minted abstraction actually usable by the search -- and behaviour-identical to the old
+        # hardcoded `sub` whenever `sub` is the only such primitive (e.g. BUILD_LIBRARY).
+        int_ops = [
+            prim
+            for prim in library.primitives
+            if not prim.is_variadic and self.composes_signature(prim.param_types, prim.return_type)
+        ]
         for _ in range(self.max_coord_depth):
             frozen = sorted(pool.values(), key=lambda e: self.cost.of(e, task, library))
             frozen = frozen[: self.beam_width]  # cost-beam: compose only the cheapest so far
-            for a, b in itertools.product(frozen, frozen):
-                consider(Apply("sub", (a, b)))
-        return sorted(pool.values(), key=lambda e: self.cost.of(e, task, library))[: self.beam_width]
+            for prim in int_ops:
+                for combo in itertools.product(frozen, repeat=len(prim.param_types)):
+                    consider(Apply(prim.name, combo))
+        return sorted(pool.values(), key=lambda e: self.cost.of(e, task, library))[
+            : self.beam_width
+        ]
 
     def _matching_dims(
         self, pairs: list[tuple[Grid, Grid]], library: Library
