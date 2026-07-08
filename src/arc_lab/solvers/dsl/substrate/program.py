@@ -27,8 +27,14 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.dsl.substrate.library import Closure
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.library import Closure, Primitive
+from arc_lab.solvers.dsl.substrate.types import (
+    ArrowType,
+    Type,
+    ValueType,
+    type_from_serializable,
+    type_to_serializable,
+)
 
 if TYPE_CHECKING:
     from arc_lab.solvers.dsl.substrate.library import Library, Value
@@ -63,8 +69,8 @@ class Program(ABC):
         Both default to empty, so every existing call site is unaffected."""
 
     @abstractmethod
-    def result_type(self, library: Library) -> ValueType:
-        """The type of value this program produces."""
+    def result_type(self, library: Library) -> Type:
+        """The type of value this program produces (a base type, arrow, or type variable)."""
 
     @abstractmethod
     def to_dict(self) -> dict[str, object]:
@@ -116,9 +122,9 @@ class Program(ABC):
             return Const(value=value, value_type=ValueType(value_type))
         if op == "param":
             index, param_type = data["index"], data["value_type"]
-            if not isinstance(index, int) or not isinstance(param_type, str):
+            if not isinstance(index, int) or not isinstance(param_type, (str, dict)):
                 raise ValueError(f"malformed param node: {data!r}")
-            return Param(index=index, value_type=ValueType(param_type))
+            return Param(index=index, value_type=type_from_serializable(param_type))
         if op == "apply":
             primitive, raw_args = data["primitive"], data["args"]
             if not isinstance(primitive, str) or not isinstance(raw_args, list):
@@ -131,14 +137,29 @@ class Program(ABC):
             return Apply(primitive=primitive, args=tuple(args))
         if op == "var":
             index, var_type = data["index"], data["value_type"]
-            if not isinstance(index, int) or not isinstance(var_type, str):
+            if not isinstance(index, int) or not isinstance(var_type, (str, dict)):
                 raise ValueError(f"malformed var node: {data!r}")
-            return Var(index=index, value_type=ValueType(var_type))
+            return Var(index=index, value_type=type_from_serializable(var_type))
         if op == "lam":
             body = data["body"]
             if not isinstance(body, Mapping):
                 raise ValueError(f"malformed lam node: {data!r}")
             return Lam(body=Program.from_dict(body))
+        if op == "appfn":
+            fn, raw_fn_args = data["fn"], data["args"]
+            if not isinstance(fn, Mapping) or not isinstance(raw_fn_args, list):
+                raise ValueError(f"malformed appfn node: {data!r}")
+            fn_args: list[Program] = []
+            for arg in raw_fn_args:
+                if not isinstance(arg, Mapping):
+                    raise ValueError(f"malformed appfn argument: {arg!r}")
+                fn_args.append(Program.from_dict(arg))
+            return AppFn(fn=Program.from_dict(fn), args=tuple(fn_args))
+        if op == "primref":
+            name = data["name"]
+            if not isinstance(name, str):
+                raise ValueError(f"malformed primref node: {data!r}")
+            return PrimRef(name=name)
         raise ValueError(f"unknown program node: {data!r}")
 
 
@@ -178,7 +199,7 @@ class Param(Program):
     """
 
     index: int
-    value_type: ValueType
+    value_type: Type  # a base type, or an arrow (a function-typed hole — the higher-order case)
 
     def evaluate(
         self,
@@ -189,11 +210,15 @@ class Param(Program):
     ) -> Value:
         return env[self.index]
 
-    def result_type(self, library: Library) -> ValueType:
+    def result_type(self, library: Library) -> Type:
         return self.value_type
 
     def to_dict(self) -> dict[str, object]:
-        return {"op": "param", "index": self.index, "value_type": self.value_type.value}
+        return {
+            "op": "param",
+            "index": self.index,
+            "value_type": type_to_serializable(self.value_type),
+        }
 
     def children(self) -> tuple[Program, ...]:
         return ()
@@ -248,7 +273,7 @@ class Apply(Program):
         prim = library.get(self.primitive)
         return prim.impl(*(arg.evaluate(grid, library, env, scope) for arg in self.args))
 
-    def result_type(self, library: Library) -> ValueType:
+    def result_type(self, library: Library) -> Type:
         return library.get(self.primitive).return_type
 
     def to_dict(self) -> dict[str, object]:
@@ -280,7 +305,7 @@ class Var(Program):
     """
 
     index: int
-    value_type: ValueType
+    value_type: Type
 
     def evaluate(
         self,
@@ -291,11 +316,11 @@ class Var(Program):
     ) -> Value:
         return scope[-1 - self.index]
 
-    def result_type(self, library: Library) -> ValueType:
+    def result_type(self, library: Library) -> Type:
         return self.value_type
 
     def to_dict(self) -> dict[str, object]:
-        return {"op": "var", "index": self.index, "value_type": self.value_type.value}
+        return {"op": "var", "index": self.index, "value_type": type_to_serializable(self.value_type)}
 
     def children(self) -> tuple[Program, ...]:
         return ()
@@ -340,3 +365,87 @@ class Lam(Program):
 
     def __str__(self) -> str:
         return f"lam({self.body})"
+
+
+@dataclass(frozen=True, slots=True)
+class AppFn(Program):
+    """Apply a *computed* function value to arguments — the higher-order application node.
+
+    Unlike :class:`Apply` (whose head is a fixed primitive *name*), ``fn`` is a sub-program that
+    evaluates to a function value: a :class:`~...library.Closure` (from a :class:`Lam`) or a
+    :class:`~...library.Primitive` (from a :class:`PrimRef`). Evaluation reuses exactly the machinery
+    ``build_grid`` uses per cell — ``Closure.__call__`` for a lambda (curried), ``impl(*args)`` for a
+    primitive — so applying a function value needs no new runtime. Its :meth:`result_type` is the head
+    arrow's codomain, which is why :class:`Type`'s arrow types (Phase C) are the prerequisite.
+    """
+
+    fn: Program
+    args: tuple[Program, ...]
+
+    def evaluate(
+        self,
+        grid: Grid,
+        library: Library,
+        env: tuple[Value, ...] = (),
+        scope: tuple[Value, ...] = (),
+    ) -> Value:
+        fn_value = self.fn.evaluate(grid, library, env, scope)
+        arg_values = [arg.evaluate(grid, library, env, scope) for arg in self.args]
+        if isinstance(fn_value, Primitive):
+            return fn_value.impl(*arg_values)  # a primitive applies all args at once
+        result: Value = fn_value
+        for arg_value in arg_values:  # a closure is curried: apply one argument at a time
+            if not isinstance(result, Closure):
+                raise TypeError(f"AppFn applied a non-function value: {type(result).__name__}")
+            result = result(arg_value)
+        return result
+
+    def result_type(self, library: Library) -> Type:
+        fn_type = self.fn.result_type(library)
+        if not isinstance(fn_type, ArrowType):
+            raise TypeError(f"AppFn head does not have a function type: {fn_type}")
+        return fn_type.result
+
+    def to_dict(self) -> dict[str, object]:
+        return {"op": "appfn", "fn": self.fn.to_dict(), "args": [arg.to_dict() for arg in self.args]}
+
+    def children(self) -> tuple[Program, ...]:
+        return (self.fn, *self.args)
+
+    def __str__(self) -> str:
+        return f"{self.fn}({', '.join(str(arg) for arg in self.args)})"
+
+
+@dataclass(frozen=True, slots=True)
+class PrimRef(Program):
+    """A primitive as a first-class *function value* — e.g. ``width`` passed to a function-typed hole.
+
+    Evaluates to the named :class:`~...library.Primitive` itself (a callable value that :class:`AppFn`
+    applies), and its type is that primitive's arrow ``(param_types) -> return_type``. This is what lets
+    a ``GRID -> INT`` perceiver fill a function-typed hole — cleaner than eta-expanding into a ``Lam``
+    (no size inflation, variadic-safe, uniform).
+    """
+
+    name: str
+
+    def evaluate(
+        self,
+        grid: Grid,
+        library: Library,
+        env: tuple[Value, ...] = (),
+        scope: tuple[Value, ...] = (),
+    ) -> Value:
+        return library.get(self.name)
+
+    def result_type(self, library: Library) -> Type:
+        prim = library.get(self.name)
+        return ArrowType(tuple(prim.param_types), prim.return_type)
+
+    def to_dict(self) -> dict[str, object]:
+        return {"op": "primref", "name": self.name}
+
+    def children(self) -> tuple[Program, ...]:
+        return ()
+
+    def __str__(self) -> str:
+        return f"&{self.name}"  # `&` = a reference to the primitive as a value

@@ -26,7 +26,7 @@ from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.cost import Cost
 from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive, Value
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import Type, ValueType
 
 #: A fixed, varied battery for observational equivalence (square + non-square + singleton).
 _TEST_GRIDS: tuple[Grid, ...] = (
@@ -40,8 +40,10 @@ _TEST_INTS: tuple[int, ...] = (0, 1, 2, 3)
 _MAX_BATTERY = 400  # cap the arg-combination product for high-arity abstractions
 
 
-def _battery(param_types: tuple[ValueType, ...]) -> list[tuple[Value, ...]]:
-    pools: dict[ValueType, tuple[Value, ...]] = {
+def _battery(param_types: tuple[Type, ...]) -> list[tuple[Value, ...]]:
+    # Base-typed inputs only; a function-typed (arrow) parameter has no test battery yet — behavioral
+    # signatures over higher-order primitives are a later (Phase E) concern.
+    pools: dict[Type, tuple[Value, ...]] = {
         ValueType.GRID: _TEST_GRIDS,
         ValueType.COLOR: _TEST_COLORS,
         ValueType.INT: _TEST_INTS,

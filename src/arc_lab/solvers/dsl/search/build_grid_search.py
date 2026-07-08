@@ -35,7 +35,7 @@ from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
 from arc_lab.solvers.dsl.substrate.library import Library, Value
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, Program, Var
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import Type, ValueType
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +61,7 @@ class BuildGridSearch(Search):
         self.beam_width = beam_width
         self.consts = consts
 
-    def composes_signature(
-        self, param_types: tuple[ValueType, ...], return_type: ValueType
-    ) -> bool:
+    def composes_signature(self, param_types: tuple[Type, ...], return_type: Type) -> bool:
         """Whether the coordinate enumeration composes a primitive of this signature (``INT^n -> INT``).
 
         The search's own composition rule, exposed so a ``SearchScopedFrequentSubtree`` can mine

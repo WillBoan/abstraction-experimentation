@@ -18,7 +18,7 @@ from __future__ import annotations
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive, Value
 from arc_lab.solvers.dsl.substrate.program import Input, Param, Program
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import Type
 
 # The template is closed (no Input), so the outer input grid is never consulted while
 # evaluating it; a fixed dummy stands in for evaluate's required grid parameter.
@@ -48,13 +48,14 @@ def make_abstraction(name: str, template: Program, library: Library) -> Primitiv
     )
 
 
-def _param_types(template: Program) -> tuple[ValueType, ...]:
+def _param_types(template: Program) -> tuple[Type, ...]:
     """The template's hole types in index order; validates closed + contiguous indices.
 
     A repeated ``Param`` index (the variable-sharing case, e.g. one grid fed to several
     positions) is fine as long as its type is consistent — it still counts as one argument.
+    A hole may be arrow-typed (a function-typed parameter — the higher-order case).
     """
-    by_index: dict[int, ValueType] = {}
+    by_index: dict[int, Type] = {}
     for node in template.walk():
         if isinstance(node, Input):
             raise ValueError("abstraction template must be closed (no Input node)")

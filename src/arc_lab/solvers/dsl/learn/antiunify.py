@@ -27,7 +27,7 @@ from collections.abc import Callable, Iterator
 
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.program import Apply, Input, Lam, Param, Program, Var
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import Type, ValueType
 
 
 class _BoundVarEscapeError(Exception):
@@ -200,7 +200,7 @@ class SearchScopedFrequentSubtree(FrequentSubtree):
     def __init__(
         self,
         *,
-        composes: Callable[[tuple[ValueType, ...], ValueType], bool],
+        composes: Callable[[tuple[Type, ...], Type], bool],
         min_frequency: int = 2,
     ) -> None:
         super().__init__(min_frequency=min_frequency)
@@ -223,9 +223,9 @@ def _contains_lam(program: Program) -> bool:
 
 def _template_signature(
     template: Program, library: Library
-) -> tuple[tuple[ValueType, ...], ValueType]:
+) -> tuple[tuple[Type, ...], Type]:
     """The closed template's ``(param_types, return_type)`` — its signature as a would-be abstraction."""
-    by_index: dict[int, ValueType] = {}
+    by_index: dict[int, Type] = {}
     for node in template.walk():
         if isinstance(node, Param):
             by_index[node.index] = node.value_type

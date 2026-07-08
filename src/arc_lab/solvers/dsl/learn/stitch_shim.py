@@ -27,15 +27,17 @@ from typing import TYPE_CHECKING, TypeAlias
 from arc_lab.solvers.dsl.learn.antiunify import AbstractionProposer, _close_template, _is_useful
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.program import (
+    AppFn,
     Apply,
     Const,
     Input,
     Lam,
     Param,
+    PrimRef,
     Program,
     Var,
 )
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import Type, ValueType
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -69,6 +71,10 @@ def to_sexpr(program: Program) -> str:
         return f"x{program.index}"  # a closed terminal (see docstring); `#j` is Stitch-output only
     if isinstance(program, Lam):
         return f"(lam {to_sexpr(program.body)})"
+    if isinstance(program, PrimRef):
+        return program.name  # a primitive as a value is its bare symbol (higher-order head)
+    if isinstance(program, AppFn):
+        return f"({to_sexpr(program.fn)} {' '.join(to_sexpr(a) for a in program.args)})"
     if isinstance(program, Apply):
         if not program.args:
             return program.primitive
@@ -116,7 +122,7 @@ def _parse(tokens: Sequence[str], i: int) -> tuple[SExpr, int]:
     return tok, i + 1
 
 
-def _to_program(node: SExpr, library: Library, expected: ValueType | None) -> Program:
+def _to_program(node: SExpr, library: Library, expected: Type | None) -> Program:
     """Convert a parsed node to a `Program`, threading the expected type down to the leaves."""
     if isinstance(node, str):
         return _atom_to_program(node, library, expected)
@@ -136,23 +142,23 @@ def _to_program(node: SExpr, library: Library, expected: ValueType | None) -> Pr
     )
 
 
-def _atom_to_program(atom: str, library: Library, expected: ValueType | None) -> Program:
+def _atom_to_program(atom: str, library: Library, expected: Type | None) -> Program:
     if atom == "input":
         return Input()
     if atom.startswith("#"):
         return Param(int(atom[1:]), expected or _INT)
     if atom.startswith("$"):
         return Var(int(atom[1:]), expected or _INT)
-    if _is_int_literal(atom):
-        return Const(int(atom), expected or _INT)
+    if _is_int_literal(atom):  # a literal is always base-typed
+        return Const(int(atom), expected if isinstance(expected, ValueType) else _INT)
     if atom in library:  # a nullary primitive used as a value
         return Apply(atom, ())
     raise ValueError(f"unknown atom {atom!r} (not input/#j/$i/literal/primitive)")
 
 
 def _arg_types(
-    param_types: tuple[ValueType, ...], variadic: ValueType | None, n: int
-) -> tuple[ValueType | None, ...]:
+    param_types: tuple[Type, ...], variadic: Type | None, n: int
+) -> tuple[Type | None, ...]:
     """Expected type per argument position, extending a variadic tail with its element type."""
     return tuple(param_types[i] if i < len(param_types) else variadic for i in range(n))
 

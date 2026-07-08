@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import Type, ValueType, type_to_serializable
 
 if TYPE_CHECKING:
     from arc_lab.solvers.dsl.substrate.program import Program
@@ -56,9 +56,10 @@ class Closure:
         return self.body.evaluate(self.grid, self.library, self.env, (*self.scope, arg))
 
 
-#: A value flowing through a program: a grid, a scalar (color / small int), or a function
-#: value (a lambda's closure). Widens further as new value types are introduced.
-Value: TypeAlias = Grid | int | Closure
+#: A value flowing through a program: a grid, a scalar (color / small int), or a *function value* —
+#: either a lambda's :class:`Closure` or a :class:`Primitive` referenced first-class (via a ``PrimRef``,
+#: applied by ``AppFn``). Widens further as new value types are introduced.
+Value: TypeAlias = "Grid | int | Closure | Primitive"
 
 #: A primitive implementation: takes value arguments, returns a value.
 PrimitiveImpl: TypeAlias = Callable[..., Value]
@@ -81,10 +82,10 @@ class Primitive:
     """
 
     name: str
-    param_types: tuple[ValueType, ...]
-    return_type: ValueType
+    param_types: tuple[Type, ...]  # a base type, or an arrow (a function-typed parameter)
+    return_type: Type
     impl: PrimitiveImpl
-    variadic_param: ValueType | None = None
+    variadic_param: Type | None = None
     #: For a *learned* abstraction: its defining template (a closed :class:`Program`
     #: with :class:`~arc_lab.solvers.dsl.substrate.program.Param` holes). ``None`` for a
     #: hand-coded primitive. ``impl`` evaluates this template; carrying it here keeps a
@@ -122,9 +123,11 @@ class Primitive:
         """
         data: dict[str, object] = {
             "name": self.name,
-            "param_types": [t.value for t in self.param_types],
-            "return_type": self.return_type.value,
-            "variadic_param": None if self.variadic_param is None else self.variadic_param.value,
+            "param_types": [type_to_serializable(t) for t in self.param_types],
+            "return_type": type_to_serializable(self.return_type),
+            "variadic_param": (
+                None if self.variadic_param is None else type_to_serializable(self.variadic_param)
+            ),
         }
         if self.template is not None:
             data["template"] = self.template.to_dict()

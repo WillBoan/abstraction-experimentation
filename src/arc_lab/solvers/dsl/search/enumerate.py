@@ -33,7 +33,7 @@ from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.search.cost import Cost
 from arc_lab.solvers.dsl.substrate.library import Library, Value
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import Type, ValueType
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ class Enumerate(Search):
         target: Signature = tuple(out for out in outputs if out is not None)
 
         # pools[type][behaviour-signature] = smallest program with that behaviour.
-        pools: dict[ValueType, dict[Signature, Program]] = {
+        pools: dict[Type, dict[Signature, Program]] = {
             ValueType.GRID: {},
             ValueType.COLOR: {},
             ValueType.INT: {},
@@ -105,7 +105,7 @@ class Enumerate(Search):
         # dedup stream independently, e.g. set `...enumerate.reject` to WARNING while
         # the parent stays at DEBUG. Not worth the indirection until the volume
         # actually gets in the way — the `if debug:` guard already makes it free when off.
-        def consider(program: Program, expected: ValueType) -> None:
+        def consider(program: Program, expected: Type) -> None:
             counts["considered"] += 1
             try:
                 sig: Signature = tuple(program.evaluate(inp, library) for inp in inputs)
@@ -126,7 +126,7 @@ class Enumerate(Search):
                 if debug:
                     logger.debug(
                         "enumerate accept [%s] %s sig=%s",
-                        expected.value,
+                        expected,
                         program,
                         _format_signature(sig),
                     )
