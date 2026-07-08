@@ -25,6 +25,11 @@ _GG = ArrowType((_G,), _G)  # GRID -> GRID
 # twice(grid=#0, fn=#1) = fn(fn(grid))  — #1 is a GRID -> GRID function-typed hole, applied twice.
 _TWICE: Program = AppFn(Param(1, _GG), (AppFn(Param(1, _GG), (Param(0, _G),)),))
 
+# thrice(fn=#0, grid=#1) = fn(fn(fn(grid))) — applies its GRID -> GRID function argument three times.
+_THRICE: Program = AppFn(
+    Param(0, _GG), (AppFn(Param(0, _GG), (AppFn(Param(0, _GG), (Param(1, _G),)),)),)
+)
+
 
 def _rot180_task() -> Task:
     grid = [[1, 2], [3, 4]]
@@ -60,3 +65,34 @@ def test_unification_prunes_ill_typed_function_candidates() -> None:
     twice = make_abstraction("twice", _TWICE, D4_LIBRARY)
     library = Library(name="mistyped", primitives=(BUILD_LIBRARY.get("width"), twice))
     assert Enumerate(max_depth=1, higher_order=True).find(_rot180_task(), library).programs == ()
+
+
+# -- Phase G: Lam-synthesis (synthesize *new* function values, not just reference library ones) --------
+
+
+def _thrice_library() -> Library:
+    thrice = make_abstraction("thrice", _THRICE, D4_LIBRARY)  # (GRID -> GRID, GRID) -> GRID
+    return Library(name="rot90+thrice", primitives=(D4_LIBRARY.get("rot90"), thrice))
+
+
+def test_lam_synthesis_supplies_a_function_no_primitive_provides() -> None:
+    # Over <rot90>, reaching rot180 via `thrice` needs the *rot180 function* (rot180^3 = rot180) — and
+    # rot180 is not a library primitive, so only a *synthesized* `lam(rot90(rot90($0)))` can fill the
+    # hole. first-order (rot180 needs depth 2) and PrimRef-only (thrice(&rot90,input)=rot270) both fail.
+    library, task = _thrice_library(), _rot180_task()
+    assert Enumerate(max_depth=1).find(task, library).programs == ()  # first-order
+    assert Enumerate(max_depth=1, higher_order=True).find(task, library).programs == ()  # PrimRef-only
+    solved = Enumerate(max_depth=1, higher_order=True, synthesize_functions=True).find(task, library)
+    assert len(solved.programs) == 1
+    program = str(solved.programs[0])
+    assert "thrice" in program and "lam" in program  # consumed a *synthesized* composed function
+
+
+def test_function_pool_dedups_synthesized_functions_by_behavior() -> None:
+    # lam(rot90($0)) behaves exactly like &rot90, so the pool keeps one candidate per behavior (the
+    # smaller PrimRef wins); the rot180 composite, which no primitive provides, survives.
+    engine = Enumerate(higher_order=True, synthesize_functions=True)
+    gg = {str(ref) for ref, arrow in engine._function_pool(_thrice_library()) if arrow == _GG}
+    assert "&rot90" in gg  # the primitive wins the rot90 behavior
+    assert "lam(rot90($0))" not in gg  # the behaviorally-redundant lambda is deduped away
+    assert any(r.startswith("lam(rot90(rot90(") for r in gg)  # the rot180 composite survives

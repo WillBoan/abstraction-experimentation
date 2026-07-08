@@ -31,8 +31,8 @@ from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.search.cost import Cost
-from arc_lab.solvers.dsl.substrate.library import Library, Value
-from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, PrimRef, Program
+from arc_lab.solvers.dsl.substrate.library import Closure, Library, Primitive, Value
+from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, PrimRef, Program, Var
 from arc_lab.solvers.dsl.substrate.types import ArrowType, Type, ValueType, unify
 
 logger = logging.getLogger(__name__)
@@ -52,6 +52,22 @@ def _format_signature(sig: Signature) -> str:
     return "(" + ", ".join(_format_value(v) for v in sig) + ")"
 
 
+#: Function synthesis: a dummy grid for evaluating Input-free lambda bodies, small per-type batteries
+#: for probing a candidate function's behaviour, and how deep to compose synthesized function bodies.
+_SYNTH_GRID: Grid = Grid.from_list([[0]])
+_SYNTH_GRIDS: tuple[Grid, ...] = (Grid.from_list([[1, 2], [3, 4]]), Grid.from_list([[5, 6, 7], [8, 9, 0]]))
+_FUNCTION_SYNTHESIS_DEPTH = 3
+
+
+def _apply_unary(fn: Value, arg: Value) -> Value:
+    """Apply a unary function value (a :class:`Primitive` from a PrimRef, a :class:`Closure` from a Lam)."""
+    if isinstance(fn, Primitive):
+        return fn.impl(arg)
+    if isinstance(fn, Closure):
+        return fn(arg)
+    raise TypeError(f"not a unary function value: {type(fn).__name__}")
+
+
 class Enumerate(Search):
     """Bottom-up, type-directed enumeration up to a bounded composition depth."""
 
@@ -63,6 +79,7 @@ class Enumerate(Search):
         max_grid_args: int = 16,
         coord_ints: bool = False,
         higher_order: bool = False,
+        synthesize_functions: bool = False,
     ) -> None:
         # Enumerate enforces consistency implicitly (a program is kept only if its
         # behaviour signature equals the training outputs), so it does not take or
@@ -82,6 +99,10 @@ class Enumerate(Search):
         # primitives referenced as first-class values (PrimRefs), pruned by arrow-type unification.
         # Off by default, so first-order libraries (no arrow params) enumerate byte-identically.
         self.higher_order = higher_order
+        # Additionally synthesize *new* function values — Lam bodies composed bottom-up from the
+        # library — for the function pool, deduped by function-behavioral signature (so a composite
+        # like the rot180-function, absent as a primitive, becomes fillable). Requires higher_order.
+        self.synthesize_functions = synthesize_functions
 
     def find(self, task: Task, library: Library) -> SearchResult:
         debug = logger.isEnabledFor(logging.DEBUG)
@@ -221,20 +242,125 @@ class Enumerate(Search):
         return candidates[: self.max_grid_args]
 
     def _function_pool(self, library: Library) -> list[tuple[Program, ArrowType]]:
-        """Library primitives as first-class function *values* (:class:`PrimRef`) + their arrow types,
-        for filling function-typed holes (enabled by ``higher_order``).
-
-        This is the higher-order consumption surface: a primitive whose parameter is a function (e.g.
-        ``twice(grid, fn: GRID -> GRID)``) draws that argument from here, so the search can supply
-        ``&rot90`` where a bare value pool has nothing. Library names are unique, so these PrimRef
-        candidates need no dedup. Synthesizing *new* function values (``Lam`` bodies) bottom-up and
-        deduping them by a function-behavioral signature is the remaining generalization.
+        """Function *values* for filling function-typed holes (enabled by ``higher_order``): every
+        library primitive as a first-class :class:`PrimRef`, plus — when ``synthesize_functions`` —
+        *new* function values composed as :class:`Lam` bodies, all deduped by a function-behavioral
+        signature so a composite (e.g. the rot180-function, absent as a primitive) becomes fillable
+        while a redundant ``lam(rot90($0))`` collapses into ``&rot90``.
         """
-        return [
+        pool: list[tuple[Program, ArrowType]] = [
             (PrimRef(prim.name), ArrowType(tuple(prim.param_types), prim.return_type))
             for prim in library.primitives
             if not prim.is_variadic
         ]
+        if self.synthesize_functions:
+            pool += self._synthesized_functions(library)
+        return self._dedup_functions(pool, library)
+
+    def _synthesized_functions(self, library: Library) -> list[tuple[Program, ArrowType]]:
+        """``Lam`` function values composed bottom-up, one per unary arrow a library primitive wants."""
+        result: list[tuple[Program, ArrowType]] = []
+        for domain, codomain in self._needed_arrows(library):
+            for body in self._lam_bodies(domain, codomain, library):
+                result.append((Lam(body), ArrowType((domain,), codomain)))
+        return result
+
+    def _needed_arrows(self, library: Library) -> set[tuple[Type, Type]]:
+        """The distinct unary ``(domain, codomain)`` arrows that appear as a primitive's parameter."""
+        arrows: set[tuple[Type, Type]] = set()
+        for prim in library.primitives:
+            for param in prim.param_types:
+                if isinstance(param, ArrowType) and len(param.params) == 1:
+                    arrows.add((param.params[0], param.result))
+        return arrows
+
+    def _lam_bodies(self, domain: Type, codomain: Type, library: Library) -> list[Program]:
+        """Bodies of type ``codomain`` over ``{Var(0, domain)}`` + first-order primitives (bottom-up,
+        deduped by the body's behaviour as the bound var ranges over a battery)."""
+        battery = self._domain_battery(domain)
+        if not battery:
+            return []
+        pools: dict[Type, dict[tuple[object, ...], Program]] = {}
+
+        def keep(body: Program, body_type: Type) -> None:
+            sig = self._body_sig(body, battery, library)
+            if sig is None:
+                return
+            bucket = pools.setdefault(body_type, {})
+            if sig not in bucket or body.size() < bucket[sig].size():
+                bucket[sig] = body
+
+        keep(Var(0, domain), domain)
+        fixed = [
+            prim
+            for prim in library.primitives
+            if not prim.is_variadic and all(not isinstance(t, ArrowType) for t in prim.param_types)
+        ]
+        for _ in range(_FUNCTION_SYNTHESIS_DEPTH):
+            frozen = {t: list(bucket.values()) for t, bucket in pools.items()}
+            for prim in fixed:
+                options = [frozen.get(t, []) for t in prim.param_types]
+                if any(not opt for opt in options):
+                    continue
+                for combo in itertools.product(*options):
+                    keep(Apply(prim.name, tuple(combo)), prim.return_type)
+        return list(pools.get(codomain, {}).values())
+
+    def _dedup_functions(
+        self, pool: list[tuple[Program, ArrowType]], library: Library
+    ) -> list[tuple[Program, ArrowType]]:
+        """Drop behaviorally-identical unary candidates (a ``PrimRef``, being smaller, wins ties)."""
+        result: list[tuple[Program, ArrowType]] = []
+        seen: set[tuple[object, ...]] = set()
+        for ref, arrow in pool:
+            if len(arrow.params) == 1:
+                sig = self._function_sig(ref, arrow.params[0], library)
+                key = (arrow, sig)
+                if key in seen:
+                    continue
+                seen.add(key)
+            result.append((ref, arrow))
+        return result
+
+    def _function_sig(
+        self, ref: Program, domain: Type, library: Library
+    ) -> tuple[object, ...] | None:
+        """A unary function candidate's behaviour: its output as the argument ranges over a battery."""
+        battery = self._domain_battery(domain)
+        if not battery:
+            return None
+        try:
+            fn = ref.evaluate(_SYNTH_GRID, library)
+            return tuple(self._value_key(_apply_unary(fn, arg)) for arg in battery)
+        except Exception:
+            return None
+
+    def _body_sig(
+        self, body: Program, battery: tuple[Value, ...], library: Library
+    ) -> tuple[object, ...] | None:
+        """A lambda body's behaviour as its bound var (``$0``) ranges over ``battery``."""
+        try:
+            return tuple(
+                self._value_key(body.evaluate(_SYNTH_GRID, library, (), (arg,))) for arg in battery
+            )
+        except Exception:
+            return None
+
+    def _domain_battery(self, domain: Type) -> tuple[Value, ...]:
+        """A few distinct values of ``domain`` to probe a function's behaviour (empty = unsupported)."""
+        if domain == ValueType.GRID:
+            return _SYNTH_GRIDS
+        if domain == ValueType.COLOR:
+            return (0, 1, 2)
+        if domain == ValueType.INT:
+            return (0, 1, 2, 3)
+        return ()
+
+    def _value_key(self, value: Value) -> object:
+        """A hashable identity for a value (grids don't hash directly)."""
+        if isinstance(value, Grid):
+            return ("grid", value.shape, value.array.tobytes())
+        return value
 
     def _arg_pool(
         self,
