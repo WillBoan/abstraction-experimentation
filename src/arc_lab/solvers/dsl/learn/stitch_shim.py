@@ -20,6 +20,7 @@ in-house :class:`AbstractionSelector`, so the cost model remains fully ours.
 
 from __future__ import annotations
 
+import itertools
 import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias
@@ -37,7 +38,15 @@ from arc_lab.solvers.dsl.substrate.program import (
     Program,
     Var,
 )
-from arc_lab.solvers.dsl.substrate.types import Type, ValueType
+from arc_lab.solvers.dsl.substrate.types import (
+    ArrowType,
+    Substitution,
+    Type,
+    TypeVar,
+    ValueType,
+    apply_subst,
+    unify,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -88,15 +97,21 @@ def to_sexpr(program: Program) -> str:
 def from_sexpr(sexpr: str, library: Library) -> Program:
     """Parse a Stitch s-expression into a closed `Program` template over ``library``.
 
-    Types are re-inferred top-down from primitive signatures (Stitch is untyped); a free ``input``
-    is lifted to a shared grid ``Param`` and all params are renumbered contiguously
-    (:func:`_close_template`), so the result is a valid, minimal-arity abstraction template.
+    Types are re-inferred (Stitch is untyped) by Hindley-Milner unification. First-order idioms infer
+    top-down from primitive signatures as before; a **higher-order** term — a metavar or bound var
+    *applied* to arguments, ``(#j a…)`` / ``($i a…)`` — becomes an :class:`AppFn` whose head's *arrow*
+    type is solved from its argument types (domain) and its context (codomain), unified across every
+    use of that metavar (so ``#0`` in ``(#0 (#0 input))`` resolves to ``GRID -> GRID``). A bare
+    primitive symbol in a value position becomes a :class:`PrimRef`. A free ``input`` is then lifted to
+    a shared grid ``Param`` and params renumbered (:func:`_close_template`).
     """
     tokens = _tokenize(sexpr)
     tree, rest = _parse(tokens, 0)
     if rest != len(tokens):
         raise ValueError(f"trailing tokens in s-expression: {sexpr!r}")
-    return _close_template(_to_program(tree, library, None))
+    ctx = _InferCtx(subst={}, metavars={}, boundvars={}, counter=itertools.count())
+    program, _ = _infer(tree, library, None, ctx)
+    return _close_template(_resolve_types(program, ctx.subst))
 
 
 def _tokenize(sexpr: str) -> list[str]:
@@ -122,38 +137,121 @@ def _parse(tokens: Sequence[str], i: int) -> tuple[SExpr, int]:
     return tok, i + 1
 
 
-def _to_program(node: SExpr, library: Library, expected: Type | None) -> Program:
-    """Convert a parsed node to a `Program`, threading the expected type down to the leaves."""
+@dataclass
+class _InferCtx:
+    """Mutable state threaded through type re-inference: the unifier + each hole/var's solved type."""
+
+    subst: Substitution
+    metavars: dict[int, Type]  # #j -> its (shared, unification-refined) type
+    boundvars: dict[int, Type]  # $i -> its (shared) type
+    counter: itertools.count[int]
+
+
+def _fresh(ctx: _InferCtx) -> TypeVar:
+    return TypeVar(f"?t{next(ctx.counter)}")
+
+
+def _unify_into(ctx: _InferCtx, t1: Type, t2: Type) -> None:
+    result = unify(t1, t2, ctx.subst)
+    if result is None:
+        raise ValueError(f"type error: cannot unify {t1} and {t2}")
+    ctx.subst = result
+
+
+def _infer(node: SExpr, library: Library, expected: Type | None, ctx: _InferCtx) -> tuple[Program, Type]:
+    """Build a `Program` from a parsed node and infer its type, unifying constraints into ``ctx``."""
     if isinstance(node, str):
-        return _atom_to_program(node, library, expected)
+        return _infer_atom(node, library, expected, ctx)
     if not node:
         raise ValueError("empty application in s-expression")
     head, args = node[0], node[1:]
     if head == "lam":
         if len(args) != 1:
             raise ValueError(f"lam takes one body, got {len(args)}")
-        return Lam(_to_program(args[0], library, None))
+        body, _ = _infer(args[0], library, None, ctx)
+        return Lam(body), ValueType.FN
     if not isinstance(head, str):
         raise ValueError(f"application head must be a symbol, got {head!r}")
-    prim = library.get(head)  # raises KeyError if it references an unknown (e.g. nested fn_k)
-    arg_types = _arg_types(prim.param_types, prim.variadic_param, len(args))
-    return Apply(
-        head, tuple(_to_program(a, library, t) for a, t in zip(args, arg_types, strict=True))
-    )
+    if head[:1] in ("#", "$"):  # higher-order application: a hole/var applied to arguments -> AppFn
+        arg_progs, arg_types = _infer_args(args, library, ctx)
+        result = _fresh(ctx)
+        applied: Type = ArrowType(tuple(arg_types), result)
+        store = ctx.metavars if head[0] == "#" else ctx.boundvars
+        index = int(head[1:])
+        if index in store:
+            _unify_into(ctx, store[index], applied)
+        else:
+            store[index] = applied
+        fn: Program = Param(index, store[index]) if head[0] == "#" else Var(index, store[index])
+        if expected is not None:
+            _unify_into(ctx, result, expected)
+        return AppFn(fn, tuple(arg_progs)), result
+    prim = library.get(head)  # first-order application; KeyError for an unknown symbol (e.g. fn_k)
+    arg_expected = _arg_types(prim.param_types, prim.variadic_param, len(args))
+    arg_progs = []
+    for arg, want in zip(args, arg_expected, strict=True):
+        arg_prog, arg_type = _infer(arg, library, want, ctx)
+        if want is not None:
+            _unify_into(ctx, arg_type, want)
+        arg_progs.append(arg_prog)
+    if expected is not None:
+        _unify_into(ctx, prim.return_type, expected)
+    return Apply(head, tuple(arg_progs)), prim.return_type
 
 
-def _atom_to_program(atom: str, library: Library, expected: Type | None) -> Program:
+def _infer_atom(
+    atom: str, library: Library, expected: Type | None, ctx: _InferCtx
+) -> tuple[Program, Type]:
     if atom == "input":
-        return Input()
-    if atom.startswith("#"):
-        return Param(int(atom[1:]), expected or _INT)
-    if atom.startswith("$"):
-        return Var(int(atom[1:]), expected or _INT)
+        if expected is not None:
+            _unify_into(ctx, ValueType.GRID, expected)
+        return Input(), ValueType.GRID
+    if atom[:1] in ("#", "$"):  # a hole / bound var used as a *value* (its type comes from context)
+        store = ctx.metavars if atom[0] == "#" else ctx.boundvars
+        index = int(atom[1:])
+        t = store.setdefault(index, expected if expected is not None else _fresh(ctx))
+        if expected is not None:
+            _unify_into(ctx, t, expected)
+        return (Param(index, t) if atom[0] == "#" else Var(index, t)), t
     if _is_int_literal(atom):  # a literal is always base-typed
-        return Const(int(atom), expected if isinstance(expected, ValueType) else _INT)
-    if atom in library:  # a nullary primitive used as a value
-        return Apply(atom, ())
+        base = expected if isinstance(expected, ValueType) else _INT
+        return Const(int(atom), base), base
+    if atom in library:  # a primitive referenced as a first-class function value
+        prim = library.get(atom)
+        arrow: Type = ArrowType(tuple(prim.param_types), prim.return_type)
+        if expected is not None:
+            _unify_into(ctx, arrow, expected)
+        return PrimRef(atom), arrow
     raise ValueError(f"unknown atom {atom!r} (not input/#j/$i/literal/primitive)")
+
+
+def _infer_args(
+    args: Sequence[SExpr], library: Library, ctx: _InferCtx
+) -> tuple[list[Program], list[Type]]:
+    progs: list[Program] = []
+    types: list[Type] = []
+    for arg in args:
+        prog, arg_type = _infer(arg, library, None, ctx)
+        progs.append(prog)
+        types.append(arg_type)
+    return progs, types
+
+
+def _resolve_types(program: Program, subst: Substitution) -> Program:
+    """Rebuild ``program`` with every hole/var's carried type substituted to its solved form."""
+    if isinstance(program, Param):
+        return Param(program.index, apply_subst(subst, program.value_type))
+    if isinstance(program, Var):
+        return Var(program.index, apply_subst(subst, program.value_type))
+    if isinstance(program, Apply):
+        return Apply(program.primitive, tuple(_resolve_types(a, subst) for a in program.args))
+    if isinstance(program, AppFn):
+        return AppFn(
+            _resolve_types(program.fn, subst), tuple(_resolve_types(a, subst) for a in program.args)
+        )
+    if isinstance(program, Lam):
+        return Lam(_resolve_types(program.body, subst))
+    return program  # Input / Const / PrimRef: no carried type variables
 
 
 def _arg_types(

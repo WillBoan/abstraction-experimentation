@@ -32,8 +32,8 @@ from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.search.cost import Cost
 from arc_lab.solvers.dsl.substrate.library import Library, Value
-from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
-from arc_lab.solvers.dsl.substrate.types import Type, ValueType
+from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, PrimRef, Program
+from arc_lab.solvers.dsl.substrate.types import ArrowType, Type, ValueType, unify
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,7 @@ class Enumerate(Search):
         max_pool: int = 600,
         max_grid_args: int = 16,
         coord_ints: bool = False,
+        higher_order: bool = False,
     ) -> None:
         # Enumerate enforces consistency implicitly (a program is kept only if its
         # behaviour signature equals the training outputs), so it does not take or
@@ -77,6 +78,10 @@ class Enumerate(Search):
         # (read/set_cell). Off by default so the existing INT-consuming vocabularies
         # (scale) are unaffected — keeping the dsl-synth lock intact.
         self.coord_ints = coord_ints
+        # Higher-order composition: fill a function-typed (arrow) argument from a pool of library
+        # primitives referenced as first-class values (PrimRefs), pruned by arrow-type unification.
+        # Off by default, so first-order libraries (no arrow params) enumerate byte-identically.
+        self.higher_order = higher_order
 
     def find(self, task: Task, library: Library) -> SearchResult:
         debug = logger.isEnabledFor(logging.DEBUG)
@@ -157,6 +162,7 @@ class Enumerate(Search):
             consider(Const(value, ValueType.INT), ValueType.INT)
 
         fixed = [prim for prim in library.primitives if not prim.is_variadic]
+        function_pool = self._function_pool(library) if self.higher_order else []
 
         # TODO(checkpointing, deferred): the run artifact checkpoints at *task* grain
         # (streaming trace + resume, see analysis/runner.py), which is the right grain
@@ -172,9 +178,10 @@ class Enumerate(Search):
             frozen = {vtype: list(bucket.values()) for vtype, bucket in pools.items()}
             frozen[ValueType.GRID] = self._grid_frontier(frozen[ValueType.GRID], task, library)
             for prim in fixed:
-                # A primitive whose arg type this engine doesn't pool (e.g. build_grid's FN, which
-                # only a lambda produces) has no options and is skipped — never a KeyError.
-                options = [frozen.get(t, []) for t in prim.param_types]
+                # Each argument position draws from its type's pool; a function-typed (arrow) position
+                # draws from the higher-order function pool (empty unless `higher_order`). A position
+                # with no candidates skips the primitive — never a KeyError.
+                options = [self._arg_pool(t, frozen, function_pool) for t in prim.param_types]
                 if any(not opt for opt in options):
                     continue
                 for combo in itertools.product(*options):
@@ -212,6 +219,34 @@ class Enumerate(Search):
         (:class:`BeamSearch`) can override this one seam without touching the search loop.
         """
         return candidates[: self.max_grid_args]
+
+    def _function_pool(self, library: Library) -> list[tuple[Program, ArrowType]]:
+        """Library primitives as first-class function *values* (:class:`PrimRef`) + their arrow types,
+        for filling function-typed holes (enabled by ``higher_order``).
+
+        This is the higher-order consumption surface: a primitive whose parameter is a function (e.g.
+        ``twice(grid, fn: GRID -> GRID)``) draws that argument from here, so the search can supply
+        ``&rot90`` where a bare value pool has nothing. Library names are unique, so these PrimRef
+        candidates need no dedup. Synthesizing *new* function values (``Lam`` bodies) bottom-up and
+        deduping them by a function-behavioral signature is the remaining generalization.
+        """
+        return [
+            (PrimRef(prim.name), ArrowType(tuple(prim.param_types), prim.return_type))
+            for prim in library.primitives
+            if not prim.is_variadic
+        ]
+
+    def _arg_pool(
+        self,
+        param_type: Type,
+        frozen: dict[Type, list[Program]],
+        function_pool: list[tuple[Program, ArrowType]],
+    ) -> list[Program]:
+        """Candidate programs for an argument of ``param_type``: the typed value pool, or — for a
+        function-typed (arrow) parameter — the function pool filtered by arrow-type unification."""
+        if isinstance(param_type, ArrowType):
+            return [ref for ref, arrow in function_pool if unify(arrow, param_type) is not None]
+        return frozen.get(param_type, [])
 
 
 class BeamSearch(Enumerate):

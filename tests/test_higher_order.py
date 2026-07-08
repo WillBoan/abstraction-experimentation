@@ -11,9 +11,10 @@ curried metavars) is Phase F, so `from_sexpr` round-tripping is not asserted her
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.dsl.learn.stitch_shim import to_sexpr
+from arc_lab.solvers.dsl.learn.stitch_shim import from_sexpr, to_sexpr
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
+from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import (
     AppFn,
     Apply,
@@ -69,3 +70,17 @@ def test_higher_order_serializes_to_a_stitch_sexpr() -> None:
     assert to_sexpr(PrimRef("width")) == "width"  # a primitive as a value is its bare symbol
     assert to_sexpr(AppFn(Param(2, _DIM), (Param(0, _G),))) == "(x2 x0)"  # apply a hole to an arg
     assert to_sexpr(_TEMPLATE) == "(sub (sub (x2 x0) x1) 1)"
+
+
+def test_from_sexpr_infers_a_higher_order_abstraction() -> None:
+    # (#0 (#0 input)) — a metavar applied to its own result on `input`. Inference must resolve #0 to
+    # GRID -> GRID (domain from `input`, codomain unified across both uses), yielding a `twice`
+    # template (fn: GRID -> GRID, grid: GRID) -> GRID whose body is fn(fn(grid)).
+    prim = make_abstraction("twice", from_sexpr("(#0 (#0 input))", D4_LIBRARY), D4_LIBRARY)
+    assert ArrowType((_G,), _G) in prim.param_types  # the hole recovered as an arrow, not opaque FN
+    assert _G in prim.param_types  # and the lifted grid parameter
+    # Behaviorally fn(fn(grid)): twice(&rot90, input) applies rot90 twice == rot180.
+    library = D4_LIBRARY.extended(name="d4+twice", extra=(prim,))
+    grid = Grid.from_list([[1, 2], [3, 4]])
+    applied: Program = Apply("twice", (PrimRef("rot90"), Input()))
+    assert applied.evaluate(grid, library) == Grid.from_list([[4, 3], [2, 1]])  # rot180

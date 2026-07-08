@@ -26,7 +26,7 @@ from collections import Counter
 from collections.abc import Callable, Iterator
 
 from arc_lab.solvers.dsl.substrate.library import Library
-from arc_lab.solvers.dsl.substrate.program import Apply, Input, Lam, Param, Program, Var
+from arc_lab.solvers.dsl.substrate.program import AppFn, Apply, Input, Lam, Param, Program, Var
 from arc_lab.solvers.dsl.substrate.types import Type, ValueType
 
 
@@ -296,7 +296,9 @@ def _close_template(program: Program) -> Program:
             return Apply(node.primitive, tuple(rebuild(arg) for arg in node.args))
         if isinstance(node, Lam):  # descend so an Input inside a lambda body is lifted too
             return Lam(rebuild(node.body))
-        return node  # Const / Var: an invariant leaf, kept concrete
+        if isinstance(node, AppFn):  # descend the higher-order application (head + args)
+            return AppFn(rebuild(node.fn), tuple(rebuild(arg) for arg in node.args))
+        return node  # Const / Var / PrimRef: an invariant leaf, kept concrete
 
     return rebuild(program)
 
