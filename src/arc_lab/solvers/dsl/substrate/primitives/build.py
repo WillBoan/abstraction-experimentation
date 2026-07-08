@@ -37,6 +37,14 @@ def _sub(a: int, b: int) -> int:
     return a - b
 
 
+def _add(a: int, b: int) -> int:
+    return a + b
+
+
+def _mul(a: int, b: int) -> int:
+    return a * b
+
+
 def _build_grid(height: int, width: int, fn: Value) -> Grid:
     """An ``height x width`` grid whose cell (i, j) is ``fn(i)(j)`` -- the lambda, applied per cell.
 
@@ -66,9 +74,20 @@ def _build_grid(height: int, width: int, fn: Value) -> Grid:
 WIDTH = Primitive(name="width", param_types=(_GRID,), return_type=_INT, impl=_width)
 HEIGHT = Primitive(name="height", param_types=(_GRID,), return_type=_INT, impl=_height)
 SUB = Primitive(name="sub", param_types=(_INT, _INT), return_type=_INT, impl=_sub)
+ADD = Primitive(name="add", param_types=(_INT, _INT), return_type=_INT, impl=_add)
+MUL = Primitive(name="mul", param_types=(_INT, _INT), return_type=_INT, impl=_mul)
 BUILD_GRID = Primitive(
     name="build_grid", param_types=(_INT, _INT, _FN), return_type=_GRID, impl=_build_grid
 )
 
 #: The cell-render floor: cells (read / set_cell) + dimension perceivers + arithmetic + build_grid.
+#: `sub` alone is the D4-rederivation clique (reflection is (n - k) - 1); `add`/`mul` are held out here.
 BUILD_LIBRARY = Library(name="build", primitives=(READ, SET_CELL, WIDTH, HEIGHT, SUB, BUILD_GRID))
+
+#: The *affine* coordinate grammar: the cell floor plus the whole (INT, INT) -> INT family
+#: (`sub` + `add` + `mul`), so a primitive-driven `BuildGridSearch` composes a*x+b coordinate maps
+#: -- an honest, wider search than reflection-only `sub`. The grammar axis of the E8/E9 matrix.
+BUILD_AFFINE_LIBRARY = Library(
+    name="build-affine",
+    primitives=(READ, SET_CELL, WIDTH, HEIGHT, SUB, ADD, MUL, BUILD_GRID),
+)
