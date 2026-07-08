@@ -7,7 +7,9 @@ from collections.abc import Callable
 from pathlib import Path
 
 from arc_lab.core.task import Task
+from arc_lab.solvers.dsl.analysis.artifact import RunCoordinates, TaskRecord
 from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, TwoPartMDL
+from arc_lab.solvers.dsl.analysis.runner import RunSummary
 from arc_lab.solvers.dsl.learn.antiunify import (
     AntiunifyPairs,
     FrequentSubtree,
@@ -19,10 +21,12 @@ from arc_lab.solvers.dsl.learn.antiunify import (
     rewrite_with,
 )
 from arc_lab.solvers.dsl.learn.experiments import (
+    CorrelationPoint,
     Experiment,
     ExperimentReport,
     _d4_targets,
     _mirror,
+    compression_transfer_correlation,
     e1_rot90,
     e2_swap_cells,
     e3_swap_cols,
@@ -34,6 +38,7 @@ from arc_lab.solvers.dsl.learn.experiments import (
     e9_mirror_index_affine,
     run_experiment,
 )
+from arc_lab.solvers.dsl.learn.harness import Usefulness, heldout_transfer, train_usefulness
 from arc_lab.solvers.dsl.learn.selection import GreedyMDL
 from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep
 from arc_lab.solvers.dsl.search import BuildGridSearch
@@ -363,3 +368,76 @@ def test_e5_rederives_rot90_as_build_grid(tmp_path: Path) -> None:
     assert (
         len(report.enablement) > 0
     )  # with the abstraction, a depth-1 apply solves; without, it can't
+
+
+# -- transfer grade + train-side usefulness (the measurement layer) -----
+
+
+def _summary(rows: dict[str, tuple[bool, int]]) -> RunSummary:
+    """A minimal RunSummary from ``{task_id: (solved, considered)}`` for metric unit tests."""
+    records = tuple(
+        TaskRecord(
+            task_id=tid,
+            solved=solved,
+            search_solved=solved,
+            considered=considered,
+            program=None,
+            program_size=None,
+            program_dict=None,
+            stats_extra={},
+        )
+        for tid, (solved, considered) in rows.items()
+    )
+    return RunSummary(
+        coordinates=RunCoordinates(solver="s", dataset="d", library={}),
+        records=records,
+        library_bits=0.0,
+        program_bits=0.0,
+    )
+
+
+def test_heldout_transfer_is_the_heldout_slice_of_new_solves() -> None:
+    heldout = frozenset({"h1", "h2"})
+    base = _summary({"t1": (True, 100), "t2": (False, 100), "h1": (False, 10), "h2": (False, 10)})
+    aug = _summary({"t1": (True, 40), "t2": (True, 40), "h1": (True, 5), "h2": (False, 5)})
+    # Only h1: a held-out task newly solved. h2 stays unsolved; t2 is train, not held-out.
+    assert heldout_transfer(base, aug, heldout) == frozenset({"h1"})
+
+
+def test_train_usefulness_is_train_only_speedup_and_enablement() -> None:
+    train = frozenset({"t1", "t2"})
+    base = _summary({"t1": (True, 100), "t2": (False, 100), "h1": (False, 10)})
+    aug = _summary({"t1": (True, 40), "t2": (True, 40), "h1": (True, 5)})
+    use = train_usefulness(base, aug, base, aug, train)  # deep pair, shallow pair (same fixtures)
+    assert use.enabled == frozenset({"t2"})  # newly solved on train (shallow pair)
+    assert use.speedup == 200 / 80  # deep train considered 200 -> 80; the held-out task excluded
+
+
+def test_e5_reports_heldout_grade_and_train_usefulness(tmp_path: Path) -> None:
+    exp = e5_rederive_rot90()
+    train_ids = frozenset(g.task_id for g in exp.tasks if g.split == "train")
+    heldout_ids = frozenset(g.task_id for g in exp.tasks if g.split == "heldout")
+    assert heldout_ids  # the testbed carries a real held-out split
+
+    report = run_experiment(exp, testbeds_root=tmp_path / "testbeds", runs_root=tmp_path / "runs")
+
+    # The grade is exactly the held-out slice of same-corpus enablement, never a train task.
+    assert report.heldout <= report.enablement
+    assert report.heldout <= heldout_ids
+    assert report.heldout.isdisjoint(train_ids)
+    # Train-side usefulness: a proper Usefulness restricted to train.
+    assert isinstance(report.usefulness, Usefulness)
+    assert report.usefulness.enabled <= train_ids
+    assert report.usefulness.speedup > 0
+
+
+def test_compression_transfer_correlation_returns_a_point_per_experiment(tmp_path: Path) -> None:
+    points = compression_transfer_correlation(
+        ["e1-rot90"], testbeds_root=tmp_path / "testbeds", runs_root=tmp_path / "runs"
+    )
+    assert [p.name for p in points] == ["e1-rot90"]
+    point = points[0]
+    assert isinstance(point, CorrelationPoint)
+    assert point.compression > 0
+    assert point.transfer >= 0
+    assert point.learned >= 1

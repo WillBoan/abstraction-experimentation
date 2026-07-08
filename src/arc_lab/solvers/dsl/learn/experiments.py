@@ -10,6 +10,7 @@ search-effort / enablement deltas across the three libraries.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -32,9 +33,12 @@ from arc_lab.solvers.dsl.learn.antiunify import (
 )
 from arc_lab.solvers.dsl.learn.harness import (
     CheckResult,
+    Usefulness,
     check_abstractions,
     compare_libraries,
     enablement_transfer,
+    heldout_transfer,
+    train_usefulness,
 )
 from arc_lab.solvers.dsl.learn.loop import LearnResult, learn
 from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep, SleepStrategy
@@ -78,6 +82,8 @@ class ExperimentReport:
     check: CheckResult
     compare: dict[str, RunSummary]  # L1/L2/L3 at the experiment's search depth
     enablement: frozenset[str]  # tasks L2 solves at depth-1 that L1 does not
+    heldout: frozenset[str]  # held-out tasks L2 solves at depth-1 that L1 cannot — the GRADE
+    usefulness: Usefulness  # train-side proxy governance may consume (keeps the grade clean)
 
     def summary_lines(self) -> list[str]:
         base, learned = self.compare["L1"], self.compare["L2"]
@@ -92,7 +98,10 @@ class ExperimentReport:
             f"(compression x{compression_ratio(base.description_length, learned.description_length):.2f})",
             f"  considered L1={base.considered_total} L2={learned.considered_total} "
             f"(speedup x{speedup_ratio(base.considered_total, learned.considered_total):.2f})",
-            f"  enablement (depth-1, L2 solves, L1 cannot): {len(self.enablement)} tasks",
+            f"  enablement (depth-1, same-corpus): {len(self.enablement)} tasks",
+            f"  held-out transfer (GRADE): {len(self.heldout)} task(s)",
+            f"  train usefulness: speedup x{self.usefulness.speedup:.2f}, "
+            f"enabled {len(self.usefulness.enabled)} train task(s)",
         ]
         return lines
 
@@ -147,17 +156,60 @@ def run_experiment(
         out_dir=runs_root,
         metric=experiment.metric,
     )
+    base_shallow, aug_shallow = shallow["L1-shallow"], shallow["L2-shallow"]
+    train_ids = frozenset(g.task_id for g in experiment.tasks if g.split == "train")
+    heldout_ids = frozenset(g.task_id for g in experiment.tasks if g.split == "heldout")
     return ExperimentReport(
         name=experiment.name,
         learned=tuple((p.name, str(p.template)) for p in result.abstractions),
         check=check_abstractions(list(result.abstractions), target_prims),
         compare=compare,
-        enablement=enablement_transfer(shallow["L1-shallow"], shallow["L2-shallow"]),
+        enablement=enablement_transfer(base_shallow, aug_shallow),
+        heldout=heldout_transfer(base_shallow, aug_shallow, heldout_ids),
+        usefulness=train_usefulness(
+            compare["L1"], compare["L2"], base_shallow, aug_shallow, train_ids
+        ),
     )
 
 
 def _task(generated: GeneratedTask) -> Task:
     return Task.from_dict(generated.task_id, generated.spec)
+
+
+@dataclass(frozen=True, slots=True)
+class CorrelationPoint:
+    """One experiment's place on the compression↔transfer plane."""
+
+    name: str
+    compression: float  # L1->L2 DL ratio: the process signal (also the governance objective)
+    transfer: int  # held-out tasks newly solved: the grade
+    train_speedup: float  # train-side usefulness proxy
+    learned: int  # abstractions minted
+
+
+def compression_transfer_correlation(
+    names: Sequence[str], *, testbeds_root: Path, runs_root: Path
+) -> list[CorrelationPoint]:
+    """Run each named experiment and collect ``(compression, transfer)`` — the diagnostic that
+    tests the MDL premise (*does compression predict transfer?*) and surfaces the E8 divergence,
+    where compression rises while the held-out grade does not.
+    """
+    points: list[CorrelationPoint] = []
+    for name in names:
+        report = run_experiment(
+            make_experiment(name), testbeds_root=testbeds_root, runs_root=runs_root
+        )
+        base, learned = report.compare["L1"], report.compare["L2"]
+        points.append(
+            CorrelationPoint(
+                name=name,
+                compression=compression_ratio(base.description_length, learned.description_length),
+                transfer=len(report.heldout),
+                train_speedup=report.usefulness.speedup,
+                learned=len(report.learned),
+            )
+        )
+    return points
 
 
 # -- E1: rot90 from the D4 generators -----------------------------------
