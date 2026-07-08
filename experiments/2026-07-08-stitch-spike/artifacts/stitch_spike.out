@@ -1,0 +1,45 @@
+serializer oracle OK (rot90 round-trips to the expected Stitch s-expr)
+
+===== RUN A (corpus) — 6 programs fed to Stitch =====
+   (build_grid (width input) (height input) (lam (lam (read input $0 $1))))
+   (build_grid (height input) (width input) (lam (lam (read input $1 (sub (sub (width input) $0) 1)))))
+   (build_grid (height input) (width input) (lam (lam (read input (sub (sub (height input) $1) 1) $0))))
+   (build_grid (width input) (height input) (lam (lam (read input $0 (sub (sub (width input) $1) 1)))))
+   (build_grid (height input) (width input) (lam (lam (read input (sub (sub (height input) $1) 1) (sub (sub (width input) $0) 1)))))
+   (build_grid (width input) (height input) (lam (lam (read input (sub (sub (height input) $0) 1) $1))))
+
+----- RUN A (corpus): stitch result -----
+json keys: ['abstractions', 'args', 'cmd', 'compression_ratio', 'final_cost', 'num_abstractions', 'original', 'original_cost', 'rewritten', 'rewritten_dreamcoder']
+  original_cost: 8490
+  final_cost: 2523
+  compression_ratio: 3.3650416171224733
+  #abstractions: 5
+  [0] name=fn_0 arity=2
+       body= (sub (sub (#1 input) #0) 1)
+  [1] name=fn_1 arity=2
+       body= (build_grid (#1 input) (#0 input))
+  [2] name=fn_2 arity=1
+       body= (read input (fn_0 #0 height))
+  [3] name=fn_3 arity=1
+       body= (fn_1 width height (lam (lam (#0 $1 (fn_0 $0 width)))))
+  [4] name=fn_4 arity=1
+       body= (fn_1 height width (lam (lam (#0 $0 $1))))
+
+===== RUN B (read-body defs) — 2 programs fed to Stitch =====
+   (read x0 x1 (sub (sub (width x0) x2) 1))
+   (read x0 (sub (sub (height x0) x1) 1) x2)
+
+----- RUN B (read-body defs): stitch result -----
+json keys: ['abstractions', 'args', 'cmd', 'compression_ratio', 'final_cost', 'num_abstractions', 'original', 'original_cost', 'rewritten', 'rewritten_dreamcoder']
+  original_cost: 1816
+  final_cost: 1008
+  compression_ratio: 1.8015873015873016
+  #abstractions: 2
+  [0] name=fn_0 arity=2
+       body= (sub (sub (#1 x0) #0) 1)
+  [1] name=fn_1 arity=0
+       body= (read x0)
+
+mirror_index target body (param-encoded): (sub (sub x0 x1) 1)
+Run B abstraction bodies: ['(sub (sub (#1 x0) #0) 1)', '(read x0)']
+RESULT: mirror_index RECOVERED

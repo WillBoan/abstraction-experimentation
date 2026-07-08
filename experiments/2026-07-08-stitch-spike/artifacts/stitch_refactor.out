@@ -1,0 +1,13 @@
+read-body definitions fed to Stitch (the 'library' as a corpus):
+    (read x0 x1 (sub (sub (width x0) x2) 1))
+    (read x0 (sub (sub (height x0) x1) 1) x2)
+target: general first-order mirror_index(n,k) = (sub (sub x0 x1) 1)
+
+### first-order library refactoring (node-count)  (ratio 1.545)
+    [0] arity=0: (read x0)
+    [1] arity=2: (sub (sub #1 #0) 1)
+
+### higher-order library refactoring (node-count)  (ratio 1.889)
+    [0] arity=2: (sub (sub (#1 x0) #0) 1)
+    [1] arity=0: (read x0)
+

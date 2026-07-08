@@ -1,0 +1,38 @@
+corpus: 6 programs, tasks=['transpose', 'flip_h', 'flip_v', 'rot90', 'rot180', 'rot270']
+
+### A1  default-cost x higher-order  (ratio 3.365, 5 absts)
+    [0] arity=2: (sub (sub (#1 input) #0) 1)   [mirror_index-shaped (INT coord)] <-- TOP
+    [1] arity=2: (build_grid (#1 input) (#0 input))   [other]
+    [2] arity=1: (read input (fn_0 #0 height))   [READ-BODY (COLOR, unreusable by search)]
+    [3] arity=1: (fn_1 width height (lam (lam (#0 $1 (fn_0 $0 width)))))   [other]
+    [4] arity=1: (fn_1 height width (lam (lam (#0 $0 $1))))   [other]
+
+### A2  default-cost x first-order  (ratio 2.796, 5 absts)
+    [0] arity=1: (read input (sub (sub (height input) #0) 1))   [READ-BODY (COLOR, unreusable by search)] <-- TOP
+    [1] arity=0: (width input)   [other]
+    [2] arity=0: (build_grid fn_1 (height input))   [other]
+    [3] arity=0: (build_grid (height input) fn_1)   [other]
+    [4] arity=1: (sub (sub fn_1 #0) 1)   [mirror_index-shaped (INT coord)]
+
+### B1  node-count x higher-order  (ratio 3.625, 5 absts)
+    [0] arity=2: (sub (sub (#1 input) #0) 1)   [mirror_index-shaped (INT coord)] <-- TOP
+    [1] arity=2: (build_grid (#1 input) (#0 input))   [other]
+    [2] arity=1: (read input (fn_0 #0 height))   [READ-BODY (COLOR, unreusable by search)]
+    [3] arity=1: (fn_1 width height (lam (lam (#0 $1 (fn_0 $0 width)))))   [other]
+    [4] arity=1: (fn_1 height width (lam (lam (#0 $0 $1))))   [other]
+
+### B2  node-count x first-order  (ratio 2.636, 5 absts)
+    [0] arity=1: (read input (sub (sub (height input) #0) 1))   [READ-BODY (COLOR, unreusable by search)] <-- TOP
+    [1] arity=0: (width input)   [other]
+    [2] arity=0: (build_grid fn_1 (height input))   [other]
+    [3] arity=0: (build_grid (height input) fn_1)   [other]
+    [4] arity=1: (sub (sub fn_1 #0) 1)   [mirror_index-shaped (INT coord)]
+
+--- allow_single_task toggle (node-count x first-order) ---
+
+### B2a  node-count x first-order x allow_single_task  (ratio 2.636, 5 absts)
+    [0] arity=1: (read input (sub (sub (height input) #0) 1))   [READ-BODY (COLOR, unreusable by search)] <-- TOP
+    [1] arity=0: (width input)   [other]
+    [2] arity=0: (build_grid fn_1 (height input))   [other]
+    [3] arity=0: (build_grid (height input) fn_1)   [other]
+    [4] arity=1: (sub (sub fn_1 #0) 1)   [mirror_index-shaped (INT coord)]
