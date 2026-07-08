@@ -29,6 +29,7 @@ from arc_lab.solvers.dsl.analysis.runner import RunSummary
 from arc_lab.solvers.dsl.learn.antiunify import (
     AbstractionProposer,
     AntiunifyPairs,
+    FrequentSubtree,
     SearchScopedFrequentSubtree,
 )
 from arc_lab.solvers.dsl.learn.harness import (
@@ -41,7 +42,8 @@ from arc_lab.solvers.dsl.learn.harness import (
     train_usefulness,
 )
 from arc_lab.solvers.dsl.learn.loop import LearnResult, learn
-from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep, SleepStrategy
+from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep, RefactoringSleep, SleepStrategy
+from arc_lab.solvers.dsl.learn.stitch_shim import StitchProposer
 from arc_lab.solvers.dsl.learn.taskgen import GeneratedTask, Solution, make_task, write_testbed
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.build_grid_search import BuildGridSearch
@@ -643,6 +645,35 @@ def e9_mirror_index_affine() -> Experiment:
     )
 
 
+def e10_stitch_refactor() -> Experiment:
+    """E10: does **Stitch library refactoring** recover a composable mirror_index *without* the
+    type-scoping stopgap? E8's sub-only environment, but the sleep step is the two-phase
+    :class:`RefactoringSleep` — in-house `FrequentSubtree` mines the read-bodies, then Stitch
+    antiunifies their differing perceiver into the general (first-order) mirror_index, our ``TwoPartMDL``
+    governing. A *labelled first-order stopgap* (see `RefactoringSleep`): the clean single-pass
+    corpus-mining is higher-order, deferred to the higher-order phase. Needs the optional wheel to run."""
+    search = BuildGridSearch(beam_width=128)
+    return Experiment(
+        name="e10-stitch-refactor",
+        starting_library=BUILD_LIBRARY,
+        targets=(("mirror_index", _mirror(Param(0, _I), Param(1, _I))),),
+        tasks=_d4_tasks(_D4_MEMBERS, n_train=3, n_heldout=1),
+        search=search,
+        enablement_search=BuildGridSearch(beam_width=64),
+        cost=ProgramSize(),
+        metric=TwoPartMDL(),
+        # No SearchScopedFrequentSubtree: refactoring recovers mirror_index on merit, not a type gag.
+        # Phase 1 (in-house FrequentSubtree) mints the closed read-bodies; phase 2 (Stitch) antiunifies
+        # their differing perceiver (width/height) into the general, composable mirror_index.
+        sleep=RefactoringSleep(
+            FrequentSubtree(),
+            StitchProposer(first_order=True, iterations=1),
+            metric=TwoPartMDL(),
+        ),
+        note="E10: Stitch library refactoring recovers mirror_index without the type-scoping stopgap.",
+    )
+
+
 #: Experiment registry for the CLI (`arc-lab learn <name>`).
 _REGISTRY = {
     "e1-rot90": e1_rot90,
@@ -654,6 +685,7 @@ _REGISTRY = {
     "e7-rederive-d4-safe": e7_rederive_d4_safe,
     "e8-mirror-index-sub": e8_mirror_index_sub,
     "e9-mirror-index-affine": e9_mirror_index_affine,
+    "e10-stitch-refactor": e10_stitch_refactor,
 }
 
 

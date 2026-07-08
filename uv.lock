@@ -72,6 +72,9 @@ dependencies = [
 llm = [
     { name = "anthropic" },
 ]
+stitch = [
+    { name = "stitch-core" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -86,9 +89,10 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40" },
     { name = "matplotlib", specifier = ">=3.9" },
     { name = "numpy", specifier = ">=2.0" },
+    { name = "stitch-core", marker = "extra == 'stitch'", specifier = ">=0.1" },
     { name = "typer", specifier = ">=0.12" },
 ]
-provides-extras = ["llm"]
+provides-extras = ["llm", "stitch"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1362,6 +1366,22 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a2/87/a6771e1546d97e7e041b6ae58d80074f81b7d5121207425c964ddf5cfdbd/sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc", size = 20372, upload-time = "2024-02-25T23:20:04.057Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e9/44/75a9c9421471a6c4805dbf2356f7c181a29c1879239abab1ea2cc8f38b40/sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2", size = 10235, upload-time = "2024-02-25T23:20:01.196Z" },
+]
+
+[[package]]
+name = "stitch-core"
+version = "0.1.29"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/87/d9/1973131e7149b8b8c7175a6987f241e73f47f2bee85d21d017f4e8b168c3/stitch_core-0.1.29.tar.gz", hash = "sha256:307a72bae661e39cd6fa400ac342d858a289ac67116d7eb5237fdae5642fab9e", size = 488932, upload-time = "2025-10-08T18:05:14.662Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ee/8a/0fad47181acec18dc9d4809d5889d030049a908cf9475b7b9fbe4dae9e69/stitch_core-0.1.29-cp311-cp311-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:78d69a82758464ff0102e209145a12c986c79a1eacd42d07205d986000a485d3", size = 1690607, upload-time = "2025-10-08T18:05:02.092Z" },
+    { url = "https://files.pythonhosted.org/packages/6f/ef/e93c1bceee197e028802c9415a927750d1855f34d7ca03a89608548c0557/stitch_core-0.1.29-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:18c4259827bed577b5b1a429fc394200aaa42d13014ee4c599839246a0dbc15f", size = 950308, upload-time = "2025-10-08T18:05:03.296Z" },
+    { url = "https://files.pythonhosted.org/packages/64/84/0fed4a0c0a80d30a8636f2352a0bed0f45fc0e68e6fc37a2c36e05ecb626/stitch_core-0.1.29-cp312-cp312-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:3a5949875cee452dd9b029f84b98753968048dd2783fbe1f5ba739da2e93684a", size = 1689865, upload-time = "2025-10-08T18:05:05.001Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/37/c246585f7b7d42b83d2511147719db3753930e661f46fbd2c825152143a9/stitch_core-0.1.29-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:850d0f29acda59011e25acf3f05060eb51f3aff371a5307838ad53d12e8e8adf", size = 949731, upload-time = "2025-10-08T18:05:06.509Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/60/8ecce3339c20b8130a28f93dbc4c7f8881ba6d6ade8938d1ee4ded3a0032/stitch_core-0.1.29-cp312-cp312-win_amd64.whl", hash = "sha256:dd623f2821cfef2b3acc95d99d4c0ecae8eac81069b8cb5e299d45a81982fc2b", size = 700713, upload-time = "2025-10-08T18:05:07.834Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/49/24924d132409fdd081bfb3958dba2b1172c6580dba0b64d840254d819921/stitch_core-0.1.29-cp313-cp313-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:ae4ec12fd2483627b3377495fee4bc376b7ac26aefe1e07a8f863f844cc22975", size = 1689869, upload-time = "2025-10-08T18:05:08.795Z" },
+    { url = "https://files.pythonhosted.org/packages/e7/a5/af1b1c59c310ad9b907aa3b3357016f2df74678536054b63c1723984c52b/stitch_core-0.1.29-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a37f1ff040637a52862bdadb86ebcf5a620962027465d7bfdaebced590faa1ec", size = 949734, upload-time = "2025-10-08T18:05:09.893Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/e7/f05279c7b469a9b1b22584e148c189af6e7fa40ad5267a6a529d0c13539e/stitch_core-0.1.29-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8cdffe6112980a63be2555ad2b4a4c57fb133f5696afc38f6f53e38f745cf82c", size = 950196, upload-time = "2025-10-08T18:05:13.332Z" },
 ]
 
 [[package]]

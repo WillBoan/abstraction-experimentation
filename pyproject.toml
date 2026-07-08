@@ -18,6 +18,7 @@ dependencies = [
 
 [project.optional-dependencies]
 llm = ["anthropic>=0.40"]
+stitch = ["stitch_core>=0.1"]  # library-learning engine; the loop runs without it (lazy-imported)
 
 [project.scripts]
 arc-lab = "arc_lab.cli:app"
@@ -62,7 +63,7 @@ files = ["src", "tests"]
 plugins = []
 
 [[tool.mypy.overrides]]
-module = ["matplotlib.*", "anthropic.*"]
+module = ["matplotlib.*", "anthropic.*", "stitch_core.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
