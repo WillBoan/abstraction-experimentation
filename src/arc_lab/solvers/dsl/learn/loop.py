@@ -1,16 +1,15 @@
 """The wake-sleep learning loop: solve, compress the solutions into abstractions, repeat.
 
 Each generation **wakes** (solves the task set with the current library, collecting the
-chosen program per solved task) then **sleeps** (proposes abstraction candidates, and
-greedily adds the one that most reduces the corpus's two-part description length, rewriting
-the corpus to use it, until no candidate compresses further). Adding an abstraction bumps
-the library version, so the next generation searches a shorter/shallower space.
+chosen program per solved task) then **sleeps** — turns that corpus into named abstractions
+via a pluggable :class:`~...sleep.SleepStrategy` (default :class:`~...sleep.GreedyMDLSleep`,
+the historical greedy-MDL machinery). Adding an abstraction bumps the library version, so the
+next generation searches a shorter/shallower space.
 
-Governance — which candidate earns a name — is an :class:`~...selection.AbstractionSelector`
-(default :class:`~...selection.GreedyMDL`), scored by the :class:`CompressionMetric` family.
-TODO(trigger alternatives): DL-plateau, frequency-threshold, online. TODO(library cost):
-charge a learned abstraction its template size, not the flat ``bits_per_primitive`` (see
-`analysis/compression.py`).
+The loop owns only the wake step and the cross-generation guards (dry-stop, and discarding a
+generation that does not lower the strategy's ``score``); *how* abstractions are invented,
+governed, and folded in — and how the outcome is scored — is the strategy's concern.
+TODO(trigger alternatives): DL-plateau, frequency-threshold, online.
 """
 
 from __future__ import annotations
@@ -19,12 +18,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from arc_lab.core.task import Task
-from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, CorpusEntry
-from arc_lab.solvers.dsl.learn.antiunify import AbstractionProposer, rewrite_with
-from arc_lab.solvers.dsl.learn.selection import AbstractionSelector, GreedyMDL
+from arc_lab.solvers.dsl.analysis.compression import CorpusEntry
+from arc_lab.solvers.dsl.learn.antiunify import AntiunifyPairs
+from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep, SleepStrategy
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
-from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive
 from arc_lab.solvers.dsl.trace import task_context
 
@@ -63,49 +61,42 @@ def learn(
     library: Library,
     search: Search,
     tasks: list[Task],
-    proposer: AbstractionProposer,
+    sleep: SleepStrategy | None = None,
     cost: Cost | None = None,
-    metric: CompressionMetric | None = None,
     trigger: LearnTrigger | None = None,
-    selector: AbstractionSelector | None = None,
     max_generations: int = 5,
-    name_prefix: str = "abs",
 ) -> LearnResult:
     """Run wake-sleep generations until no abstraction compresses (or the cap is hit)."""
     cost = cost or ProgramSize()
-    metric = metric or CompressionMetric()
+    sleep = sleep or GreedyMDLSleep(AntiunifyPairs())
     trigger = trigger or EachGeneration()
-    selector = selector or GreedyMDL()
     added: list[Primitive] = []
     history: list[GenerationRecord] = []
 
-    prev_dl: float | None = None
+    prev_score: float | None = None
     for generation in range(max_generations):
         corpus = _solve_corpus(search, cost, library, tasks)
         if not trigger.should_learn(generation, corpus):
             break
-        grown, new_prims, grown_corpus = _sleep(
-            corpus, library, proposer, metric, selector, name_prefix, len(added)
-        )
-        if not new_prims:
+        outcome = sleep.run(corpus, library, len(added))
+        if not outcome.added:
             break  # dry: nothing new to learn
-        dl = metric.describe(grown_corpus, grown).total
-        # Convergence guard: a generation that does not *lower* total DL is discarded and
-        # ends the loop. Without it, re-waking each round can re-inflate the corpus and the
-        # library grows while DL climbs (observed in E3).
-        if prev_dl is not None and dl >= prev_dl:
+        # Convergence guard: a generation that does not *lower* the strategy's score is discarded
+        # and ends the loop. Without it, re-waking each round can re-inflate the corpus and the
+        # library grows while the score climbs (observed in E3).
+        if prev_score is not None and outcome.score >= prev_score:
             break
-        library = grown
-        added.extend(new_prims)
+        library = outcome.library
+        added.extend(outcome.added)
         history.append(
             GenerationRecord(
                 generation=generation,
-                solved=len(grown_corpus),
-                description_length=dl,
-                learned=tuple(p.name for p in new_prims),
+                solved=len(outcome.corpus),
+                description_length=outcome.score,
+                learned=tuple(p.name for p in outcome.added),
             )
         )
-        prev_dl = dl
+        prev_score = outcome.score
 
     return LearnResult(library=library, abstractions=tuple(added), history=tuple(history))
 
@@ -123,28 +114,3 @@ def _solve_corpus(
         chosen = min(programs, key=lambda p: cost.of(p, task, library))
         corpus.append((task, chosen))
     return corpus
-
-
-def _sleep(
-    corpus: list[CorpusEntry],
-    library: Library,
-    proposer: AbstractionProposer,
-    metric: CompressionMetric,
-    selector: AbstractionSelector,
-    name_prefix: str,
-    start_index: int,
-) -> tuple[Library, list[Primitive], list[CorpusEntry]]:
-    """Greedily add the best-compressing abstraction, rewrite, repeat until dry."""
-    added: list[Primitive] = []
-    index = start_index
-    while True:
-        best = selector.select(corpus, library, proposer, metric)
-        if best is None:
-            break
-        name = f"{name_prefix}{index}"
-        index += 1
-        primitive = make_abstraction(name, best, library)
-        library = library.extended(name=f"{library.name}+{name}", extra=(primitive,))
-        corpus = [(task, rewrite_with(program, name, best)) for task, program in corpus]
-        added.append(primitive)
-    return library, added, corpus

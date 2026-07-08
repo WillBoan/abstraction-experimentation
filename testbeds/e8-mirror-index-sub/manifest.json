@@ -1,0 +1,127 @@
+{
+  "name": "e8-mirror-index-sub",
+  "note": "E8: E7's D4 ladder under the frequent-subtree proposer. Whole-program antiunification (E7) left the ladder uncompressed (x0.79); does mining the recurring subterm invent mirror_index = sub(sub(#0,#1),1), compress the ladder, and dissolve the beam cliff?",
+  "content_hash": "fb86a7043c5e9f45",
+  "tasks": [
+    {
+      "task_id": "transpose-00",
+      "label": "transpose",
+      "split": "train"
+    },
+    {
+      "task_id": "transpose-01",
+      "label": "transpose",
+      "split": "train"
+    },
+    {
+      "task_id": "transpose-02",
+      "label": "transpose",
+      "split": "train"
+    },
+    {
+      "task_id": "transpose-03",
+      "label": "transpose",
+      "split": "heldout"
+    },
+    {
+      "task_id": "flip_h-00",
+      "label": "flip_h",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_h-01",
+      "label": "flip_h",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_h-02",
+      "label": "flip_h",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_h-03",
+      "label": "flip_h",
+      "split": "heldout"
+    },
+    {
+      "task_id": "flip_v-00",
+      "label": "flip_v",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_v-01",
+      "label": "flip_v",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_v-02",
+      "label": "flip_v",
+      "split": "train"
+    },
+    {
+      "task_id": "flip_v-03",
+      "label": "flip_v",
+      "split": "heldout"
+    },
+    {
+      "task_id": "rot90-00",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-01",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-02",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-03",
+      "label": "rot90",
+      "split": "heldout"
+    },
+    {
+      "task_id": "rot180-00",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-01",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-02",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-03",
+      "label": "rot180",
+      "split": "heldout"
+    },
+    {
+      "task_id": "rot270-00",
+      "label": "rot270",
+      "split": "train"
+    },
+    {
+      "task_id": "rot270-01",
+      "label": "rot270",
+      "split": "train"
+    },
+    {
+      "task_id": "rot270-02",
+      "label": "rot270",
+      "split": "train"
+    },
+    {
+      "task_id": "rot270-03",
+      "label": "rot270",
+      "split": "heldout"
+    }
+  ]
+}

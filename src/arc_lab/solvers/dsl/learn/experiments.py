@@ -37,6 +37,7 @@ from arc_lab.solvers.dsl.learn.harness import (
     enablement_transfer,
 )
 from arc_lab.solvers.dsl.learn.loop import LearnResult, learn
+from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep, SleepStrategy
 from arc_lab.solvers.dsl.learn.taskgen import GeneratedTask, Solution, make_task, write_testbed
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.build_grid_search import BuildGridSearch
@@ -66,7 +67,8 @@ class Experiment:
     metric: CompressionMetric | None = None  # governance objective (None -> flat baseline)
     proposer: AbstractionProposer = field(
         default_factory=AntiunifyPairs
-    )  # the invention plug point
+    )  # the invention plug point (used by the default GreedyMDLSleep)
+    sleep: SleepStrategy | None = None  # the sleep-step plug point (None -> GreedyMDLSleep)
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,13 +113,13 @@ def run_experiment(
     train = [_task(g) for g in experiment.tasks if g.split == "train"]
     full = Dataset(name=experiment.name, tasks=tuple(_task(g) for g in experiment.tasks))
 
+    sleep = experiment.sleep or GreedyMDLSleep(experiment.proposer, metric=experiment.metric)
     result: LearnResult = learn(
         library=experiment.starting_library,
         search=experiment.search,
         tasks=train,
-        proposer=experiment.proposer,
+        sleep=sleep,
         cost=experiment.cost,
-        metric=experiment.metric,
     )
 
     starting = experiment.starting_library

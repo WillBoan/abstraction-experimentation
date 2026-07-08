@@ -35,6 +35,7 @@ from arc_lab.solvers.dsl.learn.experiments import (
     run_experiment,
 )
 from arc_lab.solvers.dsl.learn.selection import GreedyMDL
+from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep
 from arc_lab.solvers.dsl.search import BuildGridSearch
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
@@ -251,7 +252,7 @@ def _dummy_task(task_id: str) -> Task:
 
 def test_greedy_mdl_selects_the_compressing_template() -> None:
     # Two tasks solved by the same depth-2 word: folding both into one abstraction lowers DL,
-    # so GreedyMDL must pick the closed template (the seam _sleep now delegates to).
+    # so GreedyMDL must pick the closed template (the seam GreedyMDLSleep delegates to).
     program: Program = Apply("transpose", (Apply("flip_h", (Input(),)),))
     corpus = [(_dummy_task("t1"), program), (_dummy_task("t2"), program)]
     chosen = GreedyMDL().select(corpus, _GEN, AntiunifyPairs(), CompressionMetric())
@@ -263,6 +264,33 @@ def test_greedy_mdl_returns_none_when_nothing_compresses() -> None:
     program: Program = Apply("flip_h", (Input(),))
     corpus = [(_dummy_task("t1"), program)]
     assert GreedyMDL().select(corpus, _GEN, AntiunifyPairs(), CompressionMetric()) is None
+
+
+# -- the sleep step as a pluggable strategy (the Phase-A seam) -----------
+
+
+def test_greedy_mdl_sleep_mints_rewrites_and_scores() -> None:
+    # GreedyMDLSleep is the historical sleep step as a strategy: over the recurring D4 corpus it
+    # must mint the search-composable idiom, rewrite the corpus to call it, and return a score
+    # (lower = better) below the un-compressed baseline — the loop's convergence signal.
+    corpus = [(_dummy_task(f"t{i}"), p) for i in range(3) for p in _d4_member_programs()]
+    metric = TwoPartMDL()
+    baseline = metric.describe(corpus, BUILD_LIBRARY).total
+    proposer = SearchScopedFrequentSubtree(composes=BuildGridSearch().composes_signature)
+    outcome = GreedyMDLSleep(proposer, metric=metric).run(corpus, BUILD_LIBRARY, 0)
+    assert any(p.template == _MIRROR for p in outcome.added)  # minted mirror_index
+    assert outcome.library.version > BUILD_LIBRARY.version  # library grew
+    assert all("sub(sub(" not in str(p) for _, p in outcome.corpus)  # folded, no raw idiom left
+    assert outcome.score < baseline  # the step compresses
+
+
+def test_greedy_mdl_sleep_is_dry_when_nothing_compresses() -> None:
+    # No recurrence -> no candidate -> no mint; the outcome is empty and scores the input as-is.
+    program: Program = Apply("flip_h", (Input(),))
+    corpus = [(_dummy_task("t1"), program)]
+    outcome = GreedyMDLSleep(AntiunifyPairs()).run(corpus, _GEN, 0)
+    assert outcome.added == ()
+    assert outcome.library is _GEN and outcome.corpus == corpus
 
 
 # -- E1 end-to-end (the mechanism DoD gate) -----------------------------
