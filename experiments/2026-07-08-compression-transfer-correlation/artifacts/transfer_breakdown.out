@@ -1,0 +1,11 @@
+experiment             held-out base solves  L2 solves  transfer
+----------------------------------------------------------------
+e1-rot90                      4           3          4         1
+e2-swap-cells                 2           0          2         2
+e3-swap-cols                  2           0          2         2
+e4-swap-cols-mdl              2           0          2         2
+e5-rederive-rot90             2           0          2         2
+e6-rederive-d4                6           0          1         1
+e7-rederive-d4-safe           6           0          6         6
+e8-mirror-index-sub           6           1          6         5
+e9-mirror-index-affine        6           1          6         5
