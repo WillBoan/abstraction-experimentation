@@ -304,9 +304,15 @@ def _close_template(program: Program) -> Program:
 
 
 def _is_useful(template: Program) -> bool:
-    """A useful template has real structure (an Apply) and at least one hole (a Param)."""
+    """A useful template has real structure (an application) and at least one hole (a Param).
+
+    An application is either a first-order :class:`Apply` or a higher-order :class:`AppFn` (a
+    ``twice``-style abstraction is all ``AppFn`` and no ``Apply``, but is no less real).
+    """
     nodes = list(template.walk())
-    return any(isinstance(n, Apply) for n in nodes) and any(isinstance(n, Param) for n in nodes)
+    return any(isinstance(n, (Apply, AppFn)) for n in nodes) and any(
+        isinstance(n, Param) for n in nodes
+    )
 
 
 def match(template: Program, program: Program) -> tuple[Program, ...] | None:

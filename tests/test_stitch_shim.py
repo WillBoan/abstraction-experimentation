@@ -142,3 +142,35 @@ def test_stitch_compress_is_deterministic(tmp_path: Path) -> None:
     first = _compress(sexprs, iterations=5, max_arity=3, first_order=True, threads=1)
     second = _compress(sexprs, iterations=5, max_arity=3, first_order=True, threads=1)
     assert first == second  # StitchAbstraction is a frozen dataclass -> structural equality
+
+
+# -- Phase F: higher-order Stitch invents, higher-order Enumerate consumes -----
+
+
+def test_higher_order_stitch_invents_twice_and_hof_enumerate_consumes_it() -> None:
+    # The whole higher-order stack, end to end. From a corpus of "apply a transform twice", HIGHER-order
+    # Stitch invents `twice(fn, grid) = fn(fn(grid))` by holing the repeated function; FIRST-order Stitch
+    # cannot (a function in head position is unholeable). The higher-order `Enumerate` then CONSUMES the
+    # minted `twice` to solve rot180 at depth 1 — which the first-order search provably cannot.
+    pytest.importorskip("stitch_core")
+    from arc_lab.solvers.dsl.search.enumerate import Enumerate
+    from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
+    from arc_lab.solvers.dsl.substrate.library import Library
+    from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
+
+    def double(name: str) -> Program:
+        return Apply(name, (Apply(name, (Input(),)),))
+
+    corpus = [double("rot90"), double("rot270"), double("flip_h")]
+    assert StitchProposer(first_order=True).propose(corpus, D4_LIBRARY) == []  # can't hole a function
+    candidates = StitchProposer(first_order=False).propose(corpus, D4_LIBRARY)
+    assert candidates  # higher-order invents twice = (#0 (#0 input))
+
+    twice = make_abstraction("twice", candidates[0], D4_LIBRARY)
+    library = Library(name="d4+twice", primitives=(D4_LIBRARY.get("rot90"), twice))
+    task = Task.from_dict(
+        "rot180", {"train": [{"input": [[1, 2], [3, 4]], "output": [[4, 3], [2, 1]]}], "test": [{"input": [[1, 2], [3, 4]]}]}
+    )
+    assert Enumerate(max_depth=1).find(task, library).programs == ()  # first-order can't at depth 1
+    solved = Enumerate(max_depth=1, higher_order=True).find(task, library)
+    assert len(solved.programs) == 1 and "twice" in str(solved.programs[0])  # consumed the invention
