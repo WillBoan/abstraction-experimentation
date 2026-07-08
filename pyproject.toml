@@ -37,6 +37,9 @@ packages = ["src/arc_lab"]
 line-length = 100
 src = ["src", "tests"]
 target-version = "py311"
+# `experiments/` holds lab-notebook artifacts — throwaway probe scripts kept for the record,
+# not production code; don't hold them to the linter (mypy already scopes to src/tests only).
+extend-exclude = ["experiments"]
 
 [tool.ruff.lint]
 # A sensible, strict-ish default. E/F pyflakes+pycodestyle, I isort, UP pyupgrade,

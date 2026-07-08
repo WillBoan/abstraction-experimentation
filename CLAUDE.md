@@ -25,6 +25,8 @@ make format     # auto-fix ruff lint + format
 
 When you run a meaningful experiment or reach a finding — **including dead ends** — append a terse, commit-anchored entry to [EXPERIMENTS.md](EXPERIMENTS.md). It's the shared human+AI record of what's been tried and what it meant. It's an *event log, not a state mirror* — read its header for the discipline before adding to it. Planned experiments queue in [EXPERIMENT_QUEUE.md](EXPERIMENT_QUEUE.md) (drain-only; see its header) — when you log a run, delete its queue entry.
 
+For a **non-trivial investigation**, also keep a detailed lab notebook under [experiments/](experiments/) — the full write-up + the throwaway probe scripts and their outputs, which EXPERIMENTS.md (the curated abstract) points to. See [experiments/README.md](experiments/README.md); it's a catch-basin to *capture* the thinking, **not** to constrain how you explore — save probes into the folder as you go, write up the notebook when it's natural.
+
 ## Mental model
 
 A solver is **`(library × search × constraints × cost)`**. Search is a **propose → filter → rank** pipeline:
