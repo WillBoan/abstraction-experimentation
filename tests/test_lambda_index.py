@@ -14,10 +14,10 @@ from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, Param, Program, Var
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import GRID, INT
 
-_G = ValueType.GRID
-_INT = ValueType.INT
+_G = GRID
+_INT = INT
 _LIB = BUILD_LIBRARY
 
 # Non-square shapes on purpose — a fixed-coordinate program can't fit; only size-general ones do.

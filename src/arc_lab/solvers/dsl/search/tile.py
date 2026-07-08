@@ -18,7 +18,7 @@ from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import INT
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +50,8 @@ class TileSearch(Search):
         program: Program = Apply(
             "tile",
             (
-                Const(rows, ValueType.INT),
-                Const(cols, ValueType.INT),
+                Const(rows, INT),
+                Const(cols, INT),
                 *(Apply(name, (Input(),)) for name in cells),
             ),
         )

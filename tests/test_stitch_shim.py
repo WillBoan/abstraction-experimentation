@@ -16,9 +16,9 @@ from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep
 from arc_lab.solvers.dsl.learn.stitch_shim import StitchProposer, _compress, from_sexpr, to_sexpr
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, Param, Program, Var
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT
 
-_G, _I = ValueType.GRID, ValueType.INT
+_G, _I = GRID, INT
 
 
 def _mirror(n: Program, k: Program) -> Program:
@@ -60,7 +60,9 @@ def test_serialization_is_asymmetric_input_terminals_output_metavars() -> None:
     # emitted `#j` metavars decode back to Params. The two directions are deliberately not inverse.
     mirror = _mirror(Param(0, _I), Param(1, _I))
     assert to_sexpr(mirror) == "(sub (sub x0 x1) 1)"  # our program -> Stitch input
-    assert from_sexpr("(sub (sub #0 #1) 1)", BUILD_LIBRARY) == mirror  # Stitch output -> our program
+    assert (
+        from_sexpr("(sub (sub #0 #1) 1)", BUILD_LIBRARY) == mirror
+    )  # Stitch output -> our program
 
 
 def test_from_sexpr_reinfers_grid_type_from_signatures() -> None:
@@ -79,7 +81,7 @@ def test_from_sexpr_lifts_free_input_to_a_grid_param() -> None:
     assert not any(isinstance(n, Input) for n in lifted.walk())  # closed
     grid_params = {n.index for n in lifted.walk() if isinstance(n, Param) and n.value_type == _G}
     assert len(grid_params) == 1  # both `input` occurrences collapsed to one grid param
-    assert lifted.result_type(BUILD_LIBRARY) == ValueType.COLOR  # read returns a color
+    assert lifted.result_type(BUILD_LIBRARY) == COLOR  # read returns a color
 
 
 # -- Stitch as a governed proposer (needs the optional wheel) ------------
@@ -126,7 +128,10 @@ def test_stitch_refactoring_recovers_composable_mirror_index(tmp_path: Path) -> 
     from arc_lab.solvers.dsl.learn.experiments import make_experiment, run_experiment
 
     report = run_experiment(
-        make_experiment("e10-stitch-refactor"), testbeds_root=tmp_path, runs_root=tmp_path, write=False
+        make_experiment("e10-stitch-refactor"),
+        testbeds_root=tmp_path,
+        runs_root=tmp_path,
+        write=False,
     )
     assert "mirror_index" in report.check.matched  # recovered on merit, no type-scoping stopgap
     assert len(report.enablement) > 0  # composable -> the tight-beam cliff dissolved
@@ -162,15 +167,23 @@ def test_higher_order_stitch_invents_twice_and_hof_enumerate_consumes_it() -> No
         return Apply(name, (Apply(name, (Input(),)),))
 
     corpus = [double("rot90"), double("rot270"), double("flip_h")]
-    assert StitchProposer(first_order=True).propose(corpus, D4_LIBRARY) == []  # can't hole a function
+    assert (
+        StitchProposer(first_order=True).propose(corpus, D4_LIBRARY) == []
+    )  # can't hole a function
     candidates = StitchProposer(first_order=False).propose(corpus, D4_LIBRARY)
     assert candidates  # higher-order invents twice = (#0 (#0 input))
 
     twice = make_abstraction("twice", candidates[0], D4_LIBRARY)
     library = Library(name="d4+twice", primitives=(D4_LIBRARY.get("rot90"), twice))
     task = Task.from_dict(
-        "rot180", {"train": [{"input": [[1, 2], [3, 4]], "output": [[4, 3], [2, 1]]}], "test": [{"input": [[1, 2], [3, 4]]}]}
+        "rot180",
+        {
+            "train": [{"input": [[1, 2], [3, 4]], "output": [[4, 3], [2, 1]]}],
+            "test": [{"input": [[1, 2], [3, 4]]}],
+        },
     )
     assert Enumerate(max_depth=1).find(task, library).programs == ()  # first-order can't at depth 1
     solved = Enumerate(max_depth=1, higher_order=True).find(task, library)
-    assert len(solved.programs) == 1 and "twice" in str(solved.programs[0])  # consumed the invention
+    assert len(solved.programs) == 1 and "twice" in str(
+        solved.programs[0]
+    )  # consumed the invention

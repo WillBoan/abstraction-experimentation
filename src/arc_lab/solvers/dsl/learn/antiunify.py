@@ -27,7 +27,7 @@ from collections.abc import Callable, Iterator
 
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.program import AppFn, Apply, Input, Lam, Param, Program, Var
-from arc_lab.solvers.dsl.substrate.types import Type, ValueType
+from arc_lab.solvers.dsl.substrate.types import GRID, BaseType, Type
 
 
 class _BoundVarEscapeError(Exception):
@@ -173,7 +173,7 @@ class TypeScopedFrequentSubtree(FrequentSubtree):
     refactoring — see ``MACHINERY.md``.
     """
 
-    def __init__(self, *, result_type: ValueType, min_frequency: int = 2) -> None:
+    def __init__(self, *, result_type: BaseType, min_frequency: int = 2) -> None:
         super().__init__(min_frequency=min_frequency)
         self.result_type = result_type
 
@@ -221,9 +221,7 @@ def _contains_lam(program: Program) -> bool:
     return any(isinstance(node, Lam) for node in program.walk())
 
 
-def _template_signature(
-    template: Program, library: Library
-) -> tuple[tuple[Type, ...], Type]:
+def _template_signature(template: Program, library: Library) -> tuple[tuple[Type, ...], Type]:
     """The closed template's ``(param_types, return_type)`` — its signature as a would-be abstraction."""
     by_index: dict[int, Type] = {}
     for node in template.walk():
@@ -289,7 +287,7 @@ def _close_template(program: Program) -> Program:
 
     def rebuild(node: Program) -> Program:
         if isinstance(node, Input):
-            return Param(index_of.setdefault(("input",), len(index_of)), ValueType.GRID)
+            return Param(index_of.setdefault(("input",), len(index_of)), GRID)
         if isinstance(node, Param):
             return Param(index_of.setdefault(("param", node.index), len(index_of)), node.value_type)
         if isinstance(node, Apply):

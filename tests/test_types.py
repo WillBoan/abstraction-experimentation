@@ -5,17 +5,21 @@ from __future__ import annotations
 import itertools
 
 from arc_lab.solvers.dsl.substrate.types import (
+    COLOR,
+    GRID,
+    INT,
     ArrowType,
+    BaseType,
     TypeVar,
-    ValueType,
     apply_subst,
+    base_type,
     instantiate,
     type_from_serializable,
     type_to_serializable,
     unify,
 )
 
-_G, _C, _I = ValueType.GRID, ValueType.COLOR, ValueType.INT
+_G, _C, _I = GRID, COLOR, INT
 
 
 def test_unify_base_types() -> None:
@@ -72,3 +76,12 @@ def test_serialization_round_trips_and_base_types_stay_bare_strings() -> None:
         ArrowType((ArrowType((_G,), _I),), _G),  # nested (a perceiver in a hole)
     ):
         assert type_from_serializable(type_to_serializable(t)) == t
+
+
+def test_base_types_are_shared_singletons() -> None:
+    # The whole point of retiring the enum for bare constants: a base type is one shared instance, so
+    # identity (`is`) holds — and deserialization hands back the *same* singleton, not a fresh equal one.
+    assert base_type("grid") is GRID
+    assert type_from_serializable("grid") is GRID
+    unknown = base_type("mask")  # an unregistered name is graceful: a fresh, equal-but-distinct value
+    assert unknown == BaseType("mask") and unknown is not GRID

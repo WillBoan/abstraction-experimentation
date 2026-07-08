@@ -35,11 +35,11 @@ from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
 from arc_lab.solvers.dsl.substrate.library import Library, Value
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, Program, Var
-from arc_lab.solvers.dsl.substrate.types import Type, ValueType
+from arc_lab.solvers.dsl.substrate.types import INT, Type
 
 logger = logging.getLogger(__name__)
 
-_INT = ValueType.INT
+_INT = INT
 CellSig: TypeAlias = tuple[Value, ...]
 
 

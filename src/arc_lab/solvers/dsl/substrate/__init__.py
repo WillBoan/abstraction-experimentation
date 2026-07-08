@@ -18,18 +18,28 @@ A concrete solver is a choice of *(library, search strategy)* — see
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive, Value
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Param, Program
 from arc_lab.solvers.dsl.substrate.types import (
+    COLOR,
+    FN,
+    GRID,
+    INT,
     ArrowType,
+    BaseType,
     Type,
     TypeVar,
-    ValueType,
     apply_subst,
+    base_type,
     instantiate,
     unify,
 )
 
 __all__ = [
+    "COLOR",
+    "FN",
+    "GRID",
+    "INT",
     "Apply",
     "ArrowType",
+    "BaseType",
     "Const",
     "Input",
     "Library",
@@ -39,8 +49,8 @@ __all__ = [
     "Type",
     "TypeVar",
     "Value",
-    "ValueType",
     "apply_subst",
+    "base_type",
     "instantiate",
     "unify",
 ]

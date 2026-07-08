@@ -17,9 +17,9 @@ from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import AppFn, Param, Program
-from arc_lab.solvers.dsl.substrate.types import ArrowType, ValueType
+from arc_lab.solvers.dsl.substrate.types import GRID, ArrowType
 
-_G = ValueType.GRID
+_G = GRID
 _GG = ArrowType((_G,), _G)  # GRID -> GRID
 
 # twice(grid=#0, fn=#1) = fn(fn(grid))  — #1 is a GRID -> GRID function-typed hole, applied twice.
@@ -34,7 +34,8 @@ _THRICE: Program = AppFn(
 def _rot180_task() -> Task:
     grid = [[1, 2], [3, 4]]
     return Task.from_dict(
-        "rot180", {"train": [{"input": grid, "output": [[4, 3], [2, 1]]}], "test": [{"input": grid}]}
+        "rot180",
+        {"train": [{"input": grid, "output": [[4, 3], [2, 1]]}], "test": [{"input": grid}]},
     )
 
 
@@ -81,8 +82,12 @@ def test_lam_synthesis_supplies_a_function_no_primitive_provides() -> None:
     # hole. first-order (rot180 needs depth 2) and PrimRef-only (thrice(&rot90,input)=rot270) both fail.
     library, task = _thrice_library(), _rot180_task()
     assert Enumerate(max_depth=1).find(task, library).programs == ()  # first-order
-    assert Enumerate(max_depth=1, higher_order=True).find(task, library).programs == ()  # PrimRef-only
-    solved = Enumerate(max_depth=1, higher_order=True, synthesize_functions=True).find(task, library)
+    assert (
+        Enumerate(max_depth=1, higher_order=True).find(task, library).programs == ()
+    )  # PrimRef-only
+    solved = Enumerate(max_depth=1, higher_order=True, synthesize_functions=True).find(
+        task, library
+    )
     assert len(solved.programs) == 1
     program = str(solved.programs[0])
     assert "thrice" in program and "lam" in program  # consumed a *synthesized* composed function

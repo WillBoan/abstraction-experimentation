@@ -16,7 +16,7 @@ import numpy as np
 
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import GRID
 
 
 def _identity(g: Grid) -> Grid:
@@ -56,8 +56,8 @@ def _create_unary_grid_primitive(name: str, fn: Callable[[Grid], Grid]) -> Primi
 
     return Primitive(
         name=name,
-        param_types=(ValueType.GRID,),
-        return_type=ValueType.GRID,
+        param_types=(GRID,),
+        return_type=GRID,
         impl=fn,
     )
 

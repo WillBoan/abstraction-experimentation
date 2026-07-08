@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.library import Primitive
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import COLOR, GRID
 
 
 def _map_color(grid: Grid, source: int, target: int) -> Grid:
@@ -23,7 +23,7 @@ def _map_color(grid: Grid, source: int, target: int) -> Grid:
 
 MAP_COLOR = Primitive(
     name="map_color",
-    param_types=(ValueType.GRID, ValueType.COLOR, ValueType.COLOR),
-    return_type=ValueType.GRID,
+    param_types=(GRID, COLOR, COLOR),
+    return_type=GRID,
     impl=_map_color,
 )

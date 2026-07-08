@@ -29,9 +29,12 @@ from typing import TYPE_CHECKING
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.library import Closure, Primitive
 from arc_lab.solvers.dsl.substrate.types import (
+    FN,
+    GRID,
     ArrowType,
+    BaseType,
     Type,
-    ValueType,
+    base_type,
     type_from_serializable,
     type_to_serializable,
 )
@@ -119,7 +122,7 @@ class Program(ABC):
             value, value_type = data["value"], data["value_type"]
             if not isinstance(value, int) or not isinstance(value_type, str):
                 raise ValueError(f"malformed const node: {data!r}")
-            return Const(value=value, value_type=ValueType(value_type))
+            return Const(value=value, value_type=base_type(value_type))
         if op == "param":
             index, param_type = data["index"], data["value_type"]
             if not isinstance(index, int) or not isinstance(param_type, (str, dict)):
@@ -176,8 +179,8 @@ class Input(Program):
     ) -> Value:
         return grid
 
-    def result_type(self, library: Library) -> ValueType:
-        return ValueType.GRID
+    def result_type(self, library: Library) -> BaseType:
+        return GRID
 
     def to_dict(self) -> dict[str, object]:
         return {"op": "input"}
@@ -232,7 +235,7 @@ class Const(Program):
     """A literal scalar value, tagged with its type (e.g. a COLOR or an INT)."""
 
     value: int
-    value_type: ValueType
+    value_type: BaseType
 
     def evaluate(
         self,
@@ -243,11 +246,11 @@ class Const(Program):
     ) -> Value:
         return self.value
 
-    def result_type(self, library: Library) -> ValueType:
+    def result_type(self, library: Library) -> BaseType:
         return self.value_type
 
     def to_dict(self) -> dict[str, object]:
-        return {"op": "const", "value": self.value, "value_type": self.value_type.value}
+        return {"op": "const", "value": self.value, "value_type": self.value_type.name}
 
     def children(self) -> tuple[Program, ...]:
         return ()
@@ -320,7 +323,11 @@ class Var(Program):
         return self.value_type
 
     def to_dict(self) -> dict[str, object]:
-        return {"op": "var", "index": self.index, "value_type": type_to_serializable(self.value_type)}
+        return {
+            "op": "var",
+            "index": self.index,
+            "value_type": type_to_serializable(self.value_type),
+        }
 
     def children(self) -> tuple[Program, ...]:
         return ()
@@ -354,8 +361,8 @@ class Lam(Program):
     ) -> Value:
         return Closure(body=self.body, grid=grid, library=library, env=env, scope=scope)
 
-    def result_type(self, library: Library) -> ValueType:
-        return ValueType.FN
+    def result_type(self, library: Library) -> BaseType:
+        return FN
 
     def to_dict(self) -> dict[str, object]:
         return {"op": "lam", "body": self.body.to_dict()}
@@ -407,7 +414,11 @@ class AppFn(Program):
         return fn_type.result
 
     def to_dict(self) -> dict[str, object]:
-        return {"op": "appfn", "fn": self.fn.to_dict(), "args": [arg.to_dict() for arg in self.args]}
+        return {
+            "op": "appfn",
+            "fn": self.fn.to_dict(),
+            "args": [arg.to_dict() for arg in self.args],
+        }
 
     def children(self) -> tuple[Program, ...]:
         return (self.fn, *self.args)

@@ -12,7 +12,7 @@ import numpy as np
 
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.library import Primitive
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import GRID, INT
 
 _MAX_SIDE = 30
 
@@ -27,7 +27,7 @@ def _scale(grid: Grid, factor: int) -> Grid:
 
 SCALE = Primitive(
     name="scale",
-    param_types=(ValueType.GRID, ValueType.INT),
-    return_type=ValueType.GRID,
+    param_types=(GRID, INT),
+    return_type=GRID,
     impl=_scale,
 )

@@ -7,13 +7,15 @@ from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search import SingleApply
 from arc_lab.solvers.dsl.solver import GeometricSearchSolver, ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate import (
+    COLOR,
+    GRID,
+    INT,
     Apply,
     Const,
     Input,
     Library,
     Primitive,
     Program,
-    ValueType,
 )
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 
@@ -37,7 +39,7 @@ def test_library_rejects_duplicate_names() -> None:
 
 
 def test_library_extended_grows_and_bumps_version() -> None:
-    extra = Primitive("noop", (ValueType.GRID,), ValueType.GRID, lambda g: g)
+    extra = Primitive("noop", (GRID,), GRID, lambda g: g)
     grown = D4_LIBRARY.extended(name="d4+", extra=(extra,))
     assert grown.version == D4_LIBRARY.version + 1
     assert "noop" in grown.names()
@@ -66,7 +68,7 @@ def test_evaluate_apply_transpose() -> None:
 
 def test_children() -> None:
     assert Input().children() == ()
-    assert Const(5, ValueType.INT).children() == ()
+    assert Const(5, INT).children() == ()
     inner = Apply("rot90", (Input(),))
     assert Apply("flip_v", (inner,)).children() == (inner,)
 
@@ -86,9 +88,9 @@ def test_walk_yields_every_node() -> None:
 
 
 def test_result_type() -> None:
-    assert Input().result_type(D4_LIBRARY) == ValueType.GRID
-    assert Const(3, ValueType.COLOR).result_type(D4_LIBRARY) == ValueType.COLOR
-    assert Apply("rot90", (Input(),)).result_type(D4_LIBRARY) == ValueType.GRID
+    assert Input().result_type(D4_LIBRARY) == GRID
+    assert Const(3, COLOR).result_type(D4_LIBRARY) == COLOR
+    assert Apply("rot90", (Input(),)).result_type(D4_LIBRARY) == GRID
 
 
 # -- serialisation (programs are data) ---------------------------------

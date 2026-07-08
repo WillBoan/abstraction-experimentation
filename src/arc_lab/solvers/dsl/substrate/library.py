@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.dsl.substrate.types import Type, ValueType, type_to_serializable
+from arc_lab.solvers.dsl.substrate.types import GRID, Type, type_to_serializable
 
 if TYPE_CHECKING:
     from arc_lab.solvers.dsl.substrate.program import Program
@@ -108,11 +108,7 @@ class Primitive:
     @property
     def is_unary_grid_primitive(self) -> bool:
         """True if this is a fixed-arity ``(GRID,) -> GRID`` primitive."""
-        return (
-            self.param_types == (ValueType.GRID,)
-            and self.return_type == ValueType.GRID
-            and not self.is_variadic
-        )
+        return self.param_types == (GRID,) and self.return_type == GRID and not self.is_variadic
 
     def to_dict(self) -> dict[str, object]:
         """Serialise the primitive's *signature* (name + types), not its Python impl.

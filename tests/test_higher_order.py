@@ -24,9 +24,9 @@ from arc_lab.solvers.dsl.substrate.program import (
     PrimRef,
     Program,
 )
-from arc_lab.solvers.dsl.substrate.types import ArrowType, ValueType
+from arc_lab.solvers.dsl.substrate.types import GRID, INT, ArrowType
 
-_G, _I = ValueType.GRID, ValueType.INT
+_G, _I = GRID, INT
 _DIM = ArrowType((_G,), _I)  # a GRID -> INT perceiver
 
 # mirror_dim(grid=#0, coord=#1, dim=#2) = (dim(grid) - coord) - 1  — #2 is a function-typed hole.

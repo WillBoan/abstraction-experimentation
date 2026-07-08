@@ -12,9 +12,9 @@ from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Input, Param, Program
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import GRID
 
-_G = ValueType.GRID
+_G = GRID
 
 #: The two D4 generators — the E1 starting library. rot90 is withheld (it's the target).
 _GENERATORS = Library(

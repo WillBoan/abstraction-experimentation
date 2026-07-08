@@ -18,11 +18,11 @@ from __future__ import annotations
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.library import Closure, Library, Primitive, Value
 from arc_lab.solvers.dsl.substrate.primitives.cells import READ, SET_CELL
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import FN, GRID, INT
 
-_GRID = ValueType.GRID
-_INT = ValueType.INT
-_FN = ValueType.FN
+_GRID = GRID
+_INT = INT
+_FN = FN
 
 
 def _width(grid: Grid) -> int:

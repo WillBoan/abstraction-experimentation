@@ -55,9 +55,9 @@ from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_AFFINE_LIBRARY,
 from arc_lab.solvers.dsl.substrate.primitives.cells import CELL_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Lam, Param, Program, Var
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import GRID, INT
 
-_G = ValueType.GRID
+_G = GRID
 
 
 @dataclass(frozen=True, slots=True)
@@ -293,7 +293,7 @@ def _swap_solution(r1: int, c1: int, r2: int, c2: int) -> Solution:
 def _swap_template(r1: int, c1: int, r2: int, c2: int) -> Program:
     """swap_cells as a closed template over read/set_cell (fixed cells = Int constants)."""
     p0 = Param(0, _G)
-    i = ValueType.INT
+    i = INT
     read_a = Apply("read", (p0, Const(r2, i), Const(c2, i)))
     read_b = Apply("read", (p0, Const(r1, i), Const(c1, i)))
     inner = Apply("set_cell", (p0, Const(r1, i), Const(c1, i), read_a))
@@ -363,9 +363,9 @@ def _swap_cols_solution(col_top: int, col_bot: int) -> Solution:
 def _swap_cols_template() -> Program:
     """swap((0,X),(1,Y)) — the general template whose X,Y each appear twice (shared vars)."""
     p0 = Param(0, _G)
-    x = Param(1, ValueType.INT)
-    y = Param(2, ValueType.INT)
-    row0, row1 = Const(0, ValueType.INT), Const(1, ValueType.INT)
+    x = Param(1, INT)
+    y = Param(2, INT)
+    row0, row1 = Const(0, INT), Const(1, INT)
     read_a = Apply("read", (p0, row1, y))  # read (1, Y)
     read_b = Apply("read", (p0, row0, x))  # read (0, X)
     inner = Apply("set_cell", (p0, row0, x, read_a))  # (0,X) <- orig(1,Y)
@@ -433,7 +433,7 @@ def e4_swap_cols_mdl() -> Experiment:
 # *size-general* build_grid programs? E5 targets rot90 alone (the minimal re-derivation); E6 the
 # full D4 ladder (and whether a shared `mirror_index` idiom is invented — the bootstrap).
 
-_I = ValueType.INT
+_I = INT
 _C0, _C1 = Var(0, _I), Var(1, _I)  # De Bruijn: $0 = column j (inner), $1 = row i (outer)
 
 

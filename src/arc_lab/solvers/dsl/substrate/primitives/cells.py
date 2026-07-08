@@ -15,11 +15,11 @@ from __future__ import annotations
 
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT
 
-_GRID = ValueType.GRID
-_COLOR = ValueType.COLOR
-_INT = ValueType.INT
+_GRID = GRID
+_COLOR = COLOR
+_INT = INT
 
 
 def _read(grid: Grid, row: int, col: int) -> int:

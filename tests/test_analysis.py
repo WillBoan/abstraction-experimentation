@@ -20,7 +20,7 @@ from arc_lab.solvers.dsl.solver import GeometricSearchSolver
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Input, Param
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import GRID
 
 
 def _flip_task(task_id: str = "flip") -> Task:
@@ -101,7 +101,7 @@ def test_compression_ratio_direction() -> None:
 def test_two_part_mdl_charges_learned_template_size() -> None:
     # A learned abstraction pays its definition size on top of the flat name cost;
     # base primitives (no template) do not, so the two metrics agree until one is learned.
-    template = Apply("transpose", (Apply("flip_h", (Param(0, ValueType.GRID),)),))  # size 3
+    template = Apply("transpose", (Apply("flip_h", (Param(0, GRID),)),))  # size 3
     learned = make_abstraction("learned_rot90", template, D4_LIBRARY)
     library = D4_LIBRARY.extended(name="d4+learned", extra=(learned,))
     assert CompressionMetric().library_bits(D4_LIBRARY) == TwoPartMDL().library_bits(D4_LIBRARY)

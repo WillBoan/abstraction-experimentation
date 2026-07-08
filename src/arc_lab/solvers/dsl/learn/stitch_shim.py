@@ -39,11 +39,14 @@ from arc_lab.solvers.dsl.substrate.program import (
     Var,
 )
 from arc_lab.solvers.dsl.substrate.types import (
+    FN,
+    GRID,
+    INT,
     ArrowType,
+    BaseType,
     Substitution,
     Type,
     TypeVar,
-    ValueType,
     apply_subst,
     unify,
 )
@@ -53,7 +56,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_INT = ValueType.INT
+_INT = INT
 
 #: A parsed s-expression: an atom (leaf token) or a list (application / binder).
 SExpr: TypeAlias = "str | list[SExpr]"
@@ -158,7 +161,9 @@ def _unify_into(ctx: _InferCtx, t1: Type, t2: Type) -> None:
     ctx.subst = result
 
 
-def _infer(node: SExpr, library: Library, expected: Type | None, ctx: _InferCtx) -> tuple[Program, Type]:
+def _infer(
+    node: SExpr, library: Library, expected: Type | None, ctx: _InferCtx
+) -> tuple[Program, Type]:
     """Build a `Program` from a parsed node and infer its type, unifying constraints into ``ctx``."""
     if isinstance(node, str):
         return _infer_atom(node, library, expected, ctx)
@@ -169,7 +174,7 @@ def _infer(node: SExpr, library: Library, expected: Type | None, ctx: _InferCtx)
         if len(args) != 1:
             raise ValueError(f"lam takes one body, got {len(args)}")
         body, _ = _infer(args[0], library, None, ctx)
-        return Lam(body), ValueType.FN
+        return Lam(body), FN
     if not isinstance(head, str):
         raise ValueError(f"application head must be a symbol, got {head!r}")
     if head[:1] in ("#", "$"):  # higher-order application: a hole/var applied to arguments -> AppFn
@@ -204,8 +209,8 @@ def _infer_atom(
 ) -> tuple[Program, Type]:
     if atom == "input":
         if expected is not None:
-            _unify_into(ctx, ValueType.GRID, expected)
-        return Input(), ValueType.GRID
+            _unify_into(ctx, GRID, expected)
+        return Input(), GRID
     if atom[:1] in ("#", "$"):  # a hole / bound var used as a *value* (its type comes from context)
         store = ctx.metavars if atom[0] == "#" else ctx.boundvars
         index = int(atom[1:])
@@ -214,7 +219,7 @@ def _infer_atom(
             _unify_into(ctx, t, expected)
         return (Param(index, t) if atom[0] == "#" else Var(index, t)), t
     if _is_int_literal(atom):  # a literal is always base-typed
-        base = expected if isinstance(expected, ValueType) else _INT
+        base = expected if isinstance(expected, BaseType) else _INT
         return Const(int(atom), base), base
     if atom in library:  # a primitive referenced as a first-class function value
         prim = library.get(atom)

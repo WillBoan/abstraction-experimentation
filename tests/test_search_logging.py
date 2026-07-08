@@ -14,7 +14,7 @@ import pytest
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search import ConsistentWithTraining, Enumerate, SingleApply
 from arc_lab.solvers.dsl.solver import ATOMIC_LIBRARY
-from arc_lab.solvers.dsl.substrate import Apply, Const, Input, ValueType
+from arc_lab.solvers.dsl.substrate import COLOR, INT, Apply, Const, Input
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.trace import TaskIdFilter, task_context
 
@@ -54,7 +54,7 @@ def test_str_renders_nested() -> None:
     program = Apply(
         "overlay",
         (
-            Const(0, ValueType.COLOR),
+            Const(0, COLOR),
             Apply("identity", (Input(),)),
             Apply("rot90", (Input(),)),
         ),
@@ -64,7 +64,7 @@ def test_str_renders_nested() -> None:
 
 def test_str_renders_leaves() -> None:
     assert str(Input()) == "input"
-    assert str(Const(5, ValueType.INT)) == "5"
+    assert str(Const(5, INT)) == "5"
     assert str(Apply("flip_h", (Input(),))) == "flip_h(input)"
 
 

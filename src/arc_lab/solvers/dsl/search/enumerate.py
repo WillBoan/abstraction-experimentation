@@ -4,7 +4,7 @@ This is the general program-synthesis engine the whole DSL direction is built
 toward. It grows programs from the leaves up, one composition round at a time:
 
 * **Types prune the space.** A primitive's arguments are drawn only from the pool
-  of programs of the matching :class:`ValueType`, so ill-typed compositions are
+  of programs of the matching :class:`BaseType`, so ill-typed compositions are
   never formed. This is what keeps an atomic vocabulary tractable.
 * **Observational equivalence collapses it further.** Two programs that produce
   identical results on every training input are interchangeable; we keep only the
@@ -33,7 +33,7 @@ from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.search.cost import Cost
 from arc_lab.solvers.dsl.substrate.library import Closure, Library, Primitive, Value
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, PrimRef, Program, Var
-from arc_lab.solvers.dsl.substrate.types import ArrowType, Type, ValueType, unify
+from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT, ArrowType, Type, unify
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,10 @@ def _format_signature(sig: Signature) -> str:
 #: Function synthesis: a dummy grid for evaluating Input-free lambda bodies, small per-type batteries
 #: for probing a candidate function's behaviour, and how deep to compose synthesized function bodies.
 _SYNTH_GRID: Grid = Grid.from_list([[0]])
-_SYNTH_GRIDS: tuple[Grid, ...] = (Grid.from_list([[1, 2], [3, 4]]), Grid.from_list([[5, 6, 7], [8, 9, 0]]))
+_SYNTH_GRIDS: tuple[Grid, ...] = (
+    Grid.from_list([[1, 2], [3, 4]]),
+    Grid.from_list([[5, 6, 7], [8, 9, 0]]),
+)
 _FUNCTION_SYNTHESIS_DEPTH = 3
 
 
@@ -116,9 +119,9 @@ class Enumerate(Search):
 
         # pools[type][behaviour-signature] = smallest program with that behaviour.
         pools: dict[Type, dict[Signature, Program]] = {
-            ValueType.GRID: {},
-            ValueType.COLOR: {},
-            ValueType.INT: {},
+            GRID: {},
+            COLOR: {},
+            INT: {},
         }
 
         # Per-search tallies for the INFO summary (cheap; maintained unconditionally).
@@ -140,7 +143,7 @@ class Enumerate(Search):
                 if debug:
                     logger.debug("enumerate reject (eval error) %s: %s", program, exc)
                 return
-            if expected == ValueType.GRID and not all(isinstance(v, Grid) for v in sig):
+            if expected == GRID and not all(isinstance(v, Grid) for v in sig):
                 counts["nongrid"] += 1
                 if debug:
                     logger.debug("enumerate reject (non-grid) %s", program)
@@ -175,12 +178,12 @@ class Enumerate(Search):
                     logger.debug("enumerate reject (dup of %s) %s", existing, program)
 
         # Leaves: the input grid, and task-relevant color/int constants.
-        consider(Input(), ValueType.GRID)
+        consider(Input(), GRID)
         colors, ints = _leaf_constants(task, coord_ints=self.coord_ints)
         for color in colors:
-            consider(Const(color, ValueType.COLOR), ValueType.COLOR)
+            consider(Const(color, COLOR), COLOR)
         for value in ints:
-            consider(Const(value, ValueType.INT), ValueType.INT)
+            consider(Const(value, INT), INT)
 
         fixed = [prim for prim in library.primitives if not prim.is_variadic]
         function_pool = self._function_pool(library) if self.higher_order else []
@@ -192,12 +195,12 @@ class Enumerate(Search):
         # the frozen pools between rounds so an interrupted search resumes mid-task. Not
         # worth the coupling to engine internals until that cost is actually observed.
         for _ in range(self.max_depth):
-            if target in pools[ValueType.GRID]:
+            if target in pools[GRID]:
                 break
             # Freeze the current pools so this round composes only prior programs.
             # The grid frontier is capped (the overridable F1 frontier policy) to bound the count.
             frozen = {vtype: list(bucket.values()) for vtype, bucket in pools.items()}
-            frozen[ValueType.GRID] = self._grid_frontier(frozen[ValueType.GRID], task, library)
+            frozen[GRID] = self._grid_frontier(frozen[GRID], task, library)
             for prim in fixed:
                 # Each argument position draws from its type's pool; a function-typed (arrow) position
                 # draws from the higher-order function pool (empty unless `higher_order`). A position
@@ -210,7 +213,7 @@ class Enumerate(Search):
             if sum(len(b) for b in pools.values()) > self.max_pool:
                 break
 
-        found = pools[ValueType.GRID].get(target)
+        found = pools[GRID].get(target)
         programs: tuple[Program, ...] = (found,) if found is not None else ()
         stats = SearchStats(
             strategy="Enumerate",
@@ -221,9 +224,9 @@ class Enumerate(Search):
                 "deduped": counts["dup"],
                 "errored": counts["err"],
                 "nongrid": counts["nongrid"],
-                "pool_grid": len(pools[ValueType.GRID]),
-                "pool_color": len(pools[ValueType.COLOR]),
-                "pool_int": len(pools[ValueType.INT]),
+                "pool_grid": len(pools[GRID]),
+                "pool_color": len(pools[COLOR]),
+                "pool_int": len(pools[INT]),
             },
         )
         logger.info(stats.summary())
@@ -348,11 +351,11 @@ class Enumerate(Search):
 
     def _domain_battery(self, domain: Type) -> tuple[Value, ...]:
         """A few distinct values of ``domain`` to probe a function's behaviour (empty = unsupported)."""
-        if domain == ValueType.GRID:
+        if domain == GRID:
             return _SYNTH_GRIDS
-        if domain == ValueType.COLOR:
+        if domain == COLOR:
             return (0, 1, 2)
-        if domain == ValueType.INT:
+        if domain == INT:
             return (0, 1, 2, 3)
         return ()
 

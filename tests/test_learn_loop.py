@@ -47,10 +47,10 @@ from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, Param, Program, Var
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT
 
-_G = ValueType.GRID
-_C = ValueType.COLOR
+_G = GRID
+_C = COLOR
 _GEN = Library(name="gen", primitives=(D4_LIBRARY.get("flip_h"), D4_LIBRARY.get("transpose")))
 
 
@@ -72,7 +72,7 @@ def test_antiunify_holes_a_differing_position() -> None:
 
 def test_antiunify_shares_a_repeated_difference() -> None:
     # The same differing pair (0 vs 1) at two positions -> ONE shared Param (the E3 case).
-    i = ValueType.INT
+    i = INT
     a = Apply("read", (Input(), Const(0, i), Const(0, i)))
     b = Apply("read", (Input(), Const(1, i), Const(1, i)))
     template = _close_template(_antiunify(a, b, _GEN, {}, itertools.count()))
@@ -112,7 +112,7 @@ def test_rewrite_folds_nested_occurrences() -> None:
 
 def _transpose_build_grid(g: Program) -> Program:
     # build_grid(width(g), height(g), lam(lam(read(g, $0, $1)))) over a grid sub-program `g`.
-    body = Apply("read", (g, Var(0, ValueType.INT), Var(1, ValueType.INT)))
+    body = Apply("read", (g, Var(0, INT), Var(1, INT)))
     return Apply("build_grid", (Apply("width", (g,)), Apply("height", (g,)), Lam(Lam(body))))
 
 
@@ -133,7 +133,7 @@ def test_rewrite_folds_a_build_grid_program() -> None:
 
 def _build_grid_with_col(col: Program) -> Program:
     g = Input()
-    body = Apply("read", (g, Var(0, ValueType.INT), col))
+    body = Apply("read", (g, Var(0, INT), col))
     return Apply("build_grid", (Apply("width", (g,)), Apply("height", (g,)), Lam(Lam(body))))
 
 
@@ -141,13 +141,13 @@ def test_bound_var_safe_proposer_refuses_to_hoist_a_bound_var() -> None:
     # Two build_grid programs differing only in a *bound-var* coordinate. The naive proposer holes
     # the $i into an abstraction param (unsound — the E6 break); the bound-var-safe one refuses, so
     # no sound cross-member generalisation exists and it offers nothing (E7's fix).
-    p = _build_grid_with_col(Var(1, ValueType.INT))  # col = $1
+    p = _build_grid_with_col(Var(1, INT))  # col = $1
     q = _build_grid_with_col(  # col = width - $1 - 1 (a reflection, contains $1)
         Apply(
             "sub",
             (
-                Apply("sub", (Apply("width", (Input(),)), Var(1, ValueType.INT))),
-                Const(1, ValueType.INT),
+                Apply("sub", (Apply("width", (Input(),)), Var(1, INT))),
+                Const(1, INT),
             ),
         )
     )
@@ -168,7 +168,7 @@ def test_e6_and_e7_target_the_full_d4_ladder() -> None:
 # -- frequent-subtree proposers + the mirror_index bootstrap (E8 / E9) ---
 
 
-_MIRROR = _mirror(Param(0, ValueType.INT), Param(1, ValueType.INT))  # sub(sub(#0,#1),1), the idiom
+_MIRROR = _mirror(Param(0, INT), Param(1, INT))  # sub(sub(#0,#1),1), the idiom
 
 
 def _d4_member_programs() -> list[Program]:
@@ -202,17 +202,17 @@ def test_search_scoped_proposer_keeps_only_composable_idioms() -> None:
         _d4_member_programs(), BUILD_LIBRARY
     )
     assert _MIRROR in proposed
-    assert all(t.result_type(BUILD_LIBRARY) == ValueType.INT for t in proposed)
+    assert all(t.result_type(BUILD_LIBRARY) == INT for t in proposed)
     assert not any(isinstance(t, Apply) and t.primitive == "read" for t in proposed)
 
 
 def test_type_scoped_proposer_filters_by_declared_type() -> None:
     # The declared-type stopgap: only INT idioms survive (mirror_index in, COLOR read-bodies out).
-    proposed = TypeScopedFrequentSubtree(result_type=ValueType.INT).propose(
+    proposed = TypeScopedFrequentSubtree(result_type=INT).propose(
         _d4_member_programs(), BUILD_LIBRARY
     )
     assert _MIRROR in proposed
-    assert all(t.result_type(BUILD_LIBRARY) == ValueType.INT for t in proposed)
+    assert all(t.result_type(BUILD_LIBRARY) == INT for t in proposed)
 
 
 def test_naive_selects_read_body_but_scoped_selects_mirror_index() -> None:

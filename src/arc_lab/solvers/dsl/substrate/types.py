@@ -2,44 +2,37 @@
 
 Programs pass *values* between primitives, and every value has a type. A :data:`Type` is one of:
 
-* a :class:`ValueType` — an **atomic base type** (grid, color, int, the opaque function tag). These
-  are the leaves; the enum is the closed set the vocabulary uses today (new base types — mask, object
-  — slot in as members). Existing first-order code is typed entirely in these.
+* a :class:`BaseType` — an **atomic base type** (:data:`GRID`, :data:`COLOR`, :data:`INT`, and the
+  opaque function tag :data:`FN`). These are the leaves — module-level singletons, the closed set the
+  vocabulary uses today (new base types slot in as more constants). Existing first-order code is typed
+  entirely in these.
 * an :class:`ArrowType` — a **function type** ``(p1, …, pn) -> r`` (n-ary, matching a primitive's
   multi-argument signature). Refines the opaque ``FN`` tag: it is what lets typed enumeration target a
   function-valued hole precisely (e.g. a ``GRID -> INT`` perceiver), the higher-order unlock.
-* a :class:`TypeVar` — a **type variable**, for polymorphism (a generic combinator like
-  ``map : ((a -> b), [a]) -> [b]``).
+* a :class:`TypeVar` — a **type variable**, for polymorphism (``map : ((a -> b), [a]) -> [b]``).
 
+All three are frozen dataclasses — one uniform mechanism — so a type is inspectable, hashable data.
 Types are what make search over a larger, more atomic vocabulary tractable: typed enumeration only ever
 composes type-compatible pieces (unified — see :func:`unify`), pruning the otherwise-explosive space
 before a program is ever evaluated. Base types serialize to their bare string name (backward-compatible
 with every committed artifact); composite types serialize to a small tagged dict.
-
-Note (Phase C): this module adds the polymorphic type *language* + Hindley-Milner :func:`unify`. The
-existing substrate is still typed in `ValueType` alone; threading `Type` through primitive signatures,
-the enumeration pools, and the AST nodes lands with its first consumer — the higher-order phase.
 """
 
 from __future__ import annotations
 
 import itertools
 from dataclasses import dataclass
-from enum import Enum
 from typing import TypeAlias
 
 
-class ValueType(Enum):
+@dataclass(frozen=True, slots=True)
+class BaseType:
     """An atomic base type — a leaf of :data:`Type`."""
 
-    GRID = "grid"
-    COLOR = "color"  # a cell color, integer 0-9
-    INT = "int"  # a small non-negative integer (e.g. a tiling dimension)
-    FN = "fn"  # an opaque function value (a lambda's closure); ArrowType refines it
-    # Future base types (mask, object, …) slot in here as the vocabulary grows.
+    name: str
 
     def __str__(self) -> str:
-        return self.value
+        return self.name
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,10 +58,23 @@ class ArrowType:
 
 
 #: A type in the DSL: an atomic base type, a function type, or a type variable.
-Type: TypeAlias = "ValueType | ArrowType | TypeVar"
+Type: TypeAlias = "BaseType | ArrowType | TypeVar"
 
 #: A unifier: a mapping from :class:`TypeVar` names to the types they stand for.
 Substitution: TypeAlias = "dict[str, Type]"
+
+#: The base-type singletons. New base types (mask, object, …) slot in as more of these.
+GRID = BaseType("grid")
+COLOR = BaseType("color")  # a cell color, integer 0-9
+INT = BaseType("int")  # a small non-negative integer (e.g. a tiling dimension)
+FN = BaseType("fn")  # an opaque function value (a lambda's closure); ArrowType refines it
+
+_BASE_TYPES: dict[str, BaseType] = {t.name: t for t in (GRID, COLOR, INT, FN)}
+
+
+def base_type(name: str) -> BaseType:
+    """The base-type singleton for ``name`` (or a fresh :class:`BaseType` for an unknown name)."""
+    return _BASE_TYPES.get(name, BaseType(name))
 
 
 def free_type_vars(t: Type) -> set[str]:
@@ -107,7 +113,7 @@ def unify(t1: Type, t2: Type, subst: Substitution | None = None) -> Substitution
         return _bind(a.name, b, subst)
     if isinstance(b, TypeVar):
         return _bind(b.name, a, subst)
-    if isinstance(a, ValueType) and isinstance(b, ValueType):
+    if isinstance(a, BaseType) and isinstance(b, BaseType):
         return subst if a == b else None
     if isinstance(a, ArrowType) and isinstance(b, ArrowType):
         if len(a.params) != len(b.params):
@@ -155,17 +161,20 @@ Serialized: TypeAlias = "str | dict[str, object]"
 
 def type_to_serializable(t: Type) -> Serialized:
     """Serialize a type — a base type to its bare string (backward-compatible), else a tagged dict."""
-    if isinstance(t, ValueType):
-        return t.value
+    if isinstance(t, BaseType):
+        return t.name
     if isinstance(t, TypeVar):
         return {"var": t.name}
-    return {"arrow": [type_to_serializable(p) for p in t.params], "result": type_to_serializable(t.result)}
+    return {
+        "arrow": [type_to_serializable(p) for p in t.params],
+        "result": type_to_serializable(t.result),
+    }
 
 
 def type_from_serializable(data: Serialized) -> Type:
     """Reconstruct a type from :func:`type_to_serializable` (a bare string is a base type)."""
     if isinstance(data, str):
-        return ValueType(data)
+        return base_type(data)
     if "var" in data:
         name = data["var"]
         if not isinstance(name, str):

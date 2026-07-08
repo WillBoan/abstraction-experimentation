@@ -66,7 +66,7 @@ _"What is a program, and how is it run?"_ The physics both loops run on (`substr
 | Variable binding — `Param`/`env` | positional holes for abstraction args | `baked` | ✅ | learned abstractions |
 | Variable binding — lambda-index (`build_grid`) | a bound index inside a function argument — built as a **De Bruijn** bound var (`Var` = Stitch's `$i`; `Param` = `#j`) + a `Lam` binder evaluating to a `Closure`; env-based interp, no index-shifting. Stitch-compatible representation | `baked` | ✅ | **size-general geometry from cells; pixels→D4** (search + experiment shipped: E5/E7/E8/E9) |
 | Variable binding — search-holes | an unfilled node the search expands | `unbuilt` | ⚪ | top-down search (F1) |
-| Type system (`ValueType`, typed dispatch) | GRID/COLOR/INT tags; MASK/OBJECT reserved | `baked` | ✅ | search pruning |
+| Type system (`BaseType` + `ArrowType`/`TypeVar`, HM `unify`) | GRID/COLOR/INT/FN base singletons; arrows + type vars; MASK/OBJECT reserved | `baked` | ✅ | search pruning |
 | Library structure (`extended` / versioning) | the typed vocabulary as a first-class value | `baked` | ✅ | library learning (F4) |
 | Leaf / constant mining (`_leaf_constants`, `coord_ints`) | which COLOR/INT literals enter search | `baked` | ✅ | **cell-floor tractability** (coord blow-up) |
 

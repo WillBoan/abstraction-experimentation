@@ -17,7 +17,7 @@ import numpy as np
 
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.library import Primitive
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT
 
 
 def _overlay(mask: int, *grids: Grid) -> Grid:
@@ -56,18 +56,18 @@ def _tile(rows: int, cols: int, *cells: Grid) -> Grid:
 
 OVERLAY = Primitive(
     name="overlay",
-    param_types=(ValueType.COLOR,),
-    return_type=ValueType.GRID,
+    param_types=(COLOR,),
+    return_type=GRID,
     impl=_overlay,
-    variadic_param=ValueType.GRID,
+    variadic_param=GRID,
 )
 
 TILE = Primitive(
     name="tile",
-    param_types=(ValueType.INT, ValueType.INT),
-    return_type=ValueType.GRID,
+    param_types=(INT, INT),
+    return_type=GRID,
     impl=_tile,
-    variadic_param=ValueType.GRID,
+    variadic_param=GRID,
 )
 
 COMBINATORS: tuple[Primitive, ...] = (OVERLAY, TILE)

@@ -26,7 +26,7 @@ from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.cost import Cost
 from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive, Value
-from arc_lab.solvers.dsl.substrate.types import Type, ValueType
+from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT, Type
 
 #: A fixed, varied battery for observational equivalence (square + non-square + singleton).
 _TEST_GRIDS: tuple[Grid, ...] = (
@@ -44,9 +44,9 @@ def _battery(param_types: tuple[Type, ...]) -> list[tuple[Value, ...]]:
     # Base-typed inputs only; a function-typed (arrow) parameter has no test battery yet — behavioral
     # signatures over higher-order primitives are a later (Phase E) concern.
     pools: dict[Type, tuple[Value, ...]] = {
-        ValueType.GRID: _TEST_GRIDS,
-        ValueType.COLOR: _TEST_COLORS,
-        ValueType.INT: _TEST_INTS,
+        GRID: _TEST_GRIDS,
+        COLOR: _TEST_COLORS,
+        INT: _TEST_INTS,
     }
     combos = itertools.product(*(pools[t] for t in param_types))
     return list(itertools.islice(combos, _MAX_BATTERY))

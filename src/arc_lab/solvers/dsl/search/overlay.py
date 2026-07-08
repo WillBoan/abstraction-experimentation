@@ -27,7 +27,7 @@ from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Program
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import COLOR
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ class OverlaySearch(Search):
                     program: Program = Apply(
                         "overlay",
                         (
-                            Const(mask, ValueType.COLOR),
+                            Const(mask, COLOR),
                             Apply("identity", (Input(),)),
                             *(Apply(name, (Input(),)) for name in subset),
                         ),

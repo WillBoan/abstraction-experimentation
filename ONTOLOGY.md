@@ -53,12 +53,12 @@ Three axes organize everything below.
   - `🔜 next` proposed & prioritized
   - `⚪ cand` catalogued candidate, not yet prioritized
 - **Types**:
-  - Live (`ValueType` in `substrate/types.py`):
+  - Live (`BaseType` singletons `GRID`/`COLOR`/`INT`/`FN` in `substrate/types.py`):
     - `Grid`
     - `Color`
     - `Int`
     - `Fn`
-      - the lambda lift; live but **opaque** (one enum tag, no arrow types yet) — a `Lam` closure, consumed by `build_grid`
+      - the lambda lift; the opaque base tag (`FN`), now refined by `ArrowType` for higher-order dispatch — a `Lam` closure, consumed by `build_grid` and higher-order abstractions
   - Not yet implemented:
     - `Bool`
     - `Coord`

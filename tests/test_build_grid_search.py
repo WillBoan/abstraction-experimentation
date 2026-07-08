@@ -18,7 +18,7 @@ from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_AFFINE_LIBRARY, BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Param, Program
-from arc_lab.solvers.dsl.substrate.types import ValueType
+from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT
 
 _Ref = Callable[[npt.NDArray[np.int_]], npt.NDArray[np.int_]]
 
@@ -79,7 +79,7 @@ def test_difficulty_ladder_depth() -> None:
 def test_composes_signature() -> None:
     # The search's declared composition rule: it composes INT^n -> INT coordinate primitives only.
     s = BuildGridSearch()
-    _int, _grid, _color = ValueType.INT, ValueType.GRID, ValueType.COLOR
+    _int, _grid, _color = INT, GRID, COLOR
     assert s.composes_signature((_int, _int), _int)  # sub / add / mul / a learned mirror_index
     assert s.composes_signature((_int,), _int)
     assert not s.composes_signature((_grid, _int), _int)  # a GRID param is not a coordinate op
@@ -104,7 +104,7 @@ def test_affine_grammar_composes_add_and_mul() -> None:
 
 
 def _mirror_index_library() -> Library:
-    _int = ValueType.INT
+    _int = INT
     mirror = Apply("sub", (Apply("sub", (Param(0, _int), Param(1, _int))), Const(1, _int)))
     return BUILD_LIBRARY.extended(
         name="build+mirror", extra=(make_abstraction("mirror_index", mirror, BUILD_LIBRARY),)
