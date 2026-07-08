@@ -25,7 +25,11 @@ from arc_lab.solvers.dsl.analysis.compression import (
     speedup_ratio,
 )
 from arc_lab.solvers.dsl.analysis.runner import RunSummary
-from arc_lab.solvers.dsl.learn.antiunify import AbstractionProposer, AntiunifyPairs
+from arc_lab.solvers.dsl.learn.antiunify import (
+    AbstractionProposer,
+    AntiunifyPairs,
+    SearchScopedFrequentSubtree,
+)
 from arc_lab.solvers.dsl.learn.harness import (
     CheckResult,
     check_abstractions,
@@ -40,7 +44,7 @@ from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
 from arc_lab.solvers.dsl.search.enumerate import Enumerate
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
-from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
+from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_AFFINE_LIBRARY, BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.cells import CELL_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Lam, Param, Program, Var
@@ -60,7 +64,9 @@ class Experiment:
     cost: Cost
     note: str = ""
     metric: CompressionMetric | None = None  # governance objective (None -> flat baseline)
-    proposer: AbstractionProposer = field(default_factory=AntiunifyPairs)  # the invention plug point
+    proposer: AbstractionProposer = field(
+        default_factory=AntiunifyPairs
+    )  # the invention plug point
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,7 +104,9 @@ def run_experiment(
 ) -> ExperimentReport:
     """Generate the testbed, run the loop blind, then compute the three-library report."""
     if write:
-        write_testbed(experiment.name, experiment.tasks, out_root=testbeds_root, note=experiment.note)
+        write_testbed(
+            experiment.name, experiment.tasks, out_root=testbeds_root, note=experiment.note
+        )
 
     train = [_task(g) for g in experiment.tasks if g.split == "train"]
     full = Dataset(name=experiment.name, tasks=tuple(_task(g) for g in experiment.tasks))
@@ -517,6 +525,70 @@ def e7_rederive_d4_safe() -> Experiment:
     )
 
 
+# -- E8 / E9: the mirror_index bootstrap (frequent-subtree proposer x grammar) ----------
+#
+# E7 re-derived the D4 ladder but left it *uncompressed* (DL x0.79): six separate whole-member
+# abstractions, no shared idiom, because whole-program antiunification can't mine a recurring
+# *subterm*. E8/E9 swap in FrequentSubtree (mines proper subtrees) and a primitive-driven
+# BuildGridSearch (so a minted coordinate abstraction is actually *used*). The grammar is the
+# axis: E8 = sub-only, E9 = the honest affine family (sub+add+mul, a wider search / worse cliff).
+
+
+def _mirror_bootstrap_experiment(
+    name: str, starting_library: Library, note: str, *, main_beam: int, tight_beam: int
+) -> Experiment:
+    """The mirror_index-bootstrap environment; E8 and E9 differ in the starting grammar (+ beam).
+
+    The single observable is `mirror_index` itself — the loop mints only the shared coordinate idiom
+    (FrequentSubtree excludes program roots, so no whole-member abstractions pre-empt it). Enablement
+    uses a *tight-beam* BuildGridSearch: once mirror_index exists the reflection is a depth-1 coordinate,
+    so L2 clears the beam cliff that L1 (raw depth-2 `sub(sub(n,k),1)`) cannot — the search-speedup payoff.
+    The affine grammar (E9) needs a *wider* `main_beam` just to solve a reflection once and seed the
+    loop — that 128->224 gap is the measured cost of add/mul, not a confound.
+    """
+    search = BuildGridSearch(beam_width=main_beam)
+    return Experiment(
+        name=name,
+        starting_library=starting_library,
+        targets=(("mirror_index", _mirror(Param(0, _I), Param(1, _I))),),
+        tasks=_d4_tasks(_D4_MEMBERS, n_train=3, n_heldout=1),
+        search=search,
+        enablement_search=BuildGridSearch(beam_width=tight_beam),
+        cost=ProgramSize(),
+        metric=TwoPartMDL(),  # charge mirror_index its definition size — it must earn its keep
+        # STOPGAP: mine only idioms the coordinate search can reuse (INT^n->INT), derived from the
+        # search itself — not a declared type. See MACHINERY.md for the divergence + the general fix.
+        proposer=SearchScopedFrequentSubtree(composes=search.composes_signature),
+        note=note,
+    )
+
+
+def e8_mirror_index_sub() -> Experiment:
+    """E8: does a frequent-subtree proposer invent mirror_index and compress the D4 ladder? (sub-only.)"""
+    return _mirror_bootstrap_experiment(
+        "e8-mirror-index-sub",
+        BUILD_LIBRARY,
+        "E8: E7's D4 ladder under the frequent-subtree proposer. Whole-program antiunification (E7) "
+        "left the ladder uncompressed (x0.79); does mining the recurring subterm invent mirror_index "
+        "= sub(sub(#0,#1),1), compress the ladder, and dissolve the beam cliff?",
+        main_beam=128,  # E7's environment: sub-only solves the ladder at 128
+        tight_beam=64,  # sub@64 = transpose only; sub+mirror@64 = the whole ladder
+    )
+
+
+def e9_mirror_index_affine() -> Experiment:
+    """E9: E8 on the honest *affine* grammar (sub+add+mul) — a wider search; same bootstrap question."""
+    return _mirror_bootstrap_experiment(
+        "e9-mirror-index-affine",
+        BUILD_AFFINE_LIBRARY,
+        "E9: E8's bootstrap on the affine coordinate grammar (sub+add+mul). add/mul widen the base "
+        "search so the reflection is cut even at beam 128 (the chicken-and-egg: no mirror example to "
+        "mine from); beam 224 seeds it once. Is the same mirror_index invented, and its speedup larger?",
+        main_beam=224,  # affine needs >=224 to solve a reflection at all (<=192 fails) — the add/mul cost
+        tight_beam=128,  # affine@128 = transpose only; affine+mirror@128 = the whole ladder
+    )
+
+
 #: Experiment registry for the CLI (`arc-lab learn <name>`).
 _REGISTRY = {
     "e1-rot90": e1_rot90,
@@ -526,6 +598,8 @@ _REGISTRY = {
     "e5-rederive-rot90": e5_rederive_rot90,
     "e6-rederive-d4": e6_rederive_d4,
     "e7-rederive-d4-safe": e7_rederive_d4_safe,
+    "e8-mirror-index-sub": e8_mirror_index_sub,
+    "e9-mirror-index-affine": e9_mirror_index_affine,
 }
 
 

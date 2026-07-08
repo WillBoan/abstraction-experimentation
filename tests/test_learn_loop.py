@@ -7,9 +7,12 @@ from collections.abc import Callable
 from pathlib import Path
 
 from arc_lab.core.task import Task
-from arc_lab.solvers.dsl.analysis.compression import CompressionMetric
+from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, TwoPartMDL
 from arc_lab.solvers.dsl.learn.antiunify import (
     AntiunifyPairs,
+    FrequentSubtree,
+    SearchScopedFrequentSubtree,
+    TypeScopedFrequentSubtree,
     _antiunify,
     _close_template,
     match,
@@ -18,6 +21,8 @@ from arc_lab.solvers.dsl.learn.antiunify import (
 from arc_lab.solvers.dsl.learn.experiments import (
     Experiment,
     ExperimentReport,
+    _d4_targets,
+    _mirror,
     e1_rot90,
     e2_swap_cells,
     e3_swap_cols,
@@ -25,9 +30,12 @@ from arc_lab.solvers.dsl.learn.experiments import (
     e5_rederive_rot90,
     e6_rederive_d4,
     e7_rederive_d4_safe,
+    e8_mirror_index_sub,
+    e9_mirror_index_affine,
     run_experiment,
 )
 from arc_lab.solvers.dsl.learn.selection import GreedyMDL
+from arc_lab.solvers.dsl.search import BuildGridSearch
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
@@ -129,7 +137,13 @@ def test_bound_var_safe_proposer_refuses_to_hoist_a_bound_var() -> None:
     # no sound cross-member generalisation exists and it offers nothing (E7's fix).
     p = _build_grid_with_col(Var(1, ValueType.INT))  # col = $1
     q = _build_grid_with_col(  # col = width - $1 - 1 (a reflection, contains $1)
-        Apply("sub", (Apply("sub", (Apply("width", (Input(),)), Var(1, ValueType.INT))), Const(1, ValueType.INT)))
+        Apply(
+            "sub",
+            (
+                Apply("sub", (Apply("width", (Input(),)), Var(1, ValueType.INT))),
+                Const(1, ValueType.INT),
+            ),
+        )
     )
     assert len(AntiunifyPairs().propose([p, q], BUILD_LIBRARY)) >= 1
     assert AntiunifyPairs(bound_var_safe=True).propose([p, q], BUILD_LIBRARY) == []
@@ -143,6 +157,81 @@ def test_e6_and_e7_target_the_full_d4_ladder() -> None:
     e6_proposer, e7_proposer = e6_rederive_d4().proposer, e7_rederive_d4_safe().proposer
     assert isinstance(e6_proposer, AntiunifyPairs) and e6_proposer.bound_var_safe is False
     assert isinstance(e7_proposer, AntiunifyPairs) and e7_proposer.bound_var_safe is True
+
+
+# -- frequent-subtree proposers + the mirror_index bootstrap (E8 / E9) ---
+
+
+_MIRROR = _mirror(Param(0, ValueType.INT), Param(1, ValueType.INT))  # sub(sub(#0,#1),1), the idiom
+
+
+def _d4_member_programs() -> list[Program]:
+    return list(_d4_targets(Input()).values())  # the six build_grid members over the input grid
+
+
+def test_rewrite_folds_inside_a_lambda_body() -> None:
+    # The rewrite fix: fold a coordinate idiom that sits *inside* a build_grid's lam(lam(...)) body.
+    rot90 = _d4_targets(Input())["rot90"]
+    folded = rewrite_with(rot90, "m", _MIRROR)
+    assert "m(width(input), $1)" in str(folded)  # the mirror was folded, under the binder
+    assert "sub(sub(" not in str(folded)
+    # A member without the idiom is untouched.
+    transpose = _d4_targets(Input())["transpose"]
+    assert rewrite_with(transpose, "m", _MIRROR) == transpose
+
+
+def test_frequent_subtree_mines_mirror_index_and_read_bodies() -> None:
+    # The naive miner surfaces the reusable coordinate factor (mirror_index) — but *also* the larger,
+    # unreusable COLOR read-body idioms greedy MDL prefers (the compression/reusability divergence).
+    proposed = FrequentSubtree().propose(_d4_member_programs(), BUILD_LIBRARY)
+    assert _MIRROR in proposed
+    assert any(isinstance(t, Apply) and t.primitive == "read" for t in proposed)
+
+
+def test_search_scoped_proposer_keeps_only_composable_idioms() -> None:
+    # Scoping invention to what the search composes (INT^n->INT, derived from the search itself)
+    # keeps mirror_index and drops the COLOR read-bodies.
+    composes = BuildGridSearch().composes_signature
+    proposed = SearchScopedFrequentSubtree(composes=composes).propose(
+        _d4_member_programs(), BUILD_LIBRARY
+    )
+    assert _MIRROR in proposed
+    assert all(t.result_type(BUILD_LIBRARY) == ValueType.INT for t in proposed)
+    assert not any(isinstance(t, Apply) and t.primitive == "read" for t in proposed)
+
+
+def test_type_scoped_proposer_filters_by_declared_type() -> None:
+    # The declared-type stopgap: only INT idioms survive (mirror_index in, COLOR read-bodies out).
+    proposed = TypeScopedFrequentSubtree(result_type=ValueType.INT).propose(
+        _d4_member_programs(), BUILD_LIBRARY
+    )
+    assert _MIRROR in proposed
+    assert all(t.result_type(BUILD_LIBRARY) == ValueType.INT for t in proposed)
+
+
+def test_naive_selects_read_body_but_scoped_selects_mirror_index() -> None:
+    # The divergence and its fix, at the governance seam: with members recurring (as the wake corpus
+    # has them), greedy MDL over the *naive* proposer mints a read-body; the *search-scoped* proposer
+    # (mine only what the search reuses) recovers mirror_index.
+    corpus = [(_dummy_task(f"t{i}"), p) for i in range(3) for p in _d4_member_programs()]
+    composes = BuildGridSearch().composes_signature
+    naive = GreedyMDL().select(corpus, BUILD_LIBRARY, FrequentSubtree(), TwoPartMDL())
+    scoped = GreedyMDL().select(
+        corpus, BUILD_LIBRARY, SearchScopedFrequentSubtree(composes=composes), TwoPartMDL()
+    )
+    assert (
+        isinstance(naive, Apply) and naive.primitive == "read"
+    )  # greedy grabs the unreusable idiom
+    assert scoped == _MIRROR  # scoping recovers the reusable factor
+
+
+def test_e8_and_e9_target_mirror_index_via_search_scoped_proposer() -> None:
+    for factory in (e8_mirror_index_sub, e9_mirror_index_affine):
+        exp = factory()
+        assert tuple(name for name, _ in exp.targets) == ("mirror_index",)
+        assert isinstance(exp.proposer, SearchScopedFrequentSubtree)
+    assert e8_mirror_index_sub().starting_library.name == "build"  # sub-only grammar
+    assert e9_mirror_index_affine().starting_library.name == "build-affine"  # + add/mul
 
 
 def test_propose_recurring_program_yields_lifted_template() -> None:
@@ -243,4 +332,6 @@ def test_e5_rederives_rot90_as_build_grid(tmp_path: Path) -> None:
     assert report.check.matched == ("rot90",)
     assert report.check.missed == ()
     assert len(report.learned) == 1  # the size-general build_grid program, no bloat
-    assert len(report.enablement) > 0  # with the abstraction, a depth-1 apply solves; without, it can't
+    assert (
+        len(report.enablement) > 0
+    )  # with the abstraction, a depth-1 apply solves; without, it can't
