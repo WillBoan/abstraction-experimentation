@@ -56,7 +56,9 @@ def make_task(
     return GeneratedTask(task_id=task_id, label=label, split=split, spec=spec)
 
 
-def write_testbed(name: str, tasks: Sequence[GeneratedTask], *, out_root: Path, note: str = "") -> Path:
+def write_testbed(
+    name: str, tasks: Sequence[GeneratedTask], *, out_root: Path, note: str = ""
+) -> Path:
     """Write ``tasks`` as an ARC-format testbed under ``out_root/<name>/`` (+ a manifest)."""
     root = out_root / name
     tasks_dir = root / "tasks"
@@ -64,9 +66,7 @@ def write_testbed(name: str, tasks: Sequence[GeneratedTask], *, out_root: Path, 
     for task in tasks:
         (tasks_dir / f"{task.task_id}.json").write_text(json.dumps(task.spec), encoding="utf-8")
 
-    content = json.dumps(
-        {"name": name, "tasks": [t.spec for t in tasks]}, sort_keys=True
-    )
+    content = json.dumps({"name": name, "tasks": [t.spec for t in tasks]}, sort_keys=True)
     manifest = {
         "name": name,
         "note": note,

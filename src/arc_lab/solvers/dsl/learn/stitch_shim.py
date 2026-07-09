@@ -152,7 +152,9 @@ class _InferCtx:
     """Mutable state threaded through type re-inference: the unifier + each hole/var's solved type."""
 
     subst: Substitution
-    metavars: dict[int, Type]  # #j -> its (shared, unification-refined) type; term-global (Stitch's)
+    metavars: dict[
+        int, Type
+    ]  # #j -> its (shared, unification-refined) type; term-global (Stitch's)
     #: The De Bruijn binder stack: ``bound[-1]`` is the innermost ``lam``'s variable, so ``$i`` reads
     #: ``bound[-1 - i]``. A *stack* (not a flat index->type map) is essential — two ``$0``\\ s under
     #: different binders are different variables and must not be unified with each other.

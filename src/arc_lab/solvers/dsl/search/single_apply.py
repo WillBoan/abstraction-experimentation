@@ -32,8 +32,6 @@ class SingleApply(Search):
             if self.accepts(program, task, library):
                 logger.debug("SingleApply accept %s", program)
                 programs.append(program)
-        stats = SearchStats(
-            strategy="SingleApply", considered=considered, returned=len(programs)
-        )
+        stats = SearchStats(strategy="SingleApply", considered=considered, returned=len(programs))
         logger.info(stats.summary())
         return SearchResult(programs=tuple(programs), stats=stats)
