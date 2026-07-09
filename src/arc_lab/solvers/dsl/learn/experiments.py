@@ -1,6 +1,6 @@
 """Abstraction-formation experiments: starting primitives, targets, and a generated testbed.
 
-An :class:`Experiment` is a controlled environment: a starting library, hand-authored
+An :class:`StudySpec` is a controlled environment: a starting library, hand-authored
 *target* abstractions (templates over the starting primitives — used only as observables,
 for library 3 and the behavioral checker), and a deterministic synthetic testbed. The
 runner learns a library on the train split (blind to the targets), then reports the three
@@ -63,7 +63,7 @@ _G = GRID
 
 
 @dataclass(frozen=True, slots=True)
-class Experiment:
+class StudySpec:
     name: str
     starting_library: Library
     targets: tuple[tuple[str, Program], ...]  # (name, template over starting primitives)
@@ -80,7 +80,7 @@ class Experiment:
 
 
 @dataclass(frozen=True, slots=True)
-class ExperimentReport:
+class StudyReport:
     name: str
     learned: tuple[tuple[str, str], ...]  # (name, template str)
     check: CheckResult
@@ -110,13 +110,13 @@ class ExperimentReport:
         return lines
 
 
-def run_experiment(
-    experiment: Experiment,
+def run_study(
+    experiment: StudySpec,
     *,
     testbeds_root: Path,
     runs_root: Path,
     write: bool = True,
-) -> ExperimentReport:
+) -> StudyReport:
     """Generate the testbed, run the loop blind, then compute the three-library report."""
     if write:
         write_testbed(
@@ -163,7 +163,7 @@ def run_experiment(
     base_shallow, aug_shallow = shallow["L1-shallow"], shallow["L2-shallow"]
     train_ids = frozenset(g.task_id for g in experiment.tasks if g.split == "train")
     heldout_ids = frozenset(g.task_id for g in experiment.tasks if g.split == "heldout")
-    return ExperimentReport(
+    return StudyReport(
         name=experiment.name,
         learned=tuple((p.name, str(p.template)) for p in result.abstractions),
         check=check_abstractions(list(result.abstractions), target_prims),
@@ -200,9 +200,7 @@ def compression_transfer_correlation(
     """
     points: list[CorrelationPoint] = []
     for name in names:
-        report = run_experiment(
-            make_experiment(name), testbeds_root=testbeds_root, runs_root=runs_root
-        )
+        report = run_study(make_study(name), testbeds_root=testbeds_root, runs_root=runs_root)
         base, learned = report.compare["L1"], report.compare["L2"]
         points.append(
             CorrelationPoint(
@@ -246,7 +244,7 @@ def _small_grids() -> list[Grid]:
     return [Grid.from_list(rows) for rows in rows_pool]
 
 
-def e1_rot90() -> Experiment:
+def e1_rot90() -> StudySpec:
     """E1 smoke test: starting {flip_h, transpose}, target rot90 (withheld)."""
     generators = Library(
         name="generators",
@@ -267,7 +265,7 @@ def e1_rot90() -> Experiment:
                 test_inputs=[grid],
             )
         )
-    return Experiment(
+    return StudySpec(
         name="e1-rot90",
         starting_library=generators,
         targets=(("rot90", _rot90_template()),),
@@ -318,7 +316,7 @@ def _cell_search() -> Enumerate:
     return Enumerate(max_depth=4, coord_ints=True, max_grid_args=64, max_pool=20000)
 
 
-def e2_swap_cells() -> Experiment:
+def e2_swap_cells() -> StudySpec:
     """E2: starting {read, set_cell}, target fixed-cell swap_cells((0,0),(1,1)) (withheld)."""
     r1, c1, r2, c2 = 0, 0, 1, 1
     solution = _swap_solution(r1, c1, r2, c2)
@@ -337,7 +335,7 @@ def e2_swap_cells() -> Experiment:
                 test_inputs=pool[3:],
             )
         )
-    return Experiment(
+    return StudySpec(
         name="e2-swap-cells",
         starting_library=CELL_LIBRARY,
         targets=(("swap_cells", _swap_template(r1, c1, r2, c2)),),
@@ -396,8 +394,8 @@ def _swap_cols_tasks() -> tuple[GeneratedTask, ...]:
     return tuple(tasks)
 
 
-def _swap_cols_experiment(name: str, metric: CompressionMetric | None, note: str) -> Experiment:
-    return Experiment(
+def _swap_cols_experiment(name: str, metric: CompressionMetric | None, note: str) -> StudySpec:
+    return StudySpec(
         name=name,
         starting_library=CELL_LIBRARY,
         targets=(("swap_cols", _swap_cols_template()),),
@@ -410,7 +408,7 @@ def _swap_cols_experiment(name: str, metric: CompressionMetric | None, note: str
     )
 
 
-def e3_swap_cols() -> Experiment:
+def e3_swap_cols() -> StudySpec:
     """E3: general swap((0,X),(1,Y)) from {read, set_cell}; **flat** MDL (observes library bloat)."""
     return _swap_cols_experiment(
         "e3-swap-cols",
@@ -420,7 +418,7 @@ def e3_swap_cols() -> Experiment:
     )
 
 
-def e4_swap_cols_mdl() -> Experiment:
+def e4_swap_cols_mdl() -> StudySpec:
     """E4: E3 under **two-part MDL** (charges definition size) — does it stop the bloat?"""
     return _swap_cols_experiment(
         "e4-swap-cols-mdl",
@@ -527,9 +525,9 @@ def _d4_tasks(
     return tuple(tasks)
 
 
-def e5_rederive_rot90() -> Experiment:
+def e5_rederive_rot90() -> StudySpec:
     """E5: re-derive rot90 as a build_grid program from the cell floor (no D4 primitive)."""
-    return Experiment(
+    return StudySpec(
         name="e5-rederive-rot90",
         starting_library=BUILD_LIBRARY,
         targets=(("rot90", _d4_targets(Param(0, _G))["rot90"]),),
@@ -544,10 +542,10 @@ def e5_rederive_rot90() -> Experiment:
 _D4_MEMBERS = ("transpose", "flip_h", "flip_v", "rot90", "rot180", "rot270")
 
 
-def _d4_ladder_experiment(name: str, proposer: AbstractionProposer, note: str) -> Experiment:
+def _d4_ladder_experiment(name: str, proposer: AbstractionProposer, note: str) -> StudySpec:
     """The full-D4-ladder environment; e6 and e7 differ only in the antiunify proposer."""
     targets = _d4_targets(Param(0, _G))
-    return Experiment(
+    return StudySpec(
         name=name,
         starting_library=BUILD_LIBRARY,
         targets=tuple((m, targets[m]) for m in _D4_MEMBERS),
@@ -561,7 +559,7 @@ def _d4_ladder_experiment(name: str, proposer: AbstractionProposer, note: str) -
     )
 
 
-def e6_rederive_d4() -> Experiment:
+def e6_rederive_d4() -> StudySpec:
     """E6: full D4 ladder with the naive proposer — antiunify hoists bound vars, so re-derivation breaks."""
     return _d4_ladder_experiment(
         "e6-rederive-d4",
@@ -572,7 +570,7 @@ def e6_rederive_d4() -> Experiment:
     )
 
 
-def e7_rederive_d4_safe() -> Experiment:
+def e7_rederive_d4_safe() -> StudySpec:
     """E7: E6's environment with the **lambda-safe** proposer — clean full-D4 re-derivation."""
     return _d4_ladder_experiment(
         "e7-rederive-d4-safe",
@@ -594,7 +592,7 @@ def e7_rederive_d4_safe() -> Experiment:
 
 def _mirror_bootstrap_experiment(
     name: str, starting_library: Library, note: str, *, main_beam: int, tight_beam: int
-) -> Experiment:
+) -> StudySpec:
     """The mirror_index-bootstrap environment; E8 and E9 differ in the starting grammar (+ beam).
 
     The single observable is `mirror_index` itself — the loop mints only the shared coordinate idiom
@@ -605,7 +603,7 @@ def _mirror_bootstrap_experiment(
     loop — that 128->224 gap is the measured cost of add/mul, not a confound.
     """
     search = BuildGridSearch(beam_width=main_beam)
-    return Experiment(
+    return StudySpec(
         name=name,
         starting_library=starting_library,
         targets=(("mirror_index", _mirror(Param(0, _I), Param(1, _I))),),
@@ -621,7 +619,7 @@ def _mirror_bootstrap_experiment(
     )
 
 
-def e8_mirror_index_sub() -> Experiment:
+def e8_mirror_index_sub() -> StudySpec:
     """E8: does a frequent-subtree proposer invent mirror_index and compress the D4 ladder? (sub-only.)"""
     return _mirror_bootstrap_experiment(
         "e8-mirror-index-sub",
@@ -634,7 +632,7 @@ def e8_mirror_index_sub() -> Experiment:
     )
 
 
-def e9_mirror_index_affine() -> Experiment:
+def e9_mirror_index_affine() -> StudySpec:
     """E9: E8 on the honest *affine* grammar (sub+add+mul) — a wider search; same bootstrap question."""
     return _mirror_bootstrap_experiment(
         "e9-mirror-index-affine",
@@ -647,7 +645,7 @@ def e9_mirror_index_affine() -> Experiment:
     )
 
 
-def e10_stitch_refactor() -> Experiment:
+def e10_stitch_refactor() -> StudySpec:
     """E10: does **Stitch library refactoring** recover a composable mirror_index *without* the
     type-scoping stopgap? E8's sub-only environment, but the sleep step is the two-phase
     :class:`RefactoringSleep` — in-house `FrequentSubtree` mines the read-bodies, then Stitch
@@ -655,7 +653,7 @@ def e10_stitch_refactor() -> Experiment:
     governing. A *labelled first-order stopgap* (see `RefactoringSleep`): the clean single-pass
     corpus-mining is higher-order, deferred to the higher-order phase. Needs the optional wheel to run."""
     search = BuildGridSearch(beam_width=128)
-    return Experiment(
+    return StudySpec(
         name="e10-stitch-refactor",
         starting_library=BUILD_LIBRARY,
         targets=(("mirror_index", _mirror(Param(0, _I), Param(1, _I))),),
@@ -676,7 +674,7 @@ def e10_stitch_refactor() -> Experiment:
     )
 
 
-#: Experiment registry for the CLI (`arc-lab learn <name>`).
+#: StudySpec registry for the CLI (`arc-lab learn <name>`).
 _REGISTRY = {
     "e1-rot90": e1_rot90,
     "e2-swap-cells": e2_swap_cells,
@@ -691,7 +689,7 @@ _REGISTRY = {
 }
 
 
-def make_experiment(name: str) -> Experiment:
+def make_study(name: str) -> StudySpec:
     try:
         return _REGISTRY[name]()
     except KeyError:

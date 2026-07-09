@@ -184,10 +184,10 @@ def test_stitch_refactoring_recovers_composable_mirror_index(tmp_path: Path) -> 
     # perceiver into the general mirror_index — recovered behaviorally AND composed by BuildGridSearch
     # (the beam cliff dissolves), all WITHOUT the SearchScopedFrequentSubtree type gag.
     pytest.importorskip("stitch_core")
-    from arc_lab.solvers.dsl.learn.experiments import make_experiment, run_experiment
+    from arc_lab.solvers.dsl.learn.experiments import make_study, run_study
 
-    report = run_experiment(
-        make_experiment("e10-stitch-refactor"),
+    report = run_study(
+        make_study("e10-stitch-refactor"),
         testbeds_root=tmp_path,
         runs_root=tmp_path,
         write=False,

@@ -26,8 +26,8 @@ from arc_lab.solvers.dsl.learn.antiunify import (
 )
 from arc_lab.solvers.dsl.learn.experiments import (
     CorrelationPoint,
-    Experiment,
-    ExperimentReport,
+    StudyReport,
+    StudySpec,
     _d4_targets,
     _mirror,
     compression_transfer_correlation,
@@ -40,7 +40,7 @@ from arc_lab.solvers.dsl.learn.experiments import (
     e7_rederive_d4_safe,
     e8_mirror_index_sub,
     e9_mirror_index_affine,
-    run_experiment,
+    run_study,
 )
 from arc_lab.solvers.dsl.learn.selection import GreedyMDL
 from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep
@@ -309,9 +309,7 @@ def test_greedy_mdl_sleep_is_dry_when_nothing_compresses() -> None:
 
 
 def test_e1_learns_rot90_compresses_and_speeds_up(tmp_path: Path) -> None:
-    report = run_experiment(
-        e1_rot90(), testbeds_root=tmp_path / "testbeds", runs_root=tmp_path / "runs"
-    )
+    report = run_study(e1_rot90(), testbeds_root=tmp_path / "testbeds", runs_root=tmp_path / "runs")
 
     # It learned exactly one abstraction, behaviorally equal to the target rot90.
     assert report.check.matched == ("rot90",)
@@ -327,16 +325,14 @@ def test_e1_learns_rot90_compresses_and_speeds_up(tmp_path: Path) -> None:
 
 
 def test_e1_testbed_is_written(tmp_path: Path) -> None:
-    run_experiment(e1_rot90(), testbeds_root=tmp_path / "testbeds", runs_root=tmp_path / "runs")
+    run_study(e1_rot90(), testbeds_root=tmp_path / "testbeds", runs_root=tmp_path / "runs")
     testbed = tmp_path / "testbeds" / "e1-rot90"
     assert (testbed / "manifest.json").exists()
     assert list((testbed / "tasks").glob("*.json"))
 
 
-def _run(exp_fn: Callable[[], Experiment], tmp_path: Path) -> ExperimentReport:
-    return run_experiment(
-        exp_fn(), testbeds_root=tmp_path / "testbeds", runs_root=tmp_path / "runs"
-    )
+def _run(exp_fn: Callable[[], StudySpec], tmp_path: Path) -> StudyReport:
+    return run_study(exp_fn(), testbeds_root=tmp_path / "testbeds", runs_root=tmp_path / "runs")
 
 
 @pytest.mark.slow
@@ -431,7 +427,7 @@ def test_e5_reports_heldout_grade_and_train_usefulness(tmp_path: Path) -> None:
     heldout_ids = frozenset(g.task_id for g in exp.tasks if g.split == "heldout")
     assert heldout_ids  # the testbed carries a real held-out split
 
-    report = run_experiment(exp, testbeds_root=tmp_path / "testbeds", runs_root=tmp_path / "runs")
+    report = run_study(exp, testbeds_root=tmp_path / "testbeds", runs_root=tmp_path / "runs")
 
     # The grade is exactly the held-out slice of same-corpus enablement, never a train task.
     assert report.heldout <= report.enablement

@@ -178,11 +178,11 @@ def test_execute_with_sleep_synthesizes_and_writes_learned_library(tmp_path: Pat
     from arc_lab.core.dataset import Corpus
     from arc_lab.solvers.dsl.analysis.artifact import LEARNED_LIBRARY_FILE
     from arc_lab.solvers.dsl.learn.antiunify import AntiunifyPairs
-    from arc_lab.solvers.dsl.learn.experiments import make_experiment
+    from arc_lab.solvers.dsl.learn.experiments import make_study
     from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep
     from arc_lab.solvers.dsl.substrate.library import Library
 
-    exp = make_experiment("e1-rot90")
+    exp = make_study("e1-rot90")
     corpus = Corpus(
         name="e1-rot90",
         entries=tuple(
