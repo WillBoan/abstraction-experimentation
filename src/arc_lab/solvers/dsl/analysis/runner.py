@@ -19,11 +19,14 @@ import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+from arc_lab.core.annotation import Split
 from arc_lab.core.dataset import Dataset
 from arc_lab.core.task import Task
 from arc_lab.eval.scoring import score_task
 from arc_lab.solvers.dsl.analysis.artifact import (
+    LEARNED_LIBRARY_FILE,
     RESULTS_FILE,
     RUNSPEC_FILE,
     TRACE_FILE,
@@ -35,6 +38,9 @@ from arc_lab.solvers.dsl.analysis.artifact import (
     git_commit,
     read_records,
 )
+
+if TYPE_CHECKING:
+    from arc_lab.solvers.dsl.learn.sleep import SleepStrategy
 from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, SolvedTask
 from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate.program import Input, Program
@@ -169,19 +175,30 @@ class RunSummary:
         )
 
 
-def analyze(
+def execute(
     solver: ProgramSearchSolver,
     dataset: Dataset,
     *,
+    sleep: SleepStrategy | None = None,
     out_dir: Path,
     metric: CompressionMetric | None = None,
     force: bool = False,
     progress: bool = False,
 ) -> tuple[RunSummary, Path]:
-    """Run ``solver`` over ``dataset``, writing a run artifact under ``out_dir``.
+    """Execute ``solver`` over ``dataset``, writing a run artifact under ``out_dir``.
 
-    Returns the summary and the run directory. A completed run is served from cache
-    (unless ``force``); a partial run is resumed.
+    The two execution activities share this core, parameterised by ``sleep``:
+
+    * ``sleep is None`` — **Eval**: wake only, over the fixed ``solver.library``.
+    * ``sleep`` given — **Synthesize**: first grow the library on the corpus's *train* split via
+      :func:`~arc_lab.solvers.dsl.learn.loop.wake_sleep`, then eval the grown library; that library
+      is written as ``learned_library.json`` (the run's *output*, distinct from the starting library
+      the runspec records as its *input*).
+
+    Returns the summary and the run directory. A completed run is served from cache (unless
+    ``force``); a partial run is resumed. NOTE: the sleep strategy is not yet part of the run
+    identity (Phase 14 folds the learn axes into ``Config``); until then, do not Eval and Synthesize
+    the same solver+corpus into the same ``out_dir``.
     """
     metric = metric or CompressionMetric()
     spec = RunSpec(
@@ -208,6 +225,26 @@ def analyze(
         json.dumps({"run_id": spec.run_id(), "spec": spec.to_dict()}, indent=2) + "\n",
         encoding="utf-8",
     )
+
+    # Synthesize: grow the library on the corpus's train split before evaluating (deterministic,
+    # so a resumed run rebuilds the same library). Eval (sleep=None) leaves the library untouched.
+    if sleep is not None:
+        from arc_lab.solvers.dsl.learn.loop import wake_sleep
+
+        train = [
+            e.task for e in dataset.entries if e.meta is not None and e.meta.split is Split.TRAIN
+        ]
+        grown = wake_sleep(
+            library=solver.library, search=solver.search, tasks=train, sleep=sleep, cost=solver.cost
+        ).library
+        solver = ProgramSearchSolver(
+            library=grown,
+            search=solver.search,
+            cost=solver.cost,
+            name=solver.name,
+            config=solver.config,
+        )
+
     existing = read_records(trace_path)
     done = {r.task_id for r in existing}
     records: list[TaskRecord] = list(existing)
@@ -230,6 +267,10 @@ def analyze(
         program_bits=dl.program_bits,
     )
     results_path.write_text(json.dumps(summary.to_dict(), indent=2) + "\n", encoding="utf-8")
+    if sleep is not None:  # the grown library is the run's output
+        (run_dir / LEARNED_LIBRARY_FILE).write_text(
+            json.dumps(solver.library.to_dict(), indent=2) + "\n", encoding="utf-8"
+        )
     return summary, run_dir
 
 

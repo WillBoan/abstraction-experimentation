@@ -19,7 +19,7 @@ from arc_lab.solvers.dsl.analysis.compression import (
     compression_ratio,
     speedup_ratio,
 )
-from arc_lab.solvers.dsl.analysis.runner import RunSummary, analyze
+from arc_lab.solvers.dsl.analysis.runner import RunSummary, execute
 
 __all__ = [
     "CompressionMetric",
@@ -28,7 +28,7 @@ __all__ = [
     "RunSummary",
     "TaskRecord",
     "TwoPartMDL",
-    "analyze",
     "compression_ratio",
+    "execute",
     "speedup_ratio",
 ]

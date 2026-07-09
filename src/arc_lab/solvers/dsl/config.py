@@ -115,8 +115,6 @@ class Config:
     library: str
     search: SearchSpec
     cost: str = "program-size"
-    #: Shallow-budget override for the enablement / transfer probe (consumed from Phase 12).
-    enablement_budget: int | None = None
 
     def resolve_library(self) -> Library:
         return resolve_library(self.library)
@@ -143,7 +141,6 @@ class Config:
             "library": self.library,
             "search": self.search.to_dict(),
             "cost": self.cost,
-            "enablement_budget": self.enablement_budget,
         }
 
 

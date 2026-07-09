@@ -12,8 +12,8 @@ from arc_lab.solvers.dsl.analysis import (
     CompressionMetric,
     RunSummary,
     TwoPartMDL,
-    analyze,
     compression_ratio,
+    execute,
 )
 from arc_lab.solvers.dsl.analysis.artifact import RESULTS_FILE, RUNSPEC_FILE, TRACE_FILE
 from arc_lab.solvers.dsl.analysis.compression import SolvedTask
@@ -116,7 +116,7 @@ def test_two_part_mdl_charges_learned_template_size() -> None:
 
 def test_analyze_writes_artifact_and_solves(tmp_path: Path) -> None:
     ds = _dataset(_flip_task(), _rot180_task())
-    summary, run_dir = analyze(
+    summary, run_dir = execute(
         ProgramSearchSolver.from_config(PRESETS["dsl"]), ds, out_dir=tmp_path
     )
 
@@ -142,23 +142,23 @@ def test_analyze_writes_artifact_and_solves(tmp_path: Path) -> None:
 def test_analyze_is_cached_and_idempotent(tmp_path: Path) -> None:
     ds = _dataset(_flip_task())
     solver = ProgramSearchSolver.from_config(PRESETS["dsl"])
-    _, run_dir = analyze(solver, ds, out_dir=tmp_path)
+    _, run_dir = execute(solver, ds, out_dir=tmp_path)
 
     # A cache hit returns without redoing work: delete the library artifact and confirm
     # a second call (summary.json present) does NOT rewrite it.
     (run_dir / RUNSPEC_FILE).unlink()
-    analyze(solver, ds, out_dir=tmp_path)
+    execute(solver, ds, out_dir=tmp_path)
     assert not (run_dir / RUNSPEC_FILE).exists()
 
     # force=True ignores the cache and recomputes everything.
-    analyze(solver, ds, out_dir=tmp_path, force=True)
+    execute(solver, ds, out_dir=tmp_path, force=True)
     assert (run_dir / RUNSPEC_FILE).exists()
 
 
 def test_analyze_resumes_from_partial_trace(tmp_path: Path) -> None:
     ds = _dataset(_flip_task(), _rot180_task())
     solver = ProgramSearchSolver.from_config(PRESETS["dsl"])
-    _, run_dir = analyze(solver, ds, out_dir=tmp_path)
+    _, run_dir = execute(solver, ds, out_dir=tmp_path)
 
     # Simulate a crash after the first task: keep only the first trace line, drop summary.
     trace_path = run_dir / TRACE_FILE
@@ -167,6 +167,43 @@ def test_analyze_resumes_from_partial_trace(tmp_path: Path) -> None:
     (run_dir / RESULTS_FILE).unlink()
 
     # Re-running resumes: the second task is processed and the run completes.
-    summary, _ = analyze(solver, ds, out_dir=tmp_path)
+    summary, _ = execute(solver, ds, out_dir=tmp_path)
     assert summary.total == 2
     assert {r.task_id for r in summary.records} == {"flip", "rot"}
+
+
+def test_execute_with_sleep_synthesizes_and_writes_learned_library(tmp_path: Path) -> None:
+    # The sleep knob makes execute a Synthesize run: grow the library on the train split, then eval.
+    from arc_lab.core.annotation import AnnotatedTask, Split, Synthetic, TaskMeta
+    from arc_lab.core.dataset import Corpus
+    from arc_lab.solvers.dsl.analysis.artifact import LEARNED_LIBRARY_FILE
+    from arc_lab.solvers.dsl.learn.antiunify import AntiunifyPairs
+    from arc_lab.solvers.dsl.learn.experiments import make_experiment
+    from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep
+    from arc_lab.solvers.dsl.substrate.library import Library
+
+    exp = make_experiment("e1-rot90")
+    corpus = Corpus(
+        name="e1-rot90",
+        entries=tuple(
+            AnnotatedTask(
+                Task.from_dict(g.task_id, g.spec),
+                TaskMeta(Synthetic("e1-rot90"), split=Split(g.split)),
+            )
+            for g in exp.tasks
+        ),
+    )
+    solver = ProgramSearchSolver(
+        library=exp.starting_library, search=exp.search, cost=exp.cost, name="synth"
+    )
+    summary, run_dir = execute(
+        solver, corpus, sleep=GreedyMDLSleep(AntiunifyPairs()), out_dir=tmp_path
+    )
+
+    learned_path = run_dir / LEARNED_LIBRARY_FILE
+    assert learned_path.exists()  # the grown library is the run's output
+    grown = Library.from_dict(json.loads(learned_path.read_text()))
+    assert len(grown.primitives) > len(
+        exp.starting_library.primitives
+    )  # sleep minted abstraction(s)
+    assert summary.solved > 0

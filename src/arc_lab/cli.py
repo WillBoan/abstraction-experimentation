@@ -150,7 +150,7 @@ def analyze(
     to record the program found per task and the search effort spent, then computes the
     run's description length. Runs are content-addressed, cached, and resumable.
     """
-    from arc_lab.solvers.dsl.analysis import analyze as run_analysis
+    from arc_lab.solvers.dsl.analysis import execute as run_analysis
     from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 
     solver_obj = make_solver(solver)
