@@ -9,7 +9,7 @@ from __future__ import annotations
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task
 from arc_lab.eval.scoring import score_task
-from arc_lab.solvers.dsl.config import PRESETS
+from arc_lab.solvers.dsl.config import PRESETS, Config
 from arc_lab.solvers.dsl.search.composite import CompositeSearch
 from arc_lab.solvers.dsl.search.cost import ProgramSize
 from arc_lab.solvers.dsl.search.enumerate import BeamSearch, Enumerate
@@ -61,6 +61,14 @@ def test_with_param_overrides_search_param() -> None:
     assert solver.search.max_depth == 1
     # The original preset is unchanged (Config is frozen; with_param returns a copy).
     assert PRESETS["dsl-synth"].search.max_depth == 2
+
+
+def test_config_round_trips_through_dict() -> None:
+    # RunSpec holds a live Config and reconstructs it from results.json via Config.from_dict.
+    for cfg in PRESETS.values():
+        assert Config.from_dict(cfg.to_dict()) == cfg
+    tightened = PRESETS["dsl-synth"].with_param(max_depth=1)
+    assert Config.from_dict(tightened.to_dict()) == tightened
 
 
 def test_config_is_hashable() -> None:

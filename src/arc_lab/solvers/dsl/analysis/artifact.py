@@ -24,6 +24,10 @@ import subprocess
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from arc_lab.solvers.dsl.config import Config
 
 TRACE_FILE = "trace.jsonl"
 RUNSPEC_FILE = "runspec.json"
@@ -64,7 +68,7 @@ class RunSpec:
     solver: str
     dataset: str
     library: Mapping[str, object]  # Library.to_dict(): the vocabulary (floor) identity
-    config: Mapping[str, object] | None = None  # Config.to_dict(): search params + cost
+    config: Config | None = None  # the machinery (search params + cost); None for a raw solver
     commit: str | None = None
 
     def run_id(self) -> str:
@@ -74,7 +78,7 @@ class RunSpec:
                 "solver": self.solver,
                 "dataset": self.dataset,
                 "library": self.library,
-                "config": self.config,
+                "config": None if self.config is None else self.config.to_dict(),
             },
             sort_keys=True,
         )
@@ -94,7 +98,7 @@ class RunSpec:
             "solver": self.solver,
             "dataset": self.dataset,
             "library": dict(self.library),
-            "config": None if self.config is None else dict(self.config),
+            "config": None if self.config is None else self.config.to_dict(),
             "commit": self.commit,
         }
 

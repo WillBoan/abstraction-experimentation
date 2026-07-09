@@ -13,7 +13,7 @@ of constructor literals frozen inside a subclass.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
 
 from arc_lab.solvers.dsl.search.base import Search
@@ -106,6 +106,16 @@ class SearchSpec:
             "members": list(self.members),
         }
 
+    @staticmethod
+    def from_dict(data: Mapping[str, object]) -> SearchSpec:
+        max_depth, beam_width, members = data.get("max_depth"), data.get("beam_width"), data.get("members")
+        return SearchSpec(
+            kind=str(data["kind"]),
+            max_depth=max_depth if isinstance(max_depth, int) else None,
+            beam_width=beam_width if isinstance(beam_width, int) else None,
+            members=tuple(str(m) for m in members) if isinstance(members, list) else (),
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class Config:
@@ -142,6 +152,19 @@ class Config:
             "search": self.search.to_dict(),
             "cost": self.cost,
         }
+
+    @staticmethod
+    def from_dict(data: Mapping[str, object]) -> Config:
+        search_raw = data["search"]
+        if not isinstance(search_raw, Mapping):
+            raise ValueError("malformed config: 'search' must be a mapping")
+        cost = data.get("cost")
+        return Config(
+            name=str(data["name"]),
+            library=str(data["library"]),
+            search=SearchSpec.from_dict(search_raw),
+            cost=str(cost) if isinstance(cost, str) else "program-size",
+        )
 
 
 #: Named machinery presets — the historical solvers, now as data (Phase 7 wires the registry).

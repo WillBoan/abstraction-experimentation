@@ -42,6 +42,7 @@ from arc_lab.solvers.dsl.analysis.artifact import (
 if TYPE_CHECKING:
     from arc_lab.solvers.dsl.learn.sleep import SleepStrategy
 from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, SolvedTask
+from arc_lab.solvers.dsl.config import Config
 from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate.program import Input, Program
 from arc_lab.solvers.dsl.trace import task_context
@@ -142,13 +143,13 @@ class RunSummary:
         ):
             raise ValueError("malformed run summary")
         library = spec_raw["library"]
-        config = spec_raw.get("config")
+        config_raw = spec_raw.get("config")
         commit = spec_raw.get("commit")
         spec = RunSpec(
             solver=str(spec_raw["solver"]),
             dataset=str(spec_raw["dataset"]),
             library=library if isinstance(library, Mapping) else {},
-            config=config if isinstance(config, Mapping) else None,
+            config=Config.from_dict(config_raw) if isinstance(config_raw, Mapping) else None,
             commit=commit if isinstance(commit, str) else None,
         )
         records = tuple(
@@ -205,7 +206,7 @@ def execute(
         solver=solver.name,
         dataset=dataset.name,
         library=solver.library.to_dict(),
-        config=None if solver.config is None else solver.config.to_dict(),
+        config=solver.config,
         commit=git_commit(),
     )
     run_dir = out_dir / spec.dir_name()
