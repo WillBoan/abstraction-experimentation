@@ -14,9 +14,10 @@ import pytest
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep
 from arc_lab.solvers.dsl.learn.stitch_shim import StitchProposer, _compress, from_sexpr, to_sexpr
-from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
+from arc_lab.solvers.dsl.substrate.library import Library, Primitive
+from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_AFFINE_LIBRARY, BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, Param, Program, Var
-from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT
+from arc_lab.solvers.dsl.substrate.types import BOOL, COLOR, FN, GRID, INT
 
 _G, _I = GRID, INT
 
@@ -84,18 +85,66 @@ def test_from_sexpr_lifts_free_input_to_a_grid_param() -> None:
     assert lifted.result_type(BUILD_LIBRARY) == COLOR  # read returns a color
 
 
+def test_bool_consts_round_trip_through_stitch_notation() -> None:
+    # BOOL literals serialize to bare `true`/`false` tokens (valid Stitch terminals) and decode back to
+    # BOOL Consts. Without this a bool-bearing program would emit Python's `True`, which from_sexpr
+    # cannot parse — so an `eq`/`if` idiom reaching Stitch would silently fail to round-trip.
+    assert to_sexpr(Const(True, BOOL)) == "true"
+    assert to_sexpr(Const(False, BOOL)) == "false"
+    assert from_sexpr("true", BUILD_LIBRARY) == Const(True, BOOL)
+    assert from_sexpr("false", BUILD_LIBRARY) == Const(False, BOOL)
+
+
+def test_from_sexpr_scopes_bound_vars_per_binder() -> None:
+    # Two *sibling* lambdas each bind their own `$0` — at different types (a grid for `width`, an int
+    # for `add`). De Bruijn `$i` is relative to its binder, so these must stay independent. A flat
+    # index->type map (the pre-fix bug) would unify the two `$0`s and raise `grid != int`; the binder
+    # *stack* keeps them separate. `p` takes two function args (FN), the only thing special here.
+    width, add = BUILD_AFFINE_LIBRARY.get("width"), BUILD_AFFINE_LIBRARY.get("add")
+    p = Primitive("p", (FN, FN), _G, lambda a, b: a)
+    lib = Library(name="siblings", primitives=(p, width, add))
+    prog = from_sexpr("(p (lam (width $0)) (lam (add $0 1)))", lib)  # must not raise
+    var_types = {str(n.value_type) for n in prog.walk() if isinstance(n, Var)}
+    assert var_types == {"grid", "int"}  # the two `$0`s resolved independently
+
+
 # -- Stitch as a governed proposer (needs the optional wheel) ------------
 
 
-def test_stitch_proposer_proposes_the_read_body_on_the_raw_corpus() -> None:
-    # B1: first-order Stitch on the raw D4 corpus proposes the COLOR read-body idiom (the candidate
-    # greedy MDL then prefers) — the compression/reusability divergence, at the proposer seam.
+def _arity_ok(template: Program) -> bool:
+    """Every Apply node has a valid arg count for its primitive (variadic = at least the fixed arity)."""
+    for node in template.walk():
+        if isinstance(node, Apply):
+            prim = BUILD_LIBRARY.get(node.primitive)
+            if (len(node.args) < prim.arity) if prim.is_variadic else (len(node.args) != prim.arity):
+                return False
+    return True
+
+
+def test_from_sexpr_rejects_arity_invalid_partial_applications() -> None:
+    # First-order Stitch *curries*: on the D4 corpus it abstracts the common prefix and re-supplies the
+    # varying trailing arg per call site, so it emits partial applications like a 2-arg `read` (arity 3)
+    # or a 2-arg `build_grid` (arity 3). Those are not valid n-ary Applys in our non-curried DSL, so
+    # from_sexpr must reject them (a ValueError the proposer catches and skips) rather than build a
+    # malformed, unevaluable node that only a downstream arity guard catches by accident.
+    with pytest.raises(ValueError):
+        from_sexpr("(read input (sub (sub (height input) #0) 1))", BUILD_LIBRARY)  # read/3, 2 args
+    with pytest.raises(ValueError):
+        from_sexpr("(build_grid (#1 input) (#0 input))", BUILD_LIBRARY)  # build_grid/3, 2 args
+
+
+def test_stitch_proposer_yields_only_well_formed_candidates() -> None:
+    # B1, corrected: first-order Stitch on the raw D4 corpus does *not* yield a usable read-body — the
+    # "read-body" it finds is the partial application above, now correctly rejected — so the proposer
+    # returns only arity-valid candidates. The *well-formed* read-body idiom (the compression/reusability
+    # divergence) surfaces only via the hierarchical sleep path: test_stitch_sleep_selects_..., below.
     pytest.importorskip("stitch_core")
     from arc_lab.solvers.dsl.learn.experiments import _d4_targets
 
     corpus = list(_d4_targets(Input()).values())
     candidates = StitchProposer(first_order=True).propose(corpus, BUILD_LIBRARY)
-    assert any(isinstance(t, Apply) and t.primitive == "read" for t in candidates)
+    assert candidates  # it still proposes something (e.g. width(#0))
+    assert all(_arity_ok(c) for c in candidates)  # no malformed node leaks through
 
 
 def test_stitch_sleep_selects_the_read_body_first_order() -> None:

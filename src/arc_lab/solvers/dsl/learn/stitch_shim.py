@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias
 
 from arc_lab.solvers.dsl.learn.antiunify import AbstractionProposer, _close_template, _is_useful
-from arc_lab.solvers.dsl.substrate.library import Library
+from arc_lab.solvers.dsl.substrate.library import Library, Primitive
 from arc_lab.solvers.dsl.substrate.program import (
     AppFn,
     Apply,
@@ -39,6 +39,7 @@ from arc_lab.solvers.dsl.substrate.program import (
     Var,
 )
 from arc_lab.solvers.dsl.substrate.types import (
+    BOOL,
     FN,
     GRID,
     INT,
@@ -48,6 +49,7 @@ from arc_lab.solvers.dsl.substrate.types import (
     Type,
     TypeVar,
     apply_subst,
+    instantiate,
     unify,
 )
 
@@ -76,6 +78,11 @@ def to_sexpr(program: Program) -> str:
     if isinstance(program, Input):
         return "input"
     if isinstance(program, Const):
+        # A bool serializes to the bare token `true`/`false` (a valid Stitch terminal), not Python's
+        # capitalized `str(True)` = "True" — which `from_sexpr` could not parse back. (bool ⊂ int, so
+        # this branch must precede the int case.)
+        if isinstance(program.value, bool):
+            return "true" if program.value else "false"
         return str(program.value)
     if isinstance(program, Var):
         return f"${program.index}"
@@ -112,7 +119,7 @@ def from_sexpr(sexpr: str, library: Library) -> Program:
     tree, rest = _parse(tokens, 0)
     if rest != len(tokens):
         raise ValueError(f"trailing tokens in s-expression: {sexpr!r}")
-    ctx = _InferCtx(subst={}, metavars={}, boundvars={}, counter=itertools.count())
+    ctx = _InferCtx(subst={}, metavars={}, bound=[], counter=itertools.count())
     program, _ = _infer(tree, library, None, ctx)
     return _close_template(_resolve_types(program, ctx.subst))
 
@@ -145,13 +152,39 @@ class _InferCtx:
     """Mutable state threaded through type re-inference: the unifier + each hole/var's solved type."""
 
     subst: Substitution
-    metavars: dict[int, Type]  # #j -> its (shared, unification-refined) type
-    boundvars: dict[int, Type]  # $i -> its (shared) type
+    metavars: dict[int, Type]  # #j -> its (shared, unification-refined) type; term-global (Stitch's)
+    #: The De Bruijn binder stack: ``bound[-1]`` is the innermost ``lam``'s variable, so ``$i`` reads
+    #: ``bound[-1 - i]``. A *stack* (not a flat index->type map) is essential — two ``$0``\\ s under
+    #: different binders are different variables and must not be unified with each other.
+    bound: list[Type]
     counter: itertools.count[int]
 
 
 def _fresh(ctx: _InferCtx) -> TypeVar:
     return TypeVar(f"?t{next(ctx.counter)}")
+
+
+def _bound_var_type(ctx: _InferCtx, index: int) -> Type:
+    """The type of De Bruijn ``$index`` in the current binder scope (``ctx.bound[-1 - index]``)."""
+    if not 0 <= index < len(ctx.bound):
+        raise ValueError(f"bound variable ${index} out of scope (binder depth {len(ctx.bound)})")
+    return ctx.bound[-1 - index]
+
+
+def _instantiate_sig(prim: Primitive, ctx: _InferCtx) -> tuple[tuple[Type, ...], Type | None, Type]:
+    """A primitive's ``(param_types, variadic, return_type)`` with all type variables renamed fresh.
+
+    Bundling the whole signature into one :class:`ArrowType` before :func:`instantiate` keeps a shared
+    variable name coherent *within* this use while making it independent of any *other* use (so a
+    polymorphic primitive applied twice in one body doesn't cross-contaminate its two instantiations).
+    For today's monomorphic primitives this is a structural no-op.
+    """
+    variadic = prim.variadic_param
+    tail = (variadic,) if variadic is not None else ()
+    bundled = instantiate(ArrowType((*prim.param_types, *tail), prim.return_type), ctx.counter)
+    assert isinstance(bundled, ArrowType)  # instantiate preserves the ArrowType shape
+    n = len(prim.param_types)
+    return bundled.params[:n], (bundled.params[n] if variadic is not None else None), bundled.result
 
 
 def _unify_into(ctx: _InferCtx, t1: Type, t2: Type) -> None:
@@ -173,26 +206,51 @@ def _infer(
     if head == "lam":
         if len(args) != 1:
             raise ValueError(f"lam takes one body, got {len(args)}")
-        body, _ = _infer(args[0], library, None, ctx)
-        return Lam(body), FN
+        # A lambda binds one variable ($0 in its body). Seed that variable's domain from an expected
+        # arrow hole when we have one (so a lam filling a `(dom) -> cod` parameter types precisely and
+        # its bound var starts from `dom`), else a fresh var to be solved from how the body uses $0.
+        if isinstance(expected, ArrowType) and len(expected.params) == 1:
+            domain, codomain = expected.params[0], expected.result
+        else:
+            domain, codomain = _fresh(ctx), None
+        ctx.bound.append(domain)  # push: this lam is now the innermost binder for its body
+        body, body_type = _infer(args[0], library, codomain, ctx)
+        ctx.bound.pop()
+        if codomain is not None:
+            _unify_into(ctx, body_type, codomain)
+            return Lam(body), ArrowType((domain,), codomain)
+        return Lam(body), FN  # no arrow context: a lambda's own type is the opaque FN tag
     if not isinstance(head, str):
         raise ValueError(f"application head must be a symbol, got {head!r}")
     if head[:1] in ("#", "$"):  # higher-order application: a hole/var applied to arguments -> AppFn
         arg_progs, arg_types = _infer_args(args, library, ctx)
         result = _fresh(ctx)
         applied: Type = ArrowType(tuple(arg_types), result)
-        store = ctx.metavars if head[0] == "#" else ctx.boundvars
         index = int(head[1:])
-        if index in store:
-            _unify_into(ctx, store[index], applied)
-        else:
-            store[index] = applied
-        fn: Program = Param(index, store[index]) if head[0] == "#" else Var(index, store[index])
+        if head[0] == "#":  # a metavar hole applied as a function: its type is term-global
+            if index in ctx.metavars:
+                _unify_into(ctx, ctx.metavars[index], applied)
+            else:
+                ctx.metavars[index] = applied
+            fn: Program = Param(index, ctx.metavars[index])
+        else:  # a bound var applied as a function: its type comes from its binder on the stack
+            head_type = _bound_var_type(ctx, index)
+            _unify_into(ctx, head_type, applied)
+            fn = Var(index, head_type)
         if expected is not None:
             _unify_into(ctx, result, expected)
         return AppFn(fn, tuple(arg_progs)), result
     prim = library.get(head)  # first-order application; KeyError for an unknown symbol (e.g. fn_k)
-    arg_expected = _arg_types(prim.param_types, prim.variadic_param, len(args))
+    # Arity: first-order Stitch can emit a *partial* application (it curries — a fixed trailing arg
+    # reappears per call site), which is not a valid n-ary Apply in our non-curried DSL. Reject it here
+    # rather than build a malformed, unevaluable node that only a downstream guard catches by accident.
+    if prim.is_variadic:
+        if len(args) < prim.arity:
+            raise ValueError(f"{head!r} expects at least {prim.arity} args, got {len(args)}")
+    elif len(args) != prim.arity:
+        raise ValueError(f"{head!r} expects {prim.arity} args, got {len(args)}")
+    param_types, variadic, return_type = _instantiate_sig(prim, ctx)
+    arg_expected = _arg_types(param_types, variadic, len(args))
     arg_progs = []
     for arg, want in zip(args, arg_expected, strict=True):
         arg_prog, arg_type = _infer(arg, library, want, ctx)
@@ -200,8 +258,8 @@ def _infer(
             _unify_into(ctx, arg_type, want)
         arg_progs.append(arg_prog)
     if expected is not None:
-        _unify_into(ctx, prim.return_type, expected)
-    return Apply(head, tuple(arg_progs)), prim.return_type
+        _unify_into(ctx, return_type, expected)
+    return Apply(head, tuple(arg_progs)), return_type
 
 
 def _infer_atom(
@@ -211,13 +269,22 @@ def _infer_atom(
         if expected is not None:
             _unify_into(ctx, GRID, expected)
         return Input(), GRID
-    if atom[:1] in ("#", "$"):  # a hole / bound var used as a *value* (its type comes from context)
-        store = ctx.metavars if atom[0] == "#" else ctx.boundvars
+    if atom[:1] == "#":  # a metavar hole used as a value: type is term-global (shared across uses)
         index = int(atom[1:])
-        t = store.setdefault(index, expected if expected is not None else _fresh(ctx))
+        t = ctx.metavars.setdefault(index, expected if expected is not None else _fresh(ctx))
         if expected is not None:
             _unify_into(ctx, t, expected)
-        return (Param(index, t) if atom[0] == "#" else Var(index, t)), t
+        return Param(index, t), t
+    if atom[:1] == "$":  # a bound var used as a value: its type comes from its binder on the stack
+        index = int(atom[1:])
+        t = _bound_var_type(ctx, index)
+        if expected is not None:
+            _unify_into(ctx, t, expected)
+        return Var(index, t), t
+    if atom in ("true", "false"):  # a bool literal decodes to a BOOL Const (inverse of to_sexpr)
+        if expected is not None:
+            _unify_into(ctx, BOOL, expected)
+        return Const(atom == "true", BOOL), BOOL
     if _is_int_literal(atom):  # a literal is always base-typed
         base = expected if isinstance(expected, BaseType) else _INT
         return Const(int(atom), base), base
@@ -227,7 +294,7 @@ def _infer_atom(
         if expected is not None:
             _unify_into(ctx, arrow, expected)
         return PrimRef(atom), arrow
-    raise ValueError(f"unknown atom {atom!r} (not input/#j/$i/literal/primitive)")
+    raise ValueError(f"unknown atom {atom!r} (not input/#j/$i/bool/int-literal/primitive)")
 
 
 def _infer_args(
@@ -294,7 +361,9 @@ def _compress(
 
     The lazy import + the ``Any``-to-typed extraction are confined here so ``mypy --strict`` sees
     only :class:`StitchAbstraction` beyond this boundary. ``first_order`` disables curried metavars
-    (higher-order holes); ``threads`` is chosen by the caller's determinism check.
+    (higher-order holes). ``threads`` defaults to ``1`` because only single-threaded compression is
+    guaranteed reproducible — the regression locks depend on it; ``> 1`` trades that for speed and a
+    caller wanting it must verify determinism itself (there is a twice-run test that does so at 1).
     """
     import stitch_core  # lazy: optional dependency, contained to this module
 
@@ -330,11 +399,12 @@ def stitch_candidates(
     """Propose candidate abstraction templates by compressing ``programs`` with Stitch.
 
     Serialize, compress, deserialize each abstraction body back to a closed template over ``library``,
-    and keep the useful ones. Abstractions that reference *other* Stitch abstractions (Stitch's own
-    hierarchy, ``fn_k``) are skipped for now — a known first-order limitation, logged never silent:
-    resolving Stitch's hierarchy, and consuming the higher-order abstractions it builds atop it, travels
-    with the higher-order substrate (the interesting hierarchies are themselves higher-order). Governance
-    (which candidate earns a name) is the caller's selector.
+    and keep the useful ones. A body that fails to deserialize is skipped and logged at ``DEBUG``
+    (silent under this repo's default logging) — this covers both abstractions referencing *other*
+    Stitch abstractions (its own ``fn_k`` hierarchy) and, now, arity-invalid partial applications
+    (:func:`from_sexpr` rejects them). Resolving Stitch's hierarchy, and consuming the higher-order
+    abstractions it builds atop it, travels with the higher-order substrate (the interesting hierarchies
+    are themselves higher-order). Governance (which candidate earns a name) is the caller's selector.
     """
     sexprs = [to_sexpr(p) for p in programs]
     templates: list[Program] = []
