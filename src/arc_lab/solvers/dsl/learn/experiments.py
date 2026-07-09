@@ -26,6 +26,12 @@ from arc_lab.solvers.dsl.analysis.compression import (
     speedup_ratio,
 )
 from arc_lab.solvers.dsl.analysis.runner import RunSummary
+from arc_lab.solvers.dsl.analysis.transfer import (
+    Usefulness,
+    enablement_transfer,
+    heldout_transfer,
+    train_usefulness,
+)
 from arc_lab.solvers.dsl.learn.antiunify import (
     AbstractionProposer,
     AntiunifyPairs,
@@ -34,12 +40,8 @@ from arc_lab.solvers.dsl.learn.antiunify import (
 )
 from arc_lab.solvers.dsl.learn.harness import (
     CheckResult,
-    Usefulness,
     check_abstractions,
     compare_libraries,
-    enablement_transfer,
-    heldout_transfer,
-    train_usefulness,
 )
 from arc_lab.solvers.dsl.learn.loop import LearnResult, learn
 from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep, RefactoringSleep, SleepStrategy

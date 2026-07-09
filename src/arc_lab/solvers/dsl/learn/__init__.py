@@ -11,12 +11,12 @@ artifacts), and grows a `Library` via `Library.extended`. It never touches the n
 * :mod:`taskgen` — deterministic synthetic testbeds (tasks + recipe manifest).
 """
 
+from arc_lab.solvers.dsl.analysis.transfer import enablement_transfer
 from arc_lab.solvers.dsl.learn.antiunify import AbstractionProposer, AntiunifyPairs
 from arc_lab.solvers.dsl.learn.harness import (
     CheckResult,
     check_abstractions,
     compare_libraries,
-    enablement_transfer,
 )
 from arc_lab.solvers.dsl.learn.loop import (
     EachGeneration,

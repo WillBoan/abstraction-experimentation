@@ -13,6 +13,7 @@ from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.analysis.artifact import RunSpec, TaskRecord
 from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, SolvedTask, TwoPartMDL
 from arc_lab.solvers.dsl.analysis.runner import RunSummary
+from arc_lab.solvers.dsl.analysis.transfer import Usefulness, heldout_transfer, train_usefulness
 from arc_lab.solvers.dsl.learn.antiunify import (
     AntiunifyPairs,
     FrequentSubtree,
@@ -41,7 +42,6 @@ from arc_lab.solvers.dsl.learn.experiments import (
     e9_mirror_index_affine,
     run_experiment,
 )
-from arc_lab.solvers.dsl.learn.harness import Usefulness, heldout_transfer, train_usefulness
 from arc_lab.solvers.dsl.learn.selection import GreedyMDL
 from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep
 from arc_lab.solvers.dsl.search import BuildGridSearch
