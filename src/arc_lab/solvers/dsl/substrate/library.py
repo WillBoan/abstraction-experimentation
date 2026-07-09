@@ -19,7 +19,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias
 
@@ -171,6 +171,42 @@ class Library:
             "version": self.version,
             "primitives": [prim.to_dict() for prim in self.primitives],
         }
+
+    @staticmethod
+    def from_dict(data: Mapping[str, object]) -> Library:
+        """Reconstruct a live library from its serialised form.
+
+        Base primitives are resolved *by name* against the substrate registry (their ``impl`` is
+        code, dropped by :meth:`Primitive.to_dict`); learned abstractions are rebuilt from their
+        ``template`` via :func:`~arc_lab.solvers.dsl.substrate.abstraction.make_abstraction`,
+        replayed in serialised order — which is dependency order, since abstractions are appended
+        and reference only earlier primitives.
+        """
+        from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
+        from arc_lab.solvers.dsl.substrate.program import Program
+        from arc_lab.solvers.dsl.substrate.registry import resolve_primitive
+
+        name = str(data["name"])
+        version_raw = data.get("version")
+        version = version_raw if isinstance(version_raw, int) else 1
+        prim_dicts = data["primitives"]
+        if not isinstance(prim_dicts, list):
+            raise ValueError("malformed library: 'primitives' must be a list")
+
+        built: list[Primitive] = []
+        for entry in prim_dicts:
+            if not isinstance(entry, Mapping):
+                raise ValueError(f"malformed primitive entry: {entry!r}")
+            prim_name = str(entry["name"])
+            template_raw = entry.get("template")
+            if template_raw is None:
+                built.append(resolve_primitive(prim_name))
+            elif isinstance(template_raw, Mapping):
+                lower = Library(name=name, primitives=tuple(built), version=version)
+                built.append(make_abstraction(prim_name, Program.from_dict(template_raw), lower))
+            else:
+                raise ValueError(f"malformed template for primitive {prim_name!r}")
+        return Library(name=name, primitives=tuple(built), version=version)
 
     def unary_grid_primitives(self) -> Iterator[Primitive]:
         """Fixed-arity ``(GRID,) -> GRID`` primitives, in library order (no combinators)."""
