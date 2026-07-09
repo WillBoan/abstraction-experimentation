@@ -3,9 +3,10 @@
 This is the general program-synthesis engine the whole DSL direction is built
 toward. It grows programs from the leaves up, one composition round at a time:
 
-* **Types prune the space.** A primitive's arguments are drawn only from the pool
-  of programs of the matching :class:`BaseType`, so ill-typed compositions are
-  never formed. This is what keeps an atomic vocabulary tractable.
+* **Types prune the space.** A primitive's arguments are drawn only from pools of
+    programs whose types unify with the parameter slot, so ill-typed compositions are
+    never formed. This is what keeps an atomic vocabulary tractable even once the
+    floor includes first-order polymorphism (``eq`` / ``if``).
 * **Observational equivalence collapses it further.** Two programs that produce
   identical results on every training input are interchangeable; we keep only the
   *smallest* representative of each behaviour (a later, smaller-node-count equivalent
@@ -21,7 +22,6 @@ fixed-arity, atomic vocabulary.
 
 from __future__ import annotations
 
-import itertools
 import logging
 from typing import TypeAlias
 
@@ -31,9 +31,21 @@ from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.search.cost import Cost
+from arc_lab.solvers.dsl.search.type_directed import (
+    TypedProgram,
+    candidate_applications,
+    signature_matches_type,
+)
 from arc_lab.solvers.dsl.substrate.library import Closure, Library, Primitive, Value
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, PrimRef, Program, Var
-from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT, ArrowType, Type, unify
+from arc_lab.solvers.dsl.substrate.types import (
+    BOOL,
+    COLOR,
+    GRID,
+    INT,
+    ArrowType,
+    Type,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +67,15 @@ def _format_signature(sig: Signature) -> str:
 #: Function synthesis: a dummy grid for evaluating Input-free lambda bodies, small per-type batteries
 #: for probing a candidate function's behaviour, and how deep to compose synthesized function bodies.
 _SYNTH_GRID: Grid = Grid.from_list([[0]])
+#: The grid battery must vary in *height, width, and cell content independently*, so that behaviorally
+#: distinct perceivers stay distinct: a battery where every grid shares a height makes ``height``
+#: indistinguishable from a constant, silently collapsing them in the behavioral dedup. Heights here are
+#: {2, 3, 1} and widths {2, 3, 4} — pairwise distinct, so width/height/transpose/const all separate.
 _SYNTH_GRIDS: tuple[Grid, ...] = (
-    Grid.from_list([[1, 2], [3, 4]]),
-    Grid.from_list([[5, 6, 7], [8, 9, 0]]),
+    Grid.from_list([[1, 2], [3, 4]]),  # 2x2
+    Grid.from_list([[5, 6, 7], [8, 9, 0]]),  # 2x3 (varies width)
+    Grid.from_list([[1], [2], [3]]),  # 3x1 (varies height and width)
+    Grid.from_list([[2, 0, 3, 1]]),  # 1x4 (a distinct height and width again)
 )
 _FUNCTION_SYNTHESIS_DEPTH = 3
 
@@ -118,14 +136,10 @@ class Enumerate(Search):
         target: Signature = tuple(out for out in outputs if out is not None)
 
         # pools[type][behaviour-signature] = smallest program with that behaviour.
-        pools: dict[Type, dict[Signature, Program]] = {
-            GRID: {},
-            COLOR: {},
-            INT: {},
-        }
+        pools: dict[Type, dict[Signature, Program]] = {}
 
         # Per-search tallies for the INFO summary (cheap; maintained unconditionally).
-        counts = {"considered": 0, "kept": 0, "dup": 0, "err": 0, "nongrid": 0}
+        counts = {"considered": 0, "kept": 0, "dup": 0, "err": 0, "mistyped": 0}
 
         # TODO(trace-volume, optional): the four `logger.debug` sites below are the
         # firehose (~600 lines/task today, and it grows with max_depth and library
@@ -143,12 +157,12 @@ class Enumerate(Search):
                 if debug:
                     logger.debug("enumerate reject (eval error) %s: %s", program, exc)
                 return
-            if expected == GRID and not all(isinstance(v, Grid) for v in sig):
-                counts["nongrid"] += 1
+            if not signature_matches_type(sig, expected):
+                counts["mistyped"] += 1
                 if debug:
-                    logger.debug("enumerate reject (non-grid) %s", program)
+                    logger.debug("enumerate reject (mistyped as %s) %s", expected, program)
                 return
-            bucket = pools[expected]
+            bucket = pools.setdefault(expected, {})
             existing = bucket.get(sig)
             if existing is None:
                 counts["kept"] += 1
@@ -184,6 +198,8 @@ class Enumerate(Search):
             consider(Const(color, COLOR), COLOR)
         for value in ints:
             consider(Const(value, INT), INT)
+        for value in (False, True):
+            consider(Const(value, BOOL), BOOL)
 
         fixed = [prim for prim in library.primitives if not prim.is_variadic]
         function_pool = self._function_pool(library) if self.higher_order else []
@@ -195,25 +211,28 @@ class Enumerate(Search):
         # the frozen pools between rounds so an interrupted search resumes mid-task. Not
         # worth the coupling to engine internals until that cost is actually observed.
         for _ in range(self.max_depth):
-            if target in pools[GRID]:
+            if target in pools.get(GRID, {}):
                 break
             # Freeze the current pools so this round composes only prior programs.
             # The grid frontier is capped (the overridable F1 frontier policy) to bound the count.
             frozen = {vtype: list(bucket.values()) for vtype, bucket in pools.items()}
-            frozen[GRID] = self._grid_frontier(frozen[GRID], task, library)
+            frozen[GRID] = self._grid_frontier(frozen.get(GRID, []), task, library)
+            value_candidates: list[TypedProgram] = [
+                (program, result_type)
+                for result_type, programs in frozen.items()
+                for program in programs
+            ]
             for prim in fixed:
-                # Each argument position draws from its type's pool; a function-typed (arrow) position
-                # draws from the higher-order function pool (empty unless `higher_order`). A position
-                # with no candidates skips the primitive — never a KeyError.
-                options = [self._arg_pool(t, frozen, function_pool) for t in prim.param_types]
-                if any(not opt for opt in options):
-                    continue
-                for combo in itertools.product(*options):
-                    consider(Apply(prim.name, tuple(combo)), prim.return_type)
+                for combo, result_type in candidate_applications(
+                    prim,
+                    value_candidates=value_candidates,
+                    function_candidates=function_pool,
+                ):
+                    consider(Apply(prim.name, combo), result_type)
             if sum(len(b) for b in pools.values()) > self.max_pool:
                 break
 
-        found = pools[GRID].get(target)
+        found = pools.get(GRID, {}).get(target)
         programs: tuple[Program, ...] = (found,) if found is not None else ()
         stats = SearchStats(
             strategy="Enumerate",
@@ -223,10 +242,11 @@ class Enumerate(Search):
                 "kept": counts["kept"],
                 "deduped": counts["dup"],
                 "errored": counts["err"],
-                "nongrid": counts["nongrid"],
-                "pool_grid": len(pools[GRID]),
-                "pool_color": len(pools[COLOR]),
-                "pool_int": len(pools[INT]),
+                "mistyped": counts["mistyped"],
+                "pool_grid": len(pools.get(GRID, {})),
+                "pool_color": len(pools.get(COLOR, {})),
+                "pool_int": len(pools.get(INT, {})),
+                "pool_bool": len(pools.get(BOOL, {})),
             },
         )
         logger.info(stats.summary())
@@ -268,14 +288,19 @@ class Enumerate(Search):
                 result.append((Lam(body), ArrowType((domain,), codomain)))
         return result
 
-    def _needed_arrows(self, library: Library) -> set[tuple[Type, Type]]:
-        """The distinct unary ``(domain, codomain)`` arrows that appear as a primitive's parameter."""
-        arrows: set[tuple[Type, Type]] = set()
+    def _needed_arrows(self, library: Library) -> list[tuple[Type, Type]]:
+        """The distinct unary ``(domain, codomain)`` arrows that appear as a primitive's parameter.
+
+        Returned in library order via an insertion-ordered dict, not a ``set`` — a ``set`` of
+        ``BaseType``-bearing tuples iterates in ``PYTHONHASHSEED``-dependent order, which would make the
+        synthesized function pool's order vary run-to-run (the substrate is deterministic by design).
+        """
+        arrows: dict[tuple[Type, Type], None] = {}
         for prim in library.primitives:
             for param in prim.param_types:
                 if isinstance(param, ArrowType) and len(param.params) == 1:
-                    arrows.add((param.params[0], param.result))
-        return arrows
+                    arrows[(param.params[0], param.result)] = None
+        return list(arrows)
 
     def _lam_bodies(self, domain: Type, codomain: Type, library: Library) -> list[Program]:
         """Bodies of type ``codomain`` over ``{Var(0, domain)}`` + first-order primitives (bottom-up,
@@ -300,29 +325,54 @@ class Enumerate(Search):
             if not prim.is_variadic and all(not isinstance(t, ArrowType) for t in prim.param_types)
         ]
         for _ in range(_FUNCTION_SYNTHESIS_DEPTH):
-            frozen = {t: list(bucket.values()) for t, bucket in pools.items()}
+            frozen = {t: list(b.values()) for t, b in pools.items()}
+            value_candidates: list[TypedProgram] = [
+                (program, result_type)
+                for result_type, programs in frozen.items()
+                for program in programs
+            ]
             for prim in fixed:
-                options = [frozen.get(t, []) for t in prim.param_types]
-                if any(not opt for opt in options):
-                    continue
-                for combo in itertools.product(*options):
-                    keep(Apply(prim.name, tuple(combo)), prim.return_type)
+                for combo, result_type in candidate_applications(
+                    prim,
+                    value_candidates=value_candidates,
+                ):
+                    keep(Apply(prim.name, combo), result_type)
+            # Bound the synthesis the same way the main loop bounds enumeration: an arithmetic-rich
+            # library (mul growing integers) could otherwise balloon the depth-N product unchecked.
+            if sum(len(b) for b in pools.values()) > self.max_pool:
+                break
         return list(pools.get(codomain, {}).values())
 
     def _dedup_functions(
         self, pool: list[tuple[Program, ArrowType]], library: Library
     ) -> list[tuple[Program, ArrowType]]:
-        """Drop behaviorally-identical unary candidates (a ``PrimRef``, being smaller, wins ties)."""
+        """Collapse behaviorally-identical unary candidates, keeping the *smallest* witness per behavior.
+
+        Two subtleties that keep this from silently dropping a needed candidate:
+
+        * A ``None`` signature means "couldn't probe" (an unprobeable domain, or the candidate errored on
+          the battery) — **not** "same behavior". Such candidates, and every non-unary one, are kept
+          unconditionally; only genuinely-comparable candidates are deduped.
+        * Ties keep the smaller-node-count witness (a ``PrimRef`` beats an equivalent ``Lam``), by an
+          explicit size comparison rather than relying on enumeration order.
+        """
         result: list[tuple[Program, ArrowType]] = []
-        seen: set[tuple[object, ...]] = set()
+        best: dict[tuple[ArrowType, tuple[object, ...]], int] = {}  # behavior -> index in `result`
         for ref, arrow in pool:
-            if len(arrow.params) == 1:
-                sig = self._function_sig(ref, arrow.params[0], library)
-                key = (arrow, sig)
-                if key in seen:
-                    continue
-                seen.add(key)
-            result.append((ref, arrow))
+            sig = (
+                self._function_sig(ref, arrow.params[0], library)
+                if len(arrow.params) == 1
+                else None
+            )
+            if sig is None:  # non-unary or unprobeable: not comparable, so never collapse
+                result.append((ref, arrow))
+                continue
+            key = (arrow, sig)
+            if key not in best:
+                best[key] = len(result)
+                result.append((ref, arrow))
+            elif ref.size() < result[best[key]][0].size():
+                result[best[key]] = (ref, arrow)  # a smaller witness for the same behavior wins
         return result
 
     def _function_sig(
@@ -350,13 +400,20 @@ class Enumerate(Search):
             return None
 
     def _domain_battery(self, domain: Type) -> tuple[Value, ...]:
-        """A few distinct values of ``domain`` to probe a function's behaviour (empty = unsupported)."""
+        """A few distinct values of ``domain`` to probe a function's behaviour (empty = unsupported).
+
+        The batteries span the whole small-value range per type (all ten colors; ints 0..9) so two
+        functions differing anywhere in that range are told apart, rather than collapsed — an empty
+        battery (an unprobeable type) means "cannot compare", which the callers treat as "keep both".
+        """
         if domain == GRID:
             return _SYNTH_GRIDS
+        if domain == BOOL:
+            return (False, True)
         if domain == COLOR:
-            return (0, 1, 2)
+            return tuple(range(10))  # every ARC color, so a recolor touching any of 0..9 is visible
         if domain == INT:
-            return (0, 1, 2, 3)
+            return tuple(range(10))  # small non-negative ints (grid dimensions / coordinates)
         return ()
 
     def _value_key(self, value: Value) -> object:
@@ -364,18 +421,6 @@ class Enumerate(Search):
         if isinstance(value, Grid):
             return ("grid", value.shape, value.array.tobytes())
         return value
-
-    def _arg_pool(
-        self,
-        param_type: Type,
-        frozen: dict[Type, list[Program]],
-        function_pool: list[tuple[Program, ArrowType]],
-    ) -> list[Program]:
-        """Candidate programs for an argument of ``param_type``: the typed value pool, or — for a
-        function-typed (arrow) parameter — the function pool filtered by arrow-type unification."""
-        if isinstance(param_type, ArrowType):
-            return [ref for ref, arrow in function_pool if unify(arrow, param_type) is not None]
-        return frozen.get(param_type, [])
 
 
 class BeamSearch(Enumerate):

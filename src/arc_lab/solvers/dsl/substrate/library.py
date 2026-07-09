@@ -56,10 +56,11 @@ class Closure:
         return self.body.evaluate(self.grid, self.library, self.env, (*self.scope, arg))
 
 
-#: A value flowing through a program: a grid, a scalar (color / small int), or a *function value* —
+#: A value flowing through a program: a grid, a scalar (color / small int / bool), or a *function
+#: value —
 #: either a lambda's :class:`Closure` or a :class:`Primitive` referenced first-class (via a ``PrimRef``,
 #: applied by ``AppFn``). Widens further as new value types are introduced.
-Value: TypeAlias = "Grid | int | Closure | Primitive"
+Value: TypeAlias = "Grid | int | bool | Closure | Primitive"
 
 #: A primitive implementation: takes value arguments, returns a value.
 PrimitiveImpl: TypeAlias = Callable[..., Value]

@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.library import Closure, Primitive
 from arc_lab.solvers.dsl.substrate.types import (
+    BOOL,
     FN,
     GRID,
     ArrowType,
@@ -120,9 +121,15 @@ class Program(ABC):
             return Input()
         if op == "const":
             value, value_type = data["value"], data["value_type"]
-            if not isinstance(value, int) or not isinstance(value_type, str):
+            if not isinstance(value_type, str):
                 raise ValueError(f"malformed const node: {data!r}")
-            return Const(value=value, value_type=base_type(value_type))
+            const_type = base_type(value_type)
+            if const_type == BOOL:
+                if not isinstance(value, bool):
+                    raise ValueError(f"malformed const node: {data!r}")
+            elif not isinstance(value, int) or isinstance(value, bool):
+                raise ValueError(f"malformed const node: {data!r}")
+            return Const(value=value, value_type=const_type)
         if op == "param":
             index, param_type = data["index"], data["value_type"]
             if not isinstance(index, int) or not isinstance(param_type, (str, dict)):
@@ -234,7 +241,7 @@ class Param(Program):
 class Const(Program):
     """A literal scalar value, tagged with its type (e.g. a COLOR or an INT)."""
 
-    value: int
+    value: int | bool
     value_type: BaseType
 
     def evaluate(
@@ -256,7 +263,7 @@ class Const(Program):
         return ()
 
     def __str__(self) -> str:
-        return str(self.value)
+        return str(self.value).lower() if isinstance(self.value, bool) else str(self.value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -382,8 +389,15 @@ class AppFn(Program):
     evaluates to a function value: a :class:`~...library.Closure` (from a :class:`Lam`) or a
     :class:`~...library.Primitive` (from a :class:`PrimRef`). Evaluation reuses exactly the machinery
     ``build_grid`` uses per cell — ``Closure.__call__`` for a lambda (curried), ``impl(*args)`` for a
-    primitive — so applying a function value needs no new runtime. Its :meth:`result_type` is the head
-    arrow's codomain, which is why :class:`Type`'s arrow types (Phase C) are the prerequisite.
+    primitive — so applying a function value needs no new runtime.
+
+    :meth:`result_type` is the head arrow's codomain, so the head must expose an :class:`ArrowType`.
+    In practice ``fn`` is a :class:`Param` (an arrow-typed hole) or a :class:`PrimRef` (whose type is
+    the primitive's arrow) — both carry a precise arrow. A bare :class:`Lam` head is *not* supported by
+    ``result_type``: a lambda types only as the opaque ``FN`` tag on its own (it has no type environment
+    to infer its domain from), so its arrow is recovered by inference (``from_sexpr``) or carried
+    alongside it (the search's function pool), never read back off the node. ``result_type`` raises on a
+    non-arrow head rather than guessing.
     """
 
     fn: Program

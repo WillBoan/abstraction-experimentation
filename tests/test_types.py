@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import itertools
 
+import pytest
+
 from arc_lab.solvers.dsl.substrate.types import (
     COLOR,
     GRID,
     INT,
     ArrowType,
-    BaseType,
     TypeVar,
     apply_subst,
     base_type,
@@ -83,5 +84,12 @@ def test_base_types_are_shared_singletons() -> None:
     # identity (`is`) holds — and deserialization hands back the *same* singleton, not a fresh equal one.
     assert base_type("grid") is GRID
     assert type_from_serializable("grid") is GRID
-    unknown = base_type("mask")  # an unregistered name is graceful: a fresh, equal-but-distinct value
-    assert unknown == BaseType("mask") and unknown is not GRID
+
+
+def test_deserialization_is_fail_fast_on_unknown_base_types() -> None:
+    # A typo'd / truncated type tag in an artifact must be rejected loudly (as the retired enum did),
+    # not silently fabricated into a junk BaseType that then matches no enumeration pool.
+    with pytest.raises(ValueError):
+        base_type("gird")
+    with pytest.raises(ValueError):
+        type_from_serializable("gird")

@@ -2,10 +2,10 @@
 
 Programs pass *values* between primitives, and every value has a type. A :data:`Type` is one of:
 
-* a :class:`BaseType` — an **atomic base type** (:data:`GRID`, :data:`COLOR`, :data:`INT`, and the
-  opaque function tag :data:`FN`). These are the leaves — module-level singletons, the closed set the
-  vocabulary uses today (new base types slot in as more constants). Existing first-order code is typed
-  entirely in these.
+* a :class:`BaseType` — an **atomic base type** (:data:`GRID`, :data:`COLOR`, :data:`INT`,
+    :data:`BOOL`, and the opaque function tag :data:`FN`). These are the leaves — module-level
+    singletons, the closed set the vocabulary uses today (new base types slot in as more constants).
+    Existing first-order code is typed entirely in these.
 * an :class:`ArrowType` — a **function type** ``(p1, …, pn) -> r`` (n-ary, matching a primitive's
   multi-argument signature). Refines the opaque ``FN`` tag: it is what lets typed enumeration target a
   function-valued hole precisely (e.g. a ``GRID -> INT`` perceiver), the higher-order unlock.
@@ -67,14 +67,24 @@ Substitution: TypeAlias = "dict[str, Type]"
 GRID = BaseType("grid")
 COLOR = BaseType("color")  # a cell color, integer 0-9
 INT = BaseType("int")  # a small non-negative integer (e.g. a tiling dimension)
+BOOL = BaseType("bool")  # a truth value, produced by control primitives and branch conditions
 FN = BaseType("fn")  # an opaque function value (a lambda's closure); ArrowType refines it
 
-_BASE_TYPES: dict[str, BaseType] = {t.name: t for t in (GRID, COLOR, INT, FN)}
+_BASE_TYPES: dict[str, BaseType] = {t.name: t for t in (GRID, COLOR, INT, BOOL, FN)}
 
 
 def base_type(name: str) -> BaseType:
-    """The base-type singleton for ``name`` (or a fresh :class:`BaseType` for an unknown name)."""
-    return _BASE_TYPES.get(name, BaseType(name))
+    """The base-type singleton for ``name``; raises :class:`ValueError` for an unknown name.
+
+    This is the deserialization boundary (``Const.from_dict`` / :func:`type_from_serializable`), so it
+    is deliberately fail-fast — a typo'd or truncated type tag in an artifact must be rejected loudly,
+    exactly as the retired ``ValueType`` enum did. A *new* base type is added by registering a singleton
+    in :data:`_BASE_TYPES` (not by fabricating one here), so strictness never blocks a legitimate type.
+    """
+    try:
+        return _BASE_TYPES[name]
+    except KeyError:
+        raise ValueError(f"unknown base type {name!r}") from None
 
 
 def free_type_vars(t: Type) -> set[str]:
