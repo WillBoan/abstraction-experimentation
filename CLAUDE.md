@@ -9,11 +9,20 @@ Operational guide for agents working in this repo. Human-facing overview is in [
 ## The one command that matters
 
 ```
-make check      # ruff + mypy --strict + pytest — the gate
+make check      # ruff + mypy --strict + FULL pytest (incl. slow locks, in parallel) — the gate
+make test       # fast pytest only (`-m "not slow"`) — the dev inner loop (~2s)
 make format     # auto-fix ruff lint + format
 ```
 
 `uv` runs everything (`uv run …`); deps live in `pyproject.toml`. Never invoke `python`/`pytest` bare.
+
+**Two test tiers.** Most tests are fast unit/functionality tests and run by default. The heavy
+regression/research **locks** — E1–E9 abstraction formation (real search in the wake–sleep loop) and
+the `dsl`/`dsl-sym`/`dsl-synth` dataset benchmarks — are marked `@pytest.mark.slow` and **excluded from
+`make test`** (the fast inner loop) but **run by `make check`** (the gate, via `pytest -n auto`). So the
+locks still gate every commit; only the inner loop skips them. New tests that test search or
+abstraction-formation should be *fast functionality* checks (tiny task + tight budget); if a test
+genuinely needs a heavy search or a real dataset, mark it `slow`.
 
 ## Definition of done
 

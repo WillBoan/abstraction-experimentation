@@ -6,6 +6,8 @@ import itertools
 from collections.abc import Callable
 from pathlib import Path
 
+import pytest
+
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.analysis.artifact import RunCoordinates, TaskRecord
 from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, TwoPartMDL
@@ -332,6 +334,7 @@ def _run(exp_fn: Callable[[], Experiment], tmp_path: Path) -> ExperimentReport:
     )
 
 
+@pytest.mark.slow
 def test_e2_learns_fixed_cell_swap(tmp_path: Path) -> None:
     report = _run(e2_swap_cells, tmp_path)
     assert report.check.matched == ("swap_cells",)
@@ -340,6 +343,7 @@ def test_e2_learns_fixed_cell_swap(tmp_path: Path) -> None:
     assert len(report.enablement) > 0
 
 
+@pytest.mark.slow
 def test_e3_variable_sharing_works_but_flat_mdl_bloats(tmp_path: Path) -> None:
     report = _run(e3_swap_cols, tmp_path)
     # Variable-sharing produced the correct general swap (behaviorally matched)...
@@ -351,6 +355,7 @@ def test_e3_variable_sharing_works_but_flat_mdl_bloats(tmp_path: Path) -> None:
     assert len(report.learned) <= 5
 
 
+@pytest.mark.slow
 def test_e4_two_part_mdl_eliminates_bloat(tmp_path: Path) -> None:
     report = _run(e4_swap_cols_mdl, tmp_path)
     assert report.check.matched == ("swap_cols",)
@@ -358,6 +363,7 @@ def test_e4_two_part_mdl_eliminates_bloat(tmp_path: Path) -> None:
     assert len(report.learned) == 1
 
 
+@pytest.mark.slow
 def test_e5_rederives_rot90_as_build_grid(tmp_path: Path) -> None:
     # The keystone payoff: starting from the cell-render floor (no D4 primitive), the loop learns
     # a single size-general build_grid program behaviorally == rot90 — pixels->D4, via BuildGridSearch.
@@ -413,6 +419,7 @@ def test_train_usefulness_is_train_only_speedup_and_enablement() -> None:
     assert use.speedup == 200 / 80  # deep train considered 200 -> 80; the held-out task excluded
 
 
+@pytest.mark.slow
 def test_e5_reports_heldout_grade_and_train_usefulness(tmp_path: Path) -> None:
     exp = e5_rederive_rot90()
     train_ids = frozenset(g.task_id for g in exp.tasks if g.split == "train")

@@ -73,6 +73,7 @@ _DSL_SYM_TILE = {
 _DSL_SYM_KNOWN_SOLVED = _DSL_KNOWN_SOLVED | _DSL_SYM_OVERLAY | _DSL_SYM_TILE
 
 
+@pytest.mark.slow
 def test_dsl_sym_solves_exactly_nineteen() -> None:
     ds = load_dataset("arc1-train")
     report = run(make_solver("dsl-sym"), ds)
@@ -90,6 +91,7 @@ _DSL_SYNTH_ATOMIC = {"9172f3a0", "b1948b0a", "c59eb873", "c8f0f002"}
 _DSL_SYNTH_KNOWN_SOLVED = _DSL_KNOWN_SOLVED | _DSL_SYNTH_ATOMIC
 
 
+@pytest.mark.slow
 def test_dsl_synth_solves_the_atomic_eleven() -> None:
     from arc_lab.solvers.dsl.solver import SynthesisSolver
 
@@ -101,6 +103,7 @@ def test_dsl_synth_solves_the_atomic_eleven() -> None:
     assert solved >= _DSL_KNOWN_SOLVED
 
 
+@pytest.mark.slow
 def test_render_task_to_png(tmp_path: Path) -> None:
     ds = load_dataset("arc1-train", limit=1)
     out = tmp_path / "task.png"

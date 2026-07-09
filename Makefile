@@ -21,10 +21,13 @@ format:  ## Auto-format with ruff
 typecheck:  ## Type-check with mypy --strict
 	uv run mypy
 
-test:  ## Run the test suite
-	uv run pytest
+test:  ## Run the fast test suite (functional; excludes slow locks) — the dev inner loop
+	uv run pytest -m "not slow"
 
-check: lint typecheck test  ## Lint, type-check, and test
+test-all:  ## Run the full suite incl. the slow regression/research locks, in parallel
+	uv run pytest -n auto
+
+check: lint typecheck test-all  ## Lint, type-check, and run the FULL suite (the gate; all locks)
 
 eval-dsl:  ## Score the DSL solver on ARC-1 evaluation
 	uv run arc-lab eval dsl --dataset arc1-eval
