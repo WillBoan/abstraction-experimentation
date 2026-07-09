@@ -175,7 +175,7 @@ def list_runs(
         typer.echo(f"no runs under {directory}")
         return
     for summary in summaries:
-        coords = summary.coordinates
+        coords = summary.spec
         typer.echo(
             f"{coords.solver:18s} {coords.dataset:16s} "
             f"solved={summary.solved}/{summary.total:<3d} "

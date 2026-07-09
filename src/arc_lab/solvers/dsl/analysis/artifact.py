@@ -26,8 +26,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 TRACE_FILE = "trace.jsonl"
-SUMMARY_FILE = "summary.json"
-LIBRARY_FILE = "library.json"
+RUNSPEC_FILE = "runspec.json"
+RESULTS_FILE = "results.json"
+LEARNED_LIBRARY_FILE = "learned_library.json"
 
 
 def _slug(text: str) -> str:
@@ -50,18 +51,31 @@ def git_commit() -> str | None:
 
 
 @dataclass(frozen=True, slots=True)
-class RunCoordinates:
-    """Where a run sits in the design space — the identity that pins it."""
+class RunSpec:
+    """The identity that pins a run: solver + corpus + machinery (config) + commit.
+
+    ``run_id`` is a content hash of everything but the commit, so re-running is idempotent —
+    and, crucially, two runs differing only in a search *parameter* (carried in ``config``) get
+    distinct ids. The pre-config, name-only coordinates could not see that difference, so such
+    runs would collide on one directory and cache-clobber each other. ``config`` is ``None`` for a
+    solver built directly over a learned library (a study's L2/L3), which differ by ``library``.
+    """
 
     solver: str
     dataset: str
-    library: Mapping[str, object]  # Library.to_dict(): the ``floor`` coordinate
+    library: Mapping[str, object]  # Library.to_dict(): the vocabulary (floor) identity
+    config: Mapping[str, object] | None = None  # Config.to_dict(): search params + cost
     commit: str | None = None
 
     def run_id(self) -> str:
-        """Deterministic content hash of the coordinates (commit deliberately excluded)."""
+        """Deterministic content hash of the spec (commit deliberately excluded)."""
         payload = json.dumps(
-            {"solver": self.solver, "dataset": self.dataset, "library": self.library},
+            {
+                "solver": self.solver,
+                "dataset": self.dataset,
+                "library": self.library,
+                "config": self.config,
+            },
             sort_keys=True,
         )
         return hashlib.sha256(payload.encode()).hexdigest()[:16]
@@ -69,9 +83,9 @@ class RunCoordinates:
     def dir_name(self) -> str:
         """A legible, still-unique run directory: ``<solver>_<dataset>_<hash>``.
 
-        Solver + dataset are part of the hashed coordinates, so prefixing with them stays
-        deterministic (same coordinates → same directory → the cache still hits) while making
-        ``runs/`` navigable by eye instead of an opaque hash.
+        Solver + dataset are part of the hashed spec, so prefixing with them stays deterministic
+        (same spec → same directory → the cache still hits) while making ``runs/`` navigable by
+        eye instead of an opaque hash.
         """
         return f"{_slug(self.solver)}_{_slug(self.dataset)}_{self.run_id()}"
 
@@ -80,6 +94,7 @@ class RunCoordinates:
             "solver": self.solver,
             "dataset": self.dataset,
             "library": dict(self.library),
+            "config": None if self.config is None else dict(self.config),
             "commit": self.commit,
         }
 

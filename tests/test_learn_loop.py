@@ -10,7 +10,7 @@ import pytest
 
 from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.task import Task
-from arc_lab.solvers.dsl.analysis.artifact import RunCoordinates, TaskRecord
+from arc_lab.solvers.dsl.analysis.artifact import RunSpec, TaskRecord
 from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, SolvedTask, TwoPartMDL
 from arc_lab.solvers.dsl.analysis.runner import RunSummary
 from arc_lab.solvers.dsl.learn.antiunify import (
@@ -400,7 +400,7 @@ def _summary(rows: dict[str, tuple[bool, int]]) -> RunSummary:
         for tid, (solved, considered) in rows.items()
     )
     return RunSummary(
-        coordinates=RunCoordinates(solver="s", dataset="d", library={}),
+        spec=RunSpec(solver="s", dataset="d", library={}),
         records=records,
         library_bits=0.0,
         program_bits=0.0,

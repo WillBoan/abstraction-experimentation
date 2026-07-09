@@ -24,10 +24,10 @@ from arc_lab.core.dataset import Dataset
 from arc_lab.core.task import Task
 from arc_lab.eval.scoring import score_task
 from arc_lab.solvers.dsl.analysis.artifact import (
-    LIBRARY_FILE,
-    SUMMARY_FILE,
+    RESULTS_FILE,
+    RUNSPEC_FILE,
     TRACE_FILE,
-    RunCoordinates,
+    RunSpec,
     TaskRecord,
     append_record,
     as_float,
@@ -56,9 +56,9 @@ _FALLBACK: Program = Input()
 
 @dataclass(frozen=True, slots=True)
 class RunSummary:
-    """The committed, self-contained record of one run: coordinates + metrics + rows."""
+    """The committed, self-contained record of one run: spec + metrics + rows."""
 
-    coordinates: RunCoordinates
+    spec: RunSpec
     records: tuple[TaskRecord, ...]
     library_bits: float
     program_bits: float
@@ -90,7 +90,7 @@ class RunSummary:
 
     def summary_line(self) -> str:
         return (
-            f"{self.coordinates.solver} on {self.coordinates.dataset}: "
+            f"{self.spec.solver} on {self.spec.dataset}: "
             f"{self.solved}/{self.total} solved, "
             f"search_solved={self.search_solved}, considered={self.considered_total}, "
             f"DL={self.description_length:.1f} "
@@ -99,8 +99,8 @@ class RunSummary:
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "run_id": self.coordinates.run_id(),
-            "coordinates": self.coordinates.to_dict(),
+            "run_id": self.spec.run_id(),
+            "spec": self.spec.to_dict(),
             "metrics": {
                 "solved": self.solved,
                 "total": self.total,
@@ -126,21 +126,23 @@ class RunSummary:
 
     @staticmethod
     def from_dict(data: Mapping[str, object]) -> RunSummary:
-        coords_raw = data["coordinates"]
+        spec_raw = data["spec"]
         metrics_raw = data["metrics"]
         tasks_raw = data["tasks"]
         if not (
-            isinstance(coords_raw, Mapping)
+            isinstance(spec_raw, Mapping)
             and isinstance(metrics_raw, Mapping)
             and isinstance(tasks_raw, list)
         ):
             raise ValueError("malformed run summary")
-        library = coords_raw["library"]
-        commit = coords_raw["commit"]
-        coordinates = RunCoordinates(
-            solver=str(coords_raw["solver"]),
-            dataset=str(coords_raw["dataset"]),
+        library = spec_raw["library"]
+        config = spec_raw.get("config")
+        commit = spec_raw.get("commit")
+        spec = RunSpec(
+            solver=str(spec_raw["solver"]),
+            dataset=str(spec_raw["dataset"]),
             library=library if isinstance(library, Mapping) else {},
+            config=config if isinstance(config, Mapping) else None,
             commit=commit if isinstance(commit, str) else None,
         )
         records = tuple(
@@ -160,7 +162,7 @@ class RunSummary:
             if isinstance(row, Mapping)
         )
         return RunSummary(
-            coordinates=coordinates,
+            spec=spec,
             records=records,
             library_bits=as_float(metrics_raw["library_bits"]),
             program_bits=as_float(metrics_raw["program_bits"]),
@@ -182,24 +184,30 @@ def analyze(
     (unless ``force``); a partial run is resumed.
     """
     metric = metric or CompressionMetric()
-    coordinates = RunCoordinates(
+    spec = RunSpec(
         solver=solver.name,
         dataset=dataset.name,
         library=solver.library.to_dict(),
+        config=None if solver.config is None else solver.config.to_dict(),
         commit=git_commit(),
     )
-    run_dir = out_dir / coordinates.dir_name()
-    summary_path = run_dir / SUMMARY_FILE
+    run_dir = out_dir / spec.dir_name()
+    results_path = run_dir / RESULTS_FILE
     trace_path = run_dir / TRACE_FILE
 
-    if summary_path.exists() and not force:
-        cached = RunSummary.from_dict(json.loads(summary_path.read_text(encoding="utf-8")))
-        _warn_on_commit_mismatch(cached.coordinates.commit, coordinates.commit)
+    if results_path.exists() and not force:
+        cached = RunSummary.from_dict(json.loads(results_path.read_text(encoding="utf-8")))
+        _warn_on_commit_mismatch(cached.spec.commit, spec.commit)
         return cached, run_dir
 
     run_dir.mkdir(parents=True, exist_ok=True)
     if force and trace_path.exists():
         trace_path.unlink()
+    # The runspec (identity / inputs) is written first, so a crashed run still records what it was.
+    (run_dir / RUNSPEC_FILE).write_text(
+        json.dumps({"run_id": spec.run_id(), "spec": spec.to_dict()}, indent=2) + "\n",
+        encoding="utf-8",
+    )
     existing = read_records(trace_path)
     done = {r.task_id for r in existing}
     records: list[TaskRecord] = list(existing)
@@ -216,15 +224,12 @@ def analyze(
 
     dl = metric.describe(_corpus(records, dataset), solver.library)
     summary = RunSummary(
-        coordinates=coordinates,
+        spec=spec,
         records=tuple(records),
         library_bits=dl.library_bits,
         program_bits=dl.program_bits,
     )
-    summary_path.write_text(json.dumps(summary.to_dict(), indent=2) + "\n", encoding="utf-8")
-    (run_dir / LIBRARY_FILE).write_text(
-        json.dumps(solver.library.to_dict(), indent=2) + "\n", encoding="utf-8"
-    )
+    results_path.write_text(json.dumps(summary.to_dict(), indent=2) + "\n", encoding="utf-8")
     return summary, run_dir
 
 
@@ -303,5 +308,5 @@ def iter_run_summaries(runs_dir: Path) -> list[RunSummary]:
         return []
     return [
         RunSummary.from_dict(json.loads(path.read_text(encoding="utf-8")))
-        for path in sorted(runs_dir.glob("*/summary.json"))
+        for path in sorted(runs_dir.glob("*/results.json"))
     ]

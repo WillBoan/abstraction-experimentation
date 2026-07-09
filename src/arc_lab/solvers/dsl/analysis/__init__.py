@@ -11,7 +11,7 @@ LLM or neural solver would not share.
   resumable record of one solver x dataset x library.
 """
 
-from arc_lab.solvers.dsl.analysis.artifact import RunCoordinates, TaskRecord
+from arc_lab.solvers.dsl.analysis.artifact import RunSpec, TaskRecord
 from arc_lab.solvers.dsl.analysis.compression import (
     CompressionMetric,
     DescriptionLength,
@@ -24,7 +24,7 @@ from arc_lab.solvers.dsl.analysis.runner import RunSummary, analyze
 __all__ = [
     "CompressionMetric",
     "DescriptionLength",
-    "RunCoordinates",
+    "RunSpec",
     "RunSummary",
     "TaskRecord",
     "TwoPartMDL",

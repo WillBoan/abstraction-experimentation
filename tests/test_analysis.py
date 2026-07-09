@@ -15,7 +15,7 @@ from arc_lab.solvers.dsl.analysis import (
     analyze,
     compression_ratio,
 )
-from arc_lab.solvers.dsl.analysis.artifact import SUMMARY_FILE, TRACE_FILE
+from arc_lab.solvers.dsl.analysis.artifact import RESULTS_FILE, RUNSPEC_FILE, TRACE_FILE
 from arc_lab.solvers.dsl.analysis.compression import SolvedTask
 from arc_lab.solvers.dsl.config import PRESETS
 from arc_lab.solvers.dsl.search import SearchStats
@@ -124,14 +124,14 @@ def test_analyze_writes_artifact_and_solves(tmp_path: Path) -> None:
     assert summary.solved == 2
     assert summary.search_solved == 2
     assert summary.description_length > 0
-    assert (run_dir / SUMMARY_FILE).exists()
-    assert (run_dir / "library.json").exists()
+    assert (run_dir / RESULTS_FILE).exists()
+    assert (run_dir / RUNSPEC_FILE).exists()
     assert (run_dir / TRACE_FILE).exists()
 
     # The summary round-trips through its serialised form.
-    reloaded = RunSummary.from_dict(json.loads((run_dir / SUMMARY_FILE).read_text()))
+    reloaded = RunSummary.from_dict(json.loads((run_dir / RESULTS_FILE).read_text()))
     assert reloaded.solved == 2
-    assert reloaded.coordinates.solver == "dsl"
+    assert reloaded.spec.solver == "dsl"
 
     # Each solved task recorded the program it found.
     flip_row = next(r for r in summary.records if r.task_id == "flip")
@@ -146,13 +146,13 @@ def test_analyze_is_cached_and_idempotent(tmp_path: Path) -> None:
 
     # A cache hit returns without redoing work: delete the library artifact and confirm
     # a second call (summary.json present) does NOT rewrite it.
-    (run_dir / "library.json").unlink()
+    (run_dir / RUNSPEC_FILE).unlink()
     analyze(solver, ds, out_dir=tmp_path)
-    assert not (run_dir / "library.json").exists()
+    assert not (run_dir / RUNSPEC_FILE).exists()
 
     # force=True ignores the cache and recomputes everything.
     analyze(solver, ds, out_dir=tmp_path, force=True)
-    assert (run_dir / "library.json").exists()
+    assert (run_dir / RUNSPEC_FILE).exists()
 
 
 def test_analyze_resumes_from_partial_trace(tmp_path: Path) -> None:
@@ -164,7 +164,7 @@ def test_analyze_resumes_from_partial_trace(tmp_path: Path) -> None:
     trace_path = run_dir / TRACE_FILE
     first_line = trace_path.read_text().splitlines()[0]
     trace_path.write_text(first_line + "\n")
-    (run_dir / SUMMARY_FILE).unlink()
+    (run_dir / RESULTS_FILE).unlink()
 
     # Re-running resumes: the second task is processed and the run completes.
     summary, _ = analyze(solver, ds, out_dir=tmp_path)

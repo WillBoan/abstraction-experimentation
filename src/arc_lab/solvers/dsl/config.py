@@ -98,6 +98,14 @@ class SearchSpec:
             )
         raise ValueError(f"unknown search kind: {self.kind!r}")
 
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "kind": self.kind,
+            "max_depth": self.max_depth,
+            "beam_width": self.beam_width,
+            "members": list(self.members),
+        }
+
 
 @dataclass(frozen=True, slots=True)
 class Config:
@@ -127,6 +135,16 @@ class Config:
             beam_width=self.search.beam_width if beam_width is None else beam_width,
         )
         return replace(self, search=search)
+
+    def to_dict(self) -> dict[str, object]:
+        """Canonical serialisation — the machinery identity that feeds a run's ``run_id``."""
+        return {
+            "name": self.name,
+            "library": self.library,
+            "search": self.search.to_dict(),
+            "cost": self.cost,
+            "enablement_budget": self.enablement_budget,
+        }
 
 
 #: Named machinery presets — the historical solvers, now as data (Phase 7 wires the registry).

@@ -35,6 +35,7 @@ class ProgramSearchSolver(Solver):
         search: Search,
         cost: Cost | None = None,
         name: str = "program-search",
+        config: Config | None = None,
     ) -> None:
         self.library = library
         self.search = search
@@ -42,6 +43,10 @@ class ProgramSearchSolver(Solver):
         # Occam prior (program size). A stable sort keeps proposal order on ties.
         self.cost = ProgramSize() if cost is None else cost
         self.name = name
+        #: The declarative machinery this solver was built from, when built via
+        #: :meth:`from_config` — carries the search params into a run's identity. ``None``
+        #: for a solver constructed directly (e.g. over a learned library in a study).
+        self.config = config
 
     @classmethod
     def from_config(cls, config: Config) -> ProgramSearchSolver:
@@ -51,6 +56,7 @@ class ProgramSearchSolver(Solver):
             search=config.build_search(),
             cost=config.resolve_cost(),
             name=config.name,
+            config=config,
         )
 
     def predict(self, task: Task) -> Prediction:
