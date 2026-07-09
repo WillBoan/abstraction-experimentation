@@ -24,6 +24,7 @@ from arc_lab.solvers.dsl.learn.loop import (
     LearnResult,
     LearnTrigger,
     learn,
+    wake_sleep,
 )
 from arc_lab.solvers.dsl.learn.selection import AbstractionSelector, GreedyMDL
 from arc_lab.solvers.dsl.learn.taskgen import GeneratedTask, make_task, write_testbed
@@ -44,5 +45,6 @@ __all__ = [
     "enablement_transfer",
     "learn",
     "make_task",
+    "wake_sleep",
     "write_testbed",
 ]

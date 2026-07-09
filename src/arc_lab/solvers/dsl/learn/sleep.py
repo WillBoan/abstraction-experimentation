@@ -17,9 +17,9 @@ scores the result with its :class:`CompressionMetric`.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
-from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, CorpusEntry
+from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, SolvedTask
 from arc_lab.solvers.dsl.learn.antiunify import AbstractionProposer, rewrite_with
 from arc_lab.solvers.dsl.learn.selection import AbstractionSelector, GreedyMDL
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
@@ -37,7 +37,7 @@ class SleepOutcome:
 
     library: Library
     added: tuple[Primitive, ...]
-    corpus: list[CorpusEntry]
+    corpus: list[SolvedTask]
     score: float
 
 
@@ -45,7 +45,7 @@ class SleepStrategy(ABC):
     """Grow a library from a solved corpus in one sleep step."""
 
     @abstractmethod
-    def run(self, corpus: list[CorpusEntry], library: Library, start_index: int) -> SleepOutcome:
+    def run(self, corpus: list[SolvedTask], library: Library, start_index: int) -> SleepOutcome:
         """Invent + govern + fold abstractions; ``start_index`` seeds unique abstraction names."""
 
 
@@ -70,7 +70,7 @@ class GreedyMDLSleep(SleepStrategy):
         self.metric = metric or CompressionMetric()
         self.name_prefix = name_prefix
 
-    def run(self, corpus: list[CorpusEntry], library: Library, start_index: int) -> SleepOutcome:
+    def run(self, corpus: list[SolvedTask], library: Library, start_index: int) -> SleepOutcome:
         added: list[Primitive] = []
         index = start_index
         while True:
@@ -81,7 +81,7 @@ class GreedyMDLSleep(SleepStrategy):
             index += 1
             primitive = make_abstraction(name, best, library)
             library = library.extended(name=f"{library.name}+{name}", extra=(primitive,))
-            corpus = [(task, rewrite_with(program, name, best)) for task, program in corpus]
+            corpus = [replace(st, program=rewrite_with(st.program, name, best)) for st in corpus]
             added.append(primitive)
         score = self.metric.describe(corpus, library).total
         return SleepOutcome(library=library, added=tuple(added), corpus=corpus, score=score)
@@ -152,7 +152,7 @@ class RefactoringSleep(SleepStrategy):
         self.metric = metric or CompressionMetric()
         self.name_prefix = name_prefix
 
-    def run(self, corpus: list[CorpusEntry], library: Library, start_index: int) -> SleepOutcome:
+    def run(self, corpus: list[SolvedTask], library: Library, start_index: int) -> SleepOutcome:
         # Phase 1 — corpus mining (the historical greedy behavior).
         phase1 = GreedyMDLSleep(
             self.corpus_proposer,
@@ -173,14 +173,14 @@ class RefactoringSleep(SleepStrategy):
             index += 1
             primitive = make_abstraction(name, best, library)
             library = library.extended(name=f"{library.name}+{name}", extra=(primitive,))
-            corpus = [(task, rewrite_with(program, name, best)) for task, program in corpus]
+            corpus = [replace(st, program=rewrite_with(st.program, name, best)) for st in corpus]
             library = rewrite_library_definitions(library, name, best)
             added.append(primitive)
 
         score = self.metric.describe(corpus, library).total
         return SleepOutcome(library=library, added=tuple(added), corpus=corpus, score=score)
 
-    def _refactor_select(self, corpus: list[CorpusEntry], library: Library) -> Program | None:
+    def _refactor_select(self, corpus: list[SolvedTask], library: Library) -> Program | None:
         """The factor mined from the definitions that most lowers DL when folded into them."""
         definitions = [p.template for p in library.primitives if p.template is not None]
         if len(definitions) < 2:  # nothing to refactor a shared factor across
@@ -196,7 +196,9 @@ class RefactoringSleep(SleepStrategy):
                 name="probe", extra=(make_abstraction(probe, template, library),)
             )
             probe_lib = rewrite_library_definitions(probe_lib, probe, template)
-            probe_corpus = [(t, rewrite_with(p, probe, template)) for t, p in corpus]
+            probe_corpus = [
+                replace(st, program=rewrite_with(st.program, probe, template)) for st in corpus
+            ]
             dl = self.metric.describe(probe_corpus, probe_lib).total
             if dl < best_dl:
                 best_dl = dl

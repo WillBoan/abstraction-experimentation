@@ -31,15 +31,28 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import TypeAlias
 
+from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.cost import Cost, ProgramSize
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.program import Program
 
-#: One solved entry: the task and the (chosen) program that solves it.
-CorpusEntry: TypeAlias = tuple[Task, Program]
+
+@dataclass(frozen=True, slots=True)
+class SolvedTask:
+    """One solved entry: a task (with its metadata) and the program found to solve it.
+
+    Holds the :class:`AnnotatedTask` so an oracle/label and the found ``program`` stay
+    co-located (no join by id). ``task`` exposes the pure task for the cost / DL computation.
+    """
+
+    annotated: AnnotatedTask
+    program: Program
+
+    @property
+    def task(self) -> Task:
+        return self.annotated.task
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,11 +84,11 @@ class CompressionMetric:
         """
         return self.bits_per_primitive * len(library.primitives)
 
-    def program_bits(self, entries: Iterable[CorpusEntry], library: Library) -> float:
+    def program_bits(self, entries: Iterable[SolvedTask], library: Library) -> float:
         """Total code length of the solution programs under ``library``."""
-        return sum(self.cost.of(program, task, library) for task, program in entries)
+        return sum(self.cost.of(entry.program, entry.task, library) for entry in entries)
 
-    def describe(self, entries: Iterable[CorpusEntry], library: Library) -> DescriptionLength:
+    def describe(self, entries: Iterable[SolvedTask], library: Library) -> DescriptionLength:
         """The two-part description length of ``entries`` solved under ``library``."""
         corpus = list(entries)
         return DescriptionLength(
@@ -97,9 +110,7 @@ class TwoPartMDL(CompressionMetric):
 
     def library_bits(self, library: Library) -> float:
         flat = super().library_bits(library)
-        definitions = sum(
-            p.template.size() for p in library.primitives if p.template is not None
-        )
+        definitions = sum(p.template.size() for p in library.primitives if p.template is not None)
         return flat + definitions
 
 

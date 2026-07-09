@@ -16,8 +16,9 @@ the corpus's two-part description length, and returns the single template that l
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import replace
 
-from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, CorpusEntry
+from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, SolvedTask
 from arc_lab.solvers.dsl.learn.antiunify import AbstractionProposer, rewrite_with
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
@@ -30,7 +31,7 @@ class AbstractionSelector(ABC):
     @abstractmethod
     def select(
         self,
-        corpus: list[CorpusEntry],
+        corpus: list[SolvedTask],
         library: Library,
         proposer: AbstractionProposer,
         metric: CompressionMetric,
@@ -47,7 +48,7 @@ class GreedyMDL(AbstractionSelector):
 
     def select(
         self,
-        corpus: list[CorpusEntry],
+        corpus: list[SolvedTask],
         library: Library,
         proposer: AbstractionProposer,
         metric: CompressionMetric,
@@ -57,7 +58,7 @@ class GreedyMDL(AbstractionSelector):
         existing = {p.template for p in library.primitives if p.template is not None}
         candidates = [
             template
-            for template in proposer.propose([program for _, program in corpus], library)
+            for template in proposer.propose([st.program for st in corpus], library)
             if template not in existing
         ]
         best_template: Program | None = None
@@ -67,7 +68,9 @@ class GreedyMDL(AbstractionSelector):
             probe_lib = library.extended(
                 name="probe", extra=(make_abstraction(name, template, library),)
             )
-            rewritten = [(task, rewrite_with(program, name, template)) for task, program in corpus]
+            rewritten = [
+                replace(st, program=rewrite_with(st.program, name, template)) for st in corpus
+            ]
             dl = metric.describe(rewritten, probe_lib).total
             if dl < best_dl:
                 best_dl = dl

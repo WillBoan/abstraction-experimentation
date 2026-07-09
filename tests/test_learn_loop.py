@@ -8,9 +8,10 @@ from pathlib import Path
 
 import pytest
 
+from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.analysis.artifact import RunCoordinates, TaskRecord
-from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, TwoPartMDL
+from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, SolvedTask, TwoPartMDL
 from arc_lab.solvers.dsl.analysis.runner import RunSummary
 from arc_lab.solvers.dsl.learn.antiunify import (
     AntiunifyPairs,
@@ -221,7 +222,7 @@ def test_naive_selects_read_body_but_scoped_selects_mirror_index() -> None:
     # The divergence and its fix, at the governance seam: with members recurring (as the wake corpus
     # has them), greedy MDL over the *naive* proposer mints a read-body; the *search-scoped* proposer
     # (mine only what the search reuses) recovers mirror_index.
-    corpus = [(_dummy_task(f"t{i}"), p) for i in range(3) for p in _d4_member_programs()]
+    corpus = [_solved(_dummy_task(f"t{i}"), p) for i in range(3) for p in _d4_member_programs()]
     composes = BuildGridSearch().composes_signature
     naive = GreedyMDL().select(corpus, BUILD_LIBRARY, FrequentSubtree(), TwoPartMDL())
     scoped = GreedyMDL().select(
@@ -257,11 +258,15 @@ def _dummy_task(task_id: str) -> Task:
     )
 
 
+def _solved(task: Task, program: Program) -> SolvedTask:
+    return SolvedTask(AnnotatedTask(task), program)
+
+
 def test_greedy_mdl_selects_the_compressing_template() -> None:
     # Two tasks solved by the same depth-2 word: folding both into one abstraction lowers DL,
     # so GreedyMDL must pick the closed template (the seam GreedyMDLSleep delegates to).
     program: Program = Apply("transpose", (Apply("flip_h", (Input(),)),))
-    corpus = [(_dummy_task("t1"), program), (_dummy_task("t2"), program)]
+    corpus = [_solved(_dummy_task("t1"), program), _solved(_dummy_task("t2"), program)]
     chosen = GreedyMDL().select(corpus, _GEN, AntiunifyPairs(), CompressionMetric())
     assert chosen == Apply("transpose", (Apply("flip_h", (Param(0, _G),)),))
 
@@ -269,7 +274,7 @@ def test_greedy_mdl_selects_the_compressing_template() -> None:
 def test_greedy_mdl_returns_none_when_nothing_compresses() -> None:
     # A single non-recurring program yields no useful candidate, so nothing is minted.
     program: Program = Apply("flip_h", (Input(),))
-    corpus = [(_dummy_task("t1"), program)]
+    corpus = [_solved(_dummy_task("t1"), program)]
     assert GreedyMDL().select(corpus, _GEN, AntiunifyPairs(), CompressionMetric()) is None
 
 
@@ -280,21 +285,21 @@ def test_greedy_mdl_sleep_mints_rewrites_and_scores() -> None:
     # GreedyMDLSleep is the historical sleep step as a strategy: over the recurring D4 corpus it
     # must mint the search-composable idiom, rewrite the corpus to call it, and return a score
     # (lower = better) below the un-compressed baseline — the loop's convergence signal.
-    corpus = [(_dummy_task(f"t{i}"), p) for i in range(3) for p in _d4_member_programs()]
+    corpus = [_solved(_dummy_task(f"t{i}"), p) for i in range(3) for p in _d4_member_programs()]
     metric = TwoPartMDL()
     baseline = metric.describe(corpus, BUILD_LIBRARY).total
     proposer = SearchScopedFrequentSubtree(composes=BuildGridSearch().composes_signature)
     outcome = GreedyMDLSleep(proposer, metric=metric).run(corpus, BUILD_LIBRARY, 0)
     assert any(p.template == _MIRROR for p in outcome.added)  # minted mirror_index
     assert outcome.library.version > BUILD_LIBRARY.version  # library grew
-    assert all("sub(sub(" not in str(p) for _, p in outcome.corpus)  # folded, no raw idiom left
+    assert all("sub(sub(" not in str(st.program) for st in outcome.corpus)  # folded, no raw idiom
     assert outcome.score < baseline  # the step compresses
 
 
 def test_greedy_mdl_sleep_is_dry_when_nothing_compresses() -> None:
     # No recurrence -> no candidate -> no mint; the outcome is empty and scores the input as-is.
     program: Program = Apply("flip_h", (Input(),))
-    corpus = [(_dummy_task("t1"), program)]
+    corpus = [_solved(_dummy_task("t1"), program)]
     outcome = GreedyMDLSleep(AntiunifyPairs()).run(corpus, _GEN, 0)
     assert outcome.added == ()
     assert outcome.library is _GEN and outcome.corpus == corpus

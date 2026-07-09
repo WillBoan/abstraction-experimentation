@@ -17,8 +17,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.task import Task
-from arc_lab.solvers.dsl.analysis.compression import CorpusEntry
+from arc_lab.solvers.dsl.analysis.compression import SolvedTask
 from arc_lab.solvers.dsl.learn.antiunify import AntiunifyPairs
 from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep, SleepStrategy
 from arc_lab.solvers.dsl.search.base import Search
@@ -31,13 +32,13 @@ class LearnTrigger(ABC):
     """Decides, per generation, whether to run the sleep (abstraction) step."""
 
     @abstractmethod
-    def should_learn(self, generation: int, corpus: list[CorpusEntry]) -> bool: ...
+    def should_learn(self, generation: int, corpus: list[SolvedTask]) -> bool: ...
 
 
 class EachGeneration(LearnTrigger):
     """Always attempt to learn (termination is handled by 'no candidate compresses')."""
 
-    def should_learn(self, generation: int, corpus: list[CorpusEntry]) -> bool:
+    def should_learn(self, generation: int, corpus: list[SolvedTask]) -> bool:
         return bool(corpus)
 
 
@@ -56,7 +57,7 @@ class LearnResult:
     history: tuple[GenerationRecord, ...]
 
 
-def learn(
+def wake_sleep(
     *,
     library: Library,
     search: Search,
@@ -101,16 +102,20 @@ def learn(
     return LearnResult(library=library, abstractions=tuple(added), history=tuple(history))
 
 
+#: Legacy name for :func:`wake_sleep`, kept as an alias during the migration.
+learn = wake_sleep
+
+
 def _solve_corpus(
     search: Search, cost: Cost, library: Library, tasks: list[Task]
-) -> list[CorpusEntry]:
+) -> list[SolvedTask]:
     """Wake: the min-cost program found per solved task (mirrors predict's ranking)."""
-    corpus: list[CorpusEntry] = []
+    corpus: list[SolvedTask] = []
     for task in tasks:
         with task_context(task.task_id):
             programs = search.find(task, library).programs
         if not programs:
             continue
         chosen = min(programs, key=lambda p: cost.of(p, task, library))
-        corpus.append((task, chosen))
+        corpus.append(SolvedTask(AnnotatedTask(task), chosen))
     return corpus

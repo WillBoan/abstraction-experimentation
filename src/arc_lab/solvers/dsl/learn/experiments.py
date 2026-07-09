@@ -122,7 +122,7 @@ def run_experiment(
         )
 
     train = [_task(g) for g in experiment.tasks if g.split == "train"]
-    full = Dataset(name=experiment.name, tasks=tuple(_task(g) for g in experiment.tasks))
+    full = Dataset.of(experiment.name, tuple(_task(g) for g in experiment.tasks))
 
     sleep = experiment.sleep or GreedyMDLSleep(experiment.proposer, metric=experiment.metric)
     result: LearnResult = learn(

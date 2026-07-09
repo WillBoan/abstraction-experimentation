@@ -35,7 +35,7 @@ from arc_lab.solvers.dsl.analysis.artifact import (
     git_commit,
     read_records,
 )
-from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, CorpusEntry
+from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, SolvedTask
 from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate.program import Input, Program
 from arc_lab.solvers.dsl.trace import task_context
@@ -150,7 +150,9 @@ class RunSummary:
                 search_solved=bool(row["search_solved"]),
                 considered=as_int(row["considered"]),
                 program=(row["program"] if isinstance(row["program"], str) else None),
-                program_size=(row["program_size"] if isinstance(row["program_size"], int) else None),
+                program_size=(
+                    row["program_size"] if isinstance(row["program_size"], int) else None
+                ),
                 program_dict=None,
                 stats_extra={},
             )
@@ -265,13 +267,17 @@ def _score(solver: ProgramSearchSolver, task: Task, programs: list[Program]) -> 
     return solved
 
 
-def _corpus(records: list[TaskRecord], dataset: Dataset) -> list[CorpusEntry]:
-    """The solved corpus: (task, program) for every record that found a program."""
-    entries: list[CorpusEntry] = []
+def _corpus(records: list[TaskRecord], dataset: Dataset) -> list[SolvedTask]:
+    """The solved corpus: (annotated task, program) for every record that found a program."""
+    entries: list[SolvedTask] = []
     for record in records:
         if record.program_dict is None:
             continue
-        entries.append((dataset.get(record.task_id), Program.from_dict(record.program_dict)))
+        entries.append(
+            SolvedTask(
+                dataset.get_annotated(record.task_id), Program.from_dict(record.program_dict)
+            )
+        )
     return entries
 
 

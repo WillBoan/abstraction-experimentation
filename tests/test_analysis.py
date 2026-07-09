@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.dataset import Dataset
 from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.analysis import (
@@ -15,6 +16,7 @@ from arc_lab.solvers.dsl.analysis import (
     compression_ratio,
 )
 from arc_lab.solvers.dsl.analysis.artifact import SUMMARY_FILE, TRACE_FILE
+from arc_lab.solvers.dsl.analysis.compression import SolvedTask
 from arc_lab.solvers.dsl.search import SearchStats
 from arc_lab.solvers.dsl.solver import GeometricSearchSolver
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
@@ -45,7 +47,7 @@ def _rot180_task(task_id: str = "rot") -> Task:
 
 
 def _dataset(*tasks: Task) -> Dataset:
-    return Dataset(name="tiny", tasks=tasks)
+    return Dataset.of("tiny", tasks)
 
 
 # -- SearchStats (the standardised, centralised summary) ----------------
@@ -86,7 +88,7 @@ def test_compression_two_part_description_length() -> None:
     task = _flip_task()
     program = Apply("flip_h", (Input(),))  # size 2
     metric = CompressionMetric()  # bits_per_primitive=1.0, ProgramSize
-    dl = metric.describe([(task, program)], D4_LIBRARY)
+    dl = metric.describe([SolvedTask(AnnotatedTask(task), program)], D4_LIBRARY)
     assert dl.library_bits == float(len(D4_LIBRARY.primitives))  # 8 primitives
     assert dl.program_bits == 2.0
     assert dl.total == dl.library_bits + dl.program_bits

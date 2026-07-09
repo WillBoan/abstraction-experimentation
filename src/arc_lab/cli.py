@@ -127,7 +127,7 @@ def eval(
     ds = load_dataset(dataset, limit=None if task else limit)
     if task is not None:
         try:
-            ds = Dataset(name=ds.name, tasks=(ds.get(task),))
+            ds = Dataset(name=ds.name, entries=(ds.get_annotated(task),))
         except KeyError as exc:
             raise typer.BadParameter(str(exc)) from exc
     solver_obj = make_solver(solver)
@@ -164,7 +164,9 @@ def analyze(
 
 
 @app.command(name="runs")
-def list_runs(directory: Path = typer.Option(Path("runs"), "--dir", help="Runs directory.")) -> None:
+def list_runs(
+    directory: Path = typer.Option(Path("runs"), "--dir", help="Runs directory."),
+) -> None:
     """List recorded run artifacts (solver, dataset, solved, description length)."""
     from arc_lab.solvers.dsl.analysis.runner import iter_run_summaries
 
@@ -182,12 +184,12 @@ def list_runs(directory: Path = typer.Option(Path("runs"), "--dir", help="Runs d
 
 
 @app.command()
-def learn(
+def study(
     experiment: str = typer.Argument(..., help="Experiment name, e.g. e1-rot90"),
     testbeds: Path = typer.Option(Path("testbeds"), help="Where to write generated testbeds."),
     runs: Path = typer.Option(Path("runs"), help="Where to write run artifacts."),
 ) -> None:
-    """Run an abstraction-formation experiment: generate a testbed, learn a library, report.
+    """Run an abstraction-formation study: generate a testbed, learn a library, report.
 
     The system learns blind on the train split; the hand-authored target abstractions are
     used only to *observe* (behavioral checker + library 3), never to guide learning.
@@ -202,6 +204,16 @@ def learn(
     report = run_experiment(exp, testbeds_root=testbeds, runs_root=runs)
     for line in report.summary_lines():
         typer.echo(line)
+
+
+@app.command(name="learn", hidden=True)
+def _learn_alias(
+    experiment: str = typer.Argument(..., help="Deprecated alias for `study`."),
+    testbeds: Path = typer.Option(Path("testbeds")),
+    runs: Path = typer.Option(Path("runs")),
+) -> None:
+    """Deprecated alias for :func:`study`."""
+    study(experiment, testbeds=testbeds, runs=runs)
 
 
 if __name__ == "__main__":  # pragma: no cover

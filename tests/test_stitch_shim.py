@@ -11,7 +11,9 @@ from pathlib import Path
 
 import pytest
 
+from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.task import Task
+from arc_lab.solvers.dsl.analysis.compression import SolvedTask
 from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep
 from arc_lab.solvers.dsl.learn.stitch_shim import StitchProposer, _compress, from_sexpr, to_sexpr
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive
@@ -116,7 +118,11 @@ def _arity_ok(template: Program) -> bool:
     for node in template.walk():
         if isinstance(node, Apply):
             prim = BUILD_LIBRARY.get(node.primitive)
-            if (len(node.args) < prim.arity) if prim.is_variadic else (len(node.args) != prim.arity):
+            if (
+                (len(node.args) < prim.arity)
+                if prim.is_variadic
+                else (len(node.args) != prim.arity)
+            ):
                 return False
     return True
 
@@ -153,7 +159,11 @@ def test_stitch_sleep_selects_the_read_body_first_order() -> None:
     pytest.importorskip("stitch_core")
     from arc_lab.solvers.dsl.learn.experiments import _d4_targets
 
-    corpus = [(_task(f"t{i}"), p) for i in range(3) for p in _d4_targets(Input()).values()]
+    corpus = [
+        SolvedTask(AnnotatedTask(_task(f"t{i}")), p)
+        for i in range(3)
+        for p in _d4_targets(Input()).values()
+    ]
     outcome = GreedyMDLSleep(StitchProposer(first_order=True)).run(corpus, BUILD_LIBRARY, 0)
     assert any(
         isinstance(p.template, Apply) and p.template.primitive == "read" for p in outcome.added
