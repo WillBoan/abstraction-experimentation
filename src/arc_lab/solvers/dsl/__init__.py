@@ -9,26 +9,14 @@ The reusable machinery lives in:
 combinators)
 - :mod:`~arc_lab.solvers.dsl.search` (search strategies)
 
-A concrete solver is just a *(library, search)* pairing.
-
-It starts small — whole-grid geometric transforms searched by single application
-(:class:`GeometricSearchSolver`) — and grows by *combinators over the same
-vocabulary*: :class:`SymmetrySearchSolver` adds overlay-based symmetry repair and
-mosaic tiling without introducing any new grid transform.
+A concrete solver is a :class:`ProgramSearchSolver` built from a declarative
+:class:`~arc_lab.solvers.dsl.config.Config` (a *(library, search, cost)* triple).
+Named presets — the historical ``dsl`` / ``dsl-sym`` / ``dsl-synth`` / ``dsl-beam``
+wirings, now data — live in :mod:`~arc_lab.solvers.dsl.config`.
 """
 
-from arc_lab.solvers.dsl.solver import (
-    BeamSynthesisSolver,
-    GeometricSearchSolver,
-    ProgramSearchSolver,
-    SymmetrySearchSolver,
-    SynthesisSolver,
-)
+from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 
 __all__ = [
-    "BeamSynthesisSolver",
-    "GeometricSearchSolver",
     "ProgramSearchSolver",
-    "SymmetrySearchSolver",
-    "SynthesisSolver",
 ]

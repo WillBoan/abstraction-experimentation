@@ -4,8 +4,9 @@ import pytest
 
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
+from arc_lab.solvers.dsl.config import PRESETS
 from arc_lab.solvers.dsl.search import SingleApply
-from arc_lab.solvers.dsl.solver import GeometricSearchSolver, ProgramSearchSolver
+from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate import (
     COLOR,
     GRID,
@@ -122,7 +123,7 @@ def test_single_apply_finds_flip() -> None:
 
 
 def test_geometric_solver_is_program_search_solver() -> None:
-    solver = GeometricSearchSolver()
+    solver = ProgramSearchSolver.from_config(PRESETS["dsl"])
     assert isinstance(solver, ProgramSearchSolver)
     assert solver.name == "dsl"
 
@@ -136,4 +137,4 @@ def test_program_search_solver_fallback_returns_input() -> None:
             "test": [{"input": [[3]], "output": [[3]]}],
         },
     )
-    assert GeometricSearchSolver().predict(task) == [[_G([[3]])]]
+    assert ProgramSearchSolver.from_config(PRESETS["dsl"]).predict(task) == [[_G([[3]])]]

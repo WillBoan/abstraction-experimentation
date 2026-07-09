@@ -93,10 +93,11 @@ _DSL_SYNTH_KNOWN_SOLVED = _DSL_KNOWN_SOLVED | _DSL_SYNTH_ATOMIC
 
 @pytest.mark.slow
 def test_dsl_synth_solves_the_atomic_eleven() -> None:
-    from arc_lab.solvers.dsl.solver import SynthesisSolver
+    from arc_lab.solvers.dsl.config import PRESETS
+    from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 
     ds = load_dataset("arc1-train")
-    report = run(SynthesisSolver(max_depth=1), ds)
+    report = run(ProgramSearchSolver.from_config(PRESETS["dsl-synth"].with_param(max_depth=1)), ds)
     assert report.errored == 0
     solved = {r.task_id for r in report.results if r.solved}
     assert solved == _DSL_SYNTH_KNOWN_SOLVED

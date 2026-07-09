@@ -5,7 +5,7 @@ from arc_lab.core.task import Task
 from arc_lab.eval.scoring import score_task
 from arc_lab.solvers import make_solver
 from arc_lab.solvers.baseline import IdentitySolver
-from arc_lab.solvers.dsl import GeometricSearchSolver
+from arc_lab.solvers.dsl import ProgramSearchSolver
 
 _G = Grid.from_list
 
@@ -34,7 +34,7 @@ def test_dsl_solver_learns_horizontal_flip() -> None:
             "test": [{"input": [[7, 8, 9]], "output": [[9, 8, 7]]}],
         },
     )
-    prediction = GeometricSearchSolver().predict(task)
+    prediction = make_solver("dsl").predict(task)
     solved, _ = score_task(task, prediction)
     assert solved is True
 
@@ -48,10 +48,11 @@ def test_dsl_solver_falls_back_to_identity() -> None:
             "test": [{"input": [[3]], "output": [[3]]}],
         },
     )
-    prediction = GeometricSearchSolver().predict(task)
+    prediction = make_solver("dsl").predict(task)
     assert prediction == [[_G([[3]])]]
 
 
 def test_registry_make_solver() -> None:
-    assert isinstance(make_solver("dsl"), GeometricSearchSolver)
+    dsl = make_solver("dsl")
+    assert isinstance(dsl, ProgramSearchSolver) and dsl.name == "dsl"
     assert isinstance(make_solver("identity"), IdentitySolver)

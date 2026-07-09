@@ -8,8 +8,9 @@ import pytest
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 from arc_lab.eval.scoring import score_task
+from arc_lab.solvers import make_solver
+from arc_lab.solvers.dsl.config import SYMMETRY_LIBRARY
 from arc_lab.solvers.dsl.search import CompositeSearch, OverlaySearch, SingleApply, TileSearch
-from arc_lab.solvers.dsl.solver import SYMMETRY_LIBRARY, SymmetrySearchSolver
 from arc_lab.solvers.dsl.substrate import COLOR, INT, Apply, Const, Input, Program
 
 _G = Grid.from_list
@@ -136,7 +137,7 @@ def test_composite_search_dedups_and_concatenates() -> None:
 @pytest.mark.parametrize("task_factory", [_overlay_task, _tile_task])
 def test_symmetry_solver_solves_combinator_tasks(task_factory: object) -> None:
     task = task_factory()  # type: ignore[operator]
-    solved, _ = score_task(task, SymmetrySearchSolver().predict(task))
+    solved, _ = score_task(task, make_solver("dsl-sym").predict(task))
     assert solved is True
 
 
@@ -148,5 +149,5 @@ def test_symmetry_solver_still_solves_single_transforms() -> None:
             "test": [{"input": [[4, 5, 6]], "output": [[6, 5, 4]]}],
         },
     )
-    solved, _ = score_task(flip, SymmetrySearchSolver().predict(flip))
+    solved, _ = score_task(flip, make_solver("dsl-sym").predict(flip))
     assert solved is True

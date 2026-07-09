@@ -5,8 +5,9 @@ from __future__ import annotations
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 from arc_lab.eval.scoring import score_task
+from arc_lab.solvers.dsl.config import ATOMIC_LIBRARY, PRESETS
 from arc_lab.solvers.dsl.search import BeamSearch, Enumerate, ProgramSize
-from arc_lab.solvers.dsl.solver import ATOMIC_LIBRARY, SynthesisSolver
+from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate import COLOR, GRID, INT, Apply, Const, Input
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
@@ -128,13 +129,15 @@ def _composition_task() -> Task:
 
 def test_depth_one_cannot_solve_composition() -> None:
     task = _composition_task()
-    solved, _ = score_task(task, SynthesisSolver(max_depth=1).predict(task))
+    solver = ProgramSearchSolver.from_config(PRESETS["dsl-synth"].with_param(max_depth=1))
+    solved, _ = score_task(task, solver.predict(task))
     assert solved is False
 
 
 def test_depth_two_solves_composition() -> None:
     task = _composition_task()
-    solved, _ = score_task(task, SynthesisSolver(max_depth=2).predict(task))
+    solver = ProgramSearchSolver.from_config(PRESETS["dsl-synth"])
+    solved, _ = score_task(task, solver.predict(task))
     assert solved is True
 
 
@@ -146,7 +149,8 @@ def test_synthesis_solver_still_solves_geometry() -> None:
             "test": [{"input": [[4, 5, 6]], "output": [[6, 5, 4]]}],
         },
     )
-    solved, _ = score_task(flip, SynthesisSolver(max_depth=1).predict(flip))
+    solver = ProgramSearchSolver.from_config(PRESETS["dsl-synth"].with_param(max_depth=1))
+    solved, _ = score_task(flip, solver.predict(flip))
     assert solved is True
 
 

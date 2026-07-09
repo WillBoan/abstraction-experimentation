@@ -12,8 +12,8 @@ import logging
 import pytest
 
 from arc_lab.core.task import Task
+from arc_lab.solvers.dsl.config import ATOMIC_LIBRARY
 from arc_lab.solvers.dsl.search import ConsistentWithTraining, Enumerate, SingleApply
-from arc_lab.solvers.dsl.solver import ATOMIC_LIBRARY
 from arc_lab.solvers.dsl.substrate import COLOR, INT, Apply, Const, Input
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.trace import TaskIdFilter, task_context

@@ -17,8 +17,9 @@ from arc_lab.solvers.dsl.analysis import (
 )
 from arc_lab.solvers.dsl.analysis.artifact import SUMMARY_FILE, TRACE_FILE
 from arc_lab.solvers.dsl.analysis.compression import SolvedTask
+from arc_lab.solvers.dsl.config import PRESETS
 from arc_lab.solvers.dsl.search import SearchStats
-from arc_lab.solvers.dsl.solver import GeometricSearchSolver
+from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Input, Param
@@ -115,7 +116,9 @@ def test_two_part_mdl_charges_learned_template_size() -> None:
 
 def test_analyze_writes_artifact_and_solves(tmp_path: Path) -> None:
     ds = _dataset(_flip_task(), _rot180_task())
-    summary, run_dir = analyze(GeometricSearchSolver(), ds, out_dir=tmp_path)
+    summary, run_dir = analyze(
+        ProgramSearchSolver.from_config(PRESETS["dsl"]), ds, out_dir=tmp_path
+    )
 
     assert summary.total == 2
     assert summary.solved == 2
@@ -138,7 +141,7 @@ def test_analyze_writes_artifact_and_solves(tmp_path: Path) -> None:
 
 def test_analyze_is_cached_and_idempotent(tmp_path: Path) -> None:
     ds = _dataset(_flip_task())
-    solver = GeometricSearchSolver()
+    solver = ProgramSearchSolver.from_config(PRESETS["dsl"])
     _, run_dir = analyze(solver, ds, out_dir=tmp_path)
 
     # A cache hit returns without redoing work: delete the library artifact and confirm
@@ -154,7 +157,7 @@ def test_analyze_is_cached_and_idempotent(tmp_path: Path) -> None:
 
 def test_analyze_resumes_from_partial_trace(tmp_path: Path) -> None:
     ds = _dataset(_flip_task(), _rot180_task())
-    solver = GeometricSearchSolver()
+    solver = ProgramSearchSolver.from_config(PRESETS["dsl"])
     _, run_dir = analyze(solver, ds, out_dir=tmp_path)
 
     # Simulate a crash after the first task: keep only the first trace line, drop summary.

@@ -11,21 +11,20 @@ from collections.abc import Callable
 
 from arc_lab.solvers.base import Solver
 from arc_lab.solvers.baseline import IdentitySolver
-from arc_lab.solvers.dsl import (
-    BeamSynthesisSolver,
-    GeometricSearchSolver,
-    SymmetrySearchSolver,
-    SynthesisSolver,
-)
+from arc_lab.solvers.dsl.config import PRESETS
+from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 
-# name -> zero-argument factory. Kept as factories so constructing the registry
-# never imports optional dependencies (e.g. the LLM solver needs `anthropic`).
+
+def _preset_factory(name: str) -> Callable[[], Solver]:
+    """A zero-arg factory that builds the named machinery preset on demand."""
+    return lambda: ProgramSearchSolver.from_config(PRESETS[name])
+
+
+# name -> zero-argument factory. The DSL solvers build from named ``Config`` presets
+# (config-as-data); factories keep optional deps (e.g. the LLM's `anthropic`) unimported.
 REGISTRY: dict[str, Callable[[], Solver]] = {
     "identity": IdentitySolver,
-    "dsl": GeometricSearchSolver,
-    "dsl-sym": SymmetrySearchSolver,
-    "dsl-synth": SynthesisSolver,
-    "dsl-beam": BeamSynthesisSolver,
+    **{name: _preset_factory(name) for name in PRESETS},
 }
 
 
