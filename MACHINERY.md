@@ -24,6 +24,34 @@ It exists because the machinery is not one thing. A flat label like "abstraction
 - **Gates** — the coupling: X _gates_ Y iff Y cannot land (or cannot scale) until X exists. The critical path is the transitive closure of this relation.
 - **Confidence** — claims are tagged `[C]` committed · `[H]` working hypothesis · `[O]` open, per RESEARCH.
 
+## Configuring the machinery (data, not subclasses)
+
+After the `RunSpec × Config` refactor, a run's machinery is a **`Config`** value
+(`solvers/dsl/config.py`); see [ARCHITECTURE.md](ARCHITECTURE.md). The pluggable axes and where each
+is selected **today**:
+
+| Axis | Interface | Selected via |
+| --- | --- | --- |
+| library (Floor) | value | `Config.library` name → `config.py::LIBRARIES` |
+| search (F1) | `ABC` | `Config.search.kind` → `config.py::SearchSpec.build` |
+| cost (F2) | `ABC` | `Config.cost` name → `config.py::COSTS` |
+| constraint (F1) | `ABC` | `Search.constraints` (default `ConsistentWithTraining`) |
+| proposer · sleep · selector · metric · trigger (F4) | `ABC` | wired on a `StudySpec` (`learn/experiments.py`) |
+
+Scalar **parameters** (the knobs) — now data on `Config.search`, overridable via `Config.with_param`
+or (for learn axes) a `StudySpec` field:
+
+| param | default | where |
+| --- | --- | --- |
+| `max_depth` | 2 | `Enumerate` / `BeamSearch` |
+| `beam_width` | 16 | `BeamSearch` |
+| `max_generations` | 5 | `wake_sleep` |
+| `min_frequency` | 2 | `FrequentSubtree` proposer |
+
+Named `PRESETS` (`dsl`/`dsl-sym`/`dsl-synth`/`dsl-beam`) are the historical solvers as data;
+`ProgramSearchSolver` is the only solver class. The rest of this file is the catalogue of mechanisms
+and their couplings.
+
 ## Mental model
 
 Two axes organize everything below.

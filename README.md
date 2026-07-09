@@ -9,6 +9,10 @@ interface**. The harness — data model, scorer, runner, visualiser — never kn
 which kind of solver it's running, so LLM solvers, DSL/program-search solvers,
 neural solvers, and anything you invent next all coexist without touching it.
 
+How a run is specified, executed, and recorded — the `RunSpec · Config · Corpus`
+model and the activity tiers (Eval · Synthesize · analyze · Study) — is mapped in
+[ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Layout
 
 ```
@@ -22,7 +26,7 @@ src/arc_lab/
                                               analysis (run artifacts, MDL metrics) ·
                                               learn (abstraction-learning loop)
              llm/                             Claude-backed rule induction (optional)
-  cli.py                                      datasets · show · eval · analyze · learn · runs
+  cli.py                                      datasets · show · eval · analyze · study · runs
 data/        arc-agi-1, arc-agi-2             the datasets, as git submodules
 testbeds/    committed synthetic task sets for the learn experiments
 runs/        run artifacts — a gitignored, regenerable cache
@@ -48,7 +52,7 @@ uv run arc-lab show 007bbfb7 --dataset arc1-train   # render a task to PNG
 uv run arc-lab eval dsl --dataset arc1-eval         # score a solver
 uv run arc-lab solvers                  # list registered solvers
 uv run arc-lab analyze dsl-synth --dataset arc1-train   # run artifact: programs + metrics
-uv run arc-lab learn e1-rot90           # run an abstraction-formation experiment
+uv run arc-lab study e1-rot90           # run an abstraction-formation study
 uv run arc-lab runs                     # list recorded run artifacts
 ```
 

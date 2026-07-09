@@ -44,9 +44,11 @@ A solver is **`(library × search × constraints × cost)`**. Search is a **prop
 - **constraints** — the filter; `ConsistentWithTraining` is the spec (`search/constraints.py`).
 - **cost** — the rank; `ProgramSize` is the Occam prior (`search/cost.py`).
 
+That machinery is **data**: a frozen `Config` (`solvers/dsl/config.py` — `library × search × cost`, search params as fields). Named `PRESETS` (`dsl`/`dsl-sym`/`dsl-synth`/`dsl-beam`) replace the old solver subclasses; `ProgramSearchSolver` is the only solver class. A run is pinned by a **`RunSpec = Config × Corpus`** (content-hashed `run_id`); the corpus is a provenance-agnostic `Corpus` of `AnnotatedTask` (real or synthetic; solvers see only the pure `Task`). The activity tiers (Eval / Synthesize / analyze / Study) and the `runs/` layout live in **[ARCHITECTURE.md](ARCHITECTURE.md)** — read it for anything about runs, config, or corpora.
+
 Programs are **data**: a `Program` ABC with virtual-dispatch nodes `Input | Param | Const | Apply` (`substrate/program.py`); `Param` is the hole that makes learned abstractions possible (`substrate/abstraction.py`).
 
-**Library learning** (`solvers/dsl/learn/`) is a meta-process over solvers, not a solver: wake (solve the corpus) → sleep (antiunify proposals → greedy-MDL governance) → `Library.extended` → repeat. Targets in experiments are **observables** (behavioral checker), never a training signal. `analysis/` is the instrument: content-hashed run artifacts + MDL compression metrics.
+**Library learning** (`solvers/dsl/learn/`) is a meta-process over solvers, not a solver: wake (solve the corpus) → sleep (antiunify proposals → greedy-MDL governance) → `Library.extended` → repeat (the engine is `learn/loop.py::wake_sleep`). A **Study** (`learn/experiments.py::run_study`, a `StudySpec`) composes this with the three-library comparison and the held-out **transfer grade** (`analysis/transfer.py`). Targets are **observables** (behavioral checker), never a training signal. `analysis/` is the instrument: content-hashed run artifacts + MDL compression metrics.
 
 Layers: `core/` (grid·task·dataset) · `viz/` · `eval/` (scoring·runner) · `solvers/` (`base.py`, `dsl/`, `llm/`); inside `dsl/`: `substrate/` · `search/` · `analysis/` · `learn/`.
 
@@ -55,7 +57,7 @@ Layers: `core/` (grid·task·dataset) · `viz/` · `eval/` (scoring·runner) · 
 ```
 uv run arc-lab datasets | solvers | show <id> --dataset <ds> | eval <solver> --dataset <ds>
 uv run arc-lab analyze <solver> --dataset <ds>   # run artifact: per-task programs + search effort + DL (cached under runs/)
-uv run arc-lab learn <experiment>                # abstraction-formation experiment (names: learn/experiments.py)
+uv run arc-lab study <experiment>               # abstraction-formation study (names: learn/experiments.py)
 uv run arc-lab runs                              # list recorded run artifacts
 uv run arc-lab -vv eval <solver> ...     # -v INFO / -vv DEBUG search trace (stderr, silent by default)
 ARC_LAB_LOG=DEBUG uv run pytest -k <x>   # same trace under pytest
@@ -73,16 +75,17 @@ ARC_LAB_LOG=DEBUG uv run pytest -k <x>   # same trace under pytest
 
 ## Recipes
 
-- **Add a primitive** → define a typed `Primitive` in `solvers/dsl/substrate/primitives/*.py`; bundle it into a `Library` (see `solver.py` for `D4_LIBRARY.extended(...)`).
-- **Add a search strategy** → subclass `Search` (`search/base.py`); export in `search/__init__.py`.
-- **Add a solver** → subclass `ProgramSearchSolver` (or `Solver`); register it in `solvers/__init__.py` `REGISTRY`.
-- **Add a constraint / cost** → `search/constraints.py` / `search/cost.py`.
-- **Add a learn experiment** → generate tasks via `learn/taskgen.py`, define + register it in `learn/experiments.py` (`make_experiment`); drive with `uv run arc-lab learn <name>`. Testbeds are committed under `testbeds/`; run artifacts are a gitignored cache under `runs/`.
+- **Add a primitive** → define a typed `Primitive` in `solvers/dsl/substrate/primitives/*.py`; name the library it belongs to in `config.py::LIBRARIES` (and register base primitives in `substrate/registry.py` so learned libraries round-trip).
+- **Add a search strategy** → subclass `Search` (`search/base.py`), export in `search/__init__.py`, and add a `kind` branch to `config.py::SearchSpec.build`.
+- **Add a machinery preset** → a `Config` in `config.py::PRESETS`; the solver `REGISTRY` picks it up automatically. There are no solver subclasses.
+- **Add a constraint / cost** → `search/constraints.py` / `search/cost.py` (name the cost in `config.py::COSTS`).
+- **Add a study** → generate tasks via `learn/taskgen.py`, define + register a `StudySpec` in `learn/experiments.py` (`make_study`); drive with `uv run arc-lab study <name>`. Testbeds are committed under `testbeds/`; run artifacts are a gitignored cache under `runs/`.
 
 ## Sources of truth (don't duplicate — point here)
 
-- Solver registry: `src/arc_lab/solvers/__init__.py`
-- Learn-experiment registry: `src/arc_lab/solvers/dsl/learn/experiments.py`
+- Run / config / activity model (RunSpec · Config · Corpus · tiers · runs/ layout): `ARCHITECTURE.md`
+- Solver registry (name → `Config` preset): `src/arc_lab/solvers/__init__.py`; presets in `src/arc_lab/solvers/dsl/config.py`
+- Study registry (`make_study`): `src/arc_lab/solvers/dsl/learn/experiments.py`
 - Behavior locks: `tests/test_integration.py`
 - Commands: `Makefile`
 - Experiment history & findings: `EXPERIMENTS.md`

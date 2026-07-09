@@ -335,3 +335,16 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - **Metrics:** `make check` green — 174 passed, 5 skipped; ruff + mypy `--strict` clean; dsl 7/19/11 + E1–E9 unchanged.
 - **Interpretation:** the stack holds up — no correctness bug survived into a lock, and the first-order byte-identity is real — but "compromise-free" was the wrong word: the honest framing is *finite-battery observational equivalence* + a handful of latent gaps that bite only as the polymorphic/higher-order roadmap lands (tracked in the review file).
 - **Next:** the deferred `eq`/`if` search-cost reductions (commutative pruning; per-round budget) are queued in `MACHINERY.md` (F1). Standing move unchanged: a real ARC slice.
+
+---
+
+## 2026-07-09 — RunSpec × Config refactor (machinery as data)
+
+- **Commit:** branch `refactor/runspec-config` (Phases 1–15)
+- **Question:** (structural, not empirical) can the machinery be made *data* — a frozen, hashable `Config` — so parameters decouple from wiring, runs are reproducible, and the activity model is explicit in the code?
+- **Ran:** a 15-phase migration; `make check` green and the regression locks (`dsl`=7, `dsl-sym`=19, `dsl-synth`=11) re-verified at every lock-touching step.
+- **Result:**
+  - config-as-subclass solvers → `Config` + `PRESETS` (`ProgramSearchSolver` is the only solver class); `RunSpec = Config × Corpus` with a content-hashed `run_id` that now includes the search params (fixes a latent cache collision); provenance-agnostic `Corpus`/`AnnotatedTask`; content-addressed library store (`Library.from_dict`); one `execute()` core with a sleep knob (Eval vs Synthesize); transfer reducers moved to a read-side `analysis/transfer`; `Experiment`→`StudySpec`/`run_study`.
+  - Behaviour preserved: E1–E10 study outputs unchanged.
+- **Interpretation:** the machinery is now diffable / hashable / sweepable; the run/config/activity model is mapped in `ARCHITECTURE.md`.
+- **Next:** fold `GeneratedTask` into a `Corpus` of `AnnotatedTask` (regenerate committed testbeds); put the sleep strategy into the run identity; CLI verb split + a config-file / `--set` override surface.
