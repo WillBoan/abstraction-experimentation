@@ -1,21 +1,19 @@
-"""The DSL type system: atomic base types, function types, and type variables.
+"""The type system: type constructors, function types, and type variables.
 
 Programs pass *values* between primitives, and every value has a type. A :data:`Type` is one of:
 
-* a :class:`BaseType` — an **atomic base type** (:data:`GRID`, :data:`COLOR`, :data:`INT`,
-    :data:`BOOL`, and the opaque function tag :data:`FN`). These are the leaves — module-level
-    singletons, the closed set the vocabulary uses today (new base types slot in as more constants).
-    Existing first-order code is typed entirely in these.
+* a :class:`TypeCon` — a **type constructor** ``name[a1, …, an]`` applied to ``n`` type arguments.
+  Atomic base types are the **nullary** case (``GRID = TypeCon("grid")``); containers are parametric
+  (``list[a]``, ``pair[a, b]``). One uniform mechanism covers both — a base type is just a constructor
+  that takes no arguments.
 * an :class:`ArrowType` — a **function type** ``(p1, …, pn) -> r`` (n-ary, matching a primitive's
-  multi-argument signature). Refines the opaque ``FN`` tag: it is what lets typed enumeration target a
-  function-valued hole precisely (e.g. a ``GRID -> INT`` perceiver), the higher-order unlock.
-* a :class:`TypeVar` — a **type variable**, for polymorphism (``map : ((a -> b), [a]) -> [b]``).
+  multi-argument signature). It is what lets typed enumeration target a function-valued hole precisely
+  (e.g. a ``(int, int) -> color`` cell body), rather than an opaque function tag.
+* a :class:`TypeVar` — a **type variable**, for polymorphism (``map : ((a -> b), list[a]) -> list[b]``).
 
-All three are frozen dataclasses — one uniform mechanism — so a type is inspectable, hashable data.
-Types are what make search over a larger, more atomic vocabulary tractable: typed enumeration only ever
-composes type-compatible pieces (unified — see :func:`unify`), pruning the otherwise-explosive space
-before a program is ever evaluated. Base types serialize to their bare string name (backward-compatible
-with every committed artifact); composite types serialize to a small tagged dict.
+All three are frozen dataclasses — inspectable, hashable data. Types are what make search over a large,
+atomic vocabulary tractable: typed enumeration only ever composes type-compatible pieces (unified — see
+:func:`unify`), pruning the otherwise-explosive space before a program is ever evaluated.
 """
 
 from __future__ import annotations
@@ -26,18 +24,25 @@ from typing import TypeAlias
 
 
 @dataclass(frozen=True, slots=True)
-class BaseType:
-    """An atomic base type — a leaf of :data:`Type`."""
+class TypeCon:
+    """A type constructor applied to type arguments — ``name[args…]``.
+
+    The nullary case (``args == ()``) is an atomic base type: :data:`GRID`, :data:`INT`, and friends.
+    Parametric constructors carry their arguments: ``list[a]`` is ``TypeCon("list", (a,))``.
+    """
 
     name: str
+    args: tuple[Type, ...] = ()
 
     def __str__(self) -> str:
-        return self.name
+        if not self.args:
+            return self.name
+        return f"{self.name}[{', '.join(str(a) for a in self.args)}]"
 
 
 @dataclass(frozen=True, slots=True)
 class TypeVar:
-    """A type variable — a hole in a polymorphic signature (e.g. the ``a`` in ``[a] -> a``)."""
+    """A type variable — a hole in a polymorphic signature (e.g. the ``a`` in ``list[a] -> a``)."""
 
     name: str
 
@@ -57,29 +62,38 @@ class ArrowType:
         return f"({args}) -> {self.result}"
 
 
-#: A type in the DSL: an atomic base type, a function type, or a type variable.
-Type: TypeAlias = "BaseType | ArrowType | TypeVar"
+#: A type: a (possibly parametric) constructor, a function type, or a type variable.
+Type: TypeAlias = "TypeCon | ArrowType | TypeVar"
 
 #: A unifier: a mapping from :class:`TypeVar` names to the types they stand for.
 Substitution: TypeAlias = "dict[str, Type]"
 
-#: The base-type singletons. New base types (mask, object, …) slot in as more of these.
-GRID = BaseType("grid")
-COLOR = BaseType("color")  # a cell color, integer 0-9
-INT = BaseType("int")  # a small non-negative integer (e.g. a tiling dimension)
-BOOL = BaseType("bool")  # a truth value, produced by control primitives and branch conditions
-FN = BaseType("fn")  # an opaque function value (a lambda's closure); ArrowType refines it
+#: The atomic base types — nullary constructors, held as singletons.
+GRID = TypeCon("grid")
+COLOR = TypeCon("color")  # a cell color, integer 0-9
+INT = TypeCon("int")  # a small non-negative integer (e.g. a tiling dimension)
+BOOL = TypeCon("bool")  # a truth value, produced by control primitives and branch conditions
+FN = TypeCon("fn")  # an opaque function value; an ArrowType refines it where the shape is known
 
-_BASE_TYPES: dict[str, BaseType] = {t.name: t for t in (GRID, COLOR, INT, BOOL, FN)}
+_BASE_TYPES: dict[str, TypeCon] = {t.name: t for t in (GRID, COLOR, INT, BOOL, FN)}
 
 
-def base_type(name: str) -> BaseType:
-    """The base-type singleton for ``name``; raises :class:`ValueError` for an unknown name.
+def list_type(element: Type) -> TypeCon:
+    """The list constructor ``list[element]``."""
+    return TypeCon("list", (element,))
 
-    This is the deserialization boundary (``Const.from_dict`` / :func:`type_from_serializable`), so it
-    is deliberately fail-fast — a typo'd or truncated type tag in an artifact must be rejected loudly,
-    exactly as the retired ``ValueType`` enum did. A *new* base type is added by registering a singleton
-    in :data:`_BASE_TYPES` (not by fabricating one here), so strictness never blocks a legitimate type.
+
+def pair_type(first: Type, second: Type) -> TypeCon:
+    """The pair constructor ``pair[first, second]``."""
+    return TypeCon("pair", (first, second))
+
+
+def base_type(name: str) -> TypeCon:
+    """The nullary base-type singleton for ``name``; raises :class:`ValueError` for an unknown name.
+
+    This is the deserialization boundary for bare-string types, so it is deliberately fail-fast — a
+    typo'd or truncated type tag must be rejected loudly. A new base type is added by registering a
+    singleton in :data:`_BASE_TYPES`, so strictness never blocks a legitimate type.
     """
     try:
         return _BASE_TYPES[name]
@@ -91,31 +105,35 @@ def free_type_vars(t: Type) -> set[str]:
     """The names of the type variables occurring in ``t``."""
     if isinstance(t, TypeVar):
         return {t.name}
-    if isinstance(t, ArrowType):
+    if isinstance(t, TypeCon):
         names: set[str] = set()
-        for param in t.params:
-            names |= free_type_vars(param)
-        return names | free_type_vars(t.result)
-    return set()
+        for arg in t.args:
+            names |= free_type_vars(arg)
+        return names
+    names = set()
+    for param in t.params:
+        names |= free_type_vars(param)
+    return names | free_type_vars(t.result)
 
 
 def apply_subst(subst: Substitution, t: Type) -> Type:
     """Substitute bound type variables throughout ``t`` (chasing through the mapping)."""
     if isinstance(t, TypeVar):
         return apply_subst(subst, subst[t.name]) if t.name in subst else t
-    if isinstance(t, ArrowType):
-        return ArrowType(
-            tuple(apply_subst(subst, p) for p in t.params), apply_subst(subst, t.result)
-        )
-    return t
+    if isinstance(t, TypeCon):
+        if not t.args:
+            return t
+        return TypeCon(t.name, tuple(apply_subst(subst, a) for a in t.args))
+    return ArrowType(tuple(apply_subst(subst, p) for p in t.params), apply_subst(subst, t.result))
 
 
 def unify(t1: Type, t2: Type, subst: Substitution | None = None) -> Substitution | None:
     """Hindley-Milner unification: the substitution making ``t1`` == ``t2``, or ``None`` if none exists.
 
-    Base types unify only with themselves; a :class:`TypeVar` binds to any type (with an occurs-check
-    to reject infinite types); :class:`ArrowType`\\ s unify arity-wise and pointwise. Returned
-    substitutions compose, so this is the type-directed filter a higher-order enumeration prunes with.
+    A :class:`TypeVar` binds to any type (with an occurs-check to reject infinite types);
+    :class:`TypeCon`\\ s unify iff their names and arities match, then argument-wise; :class:`ArrowType`\\ s
+    unify arity-wise and pointwise. Nullary constructors (base types) unify iff they are the same name —
+    the loop over zero arguments is a no-op — so base-type behaviour is the natural special case.
     """
     subst = {} if subst is None else subst
     a, b = apply_subst(subst, t1), apply_subst(subst, t2)
@@ -123,12 +141,19 @@ def unify(t1: Type, t2: Type, subst: Substitution | None = None) -> Substitution
         return _bind(a.name, b, subst)
     if isinstance(b, TypeVar):
         return _bind(b.name, a, subst)
-    if isinstance(a, BaseType) and isinstance(b, BaseType):
-        return subst if a == b else None
+    if isinstance(a, TypeCon) and isinstance(b, TypeCon):
+        if a.name != b.name or len(a.args) != len(b.args):
+            return None
+        current: Substitution | None = subst
+        for xa, xb in zip(a.args, b.args, strict=True):
+            current = unify(xa, xb, current)
+            if current is None:
+                return None
+        return current
     if isinstance(a, ArrowType) and isinstance(b, ArrowType):
         if len(a.params) != len(b.params):
             return None
-        current: Substitution | None = subst
+        current = subst
         for pa, pb in zip(a.params, b.params, strict=True):
             current = unify(pa, pb, current)
             if current is None:
@@ -140,7 +165,7 @@ def unify(t1: Type, t2: Type, subst: Substitution | None = None) -> Substitution
 def _bind(name: str, t: Type, subst: Substitution) -> Substitution | None:
     if isinstance(t, TypeVar) and t.name == name:
         return subst
-    if name in free_type_vars(t):  # occurs-check: reject `a = [a]`-style infinite types
+    if name in free_type_vars(t):  # occurs-check: reject `a = list[a]`-style infinite types
         return None
     return {**subst, name: t}
 
@@ -158,31 +183,35 @@ def instantiate(t: Type, counter: itertools.count[int]) -> Type:
             if node.name not in mapping:
                 mapping[node.name] = TypeVar(f"t{next(counter)}")
             return mapping[node.name]
-        if isinstance(node, ArrowType):
-            return ArrowType(tuple(fresh(p) for p in node.params), fresh(node.result))
-        return node
+        if isinstance(node, TypeCon):
+            if not node.args:
+                return node
+            return TypeCon(node.name, tuple(fresh(a) for a in node.args))
+        return ArrowType(tuple(fresh(p) for p in node.params), fresh(node.result))
 
     return fresh(t)
 
 
-#: A serialized type: a bare string (base type) or a tagged dict (arrow / variable).
+#: A serialized type: a bare string (nullary base type) or a tagged dict (constructor / arrow / variable).
 Serialized: TypeAlias = "str | dict[str, object]"
 
 
 def type_to_serializable(t: Type) -> Serialized:
-    """Serialize a type — a base type to its bare string (backward-compatible), else a tagged dict."""
-    if isinstance(t, BaseType):
-        return t.name
+    """Serialize a type — a nullary base type to its bare string, everything else to a tagged dict."""
     if isinstance(t, TypeVar):
         return {"var": t.name}
-    return {
-        "arrow": [type_to_serializable(p) for p in t.params],
-        "result": type_to_serializable(t.result),
-    }
+    if isinstance(t, ArrowType):
+        return {
+            "arrow": [type_to_serializable(p) for p in t.params],
+            "result": type_to_serializable(t.result),
+        }
+    if not t.args:
+        return t.name
+    return {"con": t.name, "args": [type_to_serializable(a) for a in t.args]}
 
 
 def type_from_serializable(data: Serialized) -> Type:
-    """Reconstruct a type from :func:`type_to_serializable` (a bare string is a base type)."""
+    """Reconstruct a type from :func:`type_to_serializable` (a bare string is a nullary base type)."""
     if isinstance(data, str):
         return base_type(data)
     if "var" in data:
@@ -198,6 +227,11 @@ def type_from_serializable(data: Serialized) -> Type:
             tuple(type_from_serializable(_serialized(p)) for p in params),
             type_from_serializable(_serialized(result)),
         )
+    if "con" in data:
+        name, args = data["con"], data["args"]
+        if not isinstance(name, str) or not isinstance(args, list):
+            raise ValueError(f"malformed type constructor: {data!r}")
+        return TypeCon(name, tuple(type_from_serializable(_serialized(a)) for a in args))
     raise ValueError(f"unknown serialized type: {data!r}")
 
 

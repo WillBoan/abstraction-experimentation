@@ -19,8 +19,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from arc_lab.core.task import Task
-    from arc_lab.solvers.dsl.substrate.library import Library
-    from arc_lab.solvers.dsl.substrate.program import Program
+    from arc_lab.solvers.program_search.substrate.library import Library
+    from arc_lab.solvers.program_search.substrate.program import Program
 
 logger = logging.getLogger(__name__)
 

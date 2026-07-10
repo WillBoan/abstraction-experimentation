@@ -33,15 +33,15 @@ from arc_lab.solvers.program_search.substrate.types import (
     FN,
     GRID,
     ArrowType,
-    BaseType,
     Type,
+    TypeCon,
     base_type,
     type_from_serializable,
     type_to_serializable,
 )
 
 if TYPE_CHECKING:
-    from arc_lab.solvers.dsl.substrate.library import Library, Value
+    from arc_lab.solvers.program_search.substrate.library import Library, Value
 
 
 class Program(ABC):
@@ -186,7 +186,7 @@ class Input(Program):
     ) -> Value:
         return grid
 
-    def result_type(self, library: Library) -> BaseType:
+    def result_type(self, library: Library) -> TypeCon:
         return GRID
 
     def to_dict(self) -> dict[str, object]:
@@ -242,7 +242,7 @@ class Const(Program):
     """A literal scalar value, tagged with its type (e.g. a COLOR or an INT)."""
 
     value: int | bool
-    value_type: BaseType
+    value_type: TypeCon
 
     def evaluate(
         self,
@@ -253,7 +253,7 @@ class Const(Program):
     ) -> Value:
         return self.value
 
-    def result_type(self, library: Library) -> BaseType:
+    def result_type(self, library: Library) -> TypeCon:
         return self.value_type
 
     def to_dict(self) -> dict[str, object]:
@@ -368,7 +368,7 @@ class Lam(Program):
     ) -> Value:
         return Closure(body=self.body, grid=grid, library=library, env=env, scope=scope)
 
-    def result_type(self, library: Library) -> BaseType:
+    def result_type(self, library: Library) -> TypeCon:
         return FN
 
     def to_dict(self) -> dict[str, object]:
