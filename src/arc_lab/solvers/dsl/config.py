@@ -14,7 +14,8 @@ of constructor literals frozen inside a subclass.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
+from typing import TYPE_CHECKING
 
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.composite import CompositeSearch
@@ -28,6 +29,11 @@ from arc_lab.solvers.dsl.substrate.primitives.color import MAP_COLOR
 from arc_lab.solvers.dsl.substrate.primitives.combinators import COMBINATORS
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.scaling import SCALE
+
+if TYPE_CHECKING:
+    from arc_lab.solvers.dsl.analysis.compression import CompressionMetric
+    from arc_lab.solvers.dsl.learn.antiunify import AbstractionProposer
+    from arc_lab.solvers.dsl.learn.sleep import SleepStrategy
 
 #: D4 transforms plus the overlay and tile combinators.
 SYMMETRY_LIBRARY = D4_LIBRARY.extended(name="d4+combinators", extra=COMBINATORS)
@@ -108,12 +114,189 @@ class SearchSpec:
 
     @staticmethod
     def from_dict(data: Mapping[str, object]) -> SearchSpec:
-        max_depth, beam_width, members = data.get("max_depth"), data.get("beam_width"), data.get("members")
+        max_depth, beam_width, members = (
+            data.get("max_depth"),
+            data.get("beam_width"),
+            data.get("members"),
+        )
         return SearchSpec(
             kind=str(data["kind"]),
             max_depth=max_depth if isinstance(max_depth, int) else None,
             beam_width=beam_width if isinstance(beam_width, int) else None,
             members=tuple(str(m) for m in members) if isinstance(members, list) else (),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class MetricSpec:
+    """The governance objective as data: flat per-primitive MDL, or two-part (charges definitions)."""
+
+    kind: str = "flat"  # "flat" | "two-part"
+    bits_per_primitive: float = 1.0
+    cost: str = "program-size"
+
+    def build(self) -> CompressionMetric:
+        from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, TwoPartMDL
+
+        cost = resolve_cost(self.cost)
+        if self.kind == "flat":
+            return CompressionMetric(cost=cost, bits_per_primitive=self.bits_per_primitive)
+        if self.kind == "two-part":
+            return TwoPartMDL(cost=cost, bits_per_primitive=self.bits_per_primitive)
+        raise ValueError(f"unknown metric kind: {self.kind!r}")
+
+    def to_dict(self) -> dict[str, object]:
+        return {"kind": self.kind, "bits_per_primitive": self.bits_per_primitive, "cost": self.cost}
+
+    @staticmethod
+    def from_dict(data: Mapping[str, object]) -> MetricSpec:
+        bpp = data.get("bits_per_primitive")
+        cost = data.get("cost")
+        return MetricSpec(
+            kind=str(data.get("kind", "flat")),
+            bits_per_primitive=float(bpp) if isinstance(bpp, (int, float)) else 1.0,
+            cost=str(cost) if isinstance(cost, str) else "program-size",
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ProposerSpec:
+    """The abstraction-invention plug point as data.
+
+    ``kind``: ``antiunify-pairs`` (± ``bound_var_safe``) · ``frequent-subtree`` (``min_frequency``) ·
+    ``search-scoped`` (mines subtrees the *search* can compose — needs the wake search) · ``stitch``
+    (the external engine; ``iterations``/``max_arity``/``threads``/``first_order``).
+    """
+
+    kind: str = "antiunify-pairs"
+    bound_var_safe: bool = False
+    min_frequency: int = 2
+    iterations: int = 5
+    max_arity: int = 3
+    threads: int = 1
+    first_order: bool = True
+
+    def build(self, search: Search) -> AbstractionProposer:
+        from arc_lab.solvers.dsl.learn.antiunify import (
+            AntiunifyPairs,
+            FrequentSubtree,
+            SearchScopedFrequentSubtree,
+        )
+
+        if self.kind == "antiunify-pairs":
+            return AntiunifyPairs(bound_var_safe=self.bound_var_safe)
+        if self.kind == "frequent-subtree":
+            return FrequentSubtree(min_frequency=self.min_frequency)
+        if self.kind == "search-scoped":
+            composes = getattr(search, "composes_signature", None)
+            if composes is None:
+                raise ValueError("search-scoped proposer needs a search with composes_signature")
+            return SearchScopedFrequentSubtree(composes=composes)
+        if self.kind == "stitch":
+            from arc_lab.solvers.dsl.learn.stitch_shim import StitchProposer
+
+            return StitchProposer(
+                iterations=self.iterations,
+                max_arity=self.max_arity,
+                threads=self.threads,
+                first_order=self.first_order,
+            )
+        raise ValueError(f"unknown proposer kind: {self.kind!r}")
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "kind": self.kind,
+            "bound_var_safe": self.bound_var_safe,
+            "min_frequency": self.min_frequency,
+            "iterations": self.iterations,
+            "max_arity": self.max_arity,
+            "threads": self.threads,
+            "first_order": self.first_order,
+        }
+
+    @staticmethod
+    def from_dict(data: Mapping[str, object]) -> ProposerSpec:
+        def _int(key: str, default: int) -> int:
+            v = data.get(key)
+            return v if isinstance(v, int) and not isinstance(v, bool) else default
+
+        def _bool(key: str, default: bool) -> bool:
+            v = data.get(key)
+            return v if isinstance(v, bool) else default
+
+        return ProposerSpec(
+            kind=str(data.get("kind", "antiunify-pairs")),
+            bound_var_safe=_bool("bound_var_safe", False),
+            min_frequency=_int("min_frequency", 2),
+            iterations=_int("iterations", 5),
+            max_arity=_int("max_arity", 3),
+            threads=_int("threads", 1),
+            first_order=_bool("first_order", True),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SleepSpec:
+    """The whole sleep step as data: which strategy, its proposer(s), and its governance metric."""
+
+    kind: str = "greedy-mdl"  # "greedy-mdl" | "refactoring"
+    proposer: ProposerSpec = field(default_factory=ProposerSpec)
+    refactor_proposer: ProposerSpec | None = None  # required for "refactoring"
+    metric: MetricSpec = field(default_factory=MetricSpec)
+    name_prefix: str = "abs"
+
+    def build(self, search: Search) -> SleepStrategy:
+        from arc_lab.solvers.dsl.learn.selection import GreedyMDL
+        from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep, RefactoringSleep
+
+        metric = self.metric.build()
+        if self.kind == "greedy-mdl":
+            return GreedyMDLSleep(
+                self.proposer.build(search),
+                selector=GreedyMDL(),
+                metric=metric,
+                name_prefix=self.name_prefix,
+            )
+        if self.kind == "refactoring":
+            if self.refactor_proposer is None:
+                raise ValueError("refactoring sleep needs a refactor_proposer")
+            return RefactoringSleep(
+                self.proposer.build(search),
+                self.refactor_proposer.build(search),
+                selector=GreedyMDL(),
+                metric=metric,
+                name_prefix=self.name_prefix,
+            )
+        raise ValueError(f"unknown sleep kind: {self.kind!r}")
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "kind": self.kind,
+            "proposer": self.proposer.to_dict(),
+            "refactor_proposer": None
+            if self.refactor_proposer is None
+            else self.refactor_proposer.to_dict(),
+            "metric": self.metric.to_dict(),
+            "name_prefix": self.name_prefix,
+        }
+
+    @staticmethod
+    def from_dict(data: Mapping[str, object]) -> SleepSpec:
+        proposer_raw = data.get("proposer")
+        refactor_raw = data.get("refactor_proposer")
+        metric_raw = data.get("metric")
+        return SleepSpec(
+            kind=str(data.get("kind", "greedy-mdl")),
+            proposer=ProposerSpec.from_dict(proposer_raw)
+            if isinstance(proposer_raw, Mapping)
+            else ProposerSpec(),
+            refactor_proposer=ProposerSpec.from_dict(refactor_raw)
+            if isinstance(refactor_raw, Mapping)
+            else None,
+            metric=MetricSpec.from_dict(metric_raw)
+            if isinstance(metric_raw, Mapping)
+            else MetricSpec(),
+            name_prefix=str(data.get("name_prefix", "abs")),
         )
 
 
