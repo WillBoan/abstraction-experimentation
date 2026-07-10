@@ -163,9 +163,9 @@ def test_e6_and_e7_target_the_full_d4_ladder() -> None:
     for factory in (e6_rederive_d4, e7_rederive_d4_safe):
         assert tuple(name for name, _ in factory().targets) == ladder
     # The whole point of the pair: e7 swaps in the bound-var-safe proposer, e6 does not.
-    e6_proposer, e7_proposer = e6_rederive_d4().proposer, e7_rederive_d4_safe().proposer
-    assert isinstance(e6_proposer, AntiunifyPairs) and e6_proposer.bound_var_safe is False
-    assert isinstance(e7_proposer, AntiunifyPairs) and e7_proposer.bound_var_safe is True
+    e6_prop, e7_prop = e6_rederive_d4().sleep.proposer, e7_rederive_d4_safe().sleep.proposer
+    assert e6_prop.kind == "antiunify-pairs" and e6_prop.bound_var_safe is False
+    assert e7_prop.kind == "antiunify-pairs" and e7_prop.bound_var_safe is True
 
 
 # -- frequent-subtree proposers + the mirror_index bootstrap (E8 / E9) ---
@@ -238,7 +238,7 @@ def test_e8_and_e9_target_mirror_index_via_search_scoped_proposer() -> None:
     for factory in (e8_mirror_index_sub, e9_mirror_index_affine):
         exp = factory()
         assert tuple(name for name, _ in exp.targets) == ("mirror_index",)
-        assert isinstance(exp.proposer, SearchScopedFrequentSubtree)
+        assert exp.sleep.proposer.kind == "search-scoped"
     assert e8_mirror_index_sub().starting_library.name == "build"  # sub-only grammar
     assert e9_mirror_index_affine().starting_library.name == "build-affine"  # + add/mul
 

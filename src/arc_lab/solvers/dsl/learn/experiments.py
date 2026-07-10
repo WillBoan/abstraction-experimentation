@@ -19,12 +19,7 @@ import numpy as np
 from arc_lab.core.dataset import Dataset
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
-from arc_lab.solvers.dsl.analysis.compression import (
-    CompressionMetric,
-    TwoPartMDL,
-    compression_ratio,
-    speedup_ratio,
-)
+from arc_lab.solvers.dsl.analysis.compression import compression_ratio, speedup_ratio
 from arc_lab.solvers.dsl.analysis.runner import RunSummary
 from arc_lab.solvers.dsl.analysis.transfer import (
     Usefulness,
@@ -32,20 +27,13 @@ from arc_lab.solvers.dsl.analysis.transfer import (
     heldout_transfer,
     train_usefulness,
 )
-from arc_lab.solvers.dsl.learn.antiunify import (
-    AbstractionProposer,
-    AntiunifyPairs,
-    FrequentSubtree,
-    SearchScopedFrequentSubtree,
-)
+from arc_lab.solvers.dsl.config import MetricSpec, ProposerSpec, SleepSpec
 from arc_lab.solvers.dsl.learn.harness import (
     CheckResult,
     check_abstractions,
     compare_libraries,
 )
 from arc_lab.solvers.dsl.learn.loop import LearnResult, learn
-from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep, RefactoringSleep, SleepStrategy
-from arc_lab.solvers.dsl.learn.stitch_shim import StitchProposer
 from arc_lab.solvers.dsl.learn.taskgen import GeneratedTask, Solution, make_task, write_testbed
 from arc_lab.solvers.dsl.search.base import Search
 from arc_lab.solvers.dsl.search.build_grid_search import BuildGridSearch
@@ -72,11 +60,8 @@ class StudySpec:
     enablement_search: Search  # a shallower budget: what only the learned library reaches
     cost: Cost
     note: str = ""
-    metric: CompressionMetric | None = None  # governance objective (None -> flat baseline)
-    proposer: AbstractionProposer = field(
-        default_factory=AntiunifyPairs
-    )  # the invention plug point (used by the default GreedyMDLSleep)
-    sleep: SleepStrategy | None = None  # the sleep-step plug point (None -> GreedyMDLSleep)
+    #: The whole sleep step as data (invention + governance). Default: greedy-MDL + antiunify + flat.
+    sleep: SleepSpec = field(default_factory=SleepSpec)
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,7 +111,8 @@ def run_study(
     train = [_task(g) for g in experiment.tasks if g.split == "train"]
     full = Dataset.of(experiment.name, tuple(_task(g) for g in experiment.tasks))
 
-    sleep = experiment.sleep or GreedyMDLSleep(experiment.proposer, metric=experiment.metric)
+    sleep = experiment.sleep.build(experiment.search)
+    metric = experiment.sleep.metric.build()
     result: LearnResult = learn(
         library=experiment.starting_library,
         search=experiment.search,
@@ -148,7 +134,7 @@ def run_study(
         cost=experiment.cost,
         dataset=full,
         out_dir=runs_root,
-        metric=experiment.metric,
+        metric=metric,
     )
 
     # Enablement: at a shallow budget, what does the learned library reach that the base can't?
@@ -158,7 +144,7 @@ def run_study(
         cost=experiment.cost,
         dataset=full,
         out_dir=runs_root,
-        metric=experiment.metric,
+        metric=metric,
     )
     base_shallow, aug_shallow = shallow["L1-shallow"], shallow["L2-shallow"]
     train_ids = frozenset(g.task_id for g in experiment.tasks if g.split == "train")
@@ -394,7 +380,7 @@ def _swap_cols_tasks() -> tuple[GeneratedTask, ...]:
     return tuple(tasks)
 
 
-def _swap_cols_experiment(name: str, metric: CompressionMetric | None, note: str) -> StudySpec:
+def _swap_cols_experiment(name: str, sleep: SleepSpec, note: str) -> StudySpec:
     return StudySpec(
         name=name,
         starting_library=CELL_LIBRARY,
@@ -404,7 +390,7 @@ def _swap_cols_experiment(name: str, metric: CompressionMetric | None, note: str
         enablement_search=Enumerate(max_depth=1, coord_ints=True),
         cost=ProgramSize(),
         note=note,
-        metric=metric,
+        sleep=sleep,
     )
 
 
@@ -412,7 +398,7 @@ def e3_swap_cols() -> StudySpec:
     """E3: general swap((0,X),(1,Y)) from {read, set_cell}; **flat** MDL (observes library bloat)."""
     return _swap_cols_experiment(
         "e3-swap-cols",
-        None,  # flat CompressionMetric baseline
+        SleepSpec(),  # flat MDL baseline (default proposer + metric)
         "E3: general swap((0,X),(1,Y)) from {read, set_cell}, flat MDL. Variable-sharing "
         "works; flat library cost causes bloat (many marginal specialisations).",
     )
@@ -422,7 +408,7 @@ def e4_swap_cols_mdl() -> StudySpec:
     """E4: E3 under **two-part MDL** (charges definition size) — does it stop the bloat?"""
     return _swap_cols_experiment(
         "e4-swap-cols-mdl",
-        TwoPartMDL(),
+        SleepSpec(metric=MetricSpec(kind="two-part")),
         "E4: E3's environment under two-part MDL (definition cost) to test the anti-bloat term.",
     )
 
@@ -542,7 +528,7 @@ def e5_rederive_rot90() -> StudySpec:
 _D4_MEMBERS = ("transpose", "flip_h", "flip_v", "rot90", "rot180", "rot270")
 
 
-def _d4_ladder_experiment(name: str, proposer: AbstractionProposer, note: str) -> StudySpec:
+def _d4_ladder_experiment(name: str, sleep: SleepSpec, note: str) -> StudySpec:
     """The full-D4-ladder environment; e6 and e7 differ only in the antiunify proposer."""
     targets = _d4_targets(Param(0, _G))
     return StudySpec(
@@ -553,8 +539,7 @@ def _d4_ladder_experiment(name: str, proposer: AbstractionProposer, note: str) -
         search=BuildGridSearch(),
         enablement_search=Enumerate(max_depth=1),
         cost=ProgramSize(),
-        metric=TwoPartMDL(),  # charge each abstraction its definition size — keep the D4 library clean
-        proposer=proposer,
+        sleep=sleep,  # two-part MDL charges each abstraction its definition size
         note=note,
     )
 
@@ -563,7 +548,7 @@ def e6_rederive_d4() -> StudySpec:
     """E6: full D4 ladder with the naive proposer — antiunify hoists bound vars, so re-derivation breaks."""
     return _d4_ladder_experiment(
         "e6-rederive-d4",
-        AntiunifyPairs(),  # naive: pairwise antiunification lifts $i coords into abstraction params
+        SleepSpec(metric=MetricSpec(kind="two-part")),  # naive antiunify-pairs proposer (default)
         "E6: re-derive the full D4 ladder as build_grid programs. Whole-program antiunification "
         "over-generalises across members (a bound-var scope violation); governance prefers the "
         "broken abstraction. The negative that motivates E7.",
@@ -574,7 +559,10 @@ def e7_rederive_d4_safe() -> StudySpec:
     """E7: E6's environment with the **lambda-safe** proposer — clean full-D4 re-derivation."""
     return _d4_ladder_experiment(
         "e7-rederive-d4-safe",
-        AntiunifyPairs(bound_var_safe=True),  # refuse to hole subterms containing a bound $i
+        SleepSpec(
+            proposer=ProposerSpec(bound_var_safe=True),  # refuse to hole subterms with a bound $i
+            metric=MetricSpec(kind="two-part"),
+        ),
         "E7: E6 under a bound-var-safe proposer (won't lift $i into an abstraction arg). Only the "
         "sound per-member recurrences mint, so the D4 ladder re-derives cleanly. mirror_index still "
         "does not emerge — that needs a frequent-subtree proposer.",
@@ -611,10 +599,12 @@ def _mirror_bootstrap_experiment(
         search=search,
         enablement_search=BuildGridSearch(beam_width=tight_beam),
         cost=ProgramSize(),
-        metric=TwoPartMDL(),  # charge mirror_index its definition size — it must earn its keep
         # STOPGAP: mine only idioms the coordinate search can reuse (INT^n->INT), derived from the
         # search itself — not a declared type. See MACHINERY.md for the divergence + the general fix.
-        proposer=SearchScopedFrequentSubtree(composes=search.composes_signature),
+        sleep=SleepSpec(
+            proposer=ProposerSpec(kind="search-scoped"),
+            metric=MetricSpec(kind="two-part"),  # mirror_index must earn its definition size
+        ),
         note=note,
     )
 
@@ -661,14 +651,14 @@ def e10_stitch_refactor() -> StudySpec:
         search=search,
         enablement_search=BuildGridSearch(beam_width=64),
         cost=ProgramSize(),
-        metric=TwoPartMDL(),
-        # No SearchScopedFrequentSubtree: refactoring recovers mirror_index on merit, not a type gag.
-        # Phase 1 (in-house FrequentSubtree) mints the closed read-bodies; phase 2 (Stitch) antiunifies
-        # their differing perceiver (width/height) into the general, composable mirror_index.
-        sleep=RefactoringSleep(
-            FrequentSubtree(),
-            StitchProposer(first_order=True, iterations=1),
-            metric=TwoPartMDL(),
+        # No search-scoped gag: refactoring recovers mirror_index on merit. Phase 1 (in-house
+        # FrequentSubtree) mints the closed read-bodies; phase 2 (Stitch) antiunifies their differing
+        # perceiver (width/height) into the general, composable mirror_index.
+        sleep=SleepSpec(
+            kind="refactoring",
+            proposer=ProposerSpec(kind="frequent-subtree"),
+            refactor_proposer=ProposerSpec(kind="stitch", first_order=True, iterations=1),
+            metric=MetricSpec(kind="two-part"),
         ),
         note="E10: Stitch library refactoring recovers mirror_index without the type-scoping stopgap.",
     )
