@@ -1,0 +1,56 @@
+"""First-order composition (§5.2): well-typed application generation via unification."""
+
+from __future__ import annotations
+
+import itertools
+
+from arc_lab.solvers.program_search.search.composition import first_order_applications
+from arc_lab.solvers.program_search.substrate.library import Primitive
+from arc_lab.solvers.program_search.substrate.program import Apply, Const, Input
+from arc_lab.solvers.program_search.substrate.types import BOOL, COLOR, GRID, INT, TypeVar
+
+# Argument candidates: one pooled program per base type.
+_INT = Const(value=1, value_type=INT)
+_COLOR = Const(value=5, value_type=COLOR)
+_GRID = Input()
+_CANDS = [(_INT, INT), (_COLOR, COLOR), (_GRID, GRID)]
+
+_INC = Primitive(name="inc", param_types=(INT,), return_type=INT, impl=lambda x: x)
+_MK = Primitive(name="mk", param_types=(INT, COLOR), return_type=GRID, impl=lambda a, b: a)
+_A = TypeVar("a")
+_ID = Primitive(name="id", param_types=(_A,), return_type=_A, impl=lambda x: x)
+_EQ = Primitive(name="eq", param_types=(_A, _A), return_type=BOOL, impl=lambda a, b: a)
+
+
+def test_monomorphic_unary_matches_only_its_type() -> None:
+    result = list(first_order_applications(_INC, _CANDS, itertools.count()))
+    assert result == [(Apply(primitive="inc", args=(_INT,)), INT)]
+
+
+def test_monomorphic_binary_picks_each_param_by_type() -> None:
+    result = list(first_order_applications(_MK, _CANDS, itertools.count()))
+    assert result == [(Apply(primitive="mk", args=(_INT, _COLOR)), GRID)]
+
+
+def test_polymorphic_identity_matches_every_candidate_with_its_type() -> None:
+    result = list(first_order_applications(_ID, _CANDS, itertools.count()))
+    assert result == [
+        (Apply(primitive="id", args=(_INT,)), INT),
+        (Apply(primitive="id", args=(_COLOR,)), COLOR),
+        (Apply(primitive="id", args=(_GRID,)), GRID),
+    ]
+
+
+def test_shared_type_var_forces_both_args_to_one_type() -> None:
+    # eq : (a, a) -> bool — a is bound by the first arg, so the second must match it.
+    result = list(first_order_applications(_EQ, _CANDS, itertools.count()))
+    assert result == [
+        (Apply(primitive="eq", args=(_INT, _INT)), BOOL),
+        (Apply(primitive="eq", args=(_COLOR, _COLOR)), BOOL),
+        (Apply(primitive="eq", args=(_GRID, _GRID)), BOOL),
+    ]
+
+
+def test_no_candidate_of_the_required_type_yields_nothing() -> None:
+    bool_only = [(Const(value=True, value_type=BOOL), BOOL)]
+    assert list(first_order_applications(_INC, bool_only, itertools.count())) == []

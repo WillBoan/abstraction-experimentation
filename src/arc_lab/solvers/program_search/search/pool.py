@@ -1,3 +1,13 @@
+"""The pool: the observational-equivalence dedup store at the heart of bottom-up search.
+
+Keyed ``type → signature → PoolEntry``, it holds exactly one program per ``(type, behaviour)`` — the
+cheapest — so distinct syntax with the same behaviour collapses to a single representative (§5.7 of
+ARCHITECTURE.md). Cost is cached on the entry at insertion, so dedup tie-breaks, frontier truncation,
+ranking, and extraction all read a number rather than re-evaluating.
+
+The pool is mutable engine scratch: never hashed, never part of the run identity.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -8,103 +18,74 @@ from ..substrate.types import Type
 from .signature import Signature
 
 
+@dataclass(frozen=True, slots=True)
+class PoolEntry:
+    """One pooled behaviour: the cheapest program of a ``(type, signature)``, with its cached cost."""
+
+    program: Program
+    sig: Signature
+    cost: float
+
+
 @dataclass(slots=True)
 class Pool:
-    _by_type_sig: dict[Type, dict[Signature, tuple[Program, float]]] = field(default_factory=dict)
+    """The ``type → signature → PoolEntry`` observational-equivalence dedup store."""
 
-    def add_dedup(
-        self,
-        vtype: Type,
-        signature: Signature,
-        program: Program,
-        cost_value: float,
-    ) -> bool:
-        """
-        Add a program to the pool if it is cheaper than any existing one for that type/signature.
+    _by_type_sig: dict[Type, dict[Signature, PoolEntry]] = field(default_factory=dict)
 
-        Returns
-        -------
-        bool
-            True if the program was added to the pool, False if it was deduplicated.
+    def add_dedup(self, vtype: Type, signature: Signature, program: Program, cost: float) -> bool:
+        """Insert ``program`` iff it is the first — or strictly cheaper — witness at ``(vtype, signature)``.
+
+        Returns True if it was inserted (a new behaviour, or a cheaper witness of a known one), False
+        if an existing entry was at most as costly, so ``program`` is deduplicated away.
         """
         sig_map = self._by_type_sig.setdefault(vtype, {})
-        if signature not in sig_map or cost_value < sig_map[signature][1]:
-            sig_map[signature] = (program, cost_value)
+        existing = sig_map.get(signature)
+        if existing is None or cost < existing.cost:
+            sig_map[signature] = PoolEntry(program, signature, cost)
             return True
         return False
 
     def of_type(self, vtype: Type) -> Iterable[Program]:
+        """The programs of type ``vtype`` — feeds composition (§5.2)."""
+        return (entry.program for entry in self._by_type_sig.get(vtype, {}).values())
+
+    def items_of_type(self, vtype: Type) -> Iterable[PoolEntry]:
+        """The entries of type ``vtype``, carrying signature + cached cost for the goal test (§5.8)."""
+        return iter(self._by_type_sig.get(vtype, {}).values())
+
+    def typed_programs(self) -> Iterable[tuple[Program, Type]]:
+        """Every pooled program paired with its type — the argument candidates for composition (§5.2).
+
+        Not bucketed by type: composition decides argument compatibility by *unification* (a
+        polymorphic parameter accepts any type), so it needs the flat typed stream.
         """
-        Get all programs of a given type in the pool.
-
-        Feeds `SearchEngine._compose_candidate_programs`.
-
-        Returns
-        -------
-        Iterable[Program]
-            An iterable of programs of the specified type.
-        """
-        return (prog for prog, _ in self._by_type_sig.get(vtype, {}).values())
-
-    def items_of_type(self, vtype: Type) -> Iterable[tuple[Signature, Program, float]]:
-        """Get the (signature, program, cost) entries of a given type in the pool.
-
-        Exposes the cached signature and cost so the engine can run the goal test
-        (does a signature equal the target?) and rank without re-evaluating.
-
-        Returns
-        -------
-        Iterable[tuple[Signature, Program, float]]
-            The stored entries for the given type.
-        """
-        return (
-            (signature, program, cost_value)
-            for signature, (program, cost_value) in self._by_type_sig.get(vtype, {}).items()
-        )
-
-    def _entries(self) -> Iterable[tuple[Type, Signature, Program, float]]:
-        """Get all entries in the pool, with type, signature, program, and cost."""
-        return (
-            (vtype, signature, program, cost_value)
-            for vtype, sig_map in self._by_type_sig.items()
-            for signature, (program, cost_value) in sig_map.items()
-        )
+        return ((entry.program, vtype) for vtype, entry in self._entries())
 
     def cheapest(self, n: int) -> Pool:
-        """Return a new pool holding the globally-cheapest ``n`` entries, re-bucketed by type.
+        """A new pool holding the globally-cheapest ``n`` entries, re-bucketed by type.
 
-        Ties break by insertion order, keeping the cut deterministic.
-
-        Returns
-        -------
-        Pool
-            A new pool with at most ``n`` entries.
+        A frontier-truncation *primitive*: the policy (how many, type-awareness) lives in the engine's
+        ``_select_frontier``. Ties break by insertion order, keeping the cut deterministic.
         """
-        entries = sorted(
-            self._entries(),
-            key=lambda entry: entry[3],
-        )
-        kept: dict[Type, dict[Signature, tuple[Program, float]]] = {}
-        for vtype, signature, program, cost_value in entries[:n]:
-            kept.setdefault(vtype, {})[signature] = (program, cost_value)
+        kept: dict[Type, dict[Signature, PoolEntry]] = {}
+        for vtype, entry in sorted(self._entries(), key=lambda item: item[1].cost)[:n]:
+            kept.setdefault(vtype, {})[entry.sig] = entry
         return Pool(_by_type_sig=kept)
 
     def ranked(self) -> tuple[Program, ...]:
-        """Every program in the pool, cheapest first (by cached cost).
-
-        This ranks the *whole pool* across all types.
-
-        Returns
-        -------
-        tuple[Program, ...]
-            All pooled programs, ordered by ascending cost.
-        """
-        entries = sorted(
-            self._entries(),
-            key=lambda entry: entry[3],
-        )
-        return tuple(program for _, _, program, _ in entries)
+        """Every program in the pool, cheapest first — a whole-pool view, **not** the solution set."""
+        ordered = sorted(self._entries(), key=lambda item: item[1].cost)
+        return tuple(entry.program for _, entry in ordered)
 
     def size(self) -> int:
         """The total number of programs held across all types."""
         return sum(len(sig_map) for sig_map in self._by_type_sig.values())
+
+    def _entries(self) -> Iterable[tuple[Type, PoolEntry]]:
+        """Every ``(type, entry)`` pair — backing the type-aware whole-pool operations."""
+        return (
+            (vtype, entry)
+            for vtype, sig_map in self._by_type_sig.items()
+            for entry in sig_map.values()
+        )
