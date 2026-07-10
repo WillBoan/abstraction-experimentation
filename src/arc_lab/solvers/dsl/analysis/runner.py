@@ -286,12 +286,17 @@ def execute(
 
 
 def _run_task(solver: ProgramSearchSolver, task: Task) -> TaskRecord:
+    # 1. Run the search, producing a ranked list of candidates (or empty).
     with task_context(task.task_id):
         result = solver.search.find(task, solver.library)
     programs = list(result.programs)
+
+    # 2. Rank the candidates by the solver's cost (Occam prior by default).
     chosen = (
         min(programs, key=lambda p: solver.cost.of(p, task, solver.library)) if programs else None
     )
+
+    # 3. Store the record: the solver's verdict (best-effort scoring) plus the search stats.
     return TaskRecord(
         task_id=task.task_id,
         solved=_score(solver, task, programs),

@@ -363,7 +363,6 @@ class Config:
         )
 
 
-#: Named machinery presets — the historical solvers, now as data (Phase 7 wires the registry).
 PRESETS: dict[str, Config] = {
     "dsl": Config(name="dsl", library="d4", search=SearchSpec(kind="single_apply")),
     "dsl-sym": Config(
