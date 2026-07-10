@@ -62,6 +62,40 @@ def test_unsolvable_within_the_vocabulary_returns_nothing() -> None:
     assert result.ranked_programs == ()
 
 
+def _hconcat(*grids: Grid) -> Grid:
+    rows: list[list[int]] = []
+    for i in range(grids[0].height):
+        row: list[int] = []
+        for grid in grids:
+            row.extend(grid.to_list()[i])
+        rows.append(row)
+    return Grid.from_list(rows)
+
+
+_HCONCAT = Primitive(
+    name="hconcat", param_types=(), return_type=GRID, variadic_param=GRID, impl=_hconcat
+)
+
+
+def test_solves_with_a_variadic_primitive() -> None:
+    doubled = _hconcat(_GRID, _GRID)  # 2x4
+    task = Task(task_id="v", train=(Example(input=_GRID, output=doubled),), test=())
+    engine = BottomUpSearchEngine(
+        constant_sources=(),
+        function_hole_fill_mode="none",
+        polymorphism_instantiation="monomorphize",
+        budget=Budget(max_depth=2, max_arity=2, max_pool=100),
+    )
+    result = engine.run(
+        task=task,
+        library=Library(name="concat", primitives=(_HCONCAT,)),
+        constraints=(),
+        cost=ProgramSize(),
+    )
+    assert result.stats.solved
+    assert Apply(primitive="hconcat", args=(Input(), Input())) in result.ranked_programs
+
+
 def test_beam_engine_also_solves() -> None:
     task = Task(task_id="t", train=(Example(input=_GRID, output=_transpose(_GRID)),), test=())
     engine = BeamBottomUpSearchEngine(

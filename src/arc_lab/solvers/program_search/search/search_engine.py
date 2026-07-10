@@ -22,7 +22,7 @@ from ..substrate.library import Library
 from ..substrate.program import Program
 from ..substrate.types import GRID, Type
 from .budget import Budget
-from .composition import first_order_applications
+from .composition import applications
 from .constraints import Constraint
 from .context import Context
 from .cost import Cost
@@ -131,8 +131,9 @@ class BottomUpSearchEngine(SearchEngine):
                 frontier = [
                     application
                     for primitive in state.library.primitives
-                    if not primitive.is_variadic  # variadic composition is a later layer (§5.2)
-                    for application in first_order_applications(primitive, candidates, state.counter)
+                    for application in applications(
+                        primitive, candidates, state.counter, budget.max_arity
+                    )
                 ]
             self._absorb(frontier, contexts, pool, state)
             pool = self._select_frontier(pool, budget)

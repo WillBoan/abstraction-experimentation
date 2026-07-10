@@ -24,6 +24,22 @@ from ..substrate.types import ArrowType, Substitution, Type, apply_subst, instan
 TypedProgram: TypeAlias = "tuple[Program, Type]"
 
 
+def applications(
+    primitive: Primitive,
+    candidates: Sequence[TypedProgram],
+    counter: itertools.count[int],
+    max_arity: int,
+) -> Iterator[TypedProgram]:
+    """Every well-typed application of ``primitive`` over ``candidates`` — variadic-aware.
+
+    A variadic primitive is enumerated at each arity ``1 … max_arity`` of its trailing argument; a
+    fixed-arity primitive ignores ``max_arity``. This is the dispatcher the engine calls per primitive.
+    """
+    if primitive.is_variadic:
+        return variadic_applications(primitive, candidates, counter, max_arity)
+    return first_order_applications(primitive, candidates, counter)
+
+
 def first_order_applications(
     primitive: Primitive,
     candidates: Sequence[TypedProgram],
@@ -32,23 +48,57 @@ def first_order_applications(
     """Every well-typed application of ``primitive``'s fixed parameters over ``candidates``.
 
     ``counter`` supplies fresh type-variable names (share one across an enumeration round so distinct
-    polymorphic uses stay distinct). Parameters are filled left-to-right with early pruning: a
-    candidate whose type fails to unify with the current parameter is skipped before the rest of the
+    polymorphic uses stay distinct).
+    """
+    packed = instantiate(ArrowType(primitive.param_types, primitive.return_type), counter)
+    assert isinstance(packed, ArrowType)  # instantiate preserves an ArrowType's shape
+    yield from _fill(primitive.name, packed.params, packed.result, candidates)
+
+
+def variadic_applications(
+    primitive: Primitive,
+    candidates: Sequence[TypedProgram],
+    counter: itertools.count[int],
+    max_arity: int,
+) -> Iterator[TypedProgram]:
+    """Applications of a variadic ``primitive`` at each trailing arity ``1 … max_arity``.
+
+    The trailing arguments share the single variadic element type (so if it is polymorphic they all
+    unify to one type); ``max_arity`` bounds the fan-out. The fixed leading parameters are filled first.
+    """
+    assert primitive.variadic_param is not None  # guaranteed by ``is_variadic``
+    packed = instantiate(
+        ArrowType((*primitive.param_types, primitive.variadic_param), primitive.return_type),
+        counter,
+    )
+    assert isinstance(packed, ArrowType)
+    *fixed, variadic = packed.params
+    for arity in range(1, max_arity + 1):
+        parameters = (*fixed, *(variadic for _ in range(arity)))
+        yield from _fill(primitive.name, parameters, packed.result, candidates)
+
+
+def _fill(
+    name: str,
+    parameters: tuple[Type, ...],
+    result: Type,
+    candidates: Sequence[TypedProgram],
+) -> Iterator[TypedProgram]:
+    """Fill ``parameters`` left-to-right from ``candidates``, threading one substitution.
+
+    A candidate whose type fails to unify with the current parameter is skipped before the rest of the
     argument tuple is chosen, so ill-typed combinations are never fully built.
     """
-    signature = instantiate(ArrowType(primitive.param_types, primitive.return_type), counter)
-    assert isinstance(signature, ArrowType)  # instantiate preserves an ArrowType's shape
-    params, result = signature.params, signature.result
 
-    def fill(
+    def recurse(
         index: int, subst: Substitution, chosen: tuple[Program, ...]
     ) -> Iterator[TypedProgram]:
-        if index == len(params):
-            yield Apply(primitive=primitive.name, args=chosen), apply_subst(subst, result)
+        if index == len(parameters):
+            yield Apply(primitive=name, args=chosen), apply_subst(subst, result)
             return
         for program, ptype in candidates:
-            threaded = unify(params[index], ptype, subst)
+            threaded = unify(parameters[index], ptype, subst)
             if threaded is not None:
-                yield from fill(index + 1, threaded, (*chosen, program))
+                yield from recurse(index + 1, threaded, (*chosen, program))
 
-    yield from fill(0, {}, ())
+    yield from recurse(0, {}, ())
