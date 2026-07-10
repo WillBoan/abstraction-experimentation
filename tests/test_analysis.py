@@ -177,9 +177,8 @@ def test_execute_with_sleep_synthesizes_and_writes_learned_library(tmp_path: Pat
     from arc_lab.core.annotation import AnnotatedTask, Split, Synthetic, TaskMeta
     from arc_lab.core.dataset import Corpus
     from arc_lab.solvers.dsl.analysis.artifact import LEARNED_LIBRARY_FILE
-    from arc_lab.solvers.dsl.learn.antiunify import AntiunifyPairs
+    from arc_lab.solvers.dsl.config import SleepSpec
     from arc_lab.solvers.dsl.learn.experiments import make_study
-    from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep
     from arc_lab.solvers.dsl.substrate.library import Library
 
     exp = make_study("e1-rot90")
@@ -196,9 +195,7 @@ def test_execute_with_sleep_synthesizes_and_writes_learned_library(tmp_path: Pat
     solver = ProgramSearchSolver(
         library=exp.starting_library, search=exp.search, cost=exp.cost, name="synth"
     )
-    summary, run_dir = execute(
-        solver, corpus, sleep=GreedyMDLSleep(AntiunifyPairs()), out_dir=tmp_path
-    )
+    summary, run_dir = execute(solver, corpus, sleep=SleepSpec(), out_dir=tmp_path)
 
     learned_path = run_dir / LEARNED_LIBRARY_FILE
     assert learned_path.exists()  # the grown library is the run's output

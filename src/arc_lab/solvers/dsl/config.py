@@ -308,6 +308,9 @@ class Config:
     library: str
     search: SearchSpec
     cost: str = "program-size"
+    #: The learn axes (Synthesize / Study only); ``None`` for a plain Eval config.
+    sleep: SleepSpec | None = None
+    max_generations: int = 5
 
     def resolve_library(self) -> Library:
         return resolve_library(self.library)
@@ -317,6 +320,10 @@ class Config:
 
     def build_search(self) -> Search:
         return self.search.build(self.resolve_cost())
+
+    def build_sleep(self) -> SleepStrategy | None:
+        """The live sleep strategy (``None`` for an Eval config)."""
+        return None if self.sleep is None else self.sleep.build(self.build_search())
 
     def with_param(self, *, max_depth: int | None = None, beam_width: int | None = None) -> Config:
         """Return a copy with search parameters overridden (e.g. ``with_param(max_depth=1)``)."""
@@ -334,6 +341,8 @@ class Config:
             "library": self.library,
             "search": self.search.to_dict(),
             "cost": self.cost,
+            "sleep": None if self.sleep is None else self.sleep.to_dict(),
+            "max_generations": self.max_generations,
         }
 
     @staticmethod
@@ -342,11 +351,15 @@ class Config:
         if not isinstance(search_raw, Mapping):
             raise ValueError("malformed config: 'search' must be a mapping")
         cost = data.get("cost")
+        sleep_raw = data.get("sleep")
+        mg = data.get("max_generations")
         return Config(
             name=str(data["name"]),
             library=str(data["library"]),
             search=SearchSpec.from_dict(search_raw),
             cost=str(cost) if isinstance(cost, str) else "program-size",
+            sleep=SleepSpec.from_dict(sleep_raw) if isinstance(sleep_raw, Mapping) else None,
+            max_generations=mg if isinstance(mg, int) and not isinstance(mg, bool) else 5,
         )
 
 

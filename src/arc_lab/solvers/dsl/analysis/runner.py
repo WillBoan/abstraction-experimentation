@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -40,7 +40,7 @@ from arc_lab.solvers.dsl.analysis.artifact import (
 )
 
 if TYPE_CHECKING:
-    from arc_lab.solvers.dsl.learn.sleep import SleepStrategy
+    from arc_lab.solvers.dsl.config import SleepSpec
 from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, SolvedTask
 from arc_lab.solvers.dsl.config import Config
 from arc_lab.solvers.dsl.solver import ProgramSearchSolver
@@ -180,7 +180,7 @@ def execute(
     solver: ProgramSearchSolver,
     dataset: Dataset,
     *,
-    sleep: SleepStrategy | None = None,
+    sleep: SleepSpec | None = None,
     out_dir: Path,
     metric: CompressionMetric | None = None,
     force: bool = False,
@@ -202,11 +202,16 @@ def execute(
     the same solver+corpus into the same ``out_dir``.
     """
     metric = metric or CompressionMetric()
+    # A Synthesize run's identity carries its sleep spec (via config), so it never collides with
+    # the Eval of the same starting library, nor with a Synthesize under a different sleep.
+    config = solver.config
+    if sleep is not None and config is not None:
+        config = replace(config, sleep=sleep)
     spec = RunSpec(
         solver=solver.name,
         dataset=dataset.name,
         library=solver.library.to_dict(),
-        config=solver.config,
+        config=config,
         commit=git_commit(),
     )
     run_dir = out_dir / spec.dir_name()
@@ -235,8 +240,13 @@ def execute(
         train = [
             e.task for e in dataset.entries if e.meta is not None and e.meta.split is Split.TRAIN
         ]
+        live_sleep = sleep.build(solver.search)
         grown = wake_sleep(
-            library=solver.library, search=solver.search, tasks=train, sleep=sleep, cost=solver.cost
+            library=solver.library,
+            search=solver.search,
+            tasks=train,
+            sleep=live_sleep,
+            cost=solver.cost,
         ).library
         solver = ProgramSearchSolver(
             library=grown,

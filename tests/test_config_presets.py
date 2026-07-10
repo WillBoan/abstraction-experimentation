@@ -71,6 +71,24 @@ def test_config_round_trips_through_dict() -> None:
     assert Config.from_dict(tightened.to_dict()) == tightened
 
 
+def test_sleep_enters_the_run_identity() -> None:
+    # The gap D2 closes: a Synthesize config (sleep set) and different sleeps get distinct run_ids.
+    from dataclasses import replace
+
+    from arc_lab.solvers.dsl.analysis.artifact import RunSpec
+    from arc_lab.solvers.dsl.config import ProposerSpec, SleepSpec
+
+    base = PRESETS["dsl-synth"]
+
+    def rid(cfg: Config) -> str:
+        return RunSpec(solver=cfg.name, dataset="d", library={}, config=cfg).run_id()
+
+    synth = replace(base, sleep=SleepSpec())
+    synth_safe = replace(base, sleep=SleepSpec(proposer=ProposerSpec(bound_var_safe=True)))
+    assert rid(base) != rid(synth)  # Eval vs Synthesize
+    assert rid(synth) != rid(synth_safe)  # two sleeps differ
+
+
 def test_config_is_hashable() -> None:
     # A run's identity (Phase 11) hangs off this: equal configs hash equal.
     assert hash(PRESETS["dsl-synth"]) == hash(PRESETS["dsl-synth"].with_param(max_depth=2))
