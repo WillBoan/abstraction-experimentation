@@ -6,6 +6,7 @@ from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task
 from arc_lab.solvers.program_search.search.budget import Budget
 from arc_lab.solvers.program_search.search.cost import ProgramSize
+from arc_lab.solvers.program_search.search.polymorphism import PolymorphismInstantiation
 from arc_lab.solvers.program_search.search.search_engine import (
     BeamBottomUpSearchEngine,
     BottomUpSearchEngine,
@@ -94,6 +95,20 @@ def test_solves_with_a_variadic_primitive() -> None:
     )
     assert result.stats.solved
     assert Apply(primitive="hconcat", args=(Input(), Input())) in result.ranked_programs
+
+
+def test_solves_under_every_polymorphism_policy() -> None:
+    task = Task(task_id="t", train=(Example(input=_GRID, output=_transpose(_GRID)),), test=())
+    policies: tuple[PolymorphismInstantiation, ...] = ("monomorphize", "bounded", "unrestricted")
+    for policy in policies:
+        engine = BottomUpSearchEngine(
+            constant_sources=(),
+            function_hole_fill_mode="none",
+            polymorphism_instantiation=policy,
+            budget=Budget(max_depth=2, max_arity=1, max_pool=100),
+        )
+        result = engine.run(task=task, library=_GEO, constraints=(), cost=ProgramSize())
+        assert Apply(primitive="transpose", args=(Input(),)) in result.ranked_programs
 
 
 def test_beam_engine_also_solves() -> None:

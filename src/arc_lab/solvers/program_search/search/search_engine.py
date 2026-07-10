@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import itertools
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Literal, TypeAlias
 
@@ -20,7 +21,7 @@ from arc_lab.core.task import Task
 
 from ..substrate.library import Library
 from ..substrate.program import Program
-from ..substrate.types import GRID, Type
+from ..substrate.types import GRID, Type, instantiate
 from .budget import Budget
 from .composition import applications
 from .constraints import Constraint
@@ -28,13 +29,13 @@ from .context import Context
 from .cost import Cost
 from .extraction import extract
 from .leaves import ConstantSource, seed_leaves
+from .polymorphism import PolymorphismInstantiation, monotype_universe, resolve
 from .pool import Pool
 from .scope import Scope
 from .search_result import SearchResult, SearchStats
 from .signature import Signature, compute_signature, signature_matches_type
 
 FunctionHoleFillMode: TypeAlias = Literal["none", "point-free", "lambda-synthesis"]
-PolymorphismInstantiation: TypeAlias = Literal["monomorphize", "bounded", "unrestricted"]
 
 
 @dataclass(slots=True)
@@ -57,6 +58,7 @@ class _RunState:
     task: Task
     library: Library
     cost: Cost
+    universe: tuple[Type, ...] = ()  # the bounded-polymorphism monotype universe (§6.2)
     tally: _Tally = field(default_factory=_Tally)
     counter: itertools.count[int] = field(default_factory=itertools.count)
 
@@ -97,7 +99,12 @@ class BottomUpSearchEngine(SearchEngine):
         train = [(ex.input, ex.output) for ex in task.train if ex.output is not None]
         contexts = tuple(Context(grid) for grid, _ in train)
         target: Signature = tuple(output for _, output in train)
-        state = _RunState(task=task, library=library, cost=cost)
+        universe = (
+            monotype_universe(library, self.budget.max_depth)
+            if self.polymorphism_instantiation == "bounded"
+            else ()
+        )
+        state = _RunState(task=task, library=library, cost=cost, universe=universe)
 
         pool = self._enumerate(Scope(()), contexts, self.budget, state)
         # ARC task outputs are grids; a general driver would derive the goal type from the task.
@@ -127,17 +134,32 @@ class BottomUpSearchEngine(SearchEngine):
         )
         for depth in range(budget.max_depth):
             if depth > 0:
-                candidates = list(pool.typed_programs())
-                frontier = [
-                    application
-                    for primitive in state.library.primitives
-                    for application in applications(
-                        primitive, candidates, state.counter, budget.max_arity
-                    )
-                ]
+                frontier = list(self._compose(pool, budget, state))
             self._absorb(frontier, contexts, pool, state)
             pool = self._select_frontier(pool, budget)
         return pool
+
+    def _compose(
+        self, pool: Pool, budget: Budget, state: _RunState
+    ) -> Iterator[tuple[Program, Type]]:
+        """One composition round: applications of every primitive, then the polymorphism policy (§6.2).
+
+        Under ``unrestricted`` the pooled arguments may be polymorphic, so their types are
+        re-instantiated with fresh vars per round (a no-op for the concrete pools of the other modes).
+        """
+        policy = self.polymorphism_instantiation
+        if policy == "unrestricted":
+            candidates = [
+                (program, instantiate(vtype, state.counter))
+                for program, vtype in pool.typed_programs()
+            ]
+        else:
+            candidates = list(pool.typed_programs())
+        for primitive in state.library.primitives:
+            for program, result_type in applications(
+                primitive, candidates, state.counter, budget.max_arity
+            ):
+                yield from resolve(program, result_type, policy, state.universe)
 
     def _absorb(
         self,
