@@ -7,8 +7,9 @@ locations and loads them into :class:`Corpus` objects.
 A :class:`Corpus` stores :class:`AnnotatedTask` entries (each a pure :class:`Task` plus
 solver-invisible :class:`TaskMeta`), but its iteration / indexing / ``tasks`` surface
 yields the pure ``Task`` — so solvers and the eval harness never see metadata (blindness).
-Meta-aware code reads ``entries``. The legacy name ``Dataset`` (and ``load_dataset``)
-remain as aliases during the migration.
+Meta-aware code reads ``entries``.
+
+The legacy name ``Dataset`` (and ``load_dataset``) remain as aliases during the migration.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ _DATA_ROOT: Final = _REPO_ROOT / "data"
 _TESTBED_ROOT: Final = _REPO_ROOT / "testbeds"
 
 # Friendly name -> path relative to the data root.
-DATASETS: Final[dict[str, str]] = {
+ARC_DATASETS: Final[dict[str, str]] = {
     "arc1-train": "arc-agi-1/data/training",
     "arc1-eval": "arc-agi-1/data/evaluation",
     "arc2-train": "arc-agi-2/data/training",
@@ -40,16 +41,16 @@ DATASETS: Final[dict[str, str]] = {
 def dataset_path(name: str) -> Path:
     """Resolve a friendly dataset name to an absolute directory path."""
     try:
-        rel = DATASETS[name]
+        rel = ARC_DATASETS[name]
     except KeyError:
-        known = ", ".join(sorted(DATASETS))
+        known = ", ".join(sorted(ARC_DATASETS))
         raise KeyError(f"unknown dataset {name!r}; known datasets: {known}") from None
     return _DATA_ROOT / rel
 
 
 @dataclass(frozen=True, slots=True)
 class Corpus:
-    """An ordered, named collection of tasks (real or synthetic).
+    """An ordered, named collection of tasks (real and/or synthetic).
 
     Stores :class:`AnnotatedTask` entries; the solver-facing surface (``__iter__``,
     ``__getitem__``, ``get``, ``tasks``) yields the pure :class:`Task`. Meta-aware code
@@ -60,7 +61,13 @@ class Corpus:
     entries: tuple[AnnotatedTask, ...]
 
     @classmethod
-    def of(cls, name: str, tasks: Iterable[Task], *, meta: TaskMeta | None = None) -> Corpus:
+    def of(
+        cls,
+        name: str,
+        tasks: Iterable[Task],
+        *,
+        meta: TaskMeta | None = None,
+    ) -> Corpus:
         """Build a corpus from plain tasks, attaching the same ``meta`` to each."""
         return cls(name=name, entries=tuple(AnnotatedTask(task, meta) for task in tasks))
 

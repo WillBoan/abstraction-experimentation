@@ -16,7 +16,7 @@ from pathlib import Path
 
 import typer
 
-from arc_lab.core.dataset import DATASETS, Dataset, load_dataset
+from arc_lab.core.dataset import ARC_DATASETS, Dataset, load_dataset
 from arc_lab.eval.runner import run
 from arc_lab.solvers import REGISTRY, make_solver
 from arc_lab.solvers.dsl.trace import TaskIdFilter
@@ -80,7 +80,7 @@ def main(
 @app.command()
 def datasets() -> None:
     """List the available datasets and their task counts."""
-    for name in sorted(DATASETS):
+    for name in sorted(ARC_DATASETS):
         try:
             ds = load_dataset(name)
             typer.echo(f"{name:12s} {len(ds):>4d} tasks")
