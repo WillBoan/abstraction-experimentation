@@ -11,8 +11,8 @@ from __future__ import annotations
 import numpy as np
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.dsl.substrate.library import Primitive
-from arc_lab.solvers.dsl.substrate.types import GRID, INT
+from arc_lab.solvers.program_search.substrate.library import Primitive
+from arc_lab.solvers.program_search.substrate.types import GRID, INT
 
 _MAX_SIDE = 30
 

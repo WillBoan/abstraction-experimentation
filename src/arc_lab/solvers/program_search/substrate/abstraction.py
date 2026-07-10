@@ -1,10 +1,10 @@
 """Learned abstractions: closed templates folded into first-class primitives.
 
 A learned abstraction is a *named factoring of a recurring pattern* — captured as a
-**closed template** (a :class:`~arc_lab.solvers.dsl.substrate.program.Program` whose holes
-are :class:`~arc_lab.solvers.dsl.substrate.program.Param` nodes and which contains no
-:class:`~arc_lab.solvers.dsl.substrate.program.Input`) and exposed as an ordinary typed
-:class:`~arc_lab.solvers.dsl.substrate.library.Primitive`, so search composes it exactly
+**closed template** (a :class:`~arc_lab.solvers.program_search.substrate.program.Program` whose holes
+are :class:`~arc_lab.solvers.program_search.substrate.program.Param` nodes and which contains no
+:class:`~arc_lab.solvers.program_search.substrate.program.Input`) and exposed as an ordinary typed
+:class:`~arc_lab.solvers.program_search.substrate.library.Primitive`, so search composes it exactly
 like a hand-coded one (``Enumerate`` dispatches on types only, never on provenance).
 
 Keeping the definition as *data* (the template) rather than an opaque Python closure is
@@ -16,9 +16,9 @@ template with its arguments bound to the ``Param`` holes.
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.dsl.substrate.library import Library, Primitive, Value
-from arc_lab.solvers.dsl.substrate.program import Input, Param, Program
-from arc_lab.solvers.dsl.substrate.types import Type
+from arc_lab.solvers.program_search.substrate.library import Library, Primitive, Value
+from arc_lab.solvers.program_search.substrate.program import Input, Param, Program
+from arc_lab.solvers.program_search.substrate.types import Type
 
 # The template is closed (no Input), so the outer input grid is never consulted while
 # evaluating it; a fixed dummy stands in for evaluate's required grid parameter.

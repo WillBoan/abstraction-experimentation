@@ -14,8 +14,8 @@ these compose directly as typed grid transforms, so they need no AST lambda — 
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.dsl.substrate.library import Library, Primitive
-from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT
+from arc_lab.solvers.program_search.substrate.library import Library, Primitive
+from arc_lab.solvers.program_search.substrate.types import COLOR, GRID, INT
 
 _GRID = GRID
 _COLOR = COLOR

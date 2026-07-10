@@ -3,20 +3,20 @@
 A base primitive's ``impl`` is Python code that :meth:`Primitive.to_dict` deliberately drops.
 Reconstructing a serialised library therefore resolves base atoms *by name* against the in-code
 definitions gathered here (learned abstractions instead carry a serialisable ``template`` and are
-rebuilt from it — see :func:`~arc_lab.solvers.dsl.substrate.abstraction.make_abstraction`). This
+rebuilt from it — see :func:`~arc_lab.solvers.program_search.substrate.abstraction.make_abstraction`). This
 registry is the single place that knows every hand-coded primitive.
 """
 
 from __future__ import annotations
 
-from arc_lab.solvers.dsl.substrate.library import Primitive
-from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_AFFINE_LIBRARY
-from arc_lab.solvers.dsl.substrate.primitives.cells import CELL_LIBRARY
-from arc_lab.solvers.dsl.substrate.primitives.color import MAP_COLOR
-from arc_lab.solvers.dsl.substrate.primitives.combinators import COMBINATORS
-from arc_lab.solvers.dsl.substrate.primitives.control import CONTROL_PRIMITIVES
-from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
-from arc_lab.solvers.dsl.substrate.primitives.scaling import SCALE
+from arc_lab.solvers.program_search.substrate.library import Primitive
+from arc_lab.solvers.program_search.substrate.primitives.build import BUILD_AFFINE_LIBRARY
+from arc_lab.solvers.program_search.substrate.primitives.cells import CELL_LIBRARY
+from arc_lab.solvers.program_search.substrate.primitives.color import MAP_COLOR
+from arc_lab.solvers.program_search.substrate.primitives.combinators import COMBINATORS
+from arc_lab.solvers.program_search.substrate.primitives.control import CONTROL_PRIMITIVES
+from arc_lab.solvers.program_search.substrate.primitives.geometry import D4_LIBRARY
+from arc_lab.solvers.program_search.substrate.primitives.scaling import SCALE
 
 
 def _gather() -> dict[str, Primitive]:

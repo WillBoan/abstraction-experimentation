@@ -16,9 +16,9 @@ reused from `cells.py`. Nothing here is wired into a locked solver; it's the sub
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.dsl.substrate.library import Closure, Library, Primitive, Value
-from arc_lab.solvers.dsl.substrate.primitives.cells import READ, SET_CELL
-from arc_lab.solvers.dsl.substrate.types import FN, GRID, INT
+from arc_lab.solvers.program_search.substrate.library import Closure, Library, Primitive, Value
+from arc_lab.solvers.program_search.substrate.primitives.cells import READ, SET_CELL
+from arc_lab.solvers.program_search.substrate.types import FN, GRID, INT
 
 _GRID = GRID
 _INT = INT

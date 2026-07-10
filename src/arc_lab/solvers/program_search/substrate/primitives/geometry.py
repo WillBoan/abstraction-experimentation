@@ -15,8 +15,8 @@ from collections.abc import Callable
 import numpy as np
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.dsl.substrate.library import Library, Primitive
-from arc_lab.solvers.dsl.substrate.types import GRID
+from arc_lab.solvers.program_search.substrate.library import Library, Primitive
+from arc_lab.solvers.program_search.substrate.types import GRID
 
 
 def _identity(g: Grid) -> Grid:

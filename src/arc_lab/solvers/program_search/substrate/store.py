@@ -3,7 +3,7 @@
 A library's identity is a content hash of its serialised form, so equal libraries share one file.
 A run spec references its starting library by that hash, and the store materialises it once. Base
 atoms round-trip through the substrate registry; learned abstractions round-trip through their
-templates (see :meth:`~arc_lab.solvers.dsl.substrate.library.Library.from_dict`).
+templates (see :meth:`~arc_lab.solvers.program_search.substrate.library.Library.from_dict`).
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from arc_lab.solvers.dsl.substrate.library import Library
+from arc_lab.solvers.program_search.substrate.library import Library
 
 
 def library_hash(library: Library) -> str:

@@ -27,8 +27,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.dsl.substrate.library import Closure, Primitive
-from arc_lab.solvers.dsl.substrate.types import (
+from arc_lab.solvers.program_search.substrate.library import Closure, Primitive
+from arc_lab.solvers.program_search.substrate.types import (
     BOOL,
     FN,
     GRID,

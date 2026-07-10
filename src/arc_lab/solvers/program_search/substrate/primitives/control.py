@@ -8,8 +8,8 @@ while ordering stays integer-only.
 
 from __future__ import annotations
 
-from arc_lab.solvers.dsl.substrate.library import Primitive, Value
-from arc_lab.solvers.dsl.substrate.types import BOOL, INT, TypeVar
+from arc_lab.solvers.program_search.substrate.library import Primitive, Value
+from arc_lab.solvers.program_search.substrate.types import BOOL, INT, TypeVar
 
 _A = TypeVar("a")
 

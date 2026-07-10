@@ -24,10 +24,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.dsl.substrate.types import GRID, Type, type_to_serializable
+from arc_lab.solvers.program_search.substrate.types import GRID, Type, type_to_serializable
 
 if TYPE_CHECKING:
-    from arc_lab.solvers.dsl.substrate.program import Program
+    from arc_lab.solvers.program_search.substrate.program import Program
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,7 +88,7 @@ class Primitive:
     impl: PrimitiveImpl
     variadic_param: Type | None = None
     #: For a *learned* abstraction: its defining template (a closed :class:`Program`
-    #: with :class:`~arc_lab.solvers.dsl.substrate.program.Param` holes). ``None`` for a
+    #: with :class:`~arc_lab.solvers.program_search.substrate.program.Param` holes). ``None`` for a
     #: hand-coded primitive. ``impl`` evaluates this template; carrying it here keeps a
     #: learned entry inspectable data, not an opaque closure.
     template: Program | None = None
@@ -178,13 +178,13 @@ class Library:
 
         Base primitives are resolved *by name* against the substrate registry (their ``impl`` is
         code, dropped by :meth:`Primitive.to_dict`); learned abstractions are rebuilt from their
-        ``template`` via :func:`~arc_lab.solvers.dsl.substrate.abstraction.make_abstraction`,
+        ``template`` via :func:`~arc_lab.solvers.program_search.substrate.abstraction.make_abstraction`,
         replayed in serialised order — which is dependency order, since abstractions are appended
         and reference only earlier primitives.
         """
-        from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
-        from arc_lab.solvers.dsl.substrate.program import Program
-        from arc_lab.solvers.dsl.substrate.registry import resolve_primitive
+        from arc_lab.solvers.program_search.substrate.abstraction import make_abstraction
+        from arc_lab.solvers.program_search.substrate.program import Program
+        from arc_lab.solvers.program_search.substrate.registry import resolve_primitive
 
         name = str(data["name"])
         version_raw = data.get("version")
