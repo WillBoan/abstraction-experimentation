@@ -16,8 +16,6 @@
       "Bash(ARC_LAB_LOG=DEBUG uv run pytest:*)",
       "Bash(gh run watch:*)"
     ],
-    "deny": [
-      "Read(./_notes/**)"
-    ]
+    "deny": ["Read(./_notes/**)", "Read(./src/arc_lab/solvers/dsl/**)"]
   }
 }
