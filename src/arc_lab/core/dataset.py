@@ -21,7 +21,8 @@ from pathlib import Path
 from typing import Final, TypeAlias
 
 from arc_lab.core.annotation import AnnotatedTask, Real, Split, Synthetic, TaskMeta
-from arc_lab.core.task import Task, load_tasks
+from arc_lab.core.hashing import content_id
+from arc_lab.core.task import Example, Task, load_tasks
 
 # Repo root: this file is <root>/src/arc_lab/core/dataset.py
 _REPO_ROOT: Final = Path(__file__).resolve().parents[3]
@@ -75,6 +76,32 @@ class Corpus:
     def tasks(self) -> tuple[Task, ...]:
         """The pure tasks — what solvers and the eval harness see."""
         return tuple(entry.task for entry in self.entries)
+
+    def content_hash(self) -> str:
+        """A content-addressed id over the corpus's *entries* — the corpus half of a ``run_id``.
+
+        Hashes task ids, every example grid, and each entry's meta. The corpus ``name`` is
+        deliberately **excluded**: identity is content-addressed, so identical content under two
+        names is the same corpus for run-caching purposes (the name is provenance — recorded in
+        ``runspec.json``, never hashed). Entry *order* is included: a corpus is an ordered
+        collection, and order can affect a run's trace.
+        """
+
+        def example_data(example: Example) -> dict[str, object]:
+            return {
+                "input": example.input.to_list(),
+                "output": example.output.to_list() if example.output is not None else None,
+            }
+
+        def entry_data(entry: AnnotatedTask) -> dict[str, object]:
+            return {
+                "task_id": entry.task.task_id,
+                "train": [example_data(ex) for ex in entry.task.train],
+                "test": [example_data(ex) for ex in entry.task.test],
+                "meta": entry.meta.to_dict() if entry.meta is not None else None,
+            }
+
+        return content_id([entry_data(entry) for entry in self.entries])
 
     def __len__(self) -> int:
         return len(self.entries)
