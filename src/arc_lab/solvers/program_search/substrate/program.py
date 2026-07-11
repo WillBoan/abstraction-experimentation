@@ -144,6 +144,19 @@ class Program(ABC):
                     raise ValueError(f"malformed program argument: {arg!r}")
                 args.append(Program.from_dict(arg))
             return Apply(primitive=primitive, args=tuple(args))
+        if op == "if":
+            cond, then, orelse = data["cond"], data["then"], data["orelse"]
+            if (
+                not isinstance(cond, Mapping)
+                or not isinstance(then, Mapping)
+                or not isinstance(orelse, Mapping)
+            ):
+                raise ValueError(f"malformed if node: {data!r}")
+            return If(
+                cond=Program.from_dict(cond),
+                then=Program.from_dict(then),
+                orelse=Program.from_dict(orelse),
+            )
         if op == "var":
             index, var_type = data["index"], data["value_type"]
             if not isinstance(index, int) or not isinstance(var_type, (str, dict)):
@@ -300,6 +313,57 @@ class Apply(Program):
 
     def __str__(self) -> str:
         return f"{self.primitive}({', '.join(str(arg) for arg in self.args)})"
+
+
+@dataclass(frozen=True, slots=True)
+class If(Program):
+    """Short-circuit branching: evaluate ``cond``, then **only the selected branch** (§11.3).
+
+    A dedicated node rather than an eager ``Apply`` of an ``if`` primitive, because eager
+    application would evaluate the unselected branch — and a branch that errors outside its
+    selected domain would poison both enumeration *and the final solution on test inputs*. With
+    this node, a program using domain-splitting ``if`` (each branch defined only where its
+    condition selects it) is correct everywhere, not just on the training contexts.
+
+    The library's ``if`` entry ``(BOOL, a, a) → a`` remains the *summoner* (its presence in the
+    bag enables branching, per SEARCH-SPACE.md Table A); the enumerator translates it to this
+    node. The branches are same-typed by construction, so :meth:`result_type` is the type of
+    either branch.
+    """
+
+    cond: Program
+    then: Program
+    orelse: Program
+
+    def evaluate(
+        self,
+        grid: Grid,
+        library: Library,
+        env: tuple[Value, ...] = (),
+        scope: tuple[Value, ...] = (),
+    ) -> Value:
+        selected = self.cond.evaluate(grid, library, env, scope)
+        if not isinstance(selected, bool):
+            raise TypeError(f"if condition evaluated to {type(selected).__name__}, expected bool")
+        branch = self.then if selected else self.orelse
+        return branch.evaluate(grid, library, env, scope)
+
+    def result_type(self, library: Library) -> Type:
+        return self.then.result_type(library)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "op": "if",
+            "cond": self.cond.to_dict(),
+            "then": self.then.to_dict(),
+            "orelse": self.orelse.to_dict(),
+        }
+
+    def children(self) -> tuple[Program, ...]:
+        return (self.cond, self.then, self.orelse)
+
+    def __str__(self) -> str:
+        return f"if({self.cond}, {self.then}, {self.orelse})"
 
 
 @dataclass(frozen=True, slots=True)

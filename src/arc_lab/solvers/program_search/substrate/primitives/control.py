@@ -39,7 +39,14 @@ def _not(value: bool) -> bool:
 
 
 def _if(cond: bool, when_true: Value, when_false: Value) -> Value:
-    return when_true if cond else when_false
+    """Never called: ``if`` is a capability *token*, not an executable primitive (§5.4, §11.3).
+
+    Eager application would have evaluated both branches before selecting — poisoning any program
+    whose branch errors outside its selected domain. The enumerator therefore translates this
+    entry into the short-circuit ``If`` AST node and never applies it; its presence in a library
+    only *summons* branching (SEARCH-SPACE.md Table A). Raising here keeps any other path loud.
+    """
+    raise RuntimeError("'if' is a branching capability token; programs use the If node instead")
 
 
 EQ = Primitive(name="eq", param_types=(_A, _A), return_type=BOOL, impl=_eq)

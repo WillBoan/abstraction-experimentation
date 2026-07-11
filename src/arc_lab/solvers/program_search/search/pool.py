@@ -46,6 +46,10 @@ class Pool:
             return True
         return False
 
+    def types(self) -> tuple[Type, ...]:
+        """The distinct types currently pooled, in first-insertion order (deterministic)."""
+        return tuple(self._by_type_sig)
+
     def of_type(self, vtype: Type) -> Iterable[Program]:
         """The programs of type ``vtype`` — feeds composition (§5.2)."""
         return (entry.program for entry in self._by_type_sig.get(vtype, {}).values())

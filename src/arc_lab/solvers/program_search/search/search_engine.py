@@ -5,8 +5,9 @@ A ``SearchEngine`` is frozen configuration: its capability policies and its ``Bu
 (``extract``, §5.8). Per-run mutable scratch — the effort tally and the fresh-type-variable counter —
 lives in ``_RunState`` so the engine itself stays immutable and reusable across runs.
 
-This is the first-order closed-term core. Variadic composition (§5.2), higher-order fill (§5.3),
-short-circuit ``If`` (§5.4), and the polymorphism-instantiation policy (§6.2) layer onto this spine.
+The full §5 pipeline is in place on this spine: variadic composition (§5.2), higher-order fill and
+lambda synthesis (§5.3), short-circuit ``If`` branching (§5.4), the polymorphism-instantiation
+policy (§6.2), and memoized recursion (§9).
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ from typing import Literal, TypeAlias
 from arc_lab.core.task import Task
 
 from ..substrate.library import Library, Primitive, Value
-from ..substrate.program import Lam, PrimRef, Program
+from ..substrate.program import If, Lam, PrimRef, Program
 from ..substrate.types import BOOL, COLOR, GRID, INT, ArrowType, Type, free_type_vars, instantiate
 from .budget import Budget
 from .composition import appfn_applications, applications
@@ -35,6 +36,7 @@ from .scope import Scope
 from .search_result import SearchResult, SearchStats
 from .signature import (
     Signature,
+    combine_if_signature,
     compute_function_signature,
     compute_signature,
     peel_arrow,
@@ -42,6 +44,10 @@ from .signature import (
 )
 
 FunctionHoleFillMode: TypeAlias = Literal["none", "point-free", "lambda-synthesis"]
+
+#: The library's branching capability token (§5.4): its *presence* in the bag summons branching,
+#: but the enumerator translates it into short-circuit ``If`` nodes — it is never applied eagerly.
+_BRANCHING_ENTRY = "if"
 
 
 @dataclass(slots=True)
@@ -161,9 +167,13 @@ class BottomUpSearchEngine(SearchEngine):
             *self._function_leaves(state),
         ]
         for depth in range(budget.max_depth):
+            branch_candidates: list[tuple[Program, Type, Signature | None]] = []
             if depth > 0:
+                branch_candidates = self._branch_candidates(pool, state)
                 frontier = list(self._compose(scope, pool, budget, state))
             self._absorb(frontier, contexts, pool, state)
+            for program, vtype, signature in branch_candidates:
+                self._absorb_one(program, vtype, vtype, signature, pool, state)
             pool = self._select_frontier(pool, budget)
         state.memo[key] = pool
         return pool
@@ -188,6 +198,8 @@ class BottomUpSearchEngine(SearchEngine):
         else:
             candidates = list(pool.typed_programs())
         for primitive in state.library.primitives:
+            if primitive.name == _BRANCHING_ENTRY:
+                continue  # the branching token becomes If nodes (§5.4), never an eager Apply
             for program, result_type in applications(
                 primitive, candidates, state.counter, budget.max_arity
             ):
@@ -242,10 +254,41 @@ class BottomUpSearchEngine(SearchEngine):
         if self.function_hole_fill_mode == "none":
             return
         for primitive in state.library.primitives:
+            if primitive.name == _BRANCHING_ENTRY:
+                continue  # a PrimRef of the branching token would be applied eagerly — never minted
             arrow = ArrowType(primitive.param_types, primitive.return_type)
             yield from resolve(
                 PrimRef(name=primitive.name), arrow, self.polymorphism_instantiation, state.universe
             )
+
+    def _branch_candidates(
+        self, pool: Pool, state: _RunState
+    ) -> list[tuple[Program, Type, Signature | None]]:
+        """Short-circuit ``If`` candidates for one round (§5.4), iff the library summons branching.
+
+        Composed from a pooled ``BOOL`` condition and two distinct pooled same-typed branches; the
+        signature is **combined from the parts' cached signatures** (never re-evaluated), which is
+        inherently short-circuit — a partial branch (``⊥`` outside its selected region) still
+        contributes, which is what makes domain-splitting ``if`` work. Function-typed branches are
+        skipped: their signatures are sampled per argument tuple, not per context, so the per-context
+        combination does not apply.
+        """
+        if _BRANCHING_ENTRY not in state.library:
+            return []
+        conditions = list(pool.items_of_type(BOOL))
+        if not conditions:
+            return []
+        candidates: list[tuple[Program, Type, Signature | None]] = []
+        for vtype in pool.types():
+            if isinstance(vtype, ArrowType):
+                continue
+            entries = list(pool.items_of_type(vtype))
+            for condition in conditions:
+                for then, orelse in itertools.permutations(entries, 2):
+                    program = If(cond=condition.program, then=then.program, orelse=orelse.program)
+                    signature = combine_if_signature(condition.sig, then.sig, orelse.sig)
+                    candidates.append((program, vtype, signature))
+        return candidates
 
     def _absorb(
         self,

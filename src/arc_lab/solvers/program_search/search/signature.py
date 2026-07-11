@@ -118,6 +118,30 @@ def compute_function_signature(
     return tuple(values) if any_defined else None
 
 
+def combine_if_signature(
+    cond: Signature, then: Signature, orelse: Signature
+) -> Signature | None:
+    """An ``If`` node's signature, combined from its parts' **cached** signatures (§5.4).
+
+    Per context: ``⊥`` if the condition is ``⊥``, else the selected branch's cached value — which is
+    inherently short-circuit (the unselected branch's entry is never read), so a branch that is
+    ``⊥`` outside its selected region still contributes. This is what makes domain-splitting ``if``
+    work, with no re-evaluation. Returns ``None`` iff the combination is undefined everywhere,
+    mirroring :func:`compute_signature`.
+    """
+    values: list[Value | Bottom] = []
+    any_defined = False
+    for selector, when_true, when_false in zip(cond, then, orelse, strict=True):
+        if selector is BOTTOM:
+            values.append(BOTTOM)
+            continue
+        value = when_true if selector else when_false
+        values.append(value)
+        if value is not BOTTOM:
+            any_defined = True
+    return tuple(values) if any_defined else None
+
+
 def signature_matches_type(signature: Signature, expected: Type) -> bool:
     """Whether every *defined* value in ``signature`` inhabits ``expected``.
 
