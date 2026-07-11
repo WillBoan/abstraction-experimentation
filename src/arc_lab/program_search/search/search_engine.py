@@ -12,6 +12,7 @@ policy (§6.2), and memoized recursion (§9).
 
 from __future__ import annotations
 
+import dataclasses
 import itertools
 from abc import ABC, abstractmethod
 from collections.abc import Iterator, Sequence
@@ -103,6 +104,17 @@ class SearchEngine(ABC):
         cost: Cost,
     ) -> SearchResult:
         """Search for programs consistent with ``train_examples``, ranked cheapest-first."""
+
+    def with_budget(self, budget: Budget) -> SearchEngine:
+        """This engine with its ``budget`` replaced — how a study derives its grid cells.
+
+        The budget lives on the engine (it is engine configuration, not ``Config``-level
+        data), so the override is an engine concern. An engine without a ``budget`` field
+        fails loudly rather than silently ignoring the override.
+        """
+        if not any(f.name == "budget" for f in dataclasses.fields(self)):
+            raise TypeError(f"{type(self).__name__} has no budget field to override")
+        return dataclasses.replace(self, **{"budget": budget})
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

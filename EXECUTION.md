@@ -94,7 +94,8 @@ RunSpec                                      # the recorded-run atom — exactly
 
 StudySpec                                    # orchestration, not a run — generates RunSpecs
   ├─ base_config: Config                     #   library = L1, learn = LearnSpec; grid cells derive via
-  ├─ budgets: tuple[Budget ↗, ...]           #   base_config.with_(library=Lᵢ, budget=bⱼ, learn=None)
+  ├─ budgets: tuple[Budget ↗, ...]           #   base_config.with_(library=Lᵢ, learn=None,
+  │                                          #     search_engine=engine.with_budget(bⱼ)) — budget lives ON the engine
   ├─ train_corpus: Corpus ↗
   ├─ eval_corpus: Corpus ↗
   └─ target_abstractions: tuple[(name, Program ↗), ...]   # templates over starting primitives → L3
@@ -262,9 +263,9 @@ Ordering principles: **leaf dependencies first** · **additive before destructiv
 14. `run_search_learn.py` — the loop (batch wake, ends with sleep, reset/telemetry params, per-iteration trace) + derived runs via `load_library`.
 15. `analyze_run.py` — read-side basics.
 
-**Phase 5 — Study**
+**Phase 5 — Study: DONE (2026-07-11)**
 
-16. `model/study_spec.py` + `run_study.py` (grid via `base_config.with_(...)`, execute-with-cache) + `create_study_report`.
+16. `model/study_spec.py` (`StudySpec` + `TargetAbstraction`; provenance `to_dict`, no `from_dict` — same rationale as `RunSpec`) + `run_study.py` (grid via `base_config.with_(library=Lᵢ, learn=None, search_engine=engine.with_budget(bⱼ))`, execute-with-cache; `StudyResult` = learn activity + `{L1,L2,L3}` + `GridCell → RunRecord`) + `create_study_report` (pure read: behavioral check via probe-based semantic equivalence — identical templates short-circuit, else both impls compared over typed probe values under type-matched argument permutations, cap recorded as `probe_cap`; solve-rate grid; `speedup_vs_L1` effort rows; per-library×budget transfer rows).
 
 **Phase 6 — Destructive cleanup** _(each its own commit)_
 

@@ -9,12 +9,15 @@ from arc_lab.program_search.execution.model.learn_spec import LearnSpec
 from arc_lab.program_search.execution.model.results import TaskResult, TaskScore
 from arc_lab.program_search.execution.model.run_record import RunRecord
 from arc_lab.program_search.execution.model.run_spec import RunSpec
+from arc_lab.program_search.execution.model.study_spec import StudySpec, TargetAbstraction
 
 __all__ = [
     "Config",
     "LearnSpec",
     "RunRecord",
     "RunSpec",
+    "StudySpec",
+    "TargetAbstraction",
     "TaskResult",
     "TaskScore",
     "default_registry",
