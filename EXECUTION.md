@@ -269,9 +269,9 @@ Ordering principles: **leaf dependencies first** · **additive before destructiv
 
 **Phase 6 — Destructive cleanup** _(each its own commit)_
 
-17. Delete `solvers/base.py` (`Solver`) + `eval/runner.py`; consumers of `TaskResult` move to `model/results.py`. _(The `solvers/` → `program_search/` rename is already done.)_
-18. `taskgen/` moves out of `learn/`.
-19. **Audit, then delete `solvers/dsl/`** — the old tree stays on disk until a dedicated comparison pass (old `dsl/` vs the new build: anything missed?) has run. Deleting it is the _last_ destructive step, after that audit.
+17. Delete `solvers/base.py` (`Solver`) + `eval/runner.py`; consumers of `TaskResult` move to `model/results.py`. _(The `solvers/` → `program_search/` rename is already done.)_ **Folded into step 19 (2026-07-11):** `Solver`/`runner` are load-bearing for the old tree's importability, the old behavior locks, and the old CLI — they form ONE deletion unit with `solvers/dsl/`, `solvers/baseline.py`, the old CLI commands, and the old tests. The intent of this step — the new world depends on none of it — is already satisfied and verified (nothing under `program_search/` or `tests/program_search/` imports them; the execution layer's `TaskResult` is `model/results.py`'s).
+18. **DONE (2026-07-11):** `taskgen/` ported out of `learn/` to top-level `src/arc_lab/taskgen/` (`GeneratedTask` · `make_task` · `write_testbed`), consuming only `core/`. Output format unchanged (ARC-format `testbeds/<name>/tasks/` + manifest, loaded by the existing `core.dataset.load_testbed`); the manifest `content_hash` now uses `core/hashing` (one discipline) — provenance only, so old committed manifests stay valid, but a *regenerated* testbed's manifest hash will differ even for identical content. Old `solvers/dsl/learn/taskgen.py` dies with step 19.
+19. **Audit, then delete `solvers/dsl/`** — the old tree stays on disk until a dedicated comparison pass (old `dsl/` vs the new build: anything missed?) has run. Deleting it is the _last_ destructive step, after that audit. _(User-owned; runs after everything else. Includes step 17's unit.)_
 
 **Phase 7 — CLI + docs**
 
