@@ -25,13 +25,21 @@ Prediction: TypeAlias = list[list[Grid]]
 MAX_ATTEMPTS: Final = 2
 
 
-def score_test_input(candidates: list[Grid], target: Grid, *, attempts: int = MAX_ATTEMPTS) -> bool:
+def score_test_input(
+    candidates: list[Grid],
+    target: Grid,
+    *,
+    attempts: int = MAX_ATTEMPTS,
+) -> bool:
     """True if any of the top-``attempts`` candidates matches ``target``."""
     return any(candidate == target for candidate in candidates[:attempts])
 
 
 def score_task(
-    task: Task, prediction: Prediction, *, attempts: int = MAX_ATTEMPTS
+    task: Task,
+    prediction: Prediction,
+    *,
+    attempts: int = MAX_ATTEMPTS,
 ) -> tuple[bool, tuple[bool, ...]]:
     """Score a full task.
 
