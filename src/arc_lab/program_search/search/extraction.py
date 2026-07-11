@@ -27,11 +27,13 @@ def extract(
     task: Task,
     library: Library,
 ) -> tuple[Program, ...]:
-    """The goal-type programs whose signature equals ``target`` and pass every constraint, ranked.
+    """The goal-type programs whose signature equals `target` and pass every constraint, ranked.
 
     Ranked by an explicit key — cached cost, then program size, then serialization — so equal costs
-    fall to a deterministic tiebreak and ``Program``\\ s are never compared directly (which would
-    raise). Costs are read straight from the pooled entries (cached once at insertion, §5.7); nothing
+    fall to a deterministic tiebreak and `Program`s are never compared directly (which would
+    raise).
+
+    Costs are read straight from the pooled entries (cached once at insertion, §5.7); nothing
     is re-evaluated here.
     """
     solutions = [
