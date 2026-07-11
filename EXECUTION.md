@@ -1,6 +1,6 @@
 # EXECUTION.md — the activity / call-stack model
 
-How the three activities (**SEARCH**, **SEARCH + LEARN**, **STUDY**) are composed from the execution layer's primitives. Sibling to [ARCHITECTURE.md](ARCHITECTURE.md) (the search-engine design); code lands under `src/arc_lab/program_search/execution/` (target layout — the `solvers/` → `program_search/` move is a coordinated rename; see _File / folder structure_).
+How the three activities (**SEARCH**, **SEARCH + LEARN**, **STUDY**) are composed from the execution layer's primitives. Sibling to [ARCHITECTURE.md](ARCHITECTURE.md) (the search-engine design); code lands under `src/arc_lab/program_search/execution/` (the `solvers/program_search/` → `program_search/` rename is **done**; the old `solvers/dsl/` stays on disk until the end-of-overhaul audit — see _Implementation order_).
 
 Status: agreed design, 2026-07-11. There is no `Solver` / `ProgramSearchSolver` class — the execution layer drives `Config` (`library × search_engine × constraints × cost × learn?`) directly.
 
@@ -174,7 +174,7 @@ src/arc_lab/
 ├── eval/                    # ARC scoring RULES — paradigm-agnostic, stays put
 │   └── scoring.py           #   score_test_input · score_task · Prediction (moves in from solvers/base)
 │                            #   runner.py DIES with Solver (replaced by execute)
-├── program_search/          # ← moved up from solvers/ (coordinate the rename with active engine work)
+├── program_search/          # ← moved up from solvers/ (DONE, committed)
 │   ├── substrate/           # the language: types · program · library · primitives/ · registry · store
 │   ├── search/              # the wake proposer (SearchEngine + its parts)
 │   ├── learn/               # sleep: learn_engine · proposers · governance (taskgen moves OUT)
@@ -219,3 +219,49 @@ Two deliberate changes vs. the old CLI: **`analyze-run` is read-side only** (the
 4. Wake is batched over the whole corpus before each sleep (cross-task compression signal; per-task interleaving would be order-dependent and starve antiunification).
 5. Fresh search each wake (default): sleep must see solutions _re-expressed_ in the grown library, and search-effort is a measured signal — serving cached solutions would silently destroy both.
 6. The report/analyze step (`analyze_run`, `create_study_report`) is read-only over stored artifacts.
+
+## Implementation order
+
+Ordering principles: **leaf dependencies first** · **additive before destructive** (deletions/renames last, tree stays workable throughout) · **cross-fork contact only at named sync points** (the engine/substrate work proceeds in parallel; the forks never edit the same file bodies).
+
+**Phase 0 — Foundations** _(pure, zero-collision)_
+1. `core/hashing.py` — `canonical_json` + `hash_id`. Tests: stability, key-order invariance.
+2. `Corpus.content_hash` in `core/dataset.py`. Tests: same content ⇒ same hash; content change ⇒ different; corpus *name* excluded (content-addressed: identical content under two names is the same corpus for caching).
+
+**Phase 1 — The run data model** (`execution/model/`)
+3. `results.py` — `TaskScore`, `TaskResult`.
+4. The serialization contract, once: `kind` discriminator + params, base-class `from_dict` dispatch (mirrors `Program.from_dict`), generic frozen-dataclass↔dict helper.
+5. `learn_spec.py`.
+6. `config.py` rewrite — `attempts_per_test`, `learn: LearnSpec | None`, `with_(...)`, delegating `to_dict`/`from_dict`.
+7. `run_spec.py` (`run_id`) + `run_record.py`.
+8. Tests against **fake components**: round-trip, hash stability, identity properties (SEARCH/LEARN never collide; corpus content moves `run_id`; commit excluded).
+
+> **🔗 Sync A:** `to_dict`/`from_dict` on the real `SearchEngine`/`Cost`/`Constraint`/`LearnEngine` (engine-fork files). Phase 1 completes against fakes; real wiring is a small follow-up.
+
+**Phase 2 — Scoring + predict** _(mostly additive)_
+9. `eval/scoring.py`: parameterize attempts (`k`, default 2, fed from `Config`); `Prediction` type moves in (additively; the `solvers/base` import path dies in Phase 6).
+10. `execution/predict.py` + tests with hand-built programs.
+
+**Phase 3 — The core: `execute`**
+11. `execute.py` — artifact layout, `runspec.json` first, `trace.jsonl` streamed + resume, `results.json` last, idempotency, `record_run`, `RunRecord` return; SEARCH branch wired to `SearchEngine.run`.
+12. End-to-end test: tiny task + tiny library → run → cache-hit → resume from partial trace.
+
+> **🔗 Sync B:** the `run(train_examples, …)` signature (engine fork lands it; `execute` consumes it). **🔗 Sync C:** the `LearnEngine.run` interface (needed for step 14).
+
+**Phase 4 — Activities**
+13. `run_search.py` (thin).
+14. `run_search_learn.py` — the loop (batch wake, ends with sleep, reset/telemetry params, per-iteration trace) + derived runs via `load_library`.
+15. `analyze_run.py` — read-side basics.
+
+**Phase 5 — Study**
+16. `model/study_spec.py` + `run_study.py` (grid via `base_config.with_(...)`, execute-with-cache) + `create_study_report`.
+
+**Phase 6 — Destructive cleanup** _(each its own commit)_
+17. Delete `solvers/base.py` (`Solver`) + `eval/runner.py`; consumers of `TaskResult` move to `model/results.py`. _(The `solvers/` → `program_search/` rename is already done.)_
+18. `taskgen/` moves out of `learn/`.
+19. **Audit, then delete `solvers/dsl/`** — the old tree stays on disk until a dedicated comparison pass (old `dsl/` vs the new build: anything missed?) has run. Deleting it is the *last* destructive step, after that audit.
+
+**Phase 7 — CLI + docs**
+20. `cli/` — thin modules per command; presets registry replaces the solver `REGISTRY`.
+21. Docs reconciliation: CLAUDE.md pointers, `ARCHITECTURE-2026-07-09.md` supersede-or-merge, EXPERIMENTS.md overhaul entry.
+22. **Re-pin the behavior locks deliberately** (old locks reference old presets; re-pinning is an explicit, reviewed change) — `make check` green is the final gate.
