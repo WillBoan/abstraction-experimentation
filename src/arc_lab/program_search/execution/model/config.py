@@ -22,12 +22,26 @@ from arc_lab.program_search.substrate.library import Library
 
 
 def default_registry() -> dict[str, type]:
-    """The known component kinds, resolved lazily so mid-refactor modules import late."""
+    """The known component kinds, resolved lazily so mid-refactor modules import late.
+
+    (``SearchScopedFrequentSubtree`` is deliberately absent: its ``composes`` callable is
+    programmatic-only and cannot serialise into a run identity.)
+    """
+    from arc_lab.program_search.analysis.compression import CompressionMetric, TwoPartMDL
+    from arc_lab.program_search.learn.antiunify import (
+        AntiunifyPairs,
+        FrequentSubtree,
+        TypeScopedFrequentSubtree,
+    )
+    from arc_lab.program_search.learn.engines import GreedyMDLLearnEngine, RefactoringLearnEngine
+    from arc_lab.program_search.learn.selection import GreedyMDL
+    from arc_lab.program_search.learn.stitch_shim import StitchProposer
     from arc_lab.program_search.search.budget import Budget
     from arc_lab.program_search.search.search_engine import (
         BeamBottomUpSearchEngine,
         BottomUpSearchEngine,
     )
+    from arc_lab.program_search.substrate.types import ArrowType, TypeCon, TypeVar
 
     components: tuple[type, ...] = (
         BottomUpSearchEngine,
@@ -35,6 +49,18 @@ def default_registry() -> dict[str, type]:
         Budget,
         ProgramSize,
         LearnSpec,
+        GreedyMDLLearnEngine,
+        RefactoringLearnEngine,
+        GreedyMDL,
+        CompressionMetric,
+        TwoPartMDL,
+        AntiunifyPairs,
+        FrequentSubtree,
+        TypeScopedFrequentSubtree,
+        StitchProposer,
+        TypeCon,
+        ArrowType,
+        TypeVar,
     )
     return {component.__name__: component for component in components}
 

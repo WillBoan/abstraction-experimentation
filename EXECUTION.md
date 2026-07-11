@@ -254,7 +254,7 @@ Ordering principles: **leaf dependencies first** · **additive before destructiv
 
 > **🔗 Sync B: DONE** — `run(train_examples, …)` landed across the engine/cost/constraint/sampler seam (2026-07-11).
 
-> **🔗 Sync C (interface DONE, engines in port):** `LearnEngine`/`LearnOutcome` finalized in `learn/learn_engine.py`; `analysis/compression.py` (SolvedTask, MDL metrics) ported. Concrete engines port from old `solvers/dsl/learn/` — `SleepStrategy`→`LearnEngine` (frozen dataclass, `start_index` derived from the library), `SleepOutcome`→`LearnOutcome` (`score`→`description_length`), antiunify/stitch_shim gain ordinary 3-child `If` handling (+ a reserved `if` head symbol in the Stitch s-expression codec); old `loop.py` dissolves into `run_search_learn` + engine-internal governance; `harness.py` is superseded by `execute`.
+> **🔗 Sync C: DONE (2026-07-11).** `LearnEngine`/`LearnOutcome` finalized in `learn/learn_engine.py`; `analysis/compression.py` (SolvedTask, MDL metrics) ported. Concrete engines port from old `solvers/dsl/learn/` — `SleepStrategy`→`LearnEngine` (frozen dataclass, `start_index` derived from the library), `SleepOutcome`→`LearnOutcome` (`score`→`description_length`), antiunify/stitch_shim gain ordinary 3-child `If` handling (+ a reserved `if` head symbol in the Stitch s-expression codec); old `loop.py` dissolves into `run_search_learn` + engine-internal governance; `harness.py` is superseded by `execute`.
 
 **Phase 4 — Activities**
 

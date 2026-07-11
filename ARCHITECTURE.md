@@ -270,6 +270,14 @@ A dedicated AST node `If(cond, then, orelse)` implementing all `Program` operati
 
 `Object` is `TypeCon("object", ())` with a frozen, hashable `Object` value (cells + bbox + color). `segment : GRID → List[Object]`, `render : List[Object] → GRID`, and transforms (`recolor`/`translate`/… `: Object → Object`) — arrow/`TypeCon`-typed so they sit on a typed on-ramp/off-ramp path. Their **semantics** (segmentation algorithm, render merge policy, object invariants) are specified in [ONTOLOGY.md](ONTOLOGY.md) — the primitive-floor source of truth — which this section requires be completed there; the engine consumes them through their types.
 
+### 11.6 Deliberate syntax limits (the register)
+
+Named, bounded decisions about what the *program language* (and its Stitch s-expression mirror) does not yet spell — each with its lift. Nothing here makes a **value** unreachable; these bound *syntax*, and the register exists so any limit is a decision, never an accident.
+
+1. **No container-literal syntax.** `Const` admits scalars only (int/bool); there is no AST node denoting `[1, 2, 3]`. Container *values* are fully reachable via constructor primitives (a variadic `list : (a, …) → List[a]` is expressible today — a Table-A bag capability), so a literal form is a deferred *convenience* (shorter programs, cheaper MDL for constant containers). Lift: a `Const`-with-tuple-value (or dedicated node) + one codec encode line + one inference rule, in lockstep.
+2. **Codec-completeness invariant.** Every `Program` node kind MUST have an s-expression encode + decode rule (`stitch_shim.py`), or sleep silently cannot compress programs containing it. The `If` port is the worked example (reserved `(if c t e)` head, symmetric decode). Any new substrate node extends the codec in the same change — **enforced by `tests/program_search/test_codec_completeness.py`**, whose coverage tables are checked against `Program.__subclasses__()`: a new node kind fails the suite until both codec directions exist.
+3. ~~Untyped-context scalar decode defaults to INT~~ — **lifted (2026-07-11)** via typed-literal notation: `to_sexpr` prints a non-INT scalar const as `3:color`, `from_sexpr` decodes it exactly regardless of context, so only genuinely-INT literals are bare. The former edge (a COLOR const in an expectation-free position — args of a metavar-headed application — decoded as INT) is gone; regression-tested in `test_codec_completeness.py`.
+
 ---
 
 ## 12. Best-practice lineage

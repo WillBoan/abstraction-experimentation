@@ -15,6 +15,7 @@ blind to test grids (EXECUTION.md, Sync B).
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -24,13 +25,19 @@ if TYPE_CHECKING:
 
 
 class Cost(ABC):
-    """A ranking signal over programs; lower is better."""
+    """A ranking signal over programs; lower is better.
+
+    Concrete costs are frozen dataclasses: a ``Cost`` is run identity (it sits in
+    ``Config`` and inside ``CompressionMetric``), so it must serialise via the
+    component serde and compare by value.
+    """
 
     @abstractmethod
     def of(self, program: Program, train_examples: TrainExamples, library: Library) -> float:
         """The cost of ``program`` (lower ranks earlier)."""
 
 
+@dataclass(frozen=True, slots=True)
 class ProgramSize(Cost):
     """An Occam prior: prefer programs with fewer nodes."""
 
