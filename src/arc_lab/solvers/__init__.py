@@ -28,15 +28,6 @@ REGISTRY: dict[str, Callable[[], Solver]] = {
 }
 
 
-def _make_llm() -> Solver:
-    from arc_lab.solvers.llm import ClaudeSolver
-
-    return ClaudeSolver()
-
-
-REGISTRY["llm"] = _make_llm
-
-
 def make_solver(name: str) -> Solver:
     """Instantiate a registered solver by name."""
     try:
