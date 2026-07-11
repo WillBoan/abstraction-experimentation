@@ -141,7 +141,7 @@ The enumerator composes `If` (when enabled) from a pooled `BOOL` program and two
 
 ### 5.6 Prune (intrinsic-local only)
 
-`_prunes` drops the fully-undefined (`None`) and **type mismatches** (`not signature_matches_type(defined-part, vtype)`). It does **not** drop partial programs (they are branch scaffolding), and it does **not** apply `ConsistentWithTraining` — consistency is the goal test (§5.8); pruning intermediates by it would collapse search to depth 1.
+`_prunes` drops the fully-undefined (`None`) and **type mismatches** (`not signature_matches_type(defined-part, vtype)`). It does **not** drop partial programs (they are branch scaffolding), and it does **not** apply consistency-with-training (there is no such `Constraint` — deleted; consistency is the goal test, §5.8); pruning intermediates by it would collapse search to depth 1.
 
 ### 5.7 Dedup + frontier
 

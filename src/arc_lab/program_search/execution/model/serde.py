@@ -4,8 +4,7 @@ Mirrors ``Program.from_dict``'s dispatch-on-``"op"`` pattern at the component le
 a machinery component (engine, cost, constraint, learn spec) serialises to
 ``{"kind": <class name>, **fields}`` and reconstructs by looking ``kind`` up in a
 registry. Frozen dataclasses serialise generically (fields recursed, tuples as
-lists); plain no-field classes (``ProgramSize``, ``ConsistentWithTraining``)
-serialise as their ``kind`` alone.
+lists); plain no-field classes (``ProgramSize``) serialise as their ``kind`` alone.
 
 ``Library`` is *not* serialised here — it has its own richer round-trip
 (``Library.to_dict`` / ``from_dict``, resolving primitive impls by name against the

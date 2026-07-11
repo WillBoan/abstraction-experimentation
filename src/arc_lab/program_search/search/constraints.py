@@ -1,19 +1,26 @@
-"""Constraints: the *filter* step of program search.
+"""Constraints: *extra* inductive-bias filters on goal-test survivors.
 
-A :class:`Constraint` is a boolean acceptance criterion a candidate program must
-pass. Constraints compose — a search accepts a program only if *every* active
-constraint holds — and a strategy may apply them as a final acceptance test or as
-a mid-search pruning signal, whichever fits.
+A :class:`Constraint` is NOT the consistency check. Consistency-with-training is the
+engine's goal test itself — ``sig == target`` in ``extraction.py``, read from the
+signature the pool already cached for dedup — the *definition* of a solution, not a
+filter on one. (A ``Constraint`` reimplementation of it would also be wrong: a fresh
+``evaluate`` crashes on the partial-⊥ programs the pool deliberately tolerates for
+domain-splitting ``if``.)
 
-:class:`ConsistentWithTraining` is the load-bearing one: it is the *specification*
-derived from the data (a program that fails it is simply wrong).
+What lives here instead: genuinely *extra* acceptance criteria that need information
+signature equality cannot provide — e.g. "the output must be square", or a shape
+prior. Constraints compose by conjunction (a program passes iff *every* active
+constraint holds) and run **after** the goal test, on survivors only — an
+implementation may therefore assume it receives train-consistent programs. The
+default is no constraints (``Config.constraints = ()``).
 
-In future, we may add inductive-bias constraints alongside it.
+(When the blindness seam lands — EXECUTION.md, Sync B — ``holds`` follows it:
+``task`` becomes ``train_examples``, since constraints are train-side machinery and
+must be structurally blind to test grids, like ``Cost.of``.)
 """
 
 from __future__ import annotations
 
-import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
@@ -22,32 +29,10 @@ if TYPE_CHECKING:
     from arc_lab.program_search.substrate.library import Library
     from arc_lab.program_search.substrate.program import Program
 
-logger = logging.getLogger(__name__)
-
 
 class Constraint(ABC):
-    """A predicate a candidate program must satisfy to be accepted."""
+    """An extra acceptance predicate, applied to programs that already pass the goal test."""
 
     @abstractmethod
     def holds(self, program: Program, task: Task, library: Library) -> bool:
         """True if ``program`` satisfies this constraint for ``task``."""
-
-
-class ConsistentWithTraining(Constraint):
-    """Accept a program iff it reproduces the output of every *training* example."""
-
-    def holds(self, program: Program, task: Task, library: Library) -> bool:
-        for i, example in enumerate(task.train):
-            if example.output is None:
-                return False
-            produced = program.evaluate_grid(example.input, library)
-            if produced != example.output:
-                logger.debug(
-                    "inconsistent %s at train[%d]: got %r want %r",
-                    program,
-                    i,
-                    produced,
-                    example.output,
-                )
-                return False
-        return True

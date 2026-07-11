@@ -28,7 +28,7 @@ The two axes never substitute for each other: the corpus axis decides _which tas
 - `score(attempts, test_outputs) → TaskScore` — **pure**: grid comparison, either-of-2-attempts (essentially the existing `score_task`). `predict` + `score` are the only functions that touch test grids. Recording is owned by the _activity_, never by these.
 - `LearnEngine.run(library, all_wake_solutions) → grown library` — sleep. Consumes the whole corpus's wake solutions at once (cross-task compression needs the corpus in view).
 
-Comparison-to-expected exists in exactly two places, one per example level: the `target` signature / `Constraint.holds` (**train** examples, inside search) and `predict`+`score` (**test** examples, in the activity). `Program.evaluate` / `evaluate_grid` are the _interpreter_ (program × grid → value), not comparators, and keep their names.
+Comparison-to-expected exists in exactly two places, one per example level: the `target` signature (**train** examples — the engine's goal test, `sig == target`; there is no `ConsistentWithTraining` constraint — deleted as a redundant, ⊥-incompatible reimplementation of the goal test) and `predict`+`score` (**test** examples, in the activity). A `Constraint` means only an _extra_ inductive-bias filter on goal-test survivors. `Program.evaluate` / `evaluate_grid` are the _interpreter_ (program × grid → value), not comparators, and keep their names.
 
 ---
 
@@ -225,10 +225,12 @@ Two deliberate changes vs. the old CLI: **`analyze-run` is read-side only** (the
 Ordering principles: **leaf dependencies first** · **additive before destructive** (deletions/renames last, tree stays workable throughout) · **cross-fork contact only at named sync points** (the engine/substrate work proceeds in parallel; the forks never edit the same file bodies).
 
 **Phase 0 — Foundations** _(pure, zero-collision)_
+
 1. `core/hashing.py` — `canonical_json` + `hash_id`. Tests: stability, key-order invariance.
-2. `Corpus.content_hash` in `core/dataset.py`. Tests: same content ⇒ same hash; content change ⇒ different; corpus *name* excluded (content-addressed: identical content under two names is the same corpus for caching).
+2. `Corpus.content_hash` in `core/dataset.py`. Tests: same content ⇒ same hash; content change ⇒ different; corpus _name_ excluded (content-addressed: identical content under two names is the same corpus for caching).
 
 **Phase 1 — The run data model** (`execution/model/`)
+
 3. `results.py` — `TaskScore`, `TaskResult`.
 4. The serialization contract, once: `kind` discriminator + params, base-class `from_dict` dispatch (mirrors `Program.from_dict`), generic frozen-dataclass↔dict helper.
 5. `learn_spec.py`.
@@ -239,29 +241,35 @@ Ordering principles: **leaf dependencies first** · **additive before destructiv
 > **🔗 Sync A:** `to_dict`/`from_dict` on the real `SearchEngine`/`Cost`/`Constraint`/`LearnEngine` (engine-fork files). Phase 1 completes against fakes; real wiring is a small follow-up.
 
 **Phase 2 — Scoring + predict** _(mostly additive)_
+
 9. `eval/scoring.py`: parameterize attempts (`k`, default 2, fed from `Config`); `Prediction` type moves in (additively; the `solvers/base` import path dies in Phase 6).
 10. `execution/predict.py` + tests with hand-built programs.
 
 **Phase 3 — The core: `execute`**
+
 11. `execute.py` — artifact layout, `runspec.json` first, `trace.jsonl` streamed + resume, `results.json` last, idempotency, `record_run`, `RunRecord` return; SEARCH branch wired to `SearchEngine.run`.
 12. End-to-end test: tiny task + tiny library → run → cache-hit → resume from partial trace.
 
 > **🔗 Sync B:** the `run(train_examples, …)` signature (engine fork lands it; `execute` consumes it). **🔗 Sync C:** the `LearnEngine.run` interface (needed for step 14).
 
 **Phase 4 — Activities**
+
 13. `run_search.py` (thin).
 14. `run_search_learn.py` — the loop (batch wake, ends with sleep, reset/telemetry params, per-iteration trace) + derived runs via `load_library`.
 15. `analyze_run.py` — read-side basics.
 
 **Phase 5 — Study**
+
 16. `model/study_spec.py` + `run_study.py` (grid via `base_config.with_(...)`, execute-with-cache) + `create_study_report`.
 
 **Phase 6 — Destructive cleanup** _(each its own commit)_
+
 17. Delete `solvers/base.py` (`Solver`) + `eval/runner.py`; consumers of `TaskResult` move to `model/results.py`. _(The `solvers/` → `program_search/` rename is already done.)_
 18. `taskgen/` moves out of `learn/`.
-19. **Audit, then delete `solvers/dsl/`** — the old tree stays on disk until a dedicated comparison pass (old `dsl/` vs the new build: anything missed?) has run. Deleting it is the *last* destructive step, after that audit.
+19. **Audit, then delete `solvers/dsl/`** — the old tree stays on disk until a dedicated comparison pass (old `dsl/` vs the new build: anything missed?) has run. Deleting it is the _last_ destructive step, after that audit.
 
 **Phase 7 — CLI + docs**
+
 20. `cli/` — thin modules per command; presets registry replaces the solver `REGISTRY`.
 21. Docs reconciliation: CLAUDE.md pointers, `ARCHITECTURE-2026-07-09.md` supersede-or-merge, EXPERIMENTS.md overhaul entry.
 22. **Re-pin the behavior locks deliberately** (old locks reference old presets; re-pinning is an explicit, reviewed change) — `make check` green is the final gate.

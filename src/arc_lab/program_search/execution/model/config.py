@@ -24,7 +24,6 @@ from arc_lab.program_search.substrate.library import Library
 def default_registry() -> dict[str, type]:
     """The known component kinds, resolved lazily so mid-refactor modules import late."""
     from arc_lab.program_search.search.budget import Budget
-    from arc_lab.program_search.search.constraints import ConsistentWithTraining
     from arc_lab.program_search.search.search_engine import (
         BeamBottomUpSearchEngine,
         BottomUpSearchEngine,
@@ -35,7 +34,6 @@ def default_registry() -> dict[str, type]:
         BeamBottomUpSearchEngine,
         Budget,
         ProgramSize,
-        ConsistentWithTraining,
         LearnSpec,
     )
     return {component.__name__: component for component in components}
