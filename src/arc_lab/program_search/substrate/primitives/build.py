@@ -16,7 +16,7 @@ reused from `cells.py`. Nothing here is wired into a locked solver; it's the sub
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.core.task import Task
+from arc_lab.core.task import TrainExamples
 from arc_lab.program_search.substrate.library import (
     Closure,
     Library,
@@ -80,7 +80,7 @@ def _build_grid(height: int, width: int, fn: Value) -> Grid:
 
 
 def _build_grid_body_sampler(
-    task: Task, sibling_arg_values: tuple[Value, ...]
+    train_examples: TrainExamples, sibling_arg_values: tuple[Value, ...]
 ) -> tuple[tuple[RawContext, ...], tuple[Value, ...] | None]:
     """``build_grid``'s body search: one context per training-output cell, fully propagated.
 
@@ -92,7 +92,7 @@ def _build_grid_body_sampler(
     """
     contexts: list[RawContext] = []
     target: list[Value] = []
-    for example in task.train:
+    for example in train_examples:
         if example.output is None:
             continue
         cells = example.output.to_list()

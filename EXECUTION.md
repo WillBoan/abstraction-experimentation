@@ -23,7 +23,7 @@ The two axes never substitute for each other: the corpus axis decides _which tas
 
 ## The primitives
 
-- `SearchEngine.run(train_examples, library, constraints, cost) → SearchResult` — the only entry point for searching one task. Takes the task's **train examples only** (not the full `Task`), so blindness to test examples is structural, not a promise. _(Agreed decision; the signature change lands with the engine work. `Cost.of` takes the same `train_examples` for the same reason; `task_id` for logging comes from the caller.)_
+- `SearchEngine.run(train_examples, library, constraints, cost) → SearchResult` — the only entry point for searching one task. Takes the task's **train examples only** (not the full `Task`; the `TrainExamples` alias in `core/task.py`), so blindness to test examples is structural, not a promise. _(**Sync B: DONE.** `Cost.of`, `Constraint.holds`, `extract`, and `BodySampler` take the same `train_examples`; `task_id` for logging comes from the caller.)_
 - `predict(programs, test_inputs, library) → attempts` — **pure**: select the best k programs (ARC: 2 attempts) and apply them to the test inputs via `Program.evaluate_grid`. The apply-to-test step formerly inside `Solver.predict` (the `Solver` class is gone; this function is its surviving functionality).
 - `score(attempts, test_outputs) → TaskScore` — **pure**: grid comparison, either-of-2-attempts (essentially the existing `score_task`). `predict` + `score` are the only functions that touch test grids. Recording is owned by the _activity_, never by these.
 - `LearnEngine.run(library, all_wake_solutions) → grown library` — sleep. Consumes the whole corpus's wake solutions at once (cross-task compression needs the corpus in view).
@@ -250,7 +250,7 @@ Ordering principles: **leaf dependencies first** · **additive before destructiv
 11. `execute.py` — artifact layout, `runspec.json` first, `trace.jsonl` streamed + resume, `results.json` last, idempotency, `record_run`, `RunRecord` return; SEARCH branch wired to `SearchEngine.run`.
 12. End-to-end test: tiny task + tiny library → run → cache-hit → resume from partial trace.
 
-> **🔗 Sync B:** the `run(train_examples, …)` signature (engine fork lands it; `execute` consumes it). **🔗 Sync C:** the `LearnEngine.run` interface (needed for step 14).
+> **🔗 Sync B: DONE** — `run(train_examples, …)` landed across the engine/cost/constraint/sampler seam (2026-07-11). **🔗 Sync C:** the `LearnEngine.run` interface is seeded as the ABC in `learn/learn_engine.py`; concrete engines still to land (needed for step 14).
 
 **Phase 4 — Activities**
 

@@ -12,7 +12,7 @@ import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeAlias
 
 from arc_lab.core.grid import Grid
 
@@ -31,6 +31,12 @@ class Example:
             input=Grid.from_list(d["input"]),
             output=Grid.from_list(out) if out is not None else None,
         )
+
+
+#: A task's train examples — the ONLY task data the search stack receives
+#: (``SearchEngine.run`` / ``Cost.of`` / ``Constraint.holds`` / ``BodySampler``), so
+#: blindness to test examples is structural, not a promise (EXECUTION.md, Sync B).
+TrainExamples: TypeAlias = tuple[Example, ...]
 
 
 @dataclass(frozen=True, slots=True)

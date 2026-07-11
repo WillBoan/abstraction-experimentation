@@ -27,7 +27,7 @@ from arc_lab.core.grid import Grid
 from arc_lab.program_search.substrate.types import GRID, Type, type_to_serializable
 
 if TYPE_CHECKING:
-    from arc_lab.core.task import Task
+    from arc_lab.core.task import TrainExamples
     from arc_lab.program_search.substrate.program import Program
 
 
@@ -72,14 +72,16 @@ PrimitiveImpl: TypeAlias = Callable[..., Value]
 RawContext: TypeAlias = "tuple[Grid, tuple[Value, ...]]"
 
 #: A higher-order primitive's body sampler (ARCHITECTURE.md §7, §11.4):
-#: ``(task, sibling_arg_values) -> (body contexts, aligned body target values | None)``.
+#: ``(train_examples, sibling_arg_values) -> (body contexts, aligned body target values | None)``.
 #: The contexts are where a candidate body is evaluated; a non-``None`` target (index-aligned with
 #: the contexts) enables example *propagation* — extracting just the matching bodies — while
 #: ``None`` falls back to the complete baseline (all typed bodies, §8). ``sibling_arg_values`` is
 #: in the contract for primitives whose contexts depend on their other arguments (``map``/``filter``
 #: sample the evaluated list argument); the engine passes ``()`` until such a primitive lands.
+#: Samplers receive the task's *train examples only* — the blindness seam (EXECUTION.md, Sync B).
 BodySampler: TypeAlias = (
-    "Callable[[Task, tuple[Value, ...]], tuple[tuple[RawContext, ...], tuple[Value, ...] | None]]"
+    "Callable[[TrainExamples, tuple[Value, ...]], "
+    "tuple[tuple[RawContext, ...], tuple[Value, ...] | None]]"
 )
 
 

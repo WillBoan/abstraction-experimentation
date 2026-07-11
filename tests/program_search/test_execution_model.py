@@ -13,7 +13,7 @@ import pytest
 
 from arc_lab.core.dataset import Corpus
 from arc_lab.core.grid import Grid
-from arc_lab.core.task import Example, Task
+from arc_lab.core.task import Example, Task, TrainExamples
 from arc_lab.program_search.execution.model import Config, LearnSpec, RunSpec, TaskResult, TaskScore
 from arc_lab.program_search.execution.model.serde import from_data, to_data
 from arc_lab.program_search.learn.learn_engine import LearnEngine, WakeSolutions
@@ -42,7 +42,7 @@ class FakeEngine(SearchEngine):
     def run(
         self,
         *,
-        task: Task,
+        train_examples: TrainExamples,
         library: Library,
         constraints: tuple[Constraint, ...],
         cost: Cost,
@@ -52,7 +52,7 @@ class FakeEngine(SearchEngine):
 
 @dataclass(frozen=True, slots=True)
 class FakeCost(Cost):
-    def of(self, program: Program, task: Task, library: Library) -> float:
+    def of(self, program: Program, train_examples: TrainExamples, library: Library) -> float:
         return 0.0
 
 

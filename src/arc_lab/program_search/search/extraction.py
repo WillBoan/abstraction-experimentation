@@ -9,7 +9,7 @@ already implies totality on the training contexts — no separate check. Consist
 
 from __future__ import annotations
 
-from arc_lab.core.task import Task
+from arc_lab.core.task import TrainExamples
 
 from ..substrate.library import Library
 from ..substrate.program import Program
@@ -24,7 +24,7 @@ def extract(
     goal_type: Type,
     target: Signature,
     constraints: tuple[Constraint, ...],
-    task: Task,
+    train_examples: TrainExamples,
     library: Library,
 ) -> tuple[Program, ...]:
     """The goal-type programs whose signature equals `target` and pass every constraint, ranked.
@@ -40,7 +40,9 @@ def extract(
         entry
         for entry in pool.items_of_type(goal_type)
         if entry.sig == target
-        and all(constraint.holds(entry.program, task, library) for constraint in constraints)
+        and all(
+            constraint.holds(entry.program, train_examples, library) for constraint in constraints
+        )
     ]
     solutions.sort(key=lambda entry: (entry.cost, entry.program.size(), str(entry.program)))
     return tuple(entry.program for entry in solutions)

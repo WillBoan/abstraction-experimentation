@@ -44,7 +44,7 @@ Search = library × engine × constraints × cost
 
 The content-hashable run identity is `Config` (the bundle), not a separate class; `constraints`/`cost` are passed _into_ the engine as data (values down, never callbacks up), keeping an engine reusable across ablations.
 
-**Blindness seam (agreed, lands with the engine work).** `SearchEngine.run` takes the task's **train examples only** (`run(*, train_examples, library, constraints, cost)`), not the full `Task` — blindness to test examples is structural (a type), not a promise. `Cost.of` takes the same `train_examples`; `task_id` for logging comes from the caller. See [EXECUTION.md](EXECUTION.md).
+**Blindness seam (DONE — Sync B, 2026-07-11).** `SearchEngine.run` takes the task's **train examples only** (`run(*, train_examples, library, constraints, cost)`; the `TrainExamples` alias in `core/task.py`), not the full `Task` — blindness to test examples is structural (a type), not a promise. `Cost.of`, `Constraint.holds`, `extract`, and `BodySampler` take the same `train_examples`; `task_id` for logging comes from the caller. See [EXECUTION.md](EXECUTION.md).
 
 **Components.** `SearchEngine` (`search_engine.py`, frozen dataclass; policies + budget + the `run(...) → SearchResult` entry) · `Pool` (`pool.py`, mutable engine scratch, never hashed; keyed `type → signature → (cheapest program, cost)`) · `SearchResult`/`SearchStats` (`search_result.py`, ranked programs + a frozen byproduct tally) · `Signature` (`signature.py`, §4).
 

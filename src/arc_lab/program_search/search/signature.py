@@ -118,9 +118,7 @@ def compute_function_signature(
     return tuple(values) if any_defined else None
 
 
-def combine_if_signature(
-    cond: Signature, then: Signature, orelse: Signature
-) -> Signature | None:
+def combine_if_signature(cond: Signature, then: Signature, orelse: Signature) -> Signature | None:
     """An ``If`` node's signature, combined from its parts' **cached** signatures (§5.4).
 
     Per context: ``⊥`` if the condition is ``⊥``, else the selected branch's cached value — which is

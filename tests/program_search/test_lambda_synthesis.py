@@ -7,7 +7,7 @@ synthesized* ``Lam`` — culminating in ``build_grid`` solving a size-general ta
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.core.task import Example, Task
+from arc_lab.core.task import Example, Task, TrainExamples
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.context import Context
 from arc_lab.program_search.search.cost import ProgramSize
@@ -51,7 +51,7 @@ def test_build_grid_sampler_aligns_contexts_with_output_cells() -> None:
     output = _transpose(grid)  # 3x2
     task = Task(task_id="t", train=(Example(input=grid, output=output),), test=())
     assert BUILD_GRID.body_sampler is not None
-    contexts, target = BUILD_GRID.body_sampler(task, ())
+    contexts, target = BUILD_GRID.body_sampler(task.train, ())
     assert target is not None and len(contexts) == len(target) == 6
     # Row-major over the *output* grid, scope binding = (row, col) — §3 ordering.
     assert contexts[0] == (grid, (0, 0))
@@ -78,10 +78,12 @@ def _paint(grid: Grid, fn: Value) -> Grid:
     return Grid.from_list([[color] * grid.width for _ in range(grid.height)])
 
 
-def _paint_contexts(task: Task) -> tuple[tuple[RawContext, ...], tuple[Value, ...]]:
+def _paint_contexts(
+    train_examples: TrainExamples,
+) -> tuple[tuple[RawContext, ...], tuple[Value, ...]]:
     contexts: list[RawContext] = []
     target: list[Value] = []
-    for example in task.train:
+    for example in train_examples:
         if example.output is None:
             continue
         contexts.append((example.input, (0,)))
@@ -90,15 +92,15 @@ def _paint_contexts(task: Task) -> tuple[tuple[RawContext, ...], tuple[Value, ..
 
 
 def _propagated_sampler(
-    task: Task, sibling_arg_values: tuple[Value, ...]
+    train_examples: TrainExamples, sibling_arg_values: tuple[Value, ...]
 ) -> tuple[tuple[RawContext, ...], tuple[Value, ...] | None]:
-    return _paint_contexts(task)
+    return _paint_contexts(train_examples)
 
 
 def _baseline_sampler(
-    task: Task, sibling_arg_values: tuple[Value, ...]
+    train_examples: TrainExamples, sibling_arg_values: tuple[Value, ...]
 ) -> tuple[tuple[RawContext, ...], tuple[Value, ...] | None]:
-    contexts, _ = _paint_contexts(task)
+    contexts, _ = _paint_contexts(train_examples)
     return contexts, None  # no derivable target: the complete baseline carries the search (§8)
 
 
@@ -127,7 +129,10 @@ def _run_paint(sampler: BodySampler) -> SearchResult:
     )
     engine = _engine(max_depth=3, constant_sources=("finite-enumerate",))
     return engine.run(
-        task=task, library=_paint_primitive(sampler), constraints=(), cost=ProgramSize()
+        train_examples=task.train,
+        library=_paint_primitive(sampler),
+        constraints=(),
+        cost=ProgramSize(),
     )
 
 
@@ -164,7 +169,7 @@ def test_build_grid_solves_size_general_transpose() -> None:
         test=(),
     )
     result = _engine(max_depth=3).run(
-        task=task, library=BUILD_LIBRARY, constraints=(), cost=ProgramSize()
+        train_examples=task.train, library=BUILD_LIBRARY, constraints=(), cost=ProgramSize()
     )
     assert result.stats.solved
     # build_grid(width(input), height(input), lam(lam(read(input, $0, $1)))) — §3: $1=row, $0=col.
@@ -194,7 +199,7 @@ def test_enumerate_is_memoized_within_a_run() -> None:
     grid = Grid.from_list([[1, 2], [3, 4]])
     task = Task(task_id="m", train=(Example(input=grid, output=grid),), test=())
     engine = _engine(max_depth=2)
-    state = _RunState(task=task, library=BUILD_LIBRARY, cost=ProgramSize())
+    state = _RunState(train_examples=task.train, library=BUILD_LIBRARY, cost=ProgramSize())
     contexts = (Context(grid),)
 
     first = engine._enumerate(Scope(()), contexts, engine.budget, state)

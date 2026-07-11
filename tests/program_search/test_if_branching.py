@@ -114,7 +114,9 @@ def _run(library: Library) -> SearchResult:
         polymorphism_instantiation="monomorphize",
         budget=Budget(max_depth=3, max_arity=1, max_pool=200),
     )
-    return engine.run(task=_TASK, library=library, constraints=(), cost=ProgramSize())
+    return engine.run(
+        train_examples=_TASK.train, library=library, constraints=(), cost=ProgramSize()
+    )
 
 
 def test_total_branching_solves_with_the_if_token() -> None:

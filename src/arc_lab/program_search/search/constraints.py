@@ -14,9 +14,8 @@ constraint holds) and run **after** the goal test, on survivors only — an
 implementation may therefore assume it receives train-consistent programs. The
 default is no constraints (``Config.constraints = ()``).
 
-(When the blindness seam lands — EXECUTION.md, Sync B — ``holds`` follows it:
-``task`` becomes ``train_examples``, since constraints are train-side machinery and
-must be structurally blind to test grids, like ``Cost.of``.)
+Constraints receive the task's *train examples only* — they are train-side
+machinery, structurally blind to test grids, like ``Cost.of`` (EXECUTION.md, Sync B).
 """
 
 from __future__ import annotations
@@ -25,7 +24,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from arc_lab.core.task import Task
+    from arc_lab.core.task import TrainExamples
     from arc_lab.program_search.substrate.library import Library
     from arc_lab.program_search.substrate.program import Program
 
@@ -34,5 +33,5 @@ class Constraint(ABC):
     """An extra acceptance predicate, applied to programs that already pass the goal test."""
 
     @abstractmethod
-    def holds(self, program: Program, task: Task, library: Library) -> bool:
-        """True if ``program`` satisfies this constraint for ``task``."""
+    def holds(self, program: Program, train_examples: TrainExamples, library: Library) -> bool:
+        """True if ``program`` satisfies this constraint for the task's train examples."""

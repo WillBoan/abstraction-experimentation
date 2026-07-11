@@ -18,7 +18,7 @@ from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import Literal, TypeAlias
 
-from arc_lab.core.task import Task
+from arc_lab.core.task import TrainExamples
 
 from ..substrate.library import Library, Primitive, Value
 from ..substrate.program import If, Lam, PrimRef, Program
@@ -72,32 +72,37 @@ _MemoKey: TypeAlias = "tuple[Scope, tuple[Context, ...], Budget]"
 class _RunState:
     """The inputs and mutable scratch of a single ``run`` — never part of the memoization key (§9)."""
 
-    task: Task
+    train_examples: TrainExamples
     library: Library
     cost: Cost
     universe: tuple[Type, ...] = ()  # the bounded-polymorphism monotype universe (§6.2)
     tally: _Tally = field(default_factory=_Tally)
     counter: itertools.count[int] = field(default_factory=itertools.count)
     #: Completed ``_enumerate`` pools by ``(scope, contexts, budget)``. Per-run (never on the
-    #: engine), so the fixed ``task`` a ``body_sampler`` reads cannot leak across runs. Cached
-    #: pools are treated as read-only by every caller.
+    #: engine), so the fixed ``train_examples`` a ``body_sampler`` reads cannot leak across runs.
+    #: Cached pools are treated as read-only by every caller.
     memo: dict[_MemoKey, Pool] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class SearchEngine(ABC):
-    """The reusable machinery that performs a program search."""
+    """The reusable machinery that performs a program search.
+
+    ``run`` takes the task's **train examples only** (never the full ``Task``), so
+    blindness to test examples is structural, not a promise (EXECUTION.md, Sync B).
+    ``task_id`` for logging comes from the caller.
+    """
 
     @abstractmethod
     def run(
         self,
         *,
-        task: Task,
+        train_examples: TrainExamples,
         library: Library,
         constraints: tuple[Constraint, ...],
         cost: Cost,
     ) -> SearchResult:
-        """Search for programs solving ``task``, ranked cheapest-first."""
+        """Search for programs consistent with ``train_examples``, ranked cheapest-first."""
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -115,12 +120,12 @@ class BottomUpSearchEngine(SearchEngine):
     def run(
         self,
         *,
-        task: Task,
+        train_examples: TrainExamples,
         library: Library,
         constraints: tuple[Constraint, ...],
         cost: Cost,
     ) -> SearchResult:
-        train = [(ex.input, ex.output) for ex in task.train if ex.output is not None]
+        train = [(ex.input, ex.output) for ex in train_examples if ex.output is not None]
         contexts = tuple(Context(grid) for grid, _ in train)
         target: Signature = tuple(output for _, output in train)
         universe = (
@@ -128,11 +133,13 @@ class BottomUpSearchEngine(SearchEngine):
             if self.polymorphism_instantiation == "bounded"
             else ()
         )
-        state = _RunState(task=task, library=library, cost=cost, universe=universe)
+        state = _RunState(
+            train_examples=train_examples, library=library, cost=cost, universe=universe
+        )
 
         pool = self._enumerate(Scope(()), contexts, self.budget, state)
         # ARC task outputs are grids; a general driver would derive the goal type from the task.
-        solutions = extract(pool, GRID, target, constraints, task, library)
+        solutions = extract(pool, GRID, target, constraints, train_examples, library)
 
         return SearchResult(
             ranked_programs=solutions,
@@ -227,7 +234,7 @@ class BottomUpSearchEngine(SearchEngine):
         for hole in primitive.param_types:
             if not isinstance(hole, ArrowType) or free_type_vars(hole):
                 continue
-            raw_contexts, raw_target = primitive.body_sampler(state.task, ())
+            raw_contexts, raw_target = primitive.body_sampler(state.train_examples, ())
             if not raw_contexts:
                 continue
             body_contexts = tuple(Context(grid, binding) for grid, binding in raw_contexts)
@@ -338,7 +345,7 @@ class BottomUpSearchEngine(SearchEngine):
         if not free_type_vars(output_type) and not signature_matches_type(signature, output_type):
             state.tally.pruned += 1
             return
-        cost = state.cost.of(program, state.task, state.library)
+        cost = state.cost.of(program, state.train_examples, state.library)
         if not pool.add_dedup(vtype, signature, program, cost):
             state.tally.deduped += 1
 
@@ -372,7 +379,9 @@ class BottomUpSearchEngine(SearchEngine):
         for program in pool.of_type(vtype):
             try:
                 values.append(
-                    program.evaluate(reference.input_grid, state.library, scope=reference.scope_binding)
+                    program.evaluate(
+                        reference.input_grid, state.library, scope=reference.scope_binding
+                    )
                 )
             except Exception:  # a program that errors at the reference context yields no sample
                 continue
