@@ -12,7 +12,6 @@ policy (§6.2), and memoized recursion (§9).
 
 from __future__ import annotations
 
-import dataclasses
 import itertools
 from abc import ABC, abstractmethod
 from collections.abc import Iterator, Sequence
@@ -102,19 +101,15 @@ class SearchEngine(ABC):
         library: Library,
         constraints: tuple[Constraint, ...],
         cost: Cost,
+        budget: Budget,
     ) -> SearchResult:
-        """Search for programs consistent with ``train_examples``, ranked cheapest-first."""
+        """Search for programs consistent with ``train_examples``, ranked cheapest-first.
 
-    def with_budget(self, budget: Budget) -> SearchEngine:
-        """This engine with its ``budget`` replaced — how a study derives its grid cells.
-
-        The budget lives on the engine (it is engine configuration, not ``Config``-level
-        data), so the override is an engine concern. An engine without a ``budget`` field
-        fails loudly rather than silently ignoring the override.
+        ``budget`` is an argument, not an engine field: the engine is *machinery* (the
+        algorithm and its capability policies — HOW to search); the budget is per-run
+        *data* (HOW MUCH resource), varied independently of the engine — e.g. across a
+        study grid's cells. It lives on ``Config`` alongside library/constraints/cost.
         """
-        if not any(f.name == "budget" for f in dataclasses.fields(self)):
-            raise TypeError(f"{type(self).__name__} has no budget field to override")
-        return dataclasses.replace(self, **{"budget": budget})
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -124,7 +119,6 @@ class BottomUpSearchEngine(SearchEngine):
     constant_sources: tuple[ConstantSource, ...]
     function_hole_fill_mode: FunctionHoleFillMode
     polymorphism_instantiation: PolymorphismInstantiation
-    budget: Budget
     #: Argument values sampled per parameter type when deduping a function value by behaviour (§8).
     #: The probe set is the cartesian product across parameters, so cost grows as size**arity.
     function_sample_size: int = 4
@@ -136,12 +130,13 @@ class BottomUpSearchEngine(SearchEngine):
         library: Library,
         constraints: tuple[Constraint, ...],
         cost: Cost,
+        budget: Budget,
     ) -> SearchResult:
         train = [(ex.input, ex.output) for ex in train_examples if ex.output is not None]
         contexts = tuple(Context(grid) for grid, _ in train)
         target: Signature = tuple(output for _, output in train)
         universe = (
-            monotype_universe(library, self.budget.max_depth)
+            monotype_universe(library, budget.max_depth)
             if self.polymorphism_instantiation == "bounded"
             else ()
         )
@@ -149,7 +144,7 @@ class BottomUpSearchEngine(SearchEngine):
             train_examples=train_examples, library=library, cost=cost, universe=universe
         )
 
-        pool = self._enumerate(Scope(()), contexts, self.budget, state)
+        pool = self._enumerate(Scope(()), contexts, budget, state)
         # ARC task outputs are grids; a general driver would derive the goal type from the task.
         solutions = extract(pool, GRID, target, constraints, train_examples, library)
 

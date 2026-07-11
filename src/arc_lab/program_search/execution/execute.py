@@ -100,6 +100,7 @@ def _run_task(task: Task, config: Config) -> dict[str, object]:
             library=config.library,
             constraints=config.constraints,
             cost=config.cost,
+            budget=config.budget,
         )
         prediction = predict(
             result.ranked_programs,
@@ -283,6 +284,7 @@ def _wake(
             library=library,
             constraints=config.constraints,
             cost=config.cost,
+            budget=config.budget,
         )
         considered += result.stats.considered
         if result.ranked_programs:

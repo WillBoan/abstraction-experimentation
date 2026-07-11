@@ -35,12 +35,14 @@ def _corpus(*tasks: Task) -> Corpus:
     return Corpus.of("exec-test", list(tasks))
 
 
+_BUDGET = Budget(max_depth=2, max_arity=2, max_pool=200)
+
+
 def _real_engine() -> BottomUpSearchEngine:
     return BottomUpSearchEngine(
         constant_sources=(),
         function_hole_fill_mode="none",
         polymorphism_instantiation="monomorphize",
-        budget=Budget(max_depth=2, max_arity=2, max_pool=200),
     )
 
 
@@ -57,6 +59,7 @@ class CountingEngine(SearchEngine):
         library: Library,
         constraints: tuple[Constraint, ...],
         cost: Cost,
+        budget: Budget,
     ) -> SearchResult:
         CountingEngine.calls.append(str(train_examples[0].input.to_list()))
         return SearchResult(ranked_programs=(), stats=SearchStats(engine="CountingEngine"))
@@ -71,13 +74,14 @@ class BoomEngine(SearchEngine):
         library: Library,
         constraints: tuple[Constraint, ...],
         cost: Cost,
+        budget: Budget,
     ) -> SearchResult:
         raise RuntimeError("search exploded")
 
 
 def test_execute_end_to_end_search_run(tmp_path: Path) -> None:
     spec = RunSpec(
-        config=Config(library=D4_LIBRARY, search_engine=_real_engine()),
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
         corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
     )
     record = execute(spec, runs_root=tmp_path)
@@ -103,7 +107,7 @@ def test_execute_end_to_end_search_run(tmp_path: Path) -> None:
 def test_execute_is_idempotent(tmp_path: Path) -> None:
     CountingEngine.calls.clear()
     spec = RunSpec(
-        config=Config(library=D4_LIBRARY, search_engine=CountingEngine()),
+        config=Config(library=D4_LIBRARY, search_engine=CountingEngine(), budget=_BUDGET),
         corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
     )
     execute(spec, runs_root=tmp_path)
@@ -116,7 +120,7 @@ def test_execute_is_idempotent(tmp_path: Path) -> None:
 def test_execute_resumes_from_partial_trace_with_torn_line(tmp_path: Path) -> None:
     CountingEngine.calls.clear()
     spec = RunSpec(
-        config=Config(library=D4_LIBRARY, search_engine=CountingEngine()),
+        config=Config(library=D4_LIBRARY, search_engine=CountingEngine(), budget=_BUDGET),
         corpus=_corpus(_flip_task("t1", _IN, _FLIPPED), _flip_task("t2", _IN2, _FLIPPED2)),
     )
     first = execute(spec, runs_root=tmp_path)
@@ -137,7 +141,7 @@ def test_execute_resumes_from_partial_trace_with_torn_line(tmp_path: Path) -> No
 
 def test_execute_isolates_a_broken_task(tmp_path: Path) -> None:
     spec = RunSpec(
-        config=Config(library=D4_LIBRARY, search_engine=BoomEngine()),
+        config=Config(library=D4_LIBRARY, search_engine=BoomEngine(), budget=_BUDGET),
         corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
     )
     record = execute(spec, runs_root=tmp_path)

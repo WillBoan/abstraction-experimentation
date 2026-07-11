@@ -112,10 +112,13 @@ def _run(library: Library) -> SearchResult:
         constant_sources=(),
         function_hole_fill_mode="none",
         polymorphism_instantiation="monomorphize",
-        budget=Budget(max_depth=3, max_arity=1, max_pool=200),
     )
     return engine.run(
-        train_examples=_TASK.train, library=library, constraints=(), cost=ProgramSize()
+        train_examples=_TASK.train,
+        library=library,
+        constraints=(),
+        cost=ProgramSize(),
+        budget=Budget(max_depth=3, max_arity=1, max_pool=200),
     )
 
 

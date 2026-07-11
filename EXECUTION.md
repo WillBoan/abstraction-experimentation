@@ -2,7 +2,7 @@
 
 How the three activities (**SEARCH**, **SEARCH + LEARN**, **STUDY**) are composed from the execution layer's primitives. Sibling to [ARCHITECTURE.md](ARCHITECTURE.md) (the search-engine design); code lands under `src/arc_lab/program_search/execution/` (the `solvers/program_search/` → `program_search/` rename is **done**; the old `solvers/dsl/` stays on disk until the end-of-overhaul audit — see _Implementation order_).
 
-Status: agreed design, 2026-07-11. There is no `Solver` / `ProgramSearchSolver` class — the execution layer drives `Config` (`library × search_engine × constraints × cost × learn?`) directly.
+Status: agreed design, 2026-07-11. There is no `Solver` / `ProgramSearchSolver` class — the execution layer drives `Config` (`library × search_engine × budget × constraints × cost × learn?`) directly.
 
 ## Terminology
 
@@ -23,7 +23,7 @@ The two axes never substitute for each other: the corpus axis decides _which tas
 
 ## The primitives
 
-- `SearchEngine.run(train_examples, library, constraints, cost) → SearchResult` — the only entry point for searching one task. Takes the task's **train examples only** (not the full `Task`; the `TrainExamples` alias in `core/task.py`), so blindness to test examples is structural, not a promise. _(**Sync B: DONE.** `Cost.of`, `Constraint.holds`, `extract`, and `BodySampler` take the same `train_examples`; `task_id` for logging comes from the caller.)_
+- `SearchEngine.run(train_examples, library, constraints, cost, budget) → SearchResult` — the only entry point for searching one task. Takes the task's **train examples only** (not the full `Task`; the `TrainExamples` alias in `core/task.py`), so blindness to test examples is structural, not a promise. `budget` is an *argument*, not an engine field: the engine is machinery (HOW — algorithm + capability policies); the budget is per-run data (HOW MUCH), varied independently (e.g. across a study grid) and living on `Config`. _(**Sync B: DONE.** `Cost.of`, `Constraint.holds`, `extract`, and `BodySampler` take the same `train_examples`; `task_id` for logging comes from the caller.)_
 - `predict(programs, test_inputs, library) → attempts` — **pure**: select the best k programs (ARC: 2 attempts) and apply them to the test inputs via `Program.evaluate_grid`. The apply-to-test step formerly inside `Solver.predict` (the `Solver` class is gone; this function is its surviving functionality).
 - `score(attempts, test_outputs) → TaskScore` — **pure**: grid comparison, either-of-2-attempts (essentially the existing `score_task`). `predict` + `score` are the only functions that touch test grids. Recording is owned by the _activity_, never by these.
 - `LearnEngine.run(library, solutions: tuple[SolvedTask, ...]) → LearnOutcome` — sleep. Consumes the whole corpus's wake solutions at once (cross-task compression needs the corpus in view). `SolvedTask` = (annotated task, found program), in `analysis/compression.py`. `LearnOutcome` = grown `library` + `added` primitives + `rewritten` solutions + `description_length` (the MDL objective — deliberately **not** named "score": `score_task` is the unrelated test-example scorer), with a derived `converged` (nothing added) that drives `early_stop`. A `LearnEngine` is a frozen dataclass: it is run identity, hashed via the component serde.
@@ -79,7 +79,8 @@ Three kinds of type, one tree each. **Specs** are input identity (frozen, conten
 RunSpec                                      # the recorded-run atom — exactly ONE corpus
   ├─ config: Config                          # the machinery (HOW)
   │   ├─ library: Library ↗                  #   content-addressed; provenance (hand-written vs grown) is NOT identity
-  │   ├─ search_engine: SearchEngine ↗       #   incl. its Budget + capability policies
+  │   ├─ search_engine: SearchEngine ↗       #   the machinery: algorithm + capability policies (HOW)
+  │   ├─ budget: Budget ↗                    #   the resource caps (HOW MUCH) — per-run data, flows into run() as an arg
   │   ├─ constraints: tuple[Constraint ↗, ...]
   │   ├─ cost: Cost ↗
   │   ├─ attempts_per_test: int = 2          #   k programs tried per test input (official ARC: 2); flows to predict()
@@ -94,8 +95,7 @@ RunSpec                                      # the recorded-run atom — exactly
 
 StudySpec                                    # orchestration, not a run — generates RunSpecs
   ├─ base_config: Config                     #   library = L1, learn = LearnSpec; grid cells derive via
-  ├─ budgets: tuple[Budget ↗, ...]           #   base_config.with_(library=Lᵢ, learn=None,
-  │                                          #     search_engine=engine.with_budget(bⱼ)) — budget lives ON the engine
+  ├─ budgets: tuple[Budget ↗, ...]           #   base_config.with_(library=Lᵢ, budget=bⱼ, learn=None)
   ├─ train_corpus: Corpus ↗
   ├─ eval_corpus: Corpus ↗
   └─ target_abstractions: tuple[(name, Program ↗), ...]   # templates over starting primitives → L3
@@ -138,7 +138,7 @@ arc-lab run-study    ──▶  run_study(study_spec)             ──▶  │
                             ├─ runs/<run_id>/results.json present? → cached RunRecord (no execution)
                             ├─ config.learn is None  (SEARCH run):
                             │    for task in corpus:
-                            │      SearchEngine.run(task.train_examples, library, constraints, cost)
+                            │      SearchEngine.run(task.train_examples, library, constraints, cost, budget)
                             │      predict(programs, test_inputs, library, k=config.attempts_per_test)
                             │      score_task(attempts, test_outputs) → TaskScore
                             │      → TaskResult row → trace.jsonl (streamed; resumable)
@@ -265,7 +265,7 @@ Ordering principles: **leaf dependencies first** · **additive before destructiv
 
 **Phase 5 — Study: DONE (2026-07-11)**
 
-16. `model/study_spec.py` (`StudySpec` + `TargetAbstraction`; provenance `to_dict`, no `from_dict` — same rationale as `RunSpec`) + `run_study.py` (grid via `base_config.with_(library=Lᵢ, learn=None, search_engine=engine.with_budget(bⱼ))`, execute-with-cache; `StudyResult` = learn activity + `{L1,L2,L3}` + `GridCell → RunRecord`) + `create_study_report` (pure read: behavioral check via probe-based semantic equivalence — identical templates short-circuit, else both impls compared over typed probe values under type-matched argument permutations, cap recorded as `probe_cap`; solve-rate grid; `speedup_vs_L1` effort rows; per-library×budget transfer rows).
+16. `model/study_spec.py` (`StudySpec` + `TargetAbstraction`; provenance `to_dict`, no `from_dict` — same rationale as `RunSpec`) + `run_study.py` (grid via `base_config.with_(library=Lᵢ, budget=bⱼ, learn=None)` — budget moved from engine field to `Config` field + `run()` arg (machinery vs data), execute-with-cache; `StudyResult` = learn activity + `{L1,L2,L3}` + `GridCell → RunRecord`) + `create_study_report` (pure read: behavioral check via probe-based semantic equivalence — identical templates short-circuit, else both impls compared over typed probe values under type-matched argument permutations, cap recorded as `probe_cap`; solve-rate grid; `speedup_vs_L1` effort rows; per-library×budget transfer rows).
 
 **Phase 6 — Destructive cleanup** _(each its own commit)_
 

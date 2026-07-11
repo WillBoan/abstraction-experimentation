@@ -31,20 +31,26 @@ _TRANSPOSE = Primitive(name="transpose", param_types=(GRID,), return_type=GRID, 
 _EMPTY = Library(name="empty", primitives=())
 _GEO = Library(name="geo", primitives=(_TRANSPOSE,))
 
+# One engine, many budgets: the budget is per-run data, not engine machinery.
+_ENGINE = BottomUpSearchEngine(
+    constant_sources=(),
+    function_hole_fill_mode="none",
+    polymorphism_instantiation="monomorphize",
+)
 
-def _bottom_up(max_depth: int) -> BottomUpSearchEngine:
-    return BottomUpSearchEngine(
-        constant_sources=(),
-        function_hole_fill_mode="none",
-        polymorphism_instantiation="monomorphize",
-        budget=Budget(max_depth=max_depth, max_arity=1, max_pool=100),
-    )
+
+def _budget(max_depth: int, max_arity: int = 1) -> Budget:
+    return Budget(max_depth=max_depth, max_arity=max_arity, max_pool=100)
 
 
 def test_solves_identity_with_the_input_leaf() -> None:
     task = Task(task_id="id", train=(Example(input=_GRID, output=_GRID),), test=())
-    result = _bottom_up(max_depth=1).run(
-        train_examples=task.train, library=_EMPTY, constraints=(), cost=ProgramSize()
+    result = _ENGINE.run(
+        train_examples=task.train,
+        library=_EMPTY,
+        constraints=(),
+        cost=ProgramSize(),
+        budget=_budget(max_depth=1),
     )
     assert result.stats.solved
     assert result.ranked_programs == (Input(),)
@@ -52,8 +58,12 @@ def test_solves_identity_with_the_input_leaf() -> None:
 
 def test_solves_a_single_primitive_composition() -> None:
     task = Task(task_id="t", train=(Example(input=_GRID, output=_transpose(_GRID)),), test=())
-    result = _bottom_up(max_depth=2).run(
-        train_examples=task.train, library=_GEO, constraints=(), cost=ProgramSize()
+    result = _ENGINE.run(
+        train_examples=task.train,
+        library=_GEO,
+        constraints=(),
+        cost=ProgramSize(),
+        budget=_budget(max_depth=2),
     )
     assert result.stats.solved
     assert Apply(primitive="transpose", args=(Input(),)) in result.ranked_programs
@@ -61,8 +71,12 @@ def test_solves_a_single_primitive_composition() -> None:
 
 def test_unsolvable_within_the_vocabulary_returns_nothing() -> None:
     task = Task(task_id="t", train=(Example(input=_GRID, output=_transpose(_GRID)),), test=())
-    result = _bottom_up(max_depth=2).run(
-        train_examples=task.train, library=_EMPTY, constraints=(), cost=ProgramSize()
+    result = _ENGINE.run(
+        train_examples=task.train,
+        library=_EMPTY,
+        constraints=(),
+        cost=ProgramSize(),
+        budget=_budget(max_depth=2),
     )
     assert not result.stats.solved
     assert result.ranked_programs == ()
@@ -86,17 +100,12 @@ _HCONCAT = Primitive(
 def test_solves_with_a_variadic_primitive() -> None:
     doubled = _hconcat(_GRID, _GRID)  # 2x4
     task = Task(task_id="v", train=(Example(input=_GRID, output=doubled),), test=())
-    engine = BottomUpSearchEngine(
-        constant_sources=(),
-        function_hole_fill_mode="none",
-        polymorphism_instantiation="monomorphize",
-        budget=Budget(max_depth=2, max_arity=2, max_pool=100),
-    )
-    result = engine.run(
+    result = _ENGINE.run(
         train_examples=task.train,
         library=Library(name="concat", primitives=(_HCONCAT,)),
         constraints=(),
         cost=ProgramSize(),
+        budget=_budget(max_depth=2, max_arity=2),
     )
     assert result.stats.solved
     assert Apply(primitive="hconcat", args=(Input(), Input())) in result.ranked_programs
@@ -110,10 +119,13 @@ def test_solves_under_every_polymorphism_policy() -> None:
             constant_sources=(),
             function_hole_fill_mode="none",
             polymorphism_instantiation=policy,
-            budget=Budget(max_depth=2, max_arity=1, max_pool=100),
         )
         result = engine.run(
-            train_examples=task.train, library=_GEO, constraints=(), cost=ProgramSize()
+            train_examples=task.train,
+            library=_GEO,
+            constraints=(),
+            cost=ProgramSize(),
+            budget=_budget(max_depth=2),
         )
         assert Apply(primitive="transpose", args=(Input(),)) in result.ranked_programs
 
@@ -147,13 +159,13 @@ def test_point_free_higher_order_fill_via_a_primref() -> None:
         constant_sources=(),
         function_hole_fill_mode="point-free",
         polymorphism_instantiation="monomorphize",
-        budget=Budget(max_depth=2, max_arity=1, max_pool=100),
     )
     result = engine.run(
         train_examples=task.train,
         library=Library(name="ho", primitives=(_TWICE, _ROT90)),
         constraints=(),
         cost=ProgramSize(),
+        budget=_budget(max_depth=2),
     )
     assert result.stats.solved
     assert Apply(primitive="twice", args=(PrimRef(name="rot90"), Input())) in result.ranked_programs
@@ -165,8 +177,13 @@ def test_beam_engine_also_solves() -> None:
         constant_sources=(),
         function_hole_fill_mode="none",
         polymorphism_instantiation="monomorphize",
-        budget=Budget(max_depth=2, max_arity=1, max_pool=100),
         beam_width=50,
     )
-    result = engine.run(train_examples=task.train, library=_GEO, constraints=(), cost=ProgramSize())
+    result = engine.run(
+        train_examples=task.train,
+        library=_GEO,
+        constraints=(),
+        cost=ProgramSize(),
+        budget=_budget(max_depth=2),
+    )
     assert Apply(primitive="transpose", args=(Input(),)) in result.ranked_programs

@@ -38,7 +38,7 @@ Search = library × engine × constraints × cost
 ```
 
 - **`library`** — the vocabulary (bag of typed `Primitive`s, given + invented). SEARCH-SPACE.md's Table-A surface; a slice of the full `Library`.
-- **`engine`** — reusable machinery: the recursive enumerator, its capability **policies**, and its **budget**. A sum type (`BottomUpSearchEngine`, `BeamBottomUpSearchEngine`, …); direction is intrinsic to the subclass.
+- **`engine`** — reusable machinery: the recursive enumerator and its capability **policies** (HOW to search). A sum type (`BottomUpSearchEngine`, `BeamBottomUpSearchEngine`, …); direction is intrinsic to the subclass. The **budget** is deliberately *not* an engine field: it is per-run data (HOW MUCH resource), living on `Config` and flowing into `run(...)` as an argument — a study grid varies it while the engine stays fixed.
 - **`constraints`** — the _filter_: a tuple of **extra** `Constraint`s (conjoined, AND), applied at extraction (§5.8). Consistency-with-training is **not** one of them — it is expressed structurally as the `target` signature (`sig == target`), so there is no `ConsistentWithTraining` in the tuple and no double-application. `constraints` is empty by default and carries only inductive-bias filters (e.g. output-shape priors).
 - **`cost`** — the _rank_: a single `Cost` (compose via `LexicographicCost`/`WeightedCost`, never a bare tuple).
 
@@ -46,7 +46,7 @@ The content-hashable run identity is `Config` (the bundle), not a separate class
 
 **Blindness seam (DONE — Sync B, 2026-07-11).** `SearchEngine.run` takes the task's **train examples only** (`run(*, train_examples, library, constraints, cost)`; the `TrainExamples` alias in `core/task.py`), not the full `Task` — blindness to test examples is structural (a type), not a promise. `Cost.of`, `Constraint.holds`, `extract`, and `BodySampler` take the same `train_examples`; `task_id` for logging comes from the caller. See [EXECUTION.md](EXECUTION.md).
 
-**Components.** `SearchEngine` (`search_engine.py`, frozen dataclass; policies + budget + the `run(...) → SearchResult` entry) · `Pool` (`pool.py`, mutable engine scratch, never hashed; keyed `type → signature → (cheapest program, cost)`) · `SearchResult`/`SearchStats` (`search_result.py`, ranked programs + a frozen byproduct tally) · `Signature` (`signature.py`, §4).
+**Components.** `SearchEngine` (`search_engine.py`, frozen dataclass; policies + the `run(..., budget) → SearchResult` entry) · `Pool` (`pool.py`, mutable engine scratch, never hashed; keyed `type → signature → (cheapest program, cost)`) · `SearchResult`/`SearchStats` (`search_result.py`, ranked programs + a frozen byproduct tally) · `Signature` (`signature.py`, §4).
 
 ---
 
@@ -91,7 +91,7 @@ Supporting types:
 
 ```python
 contexts  = tuple((ex.input, ()) for ex in task.train)
-pool      = self._enumerate(Scope(()), contexts, self.budget)
+pool      = self._enumerate(Scope(()), contexts, budget)    # budget is a run() ARG, not an engine field
 target    = tuple(ex.output for ex in task.train)          # a total Signature
 goal_type = task.output_type                               # GRID for ARC; not assumed by the engine
 solutions = extract(pool, goal_type, target, self.constraints, task, library)   # §5.8

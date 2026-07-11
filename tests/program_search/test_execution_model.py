@@ -18,6 +18,7 @@ from arc_lab.program_search.analysis.compression import SolvedTask
 from arc_lab.program_search.execution.model import Config, LearnSpec, RunSpec, TaskResult, TaskScore
 from arc_lab.program_search.execution.model.serde import from_data, to_data
 from arc_lab.program_search.learn.learn_engine import LearnEngine, LearnOutcome
+from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.constraints import Constraint
 from arc_lab.program_search.search.cost import Cost
 from arc_lab.program_search.search.search_engine import SearchEngine
@@ -47,6 +48,7 @@ class FakeEngine(SearchEngine):
         library: Library,
         constraints: tuple[Constraint, ...],
         cost: Cost,
+        budget: Budget,
     ) -> SearchResult:
         return SearchResult(ranked_programs=(), stats=SearchStats(engine="FakeEngine"))
 
@@ -64,14 +66,16 @@ class FakeLearnEngine(LearnEngine):
 
 
 REGISTRY: dict[str, type] = {
-    cls.__name__: cls for cls in (FakeInner, FakeEngine, FakeCost, FakeLearnEngine, LearnSpec)
+    cls.__name__: cls
+    for cls in (FakeInner, FakeEngine, FakeCost, FakeLearnEngine, LearnSpec, Budget)
 }
 
 _LIBRARY = D4_LIBRARY
+_BUDGET = Budget(max_depth=2, max_arity=2, max_pool=100)
 
 
 def _config(**overrides: object) -> Config:
-    base = Config(library=_LIBRARY, search_engine=FakeEngine(), cost=FakeCost())
+    base = Config(library=_LIBRARY, search_engine=FakeEngine(), budget=_BUDGET, cost=FakeCost())
     return base.with_(**overrides) if overrides else base
 
 
@@ -145,6 +149,12 @@ def test_machinery_changes_move_run_id() -> None:
     assert (
         base.run_id
         != RunSpec(config=_config(search_engine=FakeEngine(depth=9)), corpus=corpus).run_id
+    )
+    assert (
+        base.run_id
+        != RunSpec(
+            config=_config(budget=Budget(max_depth=9, max_arity=2, max_pool=100)), corpus=corpus
+        ).run_id
     )
 
 

@@ -32,15 +32,16 @@ def _transpose(grid: Grid) -> Grid:
     return Grid.from_list([list(col) for col in zip(*grid.to_list(), strict=True)])
 
 
-def _engine(
-    max_depth: int, constant_sources: tuple[ConstantSource, ...] = ()
-) -> BottomUpSearchEngine:
+def _engine(constant_sources: tuple[ConstantSource, ...] = ()) -> BottomUpSearchEngine:
     return BottomUpSearchEngine(
         constant_sources=constant_sources,
         function_hole_fill_mode="lambda-synthesis",
         polymorphism_instantiation="monomorphize",
-        budget=Budget(max_depth=max_depth, max_arity=1, max_pool=500),
     )
+
+
+def _budget(max_depth: int) -> Budget:
+    return Budget(max_depth=max_depth, max_arity=1, max_pool=500)
 
 
 # -- the body_sampler substrate field (§11.4) ------------------------------------------------
@@ -127,12 +128,13 @@ def _run_paint(sampler: BodySampler) -> SearchResult:
         train=(Example(input=Grid.from_list([[3]]), output=Grid.from_list([[5]])),),
         test=(),
     )
-    engine = _engine(max_depth=3, constant_sources=("finite-enumerate",))
+    engine = _engine(constant_sources=("finite-enumerate",))
     return engine.run(
         train_examples=task.train,
         library=_paint_primitive(sampler),
         constraints=(),
         cost=ProgramSize(),
+        budget=_budget(max_depth=3),
     )
 
 
@@ -168,8 +170,12 @@ def test_build_grid_solves_size_general_transpose() -> None:
         ),
         test=(),
     )
-    result = _engine(max_depth=3).run(
-        train_examples=task.train, library=BUILD_LIBRARY, constraints=(), cost=ProgramSize()
+    result = _engine().run(
+        train_examples=task.train,
+        library=BUILD_LIBRARY,
+        constraints=(),
+        cost=ProgramSize(),
+        budget=_budget(max_depth=3),
     )
     assert result.stats.solved
     # build_grid(width(input), height(input), lam(lam(read(input, $0, $1)))) — §3: $1=row, $0=col.
@@ -198,15 +204,16 @@ def test_build_grid_solves_size_general_transpose() -> None:
 def test_enumerate_is_memoized_within_a_run() -> None:
     grid = Grid.from_list([[1, 2], [3, 4]])
     task = Task(task_id="m", train=(Example(input=grid, output=grid),), test=())
-    engine = _engine(max_depth=2)
+    engine = _engine()
+    budget = _budget(max_depth=2)
     state = _RunState(train_examples=task.train, library=BUILD_LIBRARY, cost=ProgramSize())
     contexts = (Context(grid),)
 
-    first = engine._enumerate(Scope(()), contexts, engine.budget, state)
+    first = engine._enumerate(Scope(()), contexts, budget, state)
     considered = state.tally.considered
-    again = engine._enumerate(Scope(()), contexts, engine.budget, state)
+    again = engine._enumerate(Scope(()), contexts, budget, state)
     assert again is first  # served from the memo…
     assert state.tally.considered == considered  # …with no re-enumeration work
 
-    shallower = engine._enumerate(Scope(()), contexts, engine.budget.descend(), state)
+    shallower = engine._enumerate(Scope(()), contexts, budget.descend(), state)
     assert shallower is not first  # a different budget is a different key — no false sharing

@@ -101,8 +101,8 @@ def test_config_with_real_learn_engine_round_trips() -> None:
             constant_sources=(),
             function_hole_fill_mode="none",
             polymorphism_instantiation="monomorphize",
-            budget=Budget(max_depth=2, max_arity=2, max_pool=100),
         ),
+        budget=Budget(max_depth=2, max_arity=2, max_pool=100),
         learn=LearnSpec(
             learn_engine=GreedyMDLLearnEngine(proposer=AntiunifyPairs(bound_var_safe=True)),
             iterations=3,

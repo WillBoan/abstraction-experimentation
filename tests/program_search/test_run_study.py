@@ -62,8 +62,8 @@ def _spec() -> StudySpec:
                 constant_sources=(),
                 function_hole_fill_mode="none",
                 polymorphism_instantiation="monomorphize",
-                budget=_DEEP,
             ),
+            budget=_DEEP,
             learn=LearnSpec(
                 learn_engine=GreedyMDLLearnEngine(proposer=AntiunifyPairs()), iterations=3
             ),

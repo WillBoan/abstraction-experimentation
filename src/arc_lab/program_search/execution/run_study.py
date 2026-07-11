@@ -99,11 +99,7 @@ def run_study(spec: StudySpec, *, runs_root: Path | None = None) -> StudyResult:
     grid: dict[GridCell, RunRecord] = {}
     for role, library in libraries.items():
         for budget in spec.budgets:
-            config = spec.base_config.with_(
-                library=library,
-                learn=None,
-                search_engine=spec.base_config.search_engine.with_budget(budget),
-            )
+            config = spec.base_config.with_(library=library, budget=budget, learn=None)
             for corpus_role, corpus in corpora.items():
                 cell = GridCell(library=role, budget=budget, corpus=corpus_role)
                 grid[cell] = execute(RunSpec(config=config, corpus=corpus), runs_root=runs_root)
