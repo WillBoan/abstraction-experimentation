@@ -16,6 +16,7 @@ It exists because "control the search space" hides at least two independent gate
 ## Mental model (the words we're using)
 
 **Three capability layers.**
+
 - **Vocabulary** — the bag of typed primitives (given _and_ invented). Curated per run.
 - **Search capability** (forward / wake) — given a hole of type `T`, can the engine _fill_ it? (function-holes, branching, recursion, unification.)
 - **Invention capability** (backward / sleep) — given solved programs, what _new_ vocabulary can it manufacture? Feeds back into the bag.
@@ -52,6 +53,7 @@ Curating the bag can't cleanly toggle these — invention re-summons them throug
 | Constant policy | finite-enumerate · harvest-from-instance · functionally-derive · parameterize (lift to `Param`) | orthogonal to which primitives are present |
 
 **Two rows that decompose on purpose:**
+
 - **Polymorphism spans both tables.** Its _vocabulary_ aspect (mono vs. poly primitives) is a bag choice → A. Its _instantiation_ aspect (how far to solve type vars) is a knob → B. Same word, two independent levers.
 - **"Higher-order support" is not one row** — it's four: _HO primitives_ (A) + _type discipline_ (A) + _HO invention_ (B) + _fill mode_ (B). That's why you can't turn higher-order on/off in one place — and why emptying the bag of HO primitives doesn't disable higher-order _invention_.
 
