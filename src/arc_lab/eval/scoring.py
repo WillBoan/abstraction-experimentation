@@ -1,26 +1,38 @@
-"""ARC scoring rules.
+"""ARC scoring rules — paradigm-agnostic (grids in, booleans out).
 
 Under the official ARC-AGI rules a solver gets **two attempts** per test input,
 and a test input counts as correct if either attempt exactly matches the ground
 truth. A *task* is solved only if **every** one of its test inputs is correct.
+
+The attempt count is a parameter (``attempts``, default the official 2) because it
+is part of a run's identity — solve-rate depends on it — and flows from
+``Config.attempts_per_test``. These functions stay pure and solver-agnostic: they
+compare grids, nothing else. ``predict`` (building the candidate grids from found
+programs) lives in ``program_search/execution/``.
 """
 
 from __future__ import annotations
 
+from typing import Final, TypeAlias
+
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
-from arc_lab.solvers.base import Prediction
 
-#: Number of attempts allowed per test input (official ARC rule).
-MAX_ATTEMPTS = 2
+#: Per test input, the candidate output grids, best first.
+Prediction: TypeAlias = list[list[Grid]]
 
-
-def score_test_input(candidates: list[Grid], target: Grid) -> bool:
-    """True if any of the top-``MAX_ATTEMPTS`` candidates matches ``target``."""
-    return any(candidate == target for candidate in candidates[:MAX_ATTEMPTS])
+#: Attempts allowed per test input under the official ARC rule — the default ``attempts``.
+MAX_ATTEMPTS: Final = 2
 
 
-def score_task(task: Task, prediction: Prediction) -> tuple[bool, tuple[bool, ...]]:
+def score_test_input(candidates: list[Grid], target: Grid, *, attempts: int = MAX_ATTEMPTS) -> bool:
+    """True if any of the top-``attempts`` candidates matches ``target``."""
+    return any(candidate == target for candidate in candidates[:attempts])
+
+
+def score_task(
+    task: Task, prediction: Prediction, *, attempts: int = MAX_ATTEMPTS
+) -> tuple[bool, tuple[bool, ...]]:
     """Score a full task.
 
     Returns ``(solved, per_test)`` where ``per_test[i]`` is whether test input
@@ -36,7 +48,7 @@ def score_task(task: Task, prediction: Prediction) -> tuple[bool, tuple[bool, ..
             f"has {len(targets)} test inputs"
         )
     per_test = tuple(
-        score_test_input(candidates, target)
+        score_test_input(candidates, target, attempts=attempts)
         for candidates, target in zip(prediction, targets, strict=True)
     )
     return all(per_test), per_test
