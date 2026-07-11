@@ -250,7 +250,9 @@ Ordering principles: **leaf dependencies first** · **additive before destructiv
 11. `execute.py` — artifact layout, `runspec.json` first, `trace.jsonl` streamed + resume, `results.json` last, idempotency, `record_run`, `RunRecord` return; SEARCH branch wired to `SearchEngine.run`.
 12. End-to-end test: tiny task + tiny library → run → cache-hit → resume from partial trace.
 
-> **🔗 Sync B: DONE** — `run(train_examples, …)` landed across the engine/cost/constraint/sampler seam (2026-07-11). **🔗 Sync C:** the `LearnEngine.run` interface is seeded as the ABC in `learn/learn_engine.py`; concrete engines still to land (needed for step 14).
+> **🔗 Sync B: DONE** — `run(train_examples, …)` landed across the engine/cost/constraint/sampler seam (2026-07-11).
+
+> **🔗 Sync C:** the `LearnEngine.run` interface is seeded as the ABC in `learn/learn_engine.py`; concrete engines still to land (needed for step 14).
 
 **Phase 4 — Activities**
 
