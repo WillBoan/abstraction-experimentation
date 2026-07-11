@@ -26,7 +26,7 @@ The two axes never substitute for each other: the corpus axis decides _which tas
 - `SearchEngine.run(train_examples, library, constraints, cost) → SearchResult` — the only entry point for searching one task. Takes the task's **train examples only** (not the full `Task`; the `TrainExamples` alias in `core/task.py`), so blindness to test examples is structural, not a promise. _(**Sync B: DONE.** `Cost.of`, `Constraint.holds`, `extract`, and `BodySampler` take the same `train_examples`; `task_id` for logging comes from the caller.)_
 - `predict(programs, test_inputs, library) → attempts` — **pure**: select the best k programs (ARC: 2 attempts) and apply them to the test inputs via `Program.evaluate_grid`. The apply-to-test step formerly inside `Solver.predict` (the `Solver` class is gone; this function is its surviving functionality).
 - `score(attempts, test_outputs) → TaskScore` — **pure**: grid comparison, either-of-2-attempts (essentially the existing `score_task`). `predict` + `score` are the only functions that touch test grids. Recording is owned by the _activity_, never by these.
-- `LearnEngine.run(library, all_wake_solutions) → grown library` — sleep. Consumes the whole corpus's wake solutions at once (cross-task compression needs the corpus in view).
+- `LearnEngine.run(library, solutions: tuple[SolvedTask, ...]) → LearnOutcome` — sleep. Consumes the whole corpus's wake solutions at once (cross-task compression needs the corpus in view). `SolvedTask` = (annotated task, found program), in `analysis/compression.py`. `LearnOutcome` = grown `library` + `added` primitives + `rewritten` solutions + `description_length` (the MDL objective — deliberately **not** named "score": `score_task` is the unrelated test-example scorer), with a derived `converged` (nothing added) that drives `early_stop`. A `LearnEngine` is a frozen dataclass: it is run identity, hashed via the component serde.
 
 Comparison-to-expected exists in exactly two places, one per example level: the `target` signature (**train** examples — the engine's goal test, `sig == target`; there is no `ConsistentWithTraining` constraint — deleted as a redundant, ⊥-incompatible reimplementation of the goal test) and `predict`+`score` (**test** examples, in the activity). A `Constraint` means only an _extra_ inductive-bias filter on goal-test survivors. `Program.evaluate` / `evaluate_grid` are the _interpreter_ (program × grid → value), not comparators, and keep their names.
 
@@ -46,7 +46,7 @@ Takes: **train corpus** (searched & learned from); optionally an **eval corpus**
 
 1. **Wake–sleep loop** — on the _train corpus only_:
    1. Wake: `run_search_across_corpus` (fresh search each wake; reset-programs param, default True).
-   2. Sleep: `LearnEngine.run(all wake solutions) → grown library`.
+   2. Sleep: `LearnEngine.run(library, solutions) → LearnOutcome` (grown library + telemetry).
    3. Iterate per wake-sleep params; **ends with sleep** (the final wake is step 2 below, so no stale programs are ever evaluated — don't "fix" this back to ending with search).
    - Optional telemetry: `predict`+`score` after each wake (param, default False; never feeds back into learning).
    - Record `learned_library.json` + per-iteration trace.
@@ -177,8 +177,10 @@ src/arc_lab/
 ├── program_search/          # ← moved up from solvers/ (DONE, committed)
 │   ├── substrate/           # the language: types · program · library · primitives/ · registry · store
 │   ├── search/              # the wake proposer (SearchEngine + its parts)
-│   ├── learn/               # sleep: learn_engine · proposers · governance (taskgen moves OUT)
-│   └── execution/           # the layer THIS doc specifies
+│   ├── learn/               # sleep: learn_engine (ABC + LearnOutcome) · proposers · governance (taskgen moves OUT)
+│   ├── analysis/            # read-side instrument: compression.py (SolvedTask · MDL metrics · ratios)
+│   └── execution/           # the layer THIS doc specifies — activities live HERE, not a commands/
+│                            #   package (they ARE the execution layer; the CLI is the separate thin cli/)
 │       ├── model/           #   the run DATA MODEL (frozen, hashable specs + records)
 │       │   ├── config.py · learn_spec.py · run_spec.py · study_spec.py
 │       │   └── run_record.py · results.py (TaskScore · TaskResult)
@@ -252,7 +254,7 @@ Ordering principles: **leaf dependencies first** · **additive before destructiv
 
 > **🔗 Sync B: DONE** — `run(train_examples, …)` landed across the engine/cost/constraint/sampler seam (2026-07-11).
 
-> **🔗 Sync C:** the `LearnEngine.run` interface is seeded as the ABC in `learn/learn_engine.py`; concrete engines still to land (needed for step 14).
+> **🔗 Sync C (interface DONE, engines in port):** `LearnEngine`/`LearnOutcome` finalized in `learn/learn_engine.py`; `analysis/compression.py` (SolvedTask, MDL metrics) ported. Concrete engines port from old `solvers/dsl/learn/` — `SleepStrategy`→`LearnEngine` (frozen dataclass, `start_index` derived from the library), `SleepOutcome`→`LearnOutcome` (`score`→`description_length`), antiunify/stitch_shim gain ordinary 3-child `If` handling (+ a reserved `if` head symbol in the Stitch s-expression codec); old `loop.py` dissolves into `run_search_learn` + engine-internal governance; `harness.py` is superseded by `execute`.
 
 **Phase 4 — Activities**
 

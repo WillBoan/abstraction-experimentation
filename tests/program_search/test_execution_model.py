@@ -14,9 +14,10 @@ import pytest
 from arc_lab.core.dataset import Corpus
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task, TrainExamples
+from arc_lab.program_search.analysis.compression import SolvedTask
 from arc_lab.program_search.execution.model import Config, LearnSpec, RunSpec, TaskResult, TaskScore
 from arc_lab.program_search.execution.model.serde import from_data, to_data
-from arc_lab.program_search.learn.learn_engine import LearnEngine, WakeSolutions
+from arc_lab.program_search.learn.learn_engine import LearnEngine, LearnOutcome
 from arc_lab.program_search.search.constraints import Constraint
 from arc_lab.program_search.search.cost import Cost
 from arc_lab.program_search.search.search_engine import SearchEngine
@@ -58,8 +59,8 @@ class FakeCost(Cost):
 
 @dataclass(frozen=True, slots=True)
 class FakeLearnEngine(LearnEngine):
-    def run(self, library: Library, solutions: WakeSolutions) -> Library:
-        return library
+    def run(self, library: Library, solutions: tuple[SolvedTask, ...]) -> LearnOutcome:
+        return LearnOutcome(library=library, added=(), rewritten=solutions, description_length=0.0)
 
 
 REGISTRY: dict[str, type] = {
