@@ -33,8 +33,9 @@ def predict(
     """The top-``attempts_per_test`` distinct candidate grids per test input, best first.
 
     ``programs`` is expected ranked (cheapest first, as ``SearchResult.ranked_programs``
-    and ``extract`` return them); ranking is respected, not recomputed. A test input
-    with no surviving candidate gets an empty list — scoring counts it wrong.
+    and ``extract`` return them); ranking is respected, not recomputed.
+
+    A test input with no surviving candidate gets an empty list — scoring counts it wrong.
     """
     prediction: Prediction = []
     for test_input in test_inputs:
