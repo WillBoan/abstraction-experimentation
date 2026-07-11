@@ -4,21 +4,21 @@ from __future__ import annotations
 
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task
-from arc_lab.solvers.program_search.search.budget import Budget
-from arc_lab.solvers.program_search.search.cost import ProgramSize
-from arc_lab.solvers.program_search.search.polymorphism import PolymorphismInstantiation
-from arc_lab.solvers.program_search.search.search_engine import (
+from arc_lab.program_search.search.budget import Budget
+from arc_lab.program_search.search.cost import ProgramSize
+from arc_lab.program_search.search.polymorphism import PolymorphismInstantiation
+from arc_lab.program_search.search.search_engine import (
     BeamBottomUpSearchEngine,
     BottomUpSearchEngine,
 )
-from arc_lab.solvers.program_search.substrate.library import (
+from arc_lab.program_search.substrate.library import (
     Library,
     Primitive,
     Value,
     apply_function_value,
 )
-from arc_lab.solvers.program_search.substrate.program import Apply, Input, PrimRef
-from arc_lab.solvers.program_search.substrate.types import GRID, ArrowType
+from arc_lab.program_search.substrate.program import Apply, Input, PrimRef
+from arc_lab.program_search.substrate.types import GRID, ArrowType
 
 _GRID = Grid.from_list([[1, 2], [3, 4]])
 

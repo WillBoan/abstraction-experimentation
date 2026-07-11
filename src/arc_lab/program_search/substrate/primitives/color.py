@@ -10,8 +10,8 @@ exercises typed constant arguments.
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.program_search.substrate.library import Primitive
-from arc_lab.solvers.program_search.substrate.types import COLOR, GRID
+from arc_lab.program_search.substrate.library import Primitive
+from arc_lab.program_search.substrate.types import COLOR, GRID
 
 
 def _map_color(grid: Grid, source: int, target: int) -> Grid:

@@ -9,13 +9,13 @@ from __future__ import annotations
 
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task
-from arc_lab.solvers.program_search.search.constraints import Constraint
-from arc_lab.solvers.program_search.search.extraction import extract
-from arc_lab.solvers.program_search.search.pool import Pool
-from arc_lab.solvers.program_search.search.signature import BOTTOM
-from arc_lab.solvers.program_search.substrate.library import Library
-from arc_lab.solvers.program_search.substrate.program import Const, Program
-from arc_lab.solvers.program_search.substrate.types import COLOR, GRID, INT
+from arc_lab.program_search.search.constraints import Constraint
+from arc_lab.program_search.search.extraction import extract
+from arc_lab.program_search.search.pool import Pool
+from arc_lab.program_search.search.signature import BOTTOM
+from arc_lab.program_search.substrate.library import Library
+from arc_lab.program_search.substrate.program import Const, Program
+from arc_lab.program_search.substrate.types import COLOR, GRID, INT
 
 _G = Grid.from_list([[1]])
 _TASK = Task(task_id="t", train=(Example(input=_G, output=_G),), test=())

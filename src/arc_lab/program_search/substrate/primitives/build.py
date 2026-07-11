@@ -17,15 +17,15 @@ from __future__ import annotations
 
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
-from arc_lab.solvers.program_search.substrate.library import (
+from arc_lab.program_search.substrate.library import (
     Closure,
     Library,
     Primitive,
     RawContext,
     Value,
 )
-from arc_lab.solvers.program_search.substrate.primitives.cells import READ, SET_CELL
-from arc_lab.solvers.program_search.substrate.types import COLOR, GRID, INT, ArrowType
+from arc_lab.program_search.substrate.primitives.cells import READ, SET_CELL
+from arc_lab.program_search.substrate.types import COLOR, GRID, INT, ArrowType
 
 _GRID = GRID
 _INT = INT

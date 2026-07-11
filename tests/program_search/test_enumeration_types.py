@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.program_search.search.budget import Budget
-from arc_lab.solvers.program_search.search.context import Context
-from arc_lab.solvers.program_search.search.scope import Scope
-from arc_lab.solvers.program_search.substrate.types import COLOR, INT
+from arc_lab.program_search.search.budget import Budget
+from arc_lab.program_search.search.context import Context
+from arc_lab.program_search.search.scope import Scope
+from arc_lab.program_search.substrate.types import COLOR, INT
 
 _GRID = Grid.from_list([[1, 2], [3, 4]])
 

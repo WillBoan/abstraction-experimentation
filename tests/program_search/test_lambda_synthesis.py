@@ -8,14 +8,14 @@ from __future__ import annotations
 
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task
-from arc_lab.solvers.program_search.search.budget import Budget
-from arc_lab.solvers.program_search.search.context import Context
-from arc_lab.solvers.program_search.search.cost import ProgramSize
-from arc_lab.solvers.program_search.search.leaves import ConstantSource
-from arc_lab.solvers.program_search.search.scope import Scope
-from arc_lab.solvers.program_search.search.search_engine import BottomUpSearchEngine, _RunState
-from arc_lab.solvers.program_search.search.search_result import SearchResult
-from arc_lab.solvers.program_search.substrate.library import (
+from arc_lab.program_search.search.budget import Budget
+from arc_lab.program_search.search.context import Context
+from arc_lab.program_search.search.cost import ProgramSize
+from arc_lab.program_search.search.leaves import ConstantSource
+from arc_lab.program_search.search.scope import Scope
+from arc_lab.program_search.search.search_engine import BottomUpSearchEngine, _RunState
+from arc_lab.program_search.search.search_result import SearchResult
+from arc_lab.program_search.substrate.library import (
     BodySampler,
     Closure,
     Library,
@@ -23,9 +23,9 @@ from arc_lab.solvers.program_search.substrate.library import (
     RawContext,
     Value,
 )
-from arc_lab.solvers.program_search.substrate.primitives.build import BUILD_GRID, BUILD_LIBRARY
-from arc_lab.solvers.program_search.substrate.program import Apply, Const, Input, Lam, Var
-from arc_lab.solvers.program_search.substrate.types import COLOR, GRID, INT, ArrowType
+from arc_lab.program_search.substrate.primitives.build import BUILD_GRID, BUILD_LIBRARY
+from arc_lab.program_search.substrate.program import Apply, Const, Input, Lam, Var
+from arc_lab.program_search.substrate.types import COLOR, GRID, INT, ArrowType
 
 
 def _transpose(grid: Grid) -> Grid:

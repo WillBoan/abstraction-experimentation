@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from arc_lab.solvers.program_search.search.pool import Pool
-from arc_lab.solvers.program_search.substrate.program import Const
-from arc_lab.solvers.program_search.substrate.types import COLOR, GRID, INT
+from arc_lab.program_search.search.pool import Pool
+from arc_lab.program_search.substrate.program import Const
+from arc_lab.program_search.substrate.types import COLOR, GRID, INT
 
 _A = Const(value=1, value_type=COLOR)
 _B = Const(value=2, value_type=COLOR)

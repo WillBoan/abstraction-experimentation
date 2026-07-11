@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.program_search.search.context import Context
-from arc_lab.solvers.program_search.search.signature import (
+from arc_lab.program_search.search.context import Context
+from arc_lab.program_search.search.signature import (
     BOTTOM,
     Bottom,
     compute_function_signature,
@@ -14,14 +14,14 @@ from arc_lab.solvers.program_search.search.signature import (
     is_total,
     signature_matches_type,
 )
-from arc_lab.solvers.program_search.substrate.library import (
+from arc_lab.program_search.substrate.library import (
     Library,
     Primitive,
     Value,
     apply_function_value,
 )
-from arc_lab.solvers.program_search.substrate.program import Input, Lam, PrimRef, Var
-from arc_lab.solvers.program_search.substrate.types import (
+from arc_lab.program_search.substrate.program import Input, Lam, PrimRef, Var
+from arc_lab.program_search.substrate.types import (
     BOOL,
     COLOR,
     FN,

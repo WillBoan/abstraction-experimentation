@@ -16,8 +16,8 @@ from __future__ import annotations
 import numpy as np
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.program_search.substrate.library import Primitive
-from arc_lab.solvers.program_search.substrate.types import COLOR, GRID, INT
+from arc_lab.program_search.substrate.library import Primitive
+from arc_lab.program_search.substrate.types import COLOR, GRID, INT
 
 
 def _overlay(mask: int, *grids: Grid) -> Grid:

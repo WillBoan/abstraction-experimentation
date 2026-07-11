@@ -15,9 +15,9 @@ A concrete solver is a choice of *(library, search strategy)* — see
 :class:`~arc_lab.solvers.program_search.solver.ProgramSearchSolver`.
 """
 
-from arc_lab.solvers.program_search.substrate.library import Library, Primitive, Value
-from arc_lab.solvers.program_search.substrate.program import Apply, Const, Input, Param, Program
-from arc_lab.solvers.program_search.substrate.types import (
+from arc_lab.program_search.substrate.library import Library, Primitive, Value
+from arc_lab.program_search.substrate.program import Apply, Const, Input, Param, Program
+from arc_lab.program_search.substrate.types import (
     COLOR,
     FN,
     GRID,

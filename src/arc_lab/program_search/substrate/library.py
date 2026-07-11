@@ -24,11 +24,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.program_search.substrate.types import GRID, Type, type_to_serializable
+from arc_lab.program_search.substrate.types import GRID, Type, type_to_serializable
 
 if TYPE_CHECKING:
     from arc_lab.core.task import Task
-    from arc_lab.solvers.program_search.substrate.program import Program
+    from arc_lab.program_search.substrate.program import Program
 
 
 @dataclass(frozen=True, slots=True)
@@ -222,9 +222,9 @@ class Library:
         replayed in serialised order — which is dependency order, since abstractions are appended
         and reference only earlier primitives.
         """
-        from arc_lab.solvers.program_search.substrate.abstraction import make_abstraction
-        from arc_lab.solvers.program_search.substrate.program import Program
-        from arc_lab.solvers.program_search.substrate.registry import resolve_primitive
+        from arc_lab.program_search.substrate.abstraction import make_abstraction
+        from arc_lab.program_search.substrate.program import Program
+        from arc_lab.program_search.substrate.registry import resolve_primitive
 
         name = str(data["name"])
         version_raw = data.get("version")

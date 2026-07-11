@@ -4,16 +4,16 @@ from __future__ import annotations
 
 import itertools
 
-from arc_lab.solvers.program_search.search.composition import (
+from arc_lab.program_search.search.composition import (
     TypedProgram,
     appfn_applications,
     applications,
     first_order_applications,
     variadic_applications,
 )
-from arc_lab.solvers.program_search.substrate.library import Primitive
-from arc_lab.solvers.program_search.substrate.program import AppFn, Apply, Const, Input, PrimRef
-from arc_lab.solvers.program_search.substrate.types import (
+from arc_lab.program_search.substrate.library import Primitive
+from arc_lab.program_search.substrate.program import AppFn, Apply, Const, Input, PrimRef
+from arc_lab.program_search.substrate.types import (
     BOOL,
     COLOR,
     GRID,

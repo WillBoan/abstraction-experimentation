@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from arc_lab.solvers.program_search.search.polymorphism import (
+from arc_lab.program_search.search.polymorphism import (
     PolymorphismInstantiation,
     canonicalize,
     monotype_universe,
     resolve,
 )
-from arc_lab.solvers.program_search.substrate.library import Library, Primitive
-from arc_lab.solvers.program_search.substrate.program import Input
-from arc_lab.solvers.program_search.substrate.types import (
+from arc_lab.program_search.substrate.library import Library, Primitive
+from arc_lab.program_search.substrate.program import Input
+from arc_lab.program_search.substrate.types import (
     GRID,
     INT,
     ArrowType,

@@ -12,14 +12,14 @@ import pytest
 
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task
-from arc_lab.solvers.program_search.search.budget import Budget
-from arc_lab.solvers.program_search.search.cost import ProgramSize
-from arc_lab.solvers.program_search.search.search_engine import BottomUpSearchEngine
-from arc_lab.solvers.program_search.search.search_result import SearchResult
-from arc_lab.solvers.program_search.substrate.library import Library, Primitive
-from arc_lab.solvers.program_search.substrate.primitives.control import IF
-from arc_lab.solvers.program_search.substrate.program import Apply, Const, If, Input, Program
-from arc_lab.solvers.program_search.substrate.types import BOOL, COLOR, GRID
+from arc_lab.program_search.search.budget import Budget
+from arc_lab.program_search.search.cost import ProgramSize
+from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
+from arc_lab.program_search.search.search_result import SearchResult
+from arc_lab.program_search.substrate.library import Library, Primitive
+from arc_lab.program_search.substrate.primitives.control import IF
+from arc_lab.program_search.substrate.program import Apply, Const, If, Input, Program
+from arc_lab.program_search.substrate.types import BOOL, COLOR, GRID
 
 _WIDE = Grid.from_list([[1, 2, 3], [4, 5, 6]])  # 2x3
 _TALL = Grid.from_list([[7, 8], [9, 0], [1, 2]])  # 3x2

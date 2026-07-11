@@ -16,9 +16,9 @@ template with its arguments bound to the ``Param`` holes.
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.program_search.substrate.library import Library, Primitive, Value
-from arc_lab.solvers.program_search.substrate.program import Input, Param, Program
-from arc_lab.solvers.program_search.substrate.types import Type
+from arc_lab.program_search.substrate.library import Library, Primitive, Value
+from arc_lab.program_search.substrate.program import Input, Param, Program
+from arc_lab.program_search.substrate.types import Type
 
 # The template is closed (no Input), so the outer input grid is never consulted while
 # evaluating it; a fixed dummy stands in for evaluate's required grid parameter.

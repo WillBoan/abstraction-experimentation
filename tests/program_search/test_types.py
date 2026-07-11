@@ -12,7 +12,7 @@ import itertools
 
 import pytest
 
-from arc_lab.solvers.program_search.substrate.types import (
+from arc_lab.program_search.substrate.types import (
     BOOL,
     COLOR,
     GRID,

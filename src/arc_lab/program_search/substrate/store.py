@@ -12,7 +12,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from arc_lab.solvers.program_search.substrate.library import Library
+from arc_lab.program_search.substrate.library import Library
 
 
 def library_hash(library: Library) -> str:

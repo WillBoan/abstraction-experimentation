@@ -27,8 +27,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.program_search.substrate.library import Closure, apply_function_value
-from arc_lab.solvers.program_search.substrate.types import (
+from arc_lab.program_search.substrate.library import Closure, apply_function_value
+from arc_lab.program_search.substrate.types import (
     BOOL,
     GRID,
     ArrowType,
@@ -40,7 +40,7 @@ from arc_lab.solvers.program_search.substrate.types import (
 )
 
 if TYPE_CHECKING:
-    from arc_lab.solvers.program_search.substrate.library import Library, Value
+    from arc_lab.program_search.substrate.library import Library, Value
 
 
 class Program(ABC):

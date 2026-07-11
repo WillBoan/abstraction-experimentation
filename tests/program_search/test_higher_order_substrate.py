@@ -4,10 +4,10 @@
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.program_search.substrate.library import Library
-from arc_lab.solvers.program_search.substrate.primitives.build import BUILD_GRID
-from arc_lab.solvers.program_search.substrate.program import Apply, Const, Lam, Program
-from arc_lab.solvers.program_search.substrate.types import COLOR, INT, ArrowType, unify
+from arc_lab.program_search.substrate.library import Library
+from arc_lab.program_search.substrate.primitives.build import BUILD_GRID
+from arc_lab.program_search.substrate.program import Apply, Const, Lam, Program
+from arc_lab.program_search.substrate.types import COLOR, INT, ArrowType, unify
 
 _LIB = Library(name="build", primitives=(BUILD_GRID,))
 _CELL_FN = ArrowType((INT,), ArrowType((INT,), COLOR))

@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.program_search.search.context import Context
-from arc_lab.solvers.program_search.search.leaves import seed_leaves
-from arc_lab.solvers.program_search.search.scope import Scope
-from arc_lab.solvers.program_search.substrate.program import Const, Input, Var
-from arc_lab.solvers.program_search.substrate.types import BOOL, COLOR, GRID, INT
+from arc_lab.program_search.search.context import Context
+from arc_lab.program_search.search.leaves import seed_leaves
+from arc_lab.program_search.search.scope import Scope
+from arc_lab.program_search.substrate.program import Const, Input, Var
+from arc_lab.program_search.substrate.types import BOOL, COLOR, GRID, INT
 
 # A 2x3 grid, so the max dimension is 3.
 _G = Grid.from_list([[1, 2, 3], [4, 5, 6]])
