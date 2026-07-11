@@ -13,15 +13,19 @@ Variadic trailing arguments (§5.2), higher-order function holes (§5.3), and sh
 from __future__ import annotations
 
 import itertools
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from typing import TypeAlias
 
 from ..substrate.library import Primitive
-from ..substrate.program import Apply, Program
+from ..substrate.program import AppFn, Apply, Program
 from ..substrate.types import ArrowType, Substitution, Type, apply_subst, instantiate, unify
 
 #: A pooled program paired with its (instantiated) type — an argument candidate for composition.
 TypedProgram: TypeAlias = "tuple[Program, Type]"
+
+#: How a filled argument tuple becomes a program node (an ``Apply`` of a primitive, or an ``AppFn``
+#: of a pooled function value).
+_Build: TypeAlias = "Callable[[tuple[Program, ...]], Program]"
 
 
 def applications(
@@ -52,7 +56,7 @@ def first_order_applications(
     """
     packed = instantiate(ArrowType(primitive.param_types, primitive.return_type), counter)
     assert isinstance(packed, ArrowType)  # instantiate preserves an ArrowType's shape
-    yield from _fill(primitive.name, packed.params, packed.result, candidates)
+    yield from _fill(_apply_builder(primitive.name), packed.params, packed.result, candidates)
 
 
 def variadic_applications(
@@ -73,13 +77,40 @@ def variadic_applications(
     )
     assert isinstance(packed, ArrowType)
     *fixed, variadic = packed.params
+    build = _apply_builder(primitive.name)
     for arity in range(1, max_arity + 1):
         parameters = (*fixed, *(variadic for _ in range(arity)))
-        yield from _fill(primitive.name, parameters, packed.result, candidates)
+        yield from _fill(build, parameters, packed.result, candidates)
+
+
+def appfn_applications(
+    candidates: Sequence[TypedProgram],
+    counter: itertools.count[int],
+) -> Iterator[TypedProgram]:
+    """Apply each pooled function value to pooled arguments (§8) — the ``AppFn`` composition step.
+
+    A candidate receives its (fresh-instantiated) arrow's parameters: an uncurried primitive value gets
+    all its arguments at once; a curried value gets one currying step, its result possibly a further
+    function value that is applied again in a later round.
+    """
+    for fn_program, fn_type in candidates:
+        if not isinstance(fn_type, ArrowType):
+            continue
+        fresh = instantiate(fn_type, counter)
+        assert isinstance(fresh, ArrowType)
+        yield from _fill(_appfn_builder(fn_program), fresh.params, fresh.result, candidates)
+
+
+def _apply_builder(name: str) -> _Build:
+    return lambda args: Apply(primitive=name, args=args)
+
+
+def _appfn_builder(function: Program) -> _Build:
+    return lambda args: AppFn(fn=function, args=args)
 
 
 def _fill(
-    name: str,
+    build: _Build,
     parameters: tuple[Type, ...],
     result: Type,
     candidates: Sequence[TypedProgram],
@@ -87,14 +118,15 @@ def _fill(
     """Fill ``parameters`` left-to-right from ``candidates``, threading one substitution.
 
     A candidate whose type fails to unify with the current parameter is skipped before the rest of the
-    argument tuple is chosen, so ill-typed combinations are never fully built.
+    argument tuple is chosen, so ill-typed combinations are never fully built. ``build`` turns a
+    completed argument tuple into the program node (an ``Apply`` or an ``AppFn``).
     """
 
     def recurse(
         index: int, subst: Substitution, chosen: tuple[Program, ...]
     ) -> Iterator[TypedProgram]:
         if index == len(parameters):
-            yield Apply(primitive=name, args=chosen), apply_subst(subst, result)
+            yield build(chosen), apply_subst(subst, result)
             return
         for program, ptype in candidates:
             threaded = unify(parameters[index], ptype, subst)

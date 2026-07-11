@@ -12,12 +12,14 @@ program *solves* a target iff its signature :func:`is_total` and equals the targ
 
 from __future__ import annotations
 
+import itertools
+from collections.abc import Mapping, Sequence
 from enum import Enum
 from typing import TypeAlias
 
 from arc_lab.core.grid import Grid
 
-from ..substrate.library import Closure, Library, Primitive, Value
+from ..substrate.library import Closure, Library, Primitive, Value, apply_function_value
 from ..substrate.program import Program
 from ..substrate.types import ArrowType, Type, TypeVar
 from .context import Context
@@ -65,6 +67,54 @@ def compute_signature(
         else:
             values.append(value)
             any_defined = True
+    return tuple(values) if any_defined else None
+
+
+def peel_arrow(arrow_type: ArrowType) -> tuple[list[Type], Type]:
+    """Flatten a (possibly curried) arrow into its ultimate parameter types and non-arrow result."""
+    params: list[Type] = []
+    current: Type = arrow_type
+    while isinstance(current, ArrowType):
+        params.extend(current.params)
+        current = current.result
+    return params, current
+
+
+def compute_function_signature(
+    function: Program,
+    arrow_type: ArrowType,
+    contexts: tuple[Context, ...],
+    arg_samples: Mapping[Type, Sequence[Value]],
+    library: Library,
+) -> Signature | None:
+    """A function value's behavioral signature: its result on sampled argument tuples, per context.
+
+    The function is evaluated once per context (so input-dependent functions are captured), then
+    applied — curried — to each argument tuple from the cartesian product of ``arg_samples`` at its
+    (peeled) parameter types. ``⊥`` marks any application that raises; ``None`` iff the function is
+    undefined everywhere. Bounded samples make this **sound** (the goal test verifies every assembled
+    program) but complete only up to sample adequacy.
+    """
+    param_types, _ = peel_arrow(arrow_type)
+    arg_tuples = list(itertools.product(*(tuple(arg_samples.get(p, ())) for p in param_types)))
+    values: list[Value | Bottom] = []
+    any_defined = False
+    for context in contexts:
+        try:
+            fn_value: Value | None = function.evaluate(
+                context.input_grid, library, scope=context.scope_binding
+            )
+        except Exception:
+            fn_value = None
+        for args in arg_tuples:
+            if fn_value is None:
+                values.append(BOTTOM)
+                continue
+            try:
+                values.append(apply_function_value(fn_value, args))
+                any_defined = True
+            except Exception:
+                values.append(BOTTOM)
     return tuple(values) if any_defined else None
 
 

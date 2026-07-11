@@ -27,10 +27,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.program_search.substrate.library import Closure, Primitive
+from arc_lab.solvers.program_search.substrate.library import Closure, apply_function_value
 from arc_lab.solvers.program_search.substrate.types import (
     BOOL,
-    FN,
     GRID,
     ArrowType,
     Type,
@@ -151,10 +150,13 @@ class Program(ABC):
                 raise ValueError(f"malformed var node: {data!r}")
             return Var(index=index, value_type=type_from_serializable(var_type))
         if op == "lam":
-            body = data["body"]
-            if not isinstance(body, Mapping):
+            param_type, body = data["param_type"], data["body"]
+            if not isinstance(param_type, (str, dict)) or not isinstance(body, Mapping):
                 raise ValueError(f"malformed lam node: {data!r}")
-            return Lam(body=Program.from_dict(body))
+            return Lam(
+                param_type=type_from_serializable(param_type),
+                body=Program.from_dict(body),
+            )
         if op == "appfn":
             fn, raw_fn_args = data["fn"], data["args"]
             if not isinstance(fn, Mapping) or not isinstance(raw_fn_args, list):
@@ -355,8 +357,14 @@ class Lam(Program):
 
     Using an *environment* (closure) semantics — rather than substitution — means De Bruijn
     indices are just looked up in ``scope`` at evaluation time: no index shifting, no capture.
+
+    Carries the ``param_type`` of the variable it binds (``Var(0)`` within ``body``). This makes
+    :meth:`result_type` a well-defined :class:`ArrowType` rather than the opaque ``FN`` tag, and it is
+    the one type a bare lambda cannot otherwise recover (no type environment) — in particular for an
+    *unused* binder absent from the body.
     """
 
+    param_type: Type
     body: Program
 
     def evaluate(
@@ -368,17 +376,21 @@ class Lam(Program):
     ) -> Value:
         return Closure(body=self.body, grid=grid, library=library, env=env, scope=scope)
 
-    def result_type(self, library: Library) -> TypeCon:
-        return FN
+    def result_type(self, library: Library) -> ArrowType:
+        return ArrowType((self.param_type,), self.body.result_type(library))
 
     def to_dict(self) -> dict[str, object]:
-        return {"op": "lam", "body": self.body.to_dict()}
+        return {
+            "op": "lam",
+            "param_type": type_to_serializable(self.param_type),
+            "body": self.body.to_dict(),
+        }
 
     def children(self) -> tuple[Program, ...]:
         return (self.body,)
 
     def __str__(self) -> str:
-        return f"lam({self.body})"
+        return f"lam:{self.param_type}({self.body})"
 
 
 @dataclass(frozen=True, slots=True)
@@ -391,13 +403,13 @@ class AppFn(Program):
     ``build_grid`` uses per cell — ``Closure.__call__`` for a lambda (curried), ``impl(*args)`` for a
     primitive — so applying a function value needs no new runtime.
 
-    :meth:`result_type` is the head arrow's codomain, so the head must expose an :class:`ArrowType`.
-    In practice ``fn`` is a :class:`Param` (an arrow-typed hole) or a :class:`PrimRef` (whose type is
-    the primitive's arrow) — both carry a precise arrow. A bare :class:`Lam` head is *not* supported by
-    ``result_type``: a lambda types only as the opaque ``FN`` tag on its own (it has no type environment
-    to infer its domain from), so its arrow is recovered by inference (``from_sexpr``) or carried
-    alongside it (the search's function pool), never read back off the node. ``result_type`` raises on a
-    non-arrow head rather than guessing.
+    :meth:`result_type` is the head arrow's codomain, so the head must expose an :class:`ArrowType`. In
+    practice ``fn`` is a :class:`Param` (an arrow-typed hole), a :class:`PrimRef` (the primitive's
+    arrow), or a :class:`Lam` (which now carries its binder's ``param_type``, so it too types as a
+    precise arrow). ``result_type`` raises on a non-arrow head rather than guessing. It peels a *single*
+    arrow, which is correct for an uncurried head applied to all its arguments at once (a ``PrimRef``);
+    a multi-argument application of a *curried* head is not typed by this node — the search carries such
+    types at construction instead.
     """
 
     fn: Program
@@ -411,15 +423,8 @@ class AppFn(Program):
         scope: tuple[Value, ...] = (),
     ) -> Value:
         fn_value = self.fn.evaluate(grid, library, env, scope)
-        arg_values = [arg.evaluate(grid, library, env, scope) for arg in self.args]
-        if isinstance(fn_value, Primitive):
-            return fn_value.impl(*arg_values)  # a primitive applies all args at once
-        result: Value = fn_value
-        for arg_value in arg_values:  # a closure is curried: apply one argument at a time
-            if not isinstance(result, Closure):
-                raise TypeError(f"AppFn applied a non-function value: {type(result).__name__}")
-            result = result(arg_value)
-        return result
+        arg_values = tuple(arg.evaluate(grid, library, env, scope) for arg in self.args)
+        return apply_function_value(fn_value, arg_values)
 
     def result_type(self, library: Library) -> Type:
         fn_type = self.fn.result_type(library)

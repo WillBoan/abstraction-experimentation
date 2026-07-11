@@ -5,13 +5,22 @@ from __future__ import annotations
 import itertools
 
 from arc_lab.solvers.program_search.search.composition import (
+    TypedProgram,
+    appfn_applications,
     applications,
     first_order_applications,
     variadic_applications,
 )
 from arc_lab.solvers.program_search.substrate.library import Primitive
-from arc_lab.solvers.program_search.substrate.program import Apply, Const, Input
-from arc_lab.solvers.program_search.substrate.types import BOOL, COLOR, GRID, INT, TypeVar
+from arc_lab.solvers.program_search.substrate.program import AppFn, Apply, Const, Input, PrimRef
+from arc_lab.solvers.program_search.substrate.types import (
+    BOOL,
+    COLOR,
+    GRID,
+    INT,
+    ArrowType,
+    TypeVar,
+)
 
 # Argument candidates: one pooled program per base type.
 _INT = Const(value=1, value_type=INT)
@@ -81,6 +90,23 @@ def test_variadic_respects_max_arity() -> None:
     assert len(result) == 2  # only arity 1
     assert (Apply(primitive="v", args=(_COLOR, _GRID)), GRID) in result
     assert (Apply(primitive="v", args=(_COLOR, _GRID, _GRID)), GRID) not in result  # arity 2 absent
+
+
+def test_appfn_applies_a_function_value_to_arguments() -> None:
+    candidates: list[TypedProgram] = [(PrimRef(name="inc"), ArrowType((INT,), INT)), (_INT, INT)]
+    result = list(appfn_applications(candidates, itertools.count()))
+    assert (AppFn(fn=PrimRef(name="inc"), args=(_INT,)), INT) in result
+
+
+def test_appfn_partial_application_of_a_curried_value_yields_a_function() -> None:
+    curried = ArrowType((INT,), ArrowType((INT,), INT))
+    candidates: list[TypedProgram] = [(PrimRef(name="adder"), curried), (_INT, INT)]
+    result = list(appfn_applications(candidates, itertools.count()))
+    assert (AppFn(fn=PrimRef(name="adder"), args=(_INT,)), ArrowType((INT,), INT)) in result
+
+
+def test_appfn_ignores_non_function_candidates() -> None:
+    assert list(appfn_applications([(_INT, INT)], itertools.count())) == []
 
 
 def test_applications_dispatches_by_variadicity() -> None:

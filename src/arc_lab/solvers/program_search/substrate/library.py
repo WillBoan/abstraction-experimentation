@@ -27,6 +27,7 @@ from arc_lab.core.grid import Grid
 from arc_lab.solvers.program_search.substrate.types import GRID, Type, type_to_serializable
 
 if TYPE_CHECKING:
+    from arc_lab.core.task import Task
     from arc_lab.solvers.program_search.substrate.program import Program
 
 
@@ -66,6 +67,21 @@ Value: TypeAlias = "Grid | int | bool | Closure | Primitive | tuple[Value, ...]"
 #: A primitive implementation: takes value arguments, returns a value.
 PrimitiveImpl: TypeAlias = Callable[..., Value]
 
+#: One raw evaluation point for a lambda-body search: ``(input grid, scope binding)``. The substrate
+#: stays search-agnostic — the search layer wraps these into its own ``Context`` type.
+RawContext: TypeAlias = "tuple[Grid, tuple[Value, ...]]"
+
+#: A higher-order primitive's body sampler (ARCHITECTURE.md §7, §11.4):
+#: ``(task, sibling_arg_values) -> (body contexts, aligned body target values | None)``.
+#: The contexts are where a candidate body is evaluated; a non-``None`` target (index-aligned with
+#: the contexts) enables example *propagation* — extracting just the matching bodies — while
+#: ``None`` falls back to the complete baseline (all typed bodies, §8). ``sibling_arg_values`` is
+#: in the contract for primitives whose contexts depend on their other arguments (``map``/``filter``
+#: sample the evaluated list argument); the engine passes ``()`` until such a primitive lands.
+BodySampler: TypeAlias = (
+    "Callable[[Task, tuple[Value, ...]], tuple[tuple[RawContext, ...], tuple[Value, ...] | None]]"
+)
+
 
 @dataclass(frozen=True, slots=True)
 class Primitive:
@@ -93,6 +109,11 @@ class Primitive:
     #: hand-coded primitive. ``impl`` evaluates this template; carrying it here keeps a
     #: learned entry inspectable data, not an opaque closure.
     template: Program | None = None
+    #: For a *higher-order* primitive: how a recursive lambda-body search gets its evaluation
+    #: contexts and (when derivable) its propagation target — see :data:`BodySampler`. ``None``
+    #: means no lambda synthesis for this primitive's function holes (point-free fill still
+    #: applies). Like ``impl``, this is code: never serialised.
+    body_sampler: BodySampler | None = None
 
     @property
     def arity(self) -> int:
@@ -130,6 +151,24 @@ class Primitive:
         if self.template is not None:
             data["template"] = self.template.to_dict()
         return data
+
+
+def apply_function_value(fn: Value, args: tuple[Value, ...]) -> Value:
+    """Apply a function value to arguments — the shared higher-order application semantics.
+
+    A :class:`Primitive` is applied uncurried (``impl(*args)``, all at once); a :class:`Closure` is
+    applied curried (one argument at a time). Reused by the ``AppFn`` node (applying a computed
+    function) and by the search's function-value signatures (sampling a function's behaviour). Raises
+    if a non-function value is applied.
+    """
+    if isinstance(fn, Primitive):
+        return fn.impl(*args)
+    result: Value = fn
+    for arg in args:
+        if not isinstance(result, Closure):
+            raise TypeError(f"applied a non-function value: {type(result).__name__}")
+        result = result(arg)
+    return result
 
 
 @dataclass(frozen=True, slots=True)

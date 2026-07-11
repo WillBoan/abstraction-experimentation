@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from arc_lab.core.grid import Grid
 from arc_lab.solvers.program_search.search.context import Context
 from arc_lab.solvers.program_search.search.signature import (
     BOTTOM,
+    Bottom,
+    compute_function_signature,
     compute_signature,
     is_total,
     signature_matches_type,
 )
-from arc_lab.solvers.program_search.substrate.library import Library, Primitive
-from arc_lab.solvers.program_search.substrate.program import Input, Var
+from arc_lab.solvers.program_search.substrate.library import (
+    Library,
+    Primitive,
+    Value,
+    apply_function_value,
+)
+from arc_lab.solvers.program_search.substrate.program import Input, Lam, PrimRef, Var
 from arc_lab.solvers.program_search.substrate.types import (
     BOOL,
     COLOR,
@@ -19,6 +28,7 @@ from arc_lab.solvers.program_search.substrate.types import (
     GRID,
     INT,
     ArrowType,
+    Type,
     TypeVar,
     list_type,
     pair_type,
@@ -35,8 +45,10 @@ _EMPTY_LIB = Library(name="test", primitives=())
 
 def test_bottom_is_a_distinct_singleton() -> None:
     assert BOTTOM is BOTTOM
-    assert BOTTOM != 0
-    assert BOTTOM != ()
+    zero: Value | Bottom = 0
+    empty: Value | Bottom = ()
+    assert zero != BOTTOM
+    assert empty != BOTTOM
     assert str(BOTTOM) == "⊥"
 
 
@@ -127,3 +139,51 @@ def test_compute_signature_partial_marks_errors_bottom() -> None:
 def test_compute_signature_fully_undefined_is_none() -> None:
     var = Var(index=0, value_type=INT)  # raises everywhere: no binding at any context
     assert compute_signature(var, (Context(_GRID, ()),), _EMPTY_LIB) is None
+
+
+# -- function values: application semantics & behavioral signatures -------------
+
+
+def test_apply_function_value_primitive_is_uncurried() -> None:
+    inc = Primitive(name="inc", param_types=(INT,), return_type=INT, impl=lambda x: x + 1)
+    assert apply_function_value(inc, (5,)) == 6
+
+
+def test_apply_function_value_closure_is_curried() -> None:
+    # a curried function returning its outer (row = $1) argument
+    fn = Lam(param_type=INT, body=Lam(param_type=INT, body=Var(index=1, value_type=INT)))
+    closure = fn.evaluate(_GRID, _EMPTY_LIB)
+    assert apply_function_value(closure, (7, 9)) == 7
+
+
+def test_function_signature_of_a_primref() -> None:
+    inc = Primitive(name="inc", param_types=(INT,), return_type=INT, impl=lambda x: x + 1)
+    library = Library(name="t", primitives=(inc,))
+    samples: dict[Type, Sequence[Value]] = {INT: [0, 5]}
+    sig = compute_function_signature(
+        PrimRef(name="inc"), ArrowType((INT,), INT), (Context(_GRID),), samples, library
+    )
+    assert sig == (1, 6)  # inc(0), inc(5)
+
+
+def test_function_signature_discriminates_by_behavior() -> None:
+    arrow = ArrowType((INT,), ArrowType((INT,), INT))
+    samples: dict[Type, Sequence[Value]] = {INT: [0, 1, 2]}
+    col = Lam(param_type=INT, body=Lam(param_type=INT, body=Var(index=0, value_type=INT)))  # col
+    row = Lam(param_type=INT, body=Lam(param_type=INT, body=Var(index=1, value_type=INT)))  # row
+    sig_col = compute_function_signature(col, arrow, (Context(_GRID),), samples, _EMPTY_LIB)
+    sig_row = compute_function_signature(row, arrow, (Context(_GRID),), samples, _EMPTY_LIB)
+    assert sig_col != sig_row  # a sample with row != col separates them
+    col_again = Lam(param_type=INT, body=Lam(param_type=INT, body=Var(index=0, value_type=INT)))
+    assert (
+        compute_function_signature(col_again, arrow, (Context(_GRID),), samples, _EMPTY_LIB)
+        == sig_col
+    )
+
+
+def test_function_signature_none_when_undefined_everywhere() -> None:
+    bad = Lam(param_type=INT, body=Var(index=5, value_type=INT))  # $5 out of scope → raises
+    sig = compute_function_signature(
+        bad, ArrowType((INT,), INT), (Context(_GRID),), {INT: [0]}, _EMPTY_LIB
+    )
+    assert sig is None

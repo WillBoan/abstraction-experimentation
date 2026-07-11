@@ -16,13 +16,21 @@ reused from `cells.py`. Nothing here is wired into a locked solver; it's the sub
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.solvers.program_search.substrate.library import Closure, Library, Primitive, Value
+from arc_lab.core.task import Task
+from arc_lab.solvers.program_search.substrate.library import (
+    Closure,
+    Library,
+    Primitive,
+    RawContext,
+    Value,
+)
 from arc_lab.solvers.program_search.substrate.primitives.cells import READ, SET_CELL
-from arc_lab.solvers.program_search.substrate.types import FN, GRID, INT
+from arc_lab.solvers.program_search.substrate.types import COLOR, GRID, INT, ArrowType
 
 _GRID = GRID
 _INT = INT
-_FN = FN
+#: ``build_grid``'s coordinate function is curried: row -> (col -> color).
+_CELL_FN = ArrowType((_INT,), ArrowType((_INT,), COLOR))
 
 
 def _width(grid: Grid) -> int:
@@ -71,13 +79,41 @@ def _build_grid(height: int, width: int, fn: Value) -> Grid:
     return Grid.from_list(rows)
 
 
+def _build_grid_body_sampler(
+    task: Task, sibling_arg_values: tuple[Value, ...]
+) -> tuple[tuple[RawContext, ...], tuple[Value, ...] | None]:
+    """``build_grid``'s body search: one context per training-output cell, fully propagated.
+
+    Contexts pair each training input with an output-cell coordinate binding ``(row, col)`` (row
+    outer/``$1``, col inner/``$0`` — §3 scope ordering); the aligned target is that cell's color, so
+    the body search extracts exactly the coordinate→color functions that reproduce the outputs.
+    Contexts come from the training pairs' *output* dims, not the ``h``/``w`` sibling arguments —
+    ``sibling_arg_values`` is unused here.
+    """
+    contexts: list[RawContext] = []
+    target: list[Value] = []
+    for example in task.train:
+        if example.output is None:
+            continue
+        cells = example.output.to_list()
+        for row in range(example.output.height):
+            for col in range(example.output.width):
+                contexts.append((example.input, (row, col)))
+                target.append(cells[row][col])
+    return tuple(contexts), tuple(target)
+
+
 WIDTH = Primitive(name="width", param_types=(_GRID,), return_type=_INT, impl=_width)
 HEIGHT = Primitive(name="height", param_types=(_GRID,), return_type=_INT, impl=_height)
 SUB = Primitive(name="sub", param_types=(_INT, _INT), return_type=_INT, impl=_sub)
 ADD = Primitive(name="add", param_types=(_INT, _INT), return_type=_INT, impl=_add)
 MUL = Primitive(name="mul", param_types=(_INT, _INT), return_type=_INT, impl=_mul)
 BUILD_GRID = Primitive(
-    name="build_grid", param_types=(_INT, _INT, _FN), return_type=_GRID, impl=_build_grid
+    name="build_grid",
+    param_types=(_INT, _INT, _CELL_FN),
+    return_type=_GRID,
+    impl=_build_grid,
+    body_sampler=_build_grid_body_sampler,
 )
 
 #: The cell-render floor: cells (read / set_cell) + dimension perceivers + arithmetic + build_grid.

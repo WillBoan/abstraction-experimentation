@@ -11,9 +11,14 @@ from arc_lab.solvers.program_search.search.search_engine import (
     BeamBottomUpSearchEngine,
     BottomUpSearchEngine,
 )
-from arc_lab.solvers.program_search.substrate.library import Library, Primitive
-from arc_lab.solvers.program_search.substrate.program import Apply, Input
-from arc_lab.solvers.program_search.substrate.types import GRID
+from arc_lab.solvers.program_search.substrate.library import (
+    Library,
+    Primitive,
+    Value,
+    apply_function_value,
+)
+from arc_lab.solvers.program_search.substrate.program import Apply, Input, PrimRef
+from arc_lab.solvers.program_search.substrate.types import GRID, ArrowType
 
 _GRID = Grid.from_list([[1, 2], [3, 4]])
 
@@ -109,6 +114,47 @@ def test_solves_under_every_polymorphism_policy() -> None:
         )
         result = engine.run(task=task, library=_GEO, constraints=(), cost=ProgramSize())
         assert Apply(primitive="transpose", args=(Input(),)) in result.ranked_programs
+
+
+def _rot90(grid: Grid) -> Grid:
+    return Grid.from_list([list(row) for row in zip(*grid.to_list()[::-1], strict=True)])
+
+
+_ROT90 = Primitive(name="rot90", param_types=(GRID,), return_type=GRID, impl=_rot90)
+
+
+def _twice_impl(f: Value, g: Grid) -> Value:
+    once = apply_function_value(f, (g,))
+    return apply_function_value(f, (once,))
+
+
+# twice(f, g) = f(f(g)) — a genuine higher-order primitive: the function is applied internally.
+_TWICE = Primitive(
+    name="twice",
+    param_types=(ArrowType((GRID,), GRID), GRID),
+    return_type=GRID,
+    impl=_twice_impl,
+)
+
+
+def test_point_free_higher_order_fill_via_a_primref() -> None:
+    # target = rot180 = rot90 applied twice; within depth 2 the only solution is twice(&rot90, Input).
+    rot180 = _rot90(_rot90(_GRID))
+    task = Task(task_id="ho", train=(Example(input=_GRID, output=rot180),), test=())
+    engine = BottomUpSearchEngine(
+        constant_sources=(),
+        function_hole_fill_mode="point-free",
+        polymorphism_instantiation="monomorphize",
+        budget=Budget(max_depth=2, max_arity=1, max_pool=100),
+    )
+    result = engine.run(
+        task=task,
+        library=Library(name="ho", primitives=(_TWICE, _ROT90)),
+        constraints=(),
+        cost=ProgramSize(),
+    )
+    assert result.stats.solved
+    assert Apply(primitive="twice", args=(PrimRef(name="rot90"), Input())) in result.ranked_programs
 
 
 def test_beam_engine_also_solves() -> None:
