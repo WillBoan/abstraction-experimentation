@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.arc_lab.core.dataset import Corpus
+from arc_lab.core.dataset import Corpus
 
 from .config import Config
 
@@ -19,6 +19,6 @@ class RunSpec:
         raise NotImplementedError()
 
     @classmethod
-    def from_dict(cls, run_spec_dict: dict) -> RunSpec:
+    def from_dict(cls, run_spec_dict: dict[str, object]) -> RunSpec:
         """Deserialize"""
         raise NotImplementedError()
