@@ -212,6 +212,8 @@ Layering rules:
 | `arc-lab taskgen <generator>` | — | generate a synthetic corpus → committed testbed (`testbeds/`) |
 | `arc-lab runs` / `configs` / `datasets` / `show` | — | utilities (`solvers` dies with `Solver`; `configs` lists presets) |
 
+**Config precedence:** `dataclass defaults < named preset < config file < CLI --set`. The `<config>` argument to `search`/`learn` is a preset name or a JSON file `{"preset": "<name>", "set": {"<dotted.path>": <value>}}`; `--set path=value` (repeatable) applies last. Overrides are dotted paths into the frozen `Config` (`budget.max_depth=4`, `search_engine.beam_width=64`, `library=d4` by registry name, `learn.iterations=3` on a LEARN config) — `execution/overrides.py`; unknown fields and type mismatches fail loudly, and every override mints its own `run_id` (no cache collisions).
+
 Two deliberate changes vs. the old CLI: **`analyze-run` is read-side only** (the old `analyze` _executed_; execution is `search`/`learn`'s job now, and idempotency makes run-if-missing trivial), and **`taskgen` is its own command** — corpus _generation_ (seeded, deterministic, rare, committed) is disentangled from corpus _consumption_; a study that regenerated corpora inline would silently mint new run identities whenever generation logic changed, killing cache reuse. Study _takes_ corpora, never makes them.
 
 ## Load-bearing properties

@@ -59,7 +59,7 @@ uv run arc-lab -vv search ...                        # -v INFO / -vv DEBUG trace
 ARC_LAB_LOG=DEBUG uv run pytest -k <x>               # same trace under pytest
 ```
 
-A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed split (`e1-rot90:train` / `:heldout`).
+A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed split (`e1-rot90:train` / `:heldout`). Config precedence: `defaults < preset < config file < --set` — `<config>` may be a JSON file `{"preset": ..., "set": {...}}`, and `--set budget.max_depth=4` overrides any `Config` field by dotted path (`execution/overrides.py`).
 
 ## Conventions & gotchas
 
