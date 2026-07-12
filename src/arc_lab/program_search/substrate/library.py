@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias
 
 from arc_lab.core.grid import Grid
+from arc_lab.core.mask import Mask
 from arc_lab.program_search.substrate.types import GRID, Type, type_to_serializable
 
 if TYPE_CHECKING:
@@ -57,12 +58,13 @@ class Closure:
         return self.body.evaluate(self.grid, self.library, self.env, (*self.scope, arg))
 
 
-#: A value flowing through a program: a grid, a scalar (color / small int / bool), a *function value*
-#: (a lambda's :class:`Closure` or a :class:`Primitive` referenced first-class via a ``PrimRef``,
-#: applied by ``AppFn``), or a *container* — a ``tuple`` of values, the runtime form of a ``list[a]``
-#: (homogeneous sequence) or a ``pair[a, b]`` (2-tuple). The type is carried by the program, not the
-#: value, so ``list`` and ``pair`` share the native ``tuple`` representation.
-Value: TypeAlias = "Grid | int | bool | Closure | Primitive | tuple[Value, ...]"
+#: A value flowing through a program: a grid, a mask (boolean cell selection), a scalar (color /
+#: small int / bool), a *function value* (a lambda's :class:`Closure` or a :class:`Primitive`
+#: referenced first-class via a ``PrimRef``, applied by ``AppFn``), or a *container* — a ``tuple``
+#: of values, the runtime form of a ``list[a]`` (homogeneous sequence) or a ``pair[a, b]``
+#: (2-tuple). The type is carried by the program, not the value, so ``list`` and ``pair`` share the
+#: native ``tuple`` representation.
+Value: TypeAlias = "Grid | Mask | int | bool | Closure | Primitive | tuple[Value, ...]"
 
 #: A primitive implementation: takes value arguments, returns a value.
 PrimitiveImpl: TypeAlias = Callable[..., Value]

@@ -220,7 +220,7 @@ Every capability is designed, in a definite **layer** of the build: `library` (t
 
 | Capability | SEARCH-SPACE | Layer | Design |
 | --- | --- | --- | --- |
-| Data nouns: Grid · Int · Color · Bool | A | library | `TypeCon` base types |
+| Data nouns: Grid · Int · Color · Bool · Mask | A | library | `TypeCon` base types (`Mask` backed by `core/mask.py`, Grid's frozen/hashable pattern) |
 | Data nouns: List[·] · Pair[·] | A | type-system | parametric `TypeCon` (§11.1) |
 | Boolean predicates · Arithmetic · Comparison | A | library | primitives + §5.2 |
 | Branching (`if`), total **and** domain-split | A | engine + substrate | short-circuit `If` (§5.4, §11.3) + partial signatures (§4, §5.5) |

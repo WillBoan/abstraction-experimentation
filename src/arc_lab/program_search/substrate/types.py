@@ -74,8 +74,9 @@ COLOR = TypeCon("color")  # a cell color, integer 0-9
 INT = TypeCon("int")  # a small non-negative integer (e.g. a tiling dimension)
 BOOL = TypeCon("bool")  # a truth value, produced by control primitives and branch conditions
 FN = TypeCon("fn")  # an opaque function value; an ArrowType refines it where the shape is known
+MASK = TypeCon("mask")  # a boolean cell selection over a grid (ONTOLOGY.md's L3 region type)
 
-_BASE_TYPES: dict[str, TypeCon] = {t.name: t for t in (GRID, COLOR, INT, BOOL, FN)}
+_BASE_TYPES: dict[str, TypeCon] = {t.name: t for t in (GRID, COLOR, INT, BOOL, FN, MASK)}
 
 
 def list_type(element: Type) -> TypeCon:

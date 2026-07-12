@@ -64,6 +64,28 @@ def _from_cells(width: int, height: int, cells: Value) -> Grid:
     return Grid.from_list(rows)
 
 
+def _swap_cells(grid: Grid, row_a: int, col_a: int, row_b: int, col_b: int) -> Grid:
+    """Exchange the colors at (row_a, col_a) and (row_b, col_b).
+
+    Hand-shipped so it can serve as a withheld study *target* (a study's L3 = L1 + targets needs
+    the target to exist as a primitive); the re-derivation experiments (E2 lineage) keep it out of
+    their starting libraries. Derivable from ``read`` + ``set_cell`` by re-reading the original grid.
+    """
+    color_a = _read(grid, row_a, col_a)
+    color_b = _read(grid, row_b, col_b)
+    return _set_cell(_set_cell(grid, row_a, col_a, color_b), row_b, col_b, color_a)
+
+
+def _move_cell(grid: Grid, row_a: int, col_a: int, row_b: int, col_b: int) -> Grid:
+    """Relocate (row_a, col_a)'s color to (row_b, col_b), clearing the source to 0.
+
+    Same target-not-starting-vocabulary status as :func:`_swap_cells`. The source clears to color 0
+    (not "background") so it stays derivable from ``read`` + ``set_cell`` + a ``0`` constant.
+    """
+    color = _read(grid, row_a, col_a)
+    return _set_cell(_set_cell(grid, row_b, col_b, color), row_a, col_a, 0)
+
+
 READ = Primitive(name="read", param_types=(_GRID, _INT, _INT), return_type=_COLOR, impl=_read)
 SET_CELL = Primitive(
     name="set_cell", param_types=(_GRID, _INT, _INT, _COLOR), return_type=_GRID, impl=_set_cell
@@ -75,6 +97,19 @@ FROM_CELLS = Primitive(
     return_type=_GRID,
     impl=_from_cells,
 )
+SWAP_CELLS = Primitive(
+    name="swap_cells",
+    param_types=(_GRID, _INT, _INT, _INT, _INT),
+    return_type=_GRID,
+    impl=_swap_cells,
+)
+MOVE_CELL = Primitive(
+    name="move_cell",
+    param_types=(_GRID, _INT, _INT, _INT, _INT),
+    return_type=_GRID,
+    impl=_move_cell,
+)
 
-#: The cell-level starting library (E2/E3): read + set_cell.
+#: The cell-level starting library (E2/E3): read + set_cell. Deliberately excludes the target
+#: primitives (`swap_cells`/`move_cell`) — those exist to be *withheld* and re-derived.
 CELL_LIBRARY = Library(name="cells", primitives=(READ, SET_CELL))
