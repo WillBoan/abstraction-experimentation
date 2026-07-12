@@ -112,6 +112,7 @@ def _run(library: Library) -> SearchResult:
         constant_sources=(),
         function_hole_fill_mode="none",
         polymorphism_instantiation="monomorphize",
+        unpinned_type_var_mode="reject",
     )
     return engine.run(
         train_examples=_TASK.train,

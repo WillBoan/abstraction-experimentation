@@ -182,14 +182,18 @@ signature in §5.7, so no precedence rule is needed)
 
 ## 7. Higher-order primitives & body sampling
 
-**All** higher-order primitives are handled by the _one_ function-pool mechanism (§5.3, §8) — there is no bespoke per-primitive search. What a primitive optionally adds is a **`body_sampler`** (§11.4): `body_sampler(task, sibling_arg_values) → (body_contexts, body_target | None)`, giving the recursive body search its contexts and (when derivable) its propagation target:
+**All** higher-order primitives are handled by the _one_ function-pool mechanism (§5.3, §8) — there is no bespoke per-primitive search. What a primitive optionally adds is a **`body_sampler`** (§11.4): `body_sampler(train_examples, sibling_arg_values, enclosing_target) → (body_contexts, body_target | None)`, giving the recursive body search its contexts and (when derivable) its propagation target:
 
 - `build_grid`: read output dims from the training pairs → per-`(input, (row, col))` contexts; `body_target` = the output cell colors. Full propagation.
-- `map`: evaluate the list argument on the training inputs → per-`(input, (element,))` contexts; `body_target` = the aligned output elements. Full propagation.
+- `map`: evaluate the list argument on the training inputs → per-`(input, (element,))` contexts; `body_target` = the aligned output elements, when the target list-shapes and length-matches at every context. Propagation when it does, else baseline.
 - `filter`: per-`(input, (element,))` contexts; `body_target` = the `BOOL` keep-mask derivable from which elements survive to the output. Propagation when the surviving set is unambiguous, else baseline.
 - `sort_by`, `fold`: contexts as above; **`body_target = None`** (the sort key / the accumulator are latent), so the **baseline** (§8) carries them — correct and complete, without the accelerator.
 
 `body_target = None` is never a capability gap — see §8.
+
+**`enclosing_target`: one recursive rule, not a `build_grid`-specific one.** A `(values, value_type)` pair — `EnclosingTarget` in [library.py](src/arc_lab/program_search/substrate/library.py) — threads down through synthesis: at the top level it's `(train_with_output(train_examples)`'s outputs, `goal_type)`; whenever synthesis recurses into a hole's body search, the child call's version becomes whatever *that* hole's own `body_sampler` derived (`body_target`, `body_type`), or `None` if nothing was derived. Any primitive's sampler, at any nesting depth, may consult it — but only when the primitive's own (substituted) return type unifies with the target's type (checked once by the engine, in `_synthesize_for_hole`, not trusted to each sampler). `build_grid`'s full propagation and `map`/`filter`'s conditional propagation above are all instances of this one rule, not special cases; the engine has no primitive-specific propagation logic. `enclosing_target` is *not* excluded from the memoization key — see the correction in §9.
+
+**Not built: inverse-semantics propagation.** `enclosing_target` propagation stops the moment a hole's result is consumed by an ordinary (non-hole) parameter of another primitive rather than compared directly against the top-level target — e.g. `map`'s `List[b]` result feeding `render`'s `List[Object] → GRID` argument never sees a target, because `List[b]` cannot unify with `GRID` regardless of nesting depth. Making that fire needs *inverting* the wrapping primitive ("if `render(X) == training_output`, what must `X` have been") — a targeted, λ²-style condition-propagation technique, structurally different from (and narrower than) general bidirectional search: it only seeds this same `enclosing_target`/body-search machinery at composition sites that are invertible, not an arbitrary backward enumerator. Named in the older `MACHINERY.md` lever-map as `unbuilt`; not implemented here. `BottomUpSearchEngine.inverse_semantics_propagation: bool = False` names the gap explicitly — `True` raises `NotImplementedError` at construction rather than silently no-op'ing.
 
 ---
 
@@ -206,7 +210,7 @@ Propagation only changes _how many_ candidates the pool holds, never _whether_ t
 
 ## 9. Memoization
 
-Recursive sub-searches recur, so memoize. Because `_enumerate` (§4) is a pure function of its inputs, the sound key is exactly **`(scope, contexts, budget)`** — `contexts` (hashable: grids are frozen, `scope_binding`s are `Value` tuples) fixes how signatures are computed; `budget` fixes depth/arity/pool. `goal_type` and `target` are _not_ in the key — they belong to extraction (§5.8), which the cache never touches.
+Recursive sub-searches recur, so memoize. Because `_enumerate` (§4) is a pure function of its inputs, the sound key is **`(scope, contexts, budget, enclosing_target)`** — `contexts` (hashable: grids are frozen, `scope_binding`s are `Value` tuples) fixes how signatures are computed; `budget` fixes depth/arity/pool. The top-level `goal_type`/`target` are _not_ in the key — they belong to extraction (§5.8), which the cache never touches — but the recursively-threaded `enclosing_target` (§7) *is*: it can change how many candidates get synthesized and absorbed into a sub-search's own pool (propagation vs. baseline), so two different recursion paths that happen to reach the same `(scope, contexts, budget)` with a different `enclosing_target` are genuinely different searches, not a cache hit — two distinct primitives peeling to the same body scope could coincidentally produce identical body contexts while deriving different targets, and memoizing on `enclosing_target` too is what keeps that sound. (This corrects the original design, which excluded target information from the key entirely; the gap was found during implementation of §7's higher-order primitives.)
 
 ---
 
@@ -264,7 +268,7 @@ A dedicated AST node `If(cond, then, orelse)` implementing all `Program` operati
 
 ### 11.4 `body_sampler` on `Primitive` — **already in the substrate**
 
-`Primitive` carries an optional `body_sampler(task, sibling_arg_values) → (body_contexts, body_target | None)` (§7) — see [library.py](src/arc_lab/solvers/program_search/substrate/library.py); the substrate stays search-agnostic by returning _raw_ `(grid, scope_binding)` samples the search layer wraps into its `Context`s. Its presence makes higher-order-primitive extensibility real; its absence is the baseline (§8), not a gap. `sibling_arg_values` is in the contract for primitives whose contexts depend on their other arguments (`map`/`filter` sample the evaluated list argument); the engine passes `()` until such a primitive lands.
+`Primitive` carries an optional `body_sampler(train_examples, sibling_arg_values, enclosing_target) → (body_contexts, body_target | None)` (§7) — see [library.py](src/arc_lab/program_search/substrate/library.py); the substrate stays search-agnostic by returning _raw_ `(grid, scope_binding)` samples the search layer wraps into its `Context`s. Its presence makes higher-order-primitive extensibility real; its absence is the baseline (§8), not a gap. `sibling_arg_values` is one value-tuple-or-`None` per training context (`None` where a sibling errored there — partial-tolerant, §5.5-style), `()` for a hole concrete from the primitive's own signature (`build_grid` has no siblings to pin). `enclosing_target` is the recursively-threaded `EnclosingTarget | None` described in §7 — a sampler may consult it only when its own return type unifies with the target's type (checked by the engine, not the sampler).
 
 ### 11.5 Object pathway · **[proposed — substrate + ONTOLOGY]**
 

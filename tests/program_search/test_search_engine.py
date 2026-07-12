@@ -36,6 +36,7 @@ _ENGINE = BottomUpSearchEngine(
     constant_sources=(),
     function_hole_fill_mode="none",
     polymorphism_instantiation="monomorphize",
+    unpinned_type_var_mode="reject",
 )
 
 
@@ -119,6 +120,7 @@ def test_solves_under_every_polymorphism_policy() -> None:
             constant_sources=(),
             function_hole_fill_mode="none",
             polymorphism_instantiation=policy,
+            unpinned_type_var_mode="reject",
         )
         result = engine.run(
             train_examples=task.train,
@@ -159,6 +161,7 @@ def test_point_free_higher_order_fill_via_a_primref() -> None:
         constant_sources=(),
         function_hole_fill_mode="point-free",
         polymorphism_instantiation="monomorphize",
+        unpinned_type_var_mode="reject",
     )
     result = engine.run(
         train_examples=task.train,
@@ -177,6 +180,7 @@ def test_beam_engine_also_solves() -> None:
         constant_sources=(),
         function_hole_fill_mode="none",
         polymorphism_instantiation="monomorphize",
+        unpinned_type_var_mode="reject",
         beam_width=50,
     )
     result = engine.run(

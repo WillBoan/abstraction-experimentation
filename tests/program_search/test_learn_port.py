@@ -101,6 +101,7 @@ def test_config_with_real_learn_engine_round_trips() -> None:
             constant_sources=(),
             function_hole_fill_mode="none",
             polymorphism_instantiation="monomorphize",
+            unpinned_type_var_mode="reject",
         ),
         budget=Budget(max_depth=2, max_arity=2, max_pool=100),
         learn=LearnSpec(

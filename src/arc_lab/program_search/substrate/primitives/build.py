@@ -16,9 +16,10 @@ reused from `cells.py`. Nothing here is wired into a locked solver; it's the sub
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.core.task import TrainExamples
+from arc_lab.core.task import TrainExamples, train_with_output
 from arc_lab.program_search.substrate.library import (
     Closure,
+    EnclosingTarget,
     Library,
     Primitive,
     RawContext,
@@ -80,24 +81,41 @@ def _build_grid(height: int, width: int, fn: Value) -> Grid:
 
 
 def _build_grid_body_sampler(
-    train_examples: TrainExamples, sibling_arg_values: tuple[Value, ...]
+    train_examples: TrainExamples,
+    sibling_arg_values: tuple[tuple[Value, ...] | None, ...],
+    enclosing_target: EnclosingTarget | None,
 ) -> tuple[tuple[RawContext, ...], tuple[Value, ...] | None]:
     """``build_grid``'s body search: one context per training-output cell, fully propagated.
 
-    Contexts pair each training input with an output-cell coordinate binding ``(row, col)`` (row
-    outer/``$1``, col inner/``$0`` — §3 scope ordering); the aligned target is that cell's color, so
-    the body search extracts exactly the coordinate→color functions that reproduce the outputs.
-    Contexts come from the training pairs' *output* dims, not the ``h``/``w`` sibling arguments —
-    ``sibling_arg_values`` is unused here.
+    An instance of the general enclosing-target rule (§7), not a special case: the engine only ever
+    hands this a non-``None`` ``enclosing_target`` when ``build_grid``'s own return type (``GRID``)
+    unifies with it, so its values are known to be ``Grid``s. Contexts pair each training input with
+    an output-cell coordinate binding ``(row, col)`` (row outer/``$1``, col inner/``$0`` — §3 scope
+    ordering); the aligned target is that cell's color. Without an ``enclosing_target`` there are no
+    output dimensions to search bodies against, so no contexts are produced. The ``h``/``w`` sibling
+    arguments are unused — ``sibling_arg_values`` is ``()`` here (``build_grid`` has no siblings that
+    could pin anything; its hole is already concrete).
+
+    ``enclosing_target.values`` is index-aligned with *training examples* only when this call is at
+    (or under a context-preserving hole of) the top level — a hole recursively nested under a
+    *different* hole's body search (§9) sees a differently-shaped, differently-sized target (e.g.
+    per-element, not per-example). This primitive's notion of "one entry per training example" only
+    applies in the former case, so a length mismatch means "not meaningfully synthesizable here" —
+    the safe response is no contexts, mirroring how the caller already treats ``raw_contexts == ()``.
     """
+    if enclosing_target is None:
+        return (), None
     contexts: list[RawContext] = []
     target: list[Value] = []
-    for example in train_examples:
-        if example.output is None:
-            continue
-        cells = example.output.to_list()
-        for row in range(example.output.height):
-            for col in range(example.output.width):
+    examples = train_with_output(train_examples)
+    if len(examples) != len(enclosing_target.values):
+        return (), None
+    for example, output in zip(examples, enclosing_target.values, strict=True):
+        if not isinstance(output, Grid):
+            continue  # the engine's unify check should prevent this; defensive + narrows the type
+        cells = output.to_list()
+        for row in range(output.height):
+            for col in range(output.width):
                 contexts.append((example.input, (row, col)))
                 target.append(cells[row][col])
     return tuple(contexts), tuple(target)

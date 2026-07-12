@@ -70,6 +70,7 @@ def e1_rot90() -> StudySpec:
                 constant_sources=(),
                 function_hole_fill_mode="none",
                 polymorphism_instantiation="monomorphize",
+                unpinned_type_var_mode="reject",
             ),
             budget=deep,
             learn=LearnSpec(

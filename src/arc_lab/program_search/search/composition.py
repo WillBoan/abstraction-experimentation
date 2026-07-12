@@ -101,6 +101,49 @@ def appfn_applications(
         yield from _fill(_appfn_builder(fn_program), fresh.params, fresh.result, candidates)
 
 
+def hole_assignments(
+    primitive: Primitive,
+    hole_index: int,
+    candidates: Sequence[TypedProgram],
+    counter: itertools.count[int],
+) -> Iterator[tuple[tuple[Program, ...], Type, Type]]:
+    """Every well-typed choice of ``primitive``'s parameters *other than* ``hole_index``, threading
+    one substitution — used by lambda synthesis (§5.3) to pin a function-hole's type variables from
+    sibling arguments that share them (e.g. ``map``'s hole ``a→b`` shares ``a`` with its ``List[a]``
+    sibling).
+
+    Yields the chosen sibling programs (parameter order, ``hole_index`` excluded), the hole's type
+    *after* substitution, and the primitive's *return* type after the same substitution (``map``'s
+    hole and its ``List[b]`` return type share ``b`` — both need the identical substitution applied,
+    not just the hole). Each is fully resolved if every one of its free variables also appears in a
+    filled parameter, still carrying free variables otherwise (the caller decides what to do with
+    those, §6.2-style).
+
+    A separate, smaller function rather than a generalized ``_fill``: unlike ``_fill``, this never
+    builds a finished program (the hole isn't filled from the pool — it's synthesized by the caller
+    afterward) and skips one parameter entirely rather than filling every one.
+    """
+    packed = instantiate(ArrowType(primitive.param_types, primitive.return_type), counter)
+    assert isinstance(packed, ArrowType)
+    sibling_positions = [i for i in range(len(packed.params)) if i != hole_index]
+
+    def recurse(
+        remaining: tuple[int, ...], subst: Substitution, chosen: dict[int, Program]
+    ) -> Iterator[tuple[tuple[Program, ...], Type, Type]]:
+        if not remaining:
+            hole_type = apply_subst(subst, packed.params[hole_index])
+            return_type = apply_subst(subst, packed.result)
+            yield tuple(chosen[i] for i in sibling_positions), hole_type, return_type
+            return
+        index, rest = remaining[0], remaining[1:]
+        for program, ptype in candidates:
+            threaded = unify(packed.params[index], ptype, subst)
+            if threaded is not None:
+                yield from recurse(rest, threaded, {**chosen, index: program})
+
+    yield from recurse(tuple(sibling_positions), {}, {})
+
+
 def _apply_builder(name: str) -> _Build:
     return lambda args: Apply(primitive=name, args=args)
 

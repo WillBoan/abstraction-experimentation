@@ -74,6 +74,18 @@ class Task:
         return len(self.test)
 
 
+def train_with_output(examples: TrainExamples) -> TrainExamples:
+    """The examples of ``examples`` with a known output — the ones usable as evaluation contexts.
+
+    A free function over ``TrainExamples`` (not a ``Task`` method): the search stack is
+    structurally blind to ``Task`` (EXECUTION.md, Sync B) — everything downstream of
+    ``SearchEngine.run`` only ever holds a ``TrainExamples``, never a ``Task``, so this needs to
+    be callable without one. The single shared definition keeps every consumer (``run``'s own
+    ``contexts``/``target``, and every ``BodySampler``) index-aligned by construction.
+    """
+    return tuple(ex for ex in examples if ex.output is not None)
+
+
 def load_tasks(directory: str | Path) -> tuple[Task, ...]:
     """Load every ``*.json`` task in a directory, sorted by task id."""
     d = Path(directory)

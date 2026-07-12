@@ -18,13 +18,24 @@ from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import Literal, TypeAlias
 
-from arc_lab.core.task import TrainExamples
+from arc_lab.core.task import TrainExamples, train_with_output
 
-from ..substrate.library import Library, Primitive, Value
+from ..substrate.library import EnclosingTarget, Library, Primitive, Value
 from ..substrate.program import If, Lam, PrimRef, Program
-from ..substrate.types import BOOL, COLOR, GRID, INT, ArrowType, Type, free_type_vars, instantiate
+from ..substrate.types import (
+    BOOL,
+    COLOR,
+    GRID,
+    INT,
+    ArrowType,
+    Type,
+    apply_subst,
+    free_type_vars,
+    instantiate,
+    unify,
+)
 from .budget import Budget
-from .composition import appfn_applications, applications
+from .composition import appfn_applications, applications, hole_assignments
 from .constraints import Constraint
 from .context import Context
 from .cost import Cost
@@ -45,9 +56,36 @@ from .signature import (
 
 FunctionHoleFillMode: TypeAlias = Literal["none", "point-free", "lambda-synthesis"]
 
+#: How an arrow-hole type variable left unpinned by every sibling (§5.3's ``hole_assignments``) gets
+#: resolved — orthogonal to ``PolymorphismInstantiation`` (that governs ordinary composed *values*;
+#: this governs a lambda *binder's* type, with a different cost character: an eager grounding here
+#: triggers a full recursive body search per candidate type, not an O(1) substitution).
+#: ``reject``: skip synthesis for that hole (today's implicit behavior). ``eager_grounding_over_
+#: universe``: try each type in the run's bounded monotype universe. ``lazy_synthesis``: true
+#: deferred/lazy resolution (what ``unrestricted`` actually means elsewhere — pool a canonicalized,
+#: unsearched placeholder, resolve on demand) — not yet built; ``BottomUpSearchEngine.__post_init__``
+#: rejects it whenever it would actually be reached.
+UnpinnedTypeVarMode: TypeAlias = Literal["reject", "eager_grounding_over_universe", "lazy_synthesis"]
+
 #: The library's branching capability token (§5.4): its *presence* in the bag summons branching,
 #: but the enumerator translates it into short-circuit ``If`` nodes — it is never applied eagerly.
 _BRANCHING_ENTRY = "if"
+
+
+def derive_goal_type(train_examples: TrainExamples) -> Type:
+    """Derive the run's goal type from the task data — not yet built.
+
+    ``Example.output: Grid | None`` (``core/task.py``) makes ``GRID`` the *only* value any derivation
+    could produce for this codebase's ``Task`` model — there is nothing else to derive until
+    ``Task``/``Example`` become generic over output type, a separate, foundational change touching
+    dataset loading/``eval``/``viz``/scoring. This function exists so that gap is visible and named
+    (``BottomUpSearchEngine.run``'s ``goal_type`` param routes here when explicitly passed ``None``)
+    rather than silently absent — it is not a sign the capability is imminent.
+    """
+    raise NotImplementedError(
+        "goal-type derivation from the task is not yet built; pass goal_type explicitly "
+        "(BottomUpSearchEngine.run defaults it to GRID)"
+    )
 
 
 @dataclass(slots=True)
@@ -64,8 +102,15 @@ class _Tally:
 
 
 #: The memoization key of one ``_enumerate`` call (§9): exactly the inputs it is a pure function of.
-#: ``goal_type``/``target`` belong to extraction and are deliberately absent.
-_MemoKey: TypeAlias = "tuple[Scope, tuple[Context, ...], Budget]"
+#: The top-level ``goal_type``/``target`` stay out (they belong to extraction) — but
+#: ``enclosing_target`` (the recursively-threaded local target lambda synthesis consults, §7) *is*
+#: part of a sub-search's identity and must be in the key: it can change how many candidates get
+#: synthesized and absorbed into *this* call's own pool (propagation vs. baseline), so two different
+#: recursion paths that happen to reach the same ``(scope, contexts, budget)`` with a different
+#: ``enclosing_target`` are genuinely different searches, not a cache hit. (Concretely: two distinct
+#: primitives peeling to the same body scope could coincidentally produce identical body contexts
+#: while deriving different targets — memoizing on `enclosing_target` too is what keeps that sound.)
+_MemoKey: TypeAlias = "tuple[Scope, tuple[Context, ...], Budget, EnclosingTarget | None]"
 
 
 @dataclass(slots=True)
@@ -75,12 +120,16 @@ class _RunState:
     train_examples: TrainExamples
     library: Library
     cost: Cost
+    goal_type: Type = GRID
+    #: The training outputs, index-aligned with ``train_with_output(train_examples)`` — the values
+    #: half of the top-level ``EnclosingTarget`` (§7); ``()`` if there are none.
+    train_target: tuple[Value, ...] = ()
     universe: tuple[Type, ...] = ()  # the bounded-polymorphism monotype universe (§6.2)
     tally: _Tally = field(default_factory=_Tally)
     counter: itertools.count[int] = field(default_factory=itertools.count)
-    #: Completed ``_enumerate`` pools by ``(scope, contexts, budget)``. Per-run (never on the
-    #: engine), so the fixed ``train_examples`` a ``body_sampler`` reads cannot leak across runs.
-    #: Cached pools are treated as read-only by every caller.
+    #: Completed ``_enumerate`` pools by ``(scope, contexts, budget, enclosing_target)``. Per-run
+    #: (never on the engine), so the fixed ``train_examples`` a ``body_sampler`` reads cannot leak
+    #: across runs. Cached pools are treated as read-only by every caller.
     memo: dict[_MemoKey, Pool] = field(default_factory=dict)
 
 
@@ -102,6 +151,7 @@ class SearchEngine(ABC):
         constraints: tuple[Constraint, ...],
         cost: Cost,
         budget: Budget,
+        goal_type: Type | None = GRID,
     ) -> SearchResult:
         """Search for programs consistent with ``train_examples``, ranked cheapest-first.
 
@@ -109,6 +159,11 @@ class SearchEngine(ABC):
         algorithm and its capability policies — HOW to search); the budget is per-run
         *data* (HOW MUCH resource), varied independently of the engine — e.g. across a
         study grid's cells. It lives on ``Config`` alongside library/constraints/cost.
+
+        ``goal_type`` defaults to ``GRID`` (the only value any real derivation could
+        produce today) but is explicit and overridable; pass ``None`` to route through
+        ``derive_goal_type`` instead — currently unbuilt (raises), so the capability gap
+        is visible rather than silently absent.
         """
 
 
@@ -119,9 +174,33 @@ class BottomUpSearchEngine(SearchEngine):
     constant_sources: tuple[ConstantSource, ...]
     function_hole_fill_mode: FunctionHoleFillMode
     polymorphism_instantiation: PolymorphismInstantiation
+    unpinned_type_var_mode: UnpinnedTypeVarMode
     #: Argument values sampled per parameter type when deduping a function value by behaviour (§8).
     #: The probe set is the cartesian product across parameters, so cost grows as size**arity.
     function_sample_size: int = 4
+    #: Whether to invert a wrapping primitive's target to seed a nested HOF hole's search (e.g.
+    #: propagating through a future `render`) — a distinct search-strategy dimension (a goal-seeded
+    #: pass alongside bottom-up composition, needing a new `inverse_semantics` primitive capability),
+    #: not a bigger version of `enclosing_target` propagation. Named in MACHINERY.md's lever-map
+    #: ("Bidirectional", `unbuilt`) but not committed to this overhaul. Not yet built: `True` raises
+    #: in `__post_init__`, so the gap is visible rather than silently absent.
+    inverse_semantics_propagation: bool = False
+
+    def __post_init__(self) -> None:
+        if self.inverse_semantics_propagation:
+            raise NotImplementedError(
+                "inverse-semantics propagation is not yet built — see MACHINERY.md's "
+                "'Bidirectional' row"
+            )
+        if (
+            self.unpinned_type_var_mode == "lazy_synthesis"
+            and self.function_hole_fill_mode == "lambda-synthesis"
+        ):
+            raise NotImplementedError(
+                "lazy_synthesis (true deferred lambda-hole resolution) is not yet built"
+            )
+        if self.function_sample_size < 1:
+            raise ValueError(f"function_sample_size must be >= 1, got {self.function_sample_size}")
 
     def run(
         self,
@@ -131,22 +210,35 @@ class BottomUpSearchEngine(SearchEngine):
         constraints: tuple[Constraint, ...],
         cost: Cost,
         budget: Budget,
+        goal_type: Type | None = GRID,
     ) -> SearchResult:
-        train = [(ex.input, ex.output) for ex in train_examples if ex.output is not None]
+        resolved_goal_type = goal_type if goal_type is not None else derive_goal_type(train_examples)
+        # The redundant `if` restores mypy's flow-narrowing of `ex.output` — train_with_output's
+        # filter isn't visible to the type checker across the function call boundary.
+        train = [
+            (ex.input, ex.output) for ex in train_with_output(train_examples) if ex.output is not None
+        ]
         contexts = tuple(Context(grid) for grid, _ in train)
         target: Signature = tuple(output for _, output in train)
+        train_target: tuple[Value, ...] = tuple(output for _, output in train)
         universe = (
             monotype_universe(library, budget.max_depth)
             if self.polymorphism_instantiation == "bounded"
+            or self.unpinned_type_var_mode == "eager_grounding_over_universe"
             else ()
         )
         state = _RunState(
-            train_examples=train_examples, library=library, cost=cost, universe=universe
+            train_examples=train_examples,
+            library=library,
+            cost=cost,
+            goal_type=resolved_goal_type,
+            train_target=train_target,
+            universe=universe,
         )
+        top_target = EnclosingTarget(train_target, resolved_goal_type) if train_target else None
 
-        pool = self._enumerate(Scope(()), contexts, budget, state)
-        # ARC task outputs are grids; a general driver would derive the goal type from the task.
-        solutions = extract(pool, GRID, target, constraints, train_examples, library)
+        pool = self._enumerate(Scope(()), contexts, budget, state, top_target)
+        solutions = extract(pool, resolved_goal_type, target, constraints, train_examples, library)
 
         return SearchResult(
             ranked_programs=solutions,
@@ -164,14 +256,12 @@ class BottomUpSearchEngine(SearchEngine):
         contexts: tuple[Context, ...],
         budget: Budget,
         state: _RunState,
+        enclosing_target: EnclosingTarget | None,
     ) -> Pool:
-        """Build the full typed pool for ``(scope, contexts)`` up to ``budget`` (§5), memoized (§9).
-
-        ``_enumerate`` is a pure function of ``(scope, contexts, budget)`` — no goal, no target, no
-        early exit — so identical recursive sub-searches (the same lambda-body search recurring
-        every composition round) are served from ``state.memo``.
+        """Build the full typed pool for ``(scope, contexts, enclosing_target)`` up to ``budget``
+        (§5), memoized (§9 — see ``_MemoKey`` on why ``enclosing_target`` is part of the key).
         """
-        key: _MemoKey = (scope, contexts, budget)
+        key: _MemoKey = (scope, contexts, budget, enclosing_target)
         cached = state.memo.get(key)
         if cached is not None:
             return cached
@@ -184,7 +274,9 @@ class BottomUpSearchEngine(SearchEngine):
             branch_candidates: list[tuple[Program, Type, Signature | None]] = []
             if depth > 0:
                 branch_candidates = self._branch_candidates(pool, state)
-                frontier = list(self._compose(scope, pool, budget, state))
+                frontier = list(
+                    self._compose(scope, contexts, pool, budget, state, enclosing_target)
+                )
             self._absorb(frontier, contexts, pool, state)
             for program, vtype, signature in branch_candidates:
                 self._absorb_one(program, vtype, vtype, signature, pool, state)
@@ -193,7 +285,13 @@ class BottomUpSearchEngine(SearchEngine):
         return pool
 
     def _compose(
-        self, scope: Scope, pool: Pool, budget: Budget, state: _RunState
+        self,
+        scope: Scope,
+        contexts: tuple[Context, ...],
+        pool: Pool,
+        budget: Budget,
+        state: _RunState,
+        enclosing_target: EnclosingTarget | None,
     ) -> Iterator[tuple[Program, Type]]:
         """One composition round: applications of every primitive, then the polymorphism policy (§6.2).
 
@@ -219,45 +317,169 @@ class BottomUpSearchEngine(SearchEngine):
             ):
                 yield from resolve(program, result_type, policy, state.universe)
             if self.function_hole_fill_mode == "lambda-synthesis":
-                yield from self._synthesized_lambdas(primitive, scope, budget, state)
+                yield from self._synthesized_lambdas(
+                    primitive, scope, contexts, candidates, budget, state, enclosing_target
+                )
         if self.function_hole_fill_mode != "none":  # apply pooled function values (§8)
             for program, result_type in appfn_applications(candidates, state.counter):
                 yield from resolve(program, result_type, policy, state.universe)
 
     def _synthesized_lambdas(
-        self, primitive: Primitive, scope: Scope, budget: Budget, state: _RunState
+        self,
+        primitive: Primitive,
+        scope: Scope,
+        contexts: tuple[Context, ...],
+        candidates: Sequence[tuple[Program, Type]],
+        budget: Budget,
+        state: _RunState,
+        enclosing_target: EnclosingTarget | None,
     ) -> Iterator[tuple[Program, Type]]:
         """Lambda synthesis (§5.3): recursively enumerate bodies for the primitive's arrow holes.
 
-        For each *concrete* arrow-typed parameter of a primitive carrying a ``body_sampler``: peel
-        the curried arrow into its binders and innermost result, recursively ``_enumerate`` the body
-        in the extended scope against the sampler's contexts (one ``budget`` decrement for the whole
-        peel, §4 — the termination guarantee), extract the bodies — just the target-matching ones
-        under propagation, every typed body otherwise (§8) — and wrap them in nested ``Lam``\\ s. The
-        value's type is the hole arrow itself, known here at construction (no ``Lam.result_type``).
+        A *concrete* arrow-typed hole (no free type vars — e.g. ``build_grid``) is already fully
+        typed by the primitive's own signature; a hole with free type vars (e.g. ``map``'s ``a→b``)
+        is pinned by unifying against sibling arguments that share those variables
+        (``hole_assignments``, §5.2-style), with any variable that stays unpinned resolved per
+        ``unpinned_type_var_mode``. Either way, the resolved hole and the (possibly empty) sibling
+        values feed the shared ``_synthesize_for_hole``.
         """
         if primitive.body_sampler is None:
             return
-        for hole in primitive.param_types:
-            if not isinstance(hole, ArrowType) or free_type_vars(hole):
+        for hole_index, hole in enumerate(primitive.param_types):
+            if not isinstance(hole, ArrowType):
                 continue
-            raw_contexts, raw_target = primitive.body_sampler(state.train_examples, ())
-            if not raw_contexts:
+            if not free_type_vars(hole):
+                yield from self._synthesize_for_hole(
+                    primitive, hole, primitive.return_type, (), scope, budget, state,
+                    enclosing_target,
+                )
                 continue
-            body_contexts = tuple(Context(grid, binding) for grid, binding in raw_contexts)
-            body_target: Signature | None = raw_target
-            binders, body_type = peel_arrow(hole)
-            body_scope = scope
-            for binder in binders:
-                body_scope = body_scope.extend(binder)
-            body_pool = self._enumerate(body_scope, body_contexts, budget.descend(), state)
-            for entry in body_pool.items_of_type(body_type):
-                if body_target is not None and entry.sig != body_target:
+            for sibling_programs, instantiated_hole, return_type in hole_assignments(
+                primitive, hole_index, candidates, state.counter
+            ):
+                assert isinstance(instantiated_hole, ArrowType)
+                if free_type_vars(instantiated_hole) or free_type_vars(return_type):
+                    for grounded_hole, grounded_return in self._ground_unpinned_hole(
+                        instantiated_hole, return_type, state
+                    ):
+                        sibling_values = self._evaluate_siblings(sibling_programs, contexts, state)
+                        if sibling_values is None:
+                            continue
+                        yield from self._synthesize_for_hole(
+                            primitive, grounded_hole, grounded_return, sibling_values, scope,
+                            budget, state, enclosing_target,
+                        )
                     continue
-                lam: Program = entry.program
-                for binder in reversed(binders):
-                    lam = Lam(param_type=binder, body=lam)
-                yield lam, hole
+                sibling_values = self._evaluate_siblings(sibling_programs, contexts, state)
+                if sibling_values is None:
+                    continue
+                yield from self._synthesize_for_hole(
+                    primitive, instantiated_hole, return_type, sibling_values, scope, budget,
+                    state, enclosing_target,
+                )
+
+    def _ground_unpinned_hole(
+        self, hole: ArrowType, return_type: Type, state: _RunState
+    ) -> Iterator[tuple[ArrowType, Type]]:
+        """Resolve a hole's (and its primitive's return type's) still-free type variables per
+        ``unpinned_type_var_mode`` (decision 3) — the same substitution applied to both, since they
+        may share a variable (``map``'s hole ``a→b`` and its ``List[b]`` return type both use ``b``).
+
+        ``reject``: nothing (no synthesis for this hole). ``eager_grounding_over_universe``: every
+        grounding of the free variables over ``state.universe`` (each triggers its own full
+        recursive body search in the caller — costlier per-candidate than ordinary ``bounded``
+        composition's O(1) substitution). ``lazy_synthesis`` never reaches here (rejected at
+        construction, ``__post_init__``, whenever it could).
+        """
+        if self.unpinned_type_var_mode != "eager_grounding_over_universe":
+            return
+        free = sorted(free_type_vars(hole) | free_type_vars(return_type))
+        for grounding in itertools.product(state.universe, repeat=len(free)):
+            subst = dict(zip(free, grounding, strict=True))
+            resolved_hole = apply_subst(subst, hole)
+            resolved_return = apply_subst(subst, return_type)
+            assert isinstance(resolved_hole, ArrowType)
+            if not free_type_vars(resolved_hole) and not free_type_vars(resolved_return):
+                yield resolved_hole, resolved_return
+
+    def _evaluate_siblings(
+        self, programs: tuple[Program, ...], contexts: tuple[Context, ...], state: _RunState
+    ) -> tuple[tuple[Value, ...] | None, ...] | None:
+        """Evaluate sibling-argument programs at every context (§ decision 2): one entry per
+        context, ``None`` where a sibling errored *at that context* — mirroring how a partial
+        signature stays pooled elsewhere (§5.5), so a sibling total on most-but-not-all training
+        contexts can still seed synthesis from the contexts it *is* defined on. Returns ``None``
+        (skip entirely) only if every context is undefined, mirroring ``compute_signature``.
+        """
+        rows: list[tuple[Value, ...] | None] = []
+        for context in contexts:
+            try:
+                rows.append(
+                    tuple(
+                        program.evaluate(
+                            context.input_grid, state.library, scope=context.scope_binding
+                        )
+                        for program in programs
+                    )
+                )
+            except Exception:
+                rows.append(None)
+        if all(row is None for row in rows):
+            return None
+        return tuple(rows)
+
+    def _synthesize_for_hole(
+        self,
+        primitive: Primitive,
+        hole: ArrowType,
+        return_type: Type,
+        sibling_values: tuple[tuple[Value, ...] | None, ...],
+        scope: Scope,
+        budget: Budget,
+        state: _RunState,
+        enclosing_target: EnclosingTarget | None,
+    ) -> Iterator[tuple[Program, Type]]:
+        """Recursively search bodies for one (fully-resolved, possibly sibling-pinned) arrow hole
+        and wrap them in nested ``Lam``\\ s (§5.3). ``sibling_values`` is ``()`` for a hole concrete
+        from the primitive's own signature (``build_grid``); otherwise one value-tuple-or-``None``
+        per context, from ``_evaluate_siblings``. ``return_type`` is the primitive's return type
+        after whatever substitution resolved ``hole`` (they can share a type variable, e.g.
+        ``map``'s ``b``). Every caller guarantees ``hole`` has no free type variables by this point
+        — concrete from the start, sibling-pinned, or resolved by ``_ground_unpinned_hole`` — so its
+        peeled binders and result type are already fully known; there is nothing left to search for.
+
+        The primitive may consult ``enclosing_target`` (§7/§8) only if ``return_type`` unifies with
+        the target's type — checked here, once, rather than trusted to the sampler. ``unify`` can
+        succeed with an *empty* substitution (e.g. ``GRID`` unifying with ``GRID``), so the check is
+        ``is not None``, not truthiness.
+        """
+        assert primitive.body_sampler is not None
+        local_target = (
+            enclosing_target
+            if enclosing_target is not None
+            and unify(return_type, enclosing_target.value_type) is not None
+            else None
+        )
+        raw_contexts, raw_target = primitive.body_sampler(
+            state.train_examples, sibling_values, local_target
+        )
+        if not raw_contexts:
+            return
+        body_contexts = tuple(Context(grid, binding) for grid, binding in raw_contexts)
+        body_target: Signature | None = raw_target
+        binders, body_type = peel_arrow(hole)
+        body_scope = scope
+        for binder in binders:
+            body_scope = body_scope.extend(binder)
+        child_target = EnclosingTarget(raw_target, body_type) if raw_target is not None else None
+        body_pool = self._enumerate(body_scope, body_contexts, budget.descend(), state, child_target)
+        for entry in body_pool.items_of_type(body_type):
+            if body_target is not None and entry.sig != body_target:
+                continue
+            lam: Program = entry.program
+            for binder in reversed(binders):
+                lam = Lam(param_type=binder, body=lam)
+            yield lam, hole
 
     def _function_leaves(self, state: _RunState) -> Iterator[tuple[Program, Type]]:
         """``PrimRef`` function-value leaves (§8): each primitive as a first-class value.

@@ -19,6 +19,7 @@ from arc_lab.program_search.search.search_engine import BottomUpSearchEngine, Se
 from arc_lab.program_search.search.search_result import SearchResult, SearchStats
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.primitives.geometry import D4_LIBRARY
+from arc_lab.program_search.substrate.types import GRID, Type
 
 _IN = Grid.from_list([[1, 2], [3, 4]])
 _FLIPPED = Grid.from_list([[2, 1], [4, 3]])
@@ -43,6 +44,7 @@ def _real_engine() -> BottomUpSearchEngine:
         constant_sources=(),
         function_hole_fill_mode="none",
         polymorphism_instantiation="monomorphize",
+        unpinned_type_var_mode="reject",
     )
 
 
@@ -60,6 +62,7 @@ class CountingEngine(SearchEngine):
         constraints: tuple[Constraint, ...],
         cost: Cost,
         budget: Budget,
+        goal_type: Type | None = GRID,
     ) -> SearchResult:
         CountingEngine.calls.append(str(train_examples[0].input.to_list()))
         return SearchResult(ranked_programs=(), stats=SearchStats(engine="CountingEngine"))
@@ -75,6 +78,7 @@ class BoomEngine(SearchEngine):
         constraints: tuple[Constraint, ...],
         cost: Cost,
         budget: Budget,
+        goal_type: Type | None = GRID,
     ) -> SearchResult:
         raise RuntimeError("search exploded")
 

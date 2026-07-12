@@ -71,16 +71,49 @@ PrimitiveImpl: TypeAlias = Callable[..., Value]
 #: stays search-agnostic — the search layer wraps these into its own ``Context`` type.
 RawContext: TypeAlias = "tuple[Grid, tuple[Value, ...]]"
 
+
+@dataclass(frozen=True, slots=True)
+class EnclosingTarget:
+    """The recursively-propagated target a ``body_sampler`` may consult (ARCHITECTURE.md §7/§8).
+
+    A small, substrate-safe pair — plain ``Value`` tuples plus the ``Type`` they inhabit, not the
+    search layer's ``Signature`` (which also carries ``⊥``): an ``EnclosingTarget`` is always either
+    raw training data or another sampler's own derived target, never a program's computed partial
+    signature, so it never needs ``⊥``. At the top level it's the training outputs, typed by the
+    run's ``goal_type``; when synthesis recurses into a hole's body search, the child's version
+    becomes whatever *that* hole's own sampler derived, if anything — see ``search_engine.py``.
+    A primitive's sampler may use it only when its own (substituted) return type unifies with
+    ``value_type`` — the engine checks this before ever handing one to a sampler.
+    """
+
+    values: tuple[Value, ...]
+    value_type: Type
+
+    def __post_init__(self) -> None:
+        if not self.values:
+            raise ValueError("EnclosingTarget.values must be non-empty")
+
+
 #: A higher-order primitive's body sampler (ARCHITECTURE.md §7, §11.4):
-#: ``(train_examples, sibling_arg_values) -> (body contexts, aligned body target values | None)``.
-#: The contexts are where a candidate body is evaluated; a non-``None`` target (index-aligned with
-#: the contexts) enables example *propagation* — extracting just the matching bodies — while
-#: ``None`` falls back to the complete baseline (all typed bodies, §8). ``sibling_arg_values`` is
-#: in the contract for primitives whose contexts depend on their other arguments (``map``/``filter``
-#: sample the evaluated list argument); the engine passes ``()`` until such a primitive lands.
+#: ``(train_examples, sibling_arg_values, enclosing_target) -> (body contexts, aligned body target
+#: values | None)``. The contexts are where a candidate body is evaluated; a non-``None`` returned
+#: target (index-aligned with the contexts) enables example *propagation* — extracting just the
+#: matching bodies — while ``None`` falls back to the complete baseline (all typed bodies, §8).
+#:
+#: ``sibling_arg_values`` — one entry per training context, in the primitive's parameter order with
+#: the function hole excluded; ``None`` at a context where a sibling errored *there* (mirroring how
+#: a partial signature stays pooled, §5.5 — a sibling total on some but not all contexts still seeds
+#: synthesis from the contexts it *is* defined on). Empty tuple for a primitive with no siblings
+#: (e.g. ``build_grid``).
+#:
+#: ``enclosing_target`` — the recursively-propagated target (see :class:`EnclosingTarget`), or
+#: ``None`` if none is in force or the primitive's return type doesn't unify with it. A sampler may
+#: use it to propagate (e.g. a positional zip against sibling values) or ignore it and return
+#: ``body_target=None`` (baseline).
+#:
 #: Samplers receive the task's *train examples only* — the blindness seam (EXECUTION.md, Sync B).
 BodySampler: TypeAlias = (
-    "Callable[[TrainExamples, tuple[Value, ...]], "
+    "Callable[[TrainExamples, tuple[tuple[Value, ...] | None, ...], EnclosingTarget | None], "
     "tuple[tuple[RawContext, ...], tuple[Value, ...] | None]]"
 )
 

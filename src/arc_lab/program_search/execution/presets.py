@@ -44,6 +44,7 @@ def _bottom_up() -> BottomUpSearchEngine:
         constant_sources=(),
         function_hole_fill_mode="none",
         polymorphism_instantiation="monomorphize",
+        unpinned_type_var_mode="reject",
     )
 
 
@@ -52,6 +53,7 @@ def _bottom_up_with_constants() -> BottomUpSearchEngine:
         constant_sources=("finite-enumerate",),
         function_hole_fill_mode="none",
         polymorphism_instantiation="monomorphize",
+        unpinned_type_var_mode="reject",
     )
 
 
@@ -75,6 +77,7 @@ PRESETS: dict[str, Config] = {
             constant_sources=("harvest-from-instance",),
             function_hole_fill_mode="none",
             polymorphism_instantiation="monomorphize",
+            unpinned_type_var_mode="reject",
         ),
         budget=Budget(max_depth=3, max_arity=4, max_pool=500),
     ),
@@ -95,6 +98,7 @@ PRESETS: dict[str, Config] = {
             constant_sources=("harvest-from-instance",),
             function_hole_fill_mode="none",
             polymorphism_instantiation="monomorphize",
+            unpinned_type_var_mode="reject",
             beam_width=32,
         ),
         budget=Budget(max_depth=3, max_arity=2, max_pool=500),

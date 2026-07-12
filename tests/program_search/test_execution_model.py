@@ -26,6 +26,7 @@ from arc_lab.program_search.search.search_result import SearchResult, SearchStat
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.program_search.substrate.program import Program
+from arc_lab.program_search.substrate.types import GRID, Type
 
 # -- fakes --------------------------------------------------------------------
 
@@ -49,6 +50,7 @@ class FakeEngine(SearchEngine):
         constraints: tuple[Constraint, ...],
         cost: Cost,
         budget: Budget,
+        goal_type: Type | None = GRID,
     ) -> SearchResult:
         return SearchResult(ranked_programs=(), stats=SearchStats(engine="FakeEngine"))
 

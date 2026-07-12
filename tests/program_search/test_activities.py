@@ -51,6 +51,7 @@ def _learn_config(iterations: int = 3) -> Config:
             constant_sources=(),
             function_hole_fill_mode="none",
             polymorphism_instantiation="monomorphize",
+            unpinned_type_var_mode="reject",
         ),
         budget=Budget(max_depth=3, max_arity=2, max_pool=200),
         learn=LearnSpec(

@@ -90,3 +90,4 @@ A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed s
 - Lever maps (primitives / machinery): `ONTOLOGY.md` / `MACHINERY.md`
 - Research frame (dated snapshot the maps are read against): `RESEARCH-2026-07-08.md` (supersedes `RESEARCH-2026-07-07.md`)
 - Machinery build strategy (build vs. adopt vs. defer; dated): `MACHINERY-STRATEGY-2026-07-07.md`
+- Config/param defaults review (every param: options, cost impact, default rationale; dated): `CONFIG-DEFAULTS-2026-07-11.md`

@@ -9,6 +9,7 @@ from arc_lab.program_search.search.composition import (
     appfn_applications,
     applications,
     first_order_applications,
+    hole_assignments,
     variadic_applications,
 )
 from arc_lab.program_search.substrate.library import Primitive
@@ -20,6 +21,8 @@ from arc_lab.program_search.substrate.types import (
     INT,
     ArrowType,
     TypeVar,
+    free_type_vars,
+    list_type,
 )
 
 # Argument candidates: one pooled program per base type.
@@ -114,3 +117,76 @@ def test_applications_dispatches_by_variadicity() -> None:
     assert fixed == [(Apply(primitive="inc", args=(_INT,)), INT)]  # fixed-arity ignores max_arity
     variadic = list(applications(_V, _VCANDS, itertools.count(), max_arity=1))
     assert (Apply(primitive="v", args=(_COLOR, _GRID)), GRID) in variadic
+
+
+# -- hole_assignments (§5.3): pinning a function-hole's type vars from sibling arguments ---------
+
+_LIST_INT = Const(value=0, value_type=list_type(INT))  # a List[int]-typed candidate (any program)
+_B = TypeVar("b")
+_ACC = TypeVar("acc")
+
+# map : (a -> b, List[a]) -> List[b] — hole at index 0; siblings: index 1 (List[a]).
+_MAP = Primitive(
+    name="map",
+    param_types=(ArrowType((_A,), _B), list_type(_A)),
+    return_type=list_type(_B),
+    impl=lambda f, xs: xs,
+)
+
+# fold : (acc -> a -> acc, acc, List[a]) -> acc — hole at index 0; siblings: index 1 (acc), index 2
+# (List[a]) — two siblings jointly pinning both of the hole's binder types.
+_FOLD = Primitive(
+    name="fold",
+    param_types=(ArrowType((_ACC,), ArrowType((_A,), _ACC)), _ACC, list_type(_A)),
+    return_type=_ACC,
+    impl=lambda f, seed, xs: seed,
+)
+
+# apply_const : (a -> b, GRID) -> GRID — hole at index 0, but its vars (a, b) appear in NO sibling.
+_APPLY_CONST = Primitive(
+    name="apply_const",
+    param_types=(ArrowType((_A,), _B), GRID),
+    return_type=GRID,
+    impl=lambda f, g: g,
+)
+
+
+def test_hole_assignments_pins_the_hole_from_one_sibling() -> None:
+    candidates: list[TypedProgram] = [(_LIST_INT, list_type(INT)), (_GRID, GRID)]
+    result = list(hole_assignments(_MAP, 0, candidates, itertools.count()))
+    matches = [(siblings, hole) for siblings, hole, _ in result if siblings == (_LIST_INT,)]
+    assert matches, result
+    _, hole_type = matches[0]
+    assert isinstance(hole_type, ArrowType)
+    assert hole_type.params == (INT,)  # `a` pinned to INT; `b` (the result) stays free
+
+
+def test_hole_assignments_pins_both_binders_from_two_siblings() -> None:
+    seed = Const(value=5, value_type=COLOR)
+    candidates: list[TypedProgram] = [(seed, COLOR), (_LIST_INT, list_type(INT))]
+    result = list(hole_assignments(_FOLD, 0, candidates, itertools.count()))
+    matches = [
+        (siblings, hole, ret)
+        for siblings, hole, ret in result
+        if siblings == (seed, _LIST_INT)
+    ]
+    assert matches, result
+    _, hole_type, return_type = matches[0]
+    assert isinstance(hole_type, ArrowType)
+    assert hole_type.params == (COLOR,)
+    assert isinstance(hole_type.result, ArrowType)
+    assert hole_type.result.params == (INT,)
+    assert hole_type.result.result == COLOR  # the accumulator's type, shared with the return type
+    assert return_type == COLOR
+
+
+def test_hole_assignments_leaves_an_unshared_variable_free() -> None:
+    candidates: list[TypedProgram] = [(_GRID, GRID)]
+    result = list(hole_assignments(_APPLY_CONST, 0, candidates, itertools.count()))
+    # The only sibling is GRID-typed, sharing no variable with the hole `a -> b` — both stay free.
+    assert len(result) == 1
+    siblings, hole_type, return_type = result[0]
+    assert siblings == (_GRID,)
+    assert isinstance(hole_type, ArrowType)
+    assert free_type_vars(hole_type)
+    assert return_type == GRID  # apply_const's return type doesn't involve a/b at all

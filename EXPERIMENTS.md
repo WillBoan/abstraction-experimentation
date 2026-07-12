@@ -366,3 +366,23 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
     - gate: `make check` 377 passed, 5 skipped (optional stitch wheel), ~60s wall
 - **Interpretation:** the generic engine reproduces every behavior the old system got from *general* search and pays a visible, explainable cost exactly where the old system used *bespoke* structure — which is now a capability/budget question on one engine instead of a zoo of strategies. The old locks keep guarding the old tree until its deletion pass.
 - **Next:** recalibrate E2–E10 environments onto the new engine (queued); structured-composition capability for mosaic-scale variadics if/when tile tasks matter.
+
+---
+
+## 2026-07-11 — `eager_grounding_over_universe` cost-vs-depth on a real `map` recolor task
+
+- **Commit:** branch `refactor/runspec-config-2` at 35a2685 (map/filter/fold/sort_by slice, uncommitted at run time)
+- **Question:** `map`'s codomain type var is unshared by any sibling, so it can only be resolved via `unpinned_type_var_mode="eager_grounding_over_universe"` (grounds over `monotype_universe`, a full recursive body search per candidate type). How expensive is that in practice for a real end-to-end task, and is it driven by the `monotype_universe` list-nesting closure (a List-specific inflation) or something more general?
+- **Ran:** `row_to_grid(map(lam(if(eq($0,3),7,$0)), cells(input)))` — recolor-one-color, single-row grid — under `BottomUpSearchEngine(unpinned_type_var_mode="eager_grounding_over_universe")` at increasing `max_depth`/library size (probe scripts, not committed).
+- **Result:**
+  - `monotype_universe` for the trimmed library (`map`/`cells`/`row_to_grid`/`eq`/`if`) is small — 10 types at closure depth 2 — so universe-size inflation from `List` nesting is *not* the driver here.
+  - The memo key (`scope, contexts, budget, enclosing_target`) collapses across all ~10 grounding candidates for `map`'s codomain in this task, because `enclosing_target` for this task never propagates through `_propagate_elementwise` (top-level target is a `Grid`, not tuple-shaped) — so eager grounding here is *not* paying a 10x multiplier from redundant re-searches, contrary to the naive expectation.
+  - **Metrics:**
+    - full library (`+from_cells+width+height+read`), depth=4: 97,803 considered, 1.26s, unsolved
+    - full library, depth=5: 17,590,552 considered, 116.0s, unsolved
+    - trimmed library (no `read`/`width`/`height`, `row_to_grid` instead of `from_cells`), depth=5, pool=1000: 1,453,833 considered, 8.2s, unsolved
+    - trimmed library, depth=6, pool=1000: 9,873,756 considered, unsolved (completed within a 280s window)
+    - the target program was hand-built and evaluated directly (bypassing search) and is confirmed semantically correct — this is a search-budget shortfall, not an unreachable-program bug
+  - `test_higher_order_primitives.py::test_map_solves_recolor_end_to_end` was rescoped to a plain `COLOR -> COLOR` primitive (`next_color`) instead of the synthesized `eq`/`if` body — solves in <10ms at depth=4 — trading away the "map composes with a synthesized conditional" claim (not this slice's core claim) to keep the payoff test fast rather than chasing the eq/if-body cost further.
+- **Interpretation:** the real cost driver is ordinary bottom-up round-over-round growth (the same ~180x/depth pattern seen independently in the `fold` toy test), not `eager_grounding_over_universe`'s per-grounding multiplier, which turned out to be memoization-collapsed in this case. A *lambda body requiring composition depth ≥6* is expensive regardless of whether an unpinned hole is involved — `eager_grounding_over_universe` only compounds this when `enclosing_target` propagation actually fires per grounding candidate (giving each one a genuinely distinct memo key), which didn't happen here.
+- **Next:** if a future task needs both a genuinely-unpinned hole *and* real depth (≥6) in its synthesized body, expect this same wall; worth revisiting whether `eager_grounding_over_universe` should cap/prioritize `state.universe` by relevance (e.g. atomic types before list-nested ones) if that combination becomes load-bearing rather than incidental.
