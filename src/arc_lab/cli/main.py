@@ -13,7 +13,18 @@ import sys
 
 import typer
 
-from . import analyze_run, configs, datasets, learn, run_study, runs, search, show, taskgen
+from . import (
+    analyze_run,
+    configs,
+    datasets,
+    estimate,
+    learn,
+    run_study,
+    runs,
+    search,
+    show,
+    taskgen,
+)
 
 app = typer.Typer(add_completion=False, help="ARC-AGI experimentation sandbox.")
 
@@ -57,6 +68,7 @@ def main(
 
 
 app.command(name="search")(search.search)
+app.command(name="estimate")(estimate.estimate)
 app.command(name="learn")(learn.learn)
 app.command(name="run-study")(run_study.run_study_command)
 app.command(name="analyze-run")(analyze_run.analyze_run_command)
