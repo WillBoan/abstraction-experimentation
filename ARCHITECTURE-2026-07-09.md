@@ -1,5 +1,7 @@
 # ARCHITECTURE.md
 
+> **SUPERSEDED (2026-07-11) by [EXECUTION.md](EXECUTION.md).** This snapshot described the run/config/activity model as of 2026-07-09, over the *old* solver-based machinery. The execution overhaul replaced it wholesale: `Solver` is gone, `Config` holds live components (not name-strings), the activities are `run_search` / `run_search_learn` / `run_study` over a recorded-run core, and the run data model (SPECS vs RECORDS) lives in EXECUTION.md's "Run data model" section. Kept for the historical record only — do not build against it.
+
 How a _run_ is specified, executed, and recorded. Sibling to the lever maps ([ONTOLOGY.md](ONTOLOGY.md) = the primitives, [MACHINERY.md](MACHINERY.md) = the mechanisms): this file is the **run/config/activity model** — the substrate the harness drives solvers over. It reflects the state after the `RunSpec × Config` refactor. Terms in **bold** are real types.
 
 ## Ontology at a glance

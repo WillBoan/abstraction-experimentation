@@ -4,92 +4,89 @@ Operational guide for agents working in this repo. Human-facing overview is in [
 
 ## What this is
 
-`arc-lab`: a sandbox for the ARC-AGI benchmarks and, more broadly, ML / program-synthesis / abstraction-formation experimentation. The load-bearing design decision: **solvers are pluggable strangers behind one narrow interface** (`Solver.predict` in `src/arc_lab/solvers/base.py`). The harness (core / eval / viz) never knows which solver it runs.
+`arc-lab`: a sandbox for the ARC-AGI benchmarks and, more broadly, ML / program-synthesis / abstraction-formation experimentation. The load-bearing design decision: **machinery is data** — there are no solver classes; a run is a frozen, content-hashed `RunSpec = Config × Corpus`, and the execution layer (`program_search/execution/`) drives `Config` directly. The activity/call-stack model is **[EXECUTION.md](EXECUTION.md)**; the search-engine design is **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+
+> **Transitional note:** the pre-overhaul tree (`src/arc_lab/solvers/` incl. `dsl/`, `eval/runner.py`, `cli_legacy.py`, and the old top-level `tests/test_*.py`) stays on disk until a user-run audit pass, then deletes as one unit. Never build against it; `_notes/` is the user's private notes — off-limits.
 
 ## The one command that matters
 
 ```
 make check      # ruff + mypy --strict + FULL pytest (incl. slow locks, in parallel) — the gate
-make test       # fast pytest only (`-m "not slow"`) — the dev inner loop (~2s)
+make test       # fast pytest only (`-m "not slow"`) — the dev inner loop (~seconds)
 make format     # auto-fix ruff lint + format
 ```
 
 `uv` runs everything (`uv run …`); deps live in `pyproject.toml`. Never invoke `python`/`pytest` bare.
 
-**Two test tiers.** Most tests are fast unit/functionality tests and run by default. The heavy
-regression/research **locks** — E1–E9 abstraction formation (real search in the wake–sleep loop) and
-the `dsl`/`dsl-sym`/`dsl-synth` dataset benchmarks — are marked `@pytest.mark.slow` and **excluded from
-`make test`** (the fast inner loop) but **run by `make check`** (the gate, via `pytest -n auto`). So the
-locks still gate every commit; only the inner loop skips them. New tests that test search or
-abstraction-formation should be *fast functionality* checks (tiny task + tight budget); if a test
-genuinely needs a heavy search or a real dataset, mark it `slow`.
+**Two test tiers.** Fast unit/functionality tests run by default; heavy regression **locks** (dataset benchmarks, learning-loop runs) are `@pytest.mark.slow` — excluded from `make test`, run by `make check`. New search/learning tests should be *fast functionality* checks (tiny task + tight budget); mark genuinely heavy ones `slow`.
 
 ## Definition of done
 
 1. `make check` is green (ruff clean, mypy `--strict` clean, all tests pass).
-2. **Regression locks preserved.** `dsl`=7, `dsl-sym`=19, `dsl-synth`=11 solved on `arc1-train` — pinned as exact task-id sets in `tests/test_integration.py`. A behavior-preserving change must not move these; a feature that changes them updates the lock deliberately.
-3. For changes with runtime behavior, actually drive it: `uv run arc-lab eval <solver> --dataset arc1-train`.
+2. **Regression locks preserved.** The new-world locks pin exact solved task-id sets per preset on `arc1-train` in `tests/program_search/test_locks.py` (the old-world locks in `tests/test_integration.py` guard the old tree until its deletion). A behavior-preserving change must not move them; a feature that changes them updates the lock deliberately.
+3. For changes with runtime behavior, actually drive it: `uv run arc-lab search <preset> --corpus <corpus>`.
 
 ## Experiment log
 
 When you run a meaningful experiment or reach a finding — **including dead ends** — append a terse, commit-anchored entry to [EXPERIMENTS.md](EXPERIMENTS.md). It's the shared human+AI record of what's been tried and what it meant. It's an *event log, not a state mirror* — read its header for the discipline before adding to it. Planned experiments queue in [EXPERIMENT_QUEUE.md](EXPERIMENT_QUEUE.md) (drain-only; see its header) — when you log a run, delete its queue entry.
 
-For a **non-trivial investigation**, also keep a detailed lab notebook under [experiments/](experiments/) — the full write-up + the throwaway probe scripts and their outputs, which EXPERIMENTS.md (the curated abstract) points to. See [experiments/README.md](experiments/README.md); it's a catch-basin to *capture* the thinking, **not** to constrain how you explore — save probes into the folder as you go, write up the notebook when it's natural.
+For a **non-trivial investigation**, also keep a detailed lab notebook under [experiments/](experiments/) — the full write-up + the throwaway probe scripts and their outputs, which EXPERIMENTS.md (the curated abstract) points to. See [experiments/README.md](experiments/README.md).
 
 ## Mental model
 
-A solver is **`(library × search × constraints × cost)`**. Search is a **propose → filter → rank** pipeline:
-- **library** — the typed vocabulary of `Primitive`s (`solvers/dsl/substrate/`).
-- **search** — proposes candidate programs (`solvers/dsl/search/`).
-- **constraints** — the filter; `ConsistentWithTraining` is the spec (`search/constraints.py`).
-- **cost** — the rank; `ProgramSize` is the Occam prior (`search/cost.py`).
+Terminology (ARC's own): **dataset ⊃ corpus (train/eval) ⊃ task ⊃ example (train/test)**.
 
-That machinery is **data**: a frozen `Config` (`solvers/dsl/config.py` — `library × search × cost`, search params as fields). Named `PRESETS` (`dsl`/`dsl-sym`/`dsl-synth`/`dsl-beam`) replace the old solver subclasses; `ProgramSearchSolver` is the only solver class. A run is pinned by a **`RunSpec = Config × Corpus`** (content-hashed `run_id`); the corpus is a provenance-agnostic `Corpus` of `AnnotatedTask` (real or synthetic; solvers see only the pure `Task`). The activity tiers (Eval / Synthesize / analyze / Study) and the `runs/` layout live in **[ARCHITECTURE.md](ARCHITECTURE.md)** — read it for anything about runs, config, or corpora.
+- **`Config`** = `library × search_engine × budget × constraints × cost × attempts_per_test × learn?` (`execution/model/config.py`) — frozen machinery-as-data. `learn: LearnSpec | None` discriminates SEARCH vs LEARN runs. Named presets: `execution/presets.py::PRESETS` (`d4`/`sym`/`synth`/`beam`).
+- **`RunSpec = Config × Corpus`** → content-hashed `run_id` → executed once by `execute()` (the ONLY writer of `runs/`), cached, crash-safe, resumable. `runs/` is a gitignored regenerable cache.
+- **Activities**: `run_search` (one SEARCH run) · `run_search_learn` (wake-sleep loop = ONE recorded LEARN run + derived SEARCH runs: train-usefulness + transfer) · `run_study` (learn L2, build L3 = L1 + targets, grid `(L1,L2,L3) × budgets × (train,eval)`) + read-side `analyze_run` / `create_study_report`.
+- **Blindness seams**: solvers see pure `Task`s (never `TaskMeta`); `SearchEngine.run(train_examples=…)` structurally cannot see test examples; `predict` + `score_task` are the only functions touching test grids. Targets are observables, never a training signal.
+- **Search** (`program_search/search/`): one generic typed bottom-up engine (`BottomUpSearchEngine`), capability policies as fields (function-hole fill, polymorphism instantiation, constant sources), `Budget` as a `run()` argument. Goal test is `sig == target`; a `Constraint` is only an *extra* inductive-bias filter; `Cost` (`ProgramSize`) is the Occam prior.
+- **Programs are data**: `Program` ABC — `Input | Param | Const | Apply | If | Var | Lam | AppFn | PrimRef` (`substrate/program.py`). Every node kind must round-trip both codecs — enforced by `tests/program_search/test_codec_completeness.py` (ARCHITECTURE.md §11.6).
+- **Learning** (`program_search/learn/`): sleep = `LearnEngine.run(library, solutions) → LearnOutcome` (proposers: antiunify / frequent-subtree / Stitch; governance: greedy-MDL). Studies register in `execution/studies.py::STUDIES`; testbed generators in `taskgen/generators.py::GENERATORS`.
 
-Programs are **data**: a `Program` ABC with virtual-dispatch nodes `Input | Param | Const | Apply` (`substrate/program.py`); `Param` is the hole that makes learned abstractions possible (`substrate/abstraction.py`).
-
-**Library learning** (`solvers/dsl/learn/`) is a meta-process over solvers, not a solver: wake (solve the corpus) → sleep (antiunify proposals → greedy-MDL governance) → `Library.extended` → repeat (the engine is `learn/loop.py::wake_sleep`). A **Study** (`learn/experiments.py::run_study`, a `StudySpec`) composes this with the three-library comparison and the held-out **transfer grade** (`analysis/transfer.py`). Targets are **observables** (behavioral checker), never a training signal. `analysis/` is the instrument: content-hashed run artifacts + MDL compression metrics.
-
-Layers: `core/` (grid·task·dataset) · `viz/` · `eval/` (scoring·runner) · `solvers/` (`base.py`, `dsl/`, `llm/`); inside `dsl/`: `substrate/` · `search/` · `analysis/` · `learn/`.
+Layers: `core/` (grid·task·annotation·dataset·hashing) · `eval/` (scoring rules only) · `program_search/` (`substrate/` · `search/` · `learn/` · `analysis/` · `execution/`) · `taskgen/` · `cli/` (thin) · `viz/`.
 
 ## Key commands
 
 ```
-uv run arc-lab datasets | solvers | show <id> --dataset <ds> | eval <solver> --dataset <ds>
-uv run arc-lab analyze <solver> --dataset <ds>   # run artifact: per-task programs + search effort + DL (cached under runs/)
-uv run arc-lab study <experiment>               # abstraction-formation study (names: learn/experiments.py)
-uv run arc-lab runs                              # list recorded run artifacts
-uv run arc-lab -vv eval <solver> ...     # -v INFO / -vv DEBUG search trace (stderr, silent by default)
-ARC_LAB_LOG=DEBUG uv run pytest -k <x>   # same trace under pytest
+uv run arc-lab configs | datasets | runs | show <id> --dataset <ds>
+uv run arc-lab search <preset> --corpus <c>          # one SEARCH recorded run (cached)
+uv run arc-lab learn <preset> --corpus <train> [--eval-corpus <eval>]   # 2-3 recorded runs
+uv run arc-lab run-study <name> [--out report.json]  # study grid + report (cache hits free)
+uv run arc-lab analyze-run <run_id>                  # READ-ONLY over a completed run
+uv run arc-lab taskgen <generator>                   # (re)generate a committed testbed
+uv run arc-lab -vv search ...                        # -v INFO / -vv DEBUG trace (stderr)
+ARC_LAB_LOG=DEBUG uv run pytest -k <x>               # same trace under pytest
 ```
+
+A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed split (`e1-rot90:train` / `:heldout`).
 
 ## Conventions & gotchas
 
 - **mypy** `python_version = "3.12"` is intentional — only so numpy 2.5's PEP-695 stubs parse; the runtime targets 3.11+. Keep `--strict` clean.
-- **ruff** `E203` on numpy slices is `noqa`'d for ruff-format compatibility — don't "fix" it.
+- **ruff** `E203` on numpy slices is `noqa`'d for ruff-format compatibility — don't "fix" it. No `×`/`–` glyphs in code/docstrings (RUF002/RUF003).
 - **Datasets are git submodules** under `data/`; integration tests skip cleanly if absent (`git submodule update --init --recursive`).
-- **Immutable & deterministic:** `Grid` and programs are frozen; solvers use no RNG — behavior is reproducible, which is what makes the locks meaningful.
+- **Immutable & deterministic:** `Grid`, programs, and all spec types are frozen; no RNG anywhere — reproducibility is what makes content-hashed caching and the locks meaningful.
 - **Logging** is silent by default; use `%s` lazy args and guard hot paths with `if debug:` (`logger.isEnabledFor`).
 - **Don't commit or push unless asked.** Throwaway analysis scripts go in the session scratchpad, not the repo.
-- `_notes/` is the user's private notes — off-limits (denied in `.claude/settings.json`).
 
 ## Recipes
 
-- **Add a primitive** → define a typed `Primitive` in `solvers/dsl/substrate/primitives/*.py`; name the library it belongs to in `config.py::LIBRARIES` (and register base primitives in `substrate/registry.py` so learned libraries round-trip).
-- **Add a search strategy** → subclass `Search` (`search/base.py`), export in `search/__init__.py`, and add a `kind` branch to `config.py::SearchSpec.build`.
-- **Add a machinery preset** → a `Config` in `config.py::PRESETS`; the solver `REGISTRY` picks it up automatically. There are no solver subclasses.
-- **Add a constraint / cost** → `search/constraints.py` / `search/cost.py` (name the cost in `config.py::COSTS`).
-- **Add a study** → generate tasks via `learn/taskgen.py`, define + register a `StudySpec` in `learn/experiments.py` (`make_study`); drive with `uv run arc-lab study <name>`. Testbeds are committed under `testbeds/`; run artifacts are a gitignored cache under `runs/`.
+- **Add a primitive** → a typed `Primitive` in `program_search/substrate/primitives/*.py`; register it in `substrate/registry.py::BASE_PRIMITIVES` (so serialized libraries round-trip) and add it to a library in `execution/presets.py` if a preset should search over it.
+- **Add a search engine** → subclass `SearchEngine` (`search/search_engine.py`, frozen dataclass; `run(train_examples, library, constraints, cost, budget)`); add it to `execution/model/config.py::default_registry` for serde.
+- **Add a machinery preset** → a `Config` in `execution/presets.py::PRESETS`.
+- **Add a constraint / cost / learn engine / proposer** → `search/constraints.py` / `search/cost.py` / `learn/engines.py` / `learn/antiunify.py`+`learn/stitch_shim.py`; frozen dataclasses, registered in `default_registry` (they are run identity).
+- **Add a study** → a generator in `taskgen/generators.py` (committed testbed under `testbeds/`) + a `StudySpec` builder in `execution/studies.py::STUDIES`; drive with `uv run arc-lab run-study <name>`.
+- **Add a CLI command** → a thin module in `cli/`, registered in `cli/main.py`.
 
 ## Sources of truth (don't duplicate — point here)
 
-- Run / config / activity model (RunSpec · Config · Corpus · tiers · runs/ layout): `ARCHITECTURE.md`
-- Solver registry (name → `Config` preset): `src/arc_lab/solvers/__init__.py`; presets in `src/arc_lab/solvers/dsl/config.py`
-- Study registry (`make_study`): `src/arc_lab/solvers/dsl/learn/experiments.py`
-- Behavior locks: `tests/test_integration.py`
+- Activity / call-stack / run data model (RunSpec · Config · activities · runs/ layout · CLI): `EXECUTION.md`
+- Search-engine & substrate design (types · scopes · enumeration · deliberate limits register §11.6): `ARCHITECTURE.md` (the superseded run-model snapshot is `ARCHITECTURE-2026-07-09.md`)
+- Preset registry: `src/arc_lab/program_search/execution/presets.py` · Study registry: `execution/studies.py` · Generator registry: `src/arc_lab/taskgen/generators.py`
+- Behavior locks: `tests/program_search/test_locks.py` (old-tree locks: `tests/test_integration.py`, until the deletion pass)
 - Commands: `Makefile`
-- Experiment history & findings: `EXPERIMENTS.md`
-- Planned experiments: `EXPERIMENT_QUEUE.md`
+- Experiment history & findings: `EXPERIMENTS.md` · Planned experiments: `EXPERIMENT_QUEUE.md`
 - Lever maps (primitives / machinery): `ONTOLOGY.md` / `MACHINERY.md`
 - Research frame (dated snapshot the maps are read against): `RESEARCH-2026-07-08.md` (supersedes `RESEARCH-2026-07-07.md`)
 - Machinery build strategy (build vs. adopt vs. defer; dated): `MACHINERY-STRATEGY-2026-07-07.md`

@@ -21,7 +21,7 @@ llm = ["anthropic>=0.40"]
 stitch = ["stitch_core>=0.1"]  # library-learning engine; the loop runs without it (lazy-imported)
 
 [project.scripts]
-arc-lab = "arc_lab.cli:app"
+arc-lab = "arc_lab.cli.main:app"
 
 [dependency-groups]
 dev = [
@@ -54,7 +54,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # Typer requires function-call defaults (typer.Option/Argument) for its options.
-"src/arc_lab/cli.py" = ["B008"]
+"src/arc_lab/cli/*.py" = ["B008"]
+"src/arc_lab/cli_legacy.py" = ["B008"]
 
 [tool.mypy]
 # 3.12 so mypy can parse numpy 2.5's PEP 695 type stubs; runtime still supports 3.11.

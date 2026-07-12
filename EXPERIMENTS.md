@@ -348,3 +348,21 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - Behaviour preserved: E1–E10 study outputs unchanged.
 - **Interpretation:** the machinery is now diffable / hashable / sweepable; the run/config/activity model is mapped in `ARCHITECTURE.md`.
 - **Next:** fold `GeneratedTask` into a `Corpus` of `AnnotatedTask` (regenerate committed testbeds); put the sleep strategy into the run identity; CLI verb split + a config-file / `--set` override surface.
+
+---
+
+## 2026-07-11 — Execution overhaul lands; locks deliberately re-pinned on the new engine
+
+- **Commit:** branch `refactor/runspec-config-2` (the execution-layer overhaul, uncommitted at run time; the new locks pin the numbers)
+- **Question:** does the generic typed bottom-up engine + recorded-run execution layer (EXECUTION.md) reproduce the old bespoke-search behavior — and where exactly does it differ?
+- **Ran:** each new preset (`execution/presets.py`) over the full `arc1-train` (400 tasks) via `run_search`; the E1 study end-to-end via `run_study`; locks re-pinned in `tests/program_search/test_locks.py`.
+- **Result:**
+  - **Exact continuity where the old searches were generic:** `d4` = the old `dsl` seven, identical task-ids; `synth` = the old `dsl-synth` eleven, identical — and the old "lock at reduced depth, same set" empirical finding replicates (depth-2 = depth-3 set, 1s vs 103s).
+  - **Understood divergence where the old searches were bespoke:** `sym` = 10/400 vs old `dsl-sym` 19 — the D4 seven + all three overlay tasks; the missing nine are exactly the old TILE tasks. Cause: a 3x3 mosaic is nine variadic args (out of `max_arity=4`), and a tiling factor that is neither input dim is out of vocabulary under harvest constants. Budget/policy limits (data), not architecture; lift = structured-composition capability or budget policy, never a bespoke search. Full-corpus `sym` costs ~32 CPU-min (24.7M considered), so its lock runs a fixed curated 30-task slice (~40s).
+  - **Two measured budget findings:** `finite-enumerate` constants explode variadic composition on large grids (one 30x30 task ≈ 6M candidates → `sym` uses harvest-from-instance); a 16-wide beam fills with size-1 constants and starves the GRID type entirely (0/400 → `beam` = harvest + width 32, solving 9 = `synth` minus the truncation's two).
+  - **The learning loop locks green on the new stack:** E1 mints `abs0`, it behaviorally matches the withheld `rot90` target (probe-based semantic check), enablement 0→8 at the shallow budget, held-out transfer 4/4.
+  - **Metrics:**
+    - locks: `d4` 7/400 (= old) · `synth` 11/400 (= old) · `sym` 10/400 (old 19; −9 tile, understood) · `beam` 9/400 (newly locked) · E1 study transfer 4/4
+    - gate: `make check` 377 passed, 5 skipped (optional stitch wheel), ~60s wall
+- **Interpretation:** the generic engine reproduces every behavior the old system got from *general* search and pays a visible, explainable cost exactly where the old system used *bespoke* structure — which is now a capability/budget question on one engine instead of a zoo of strategies. The old locks keep guarding the old tree until its deletion pass.
+- **Next:** recalibrate E2–E10 environments onto the new engine (queued); structured-composition capability for mosaic-scale variadics if/when tile tasks matter.
