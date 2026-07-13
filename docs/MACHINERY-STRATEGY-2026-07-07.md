@@ -1,6 +1,6 @@
 # Machinery Build Strategy · 2026-07-07
 
-> **Provisional. A dated snapshot of _how we decide what machinery to build, adopt, or defer_ — as of 2026-07-07.** Companion to [MACHINERY.md](MACHINERY.md) (the _catalog_ of mechanisms) and [RESEARCH-2026-07-07.md](RESEARCH-2026-07-07.md) (the _frame_ — what we believe). Division of labor: MACHINERY = _the map_; RESEARCH = _what we believe_; **this = _how we proceed_.** Prior-art scores/meaning live in RESEARCH; here they appear only as build decisions.
+> **Provisional. A dated snapshot of _how we decide what machinery to build, adopt, or defer_ — as of 2026-07-07.** Companion to [MACHINERY.md](../MACHINERY.md) (the _catalog_ of mechanisms) and [RESEARCH-2026-07-07.md](archive/RESEARCH-2026-07-07.md) (the _frame_ — what we believe). Division of labor: MACHINERY = _the map_; RESEARCH = _what we believe_; **this = _how we proceed_.** Prior-art scores/meaning live in RESEARCH; here they appear only as build decisions.
 >
 > **May graduate to a living `MACHINERY-STRATEGY.md`** if it proves durable — until then, supersede with a new dated snapshot. Tags: **[C]** committed · **[H]** hypothesis · **[O]** open.
 >
@@ -14,7 +14,7 @@ The short answer **[H]:** a **barbell**. Build _one_ thing general and up front 
 
 ## Principle 1 — the maps are for planning, not a build queue [C]
 
-[ONTOLOGY](ONTOLOGY.md) and [MACHINERY](MACHINERY.md) are _deliberately over-complete_ (they say so). Most `⚪ cand` rows are **alternatives to each other, not requirements** (MCTS vs. A\* vs. beam; e-graph vs. antiunify invention; whole stretches of L4/L5/L6 vocabulary). ARC is solvable by many routes — you will not need all of them, so building them all is _guaranteed_ waste. Over-completeness is a feature for **planning**, a trap for **building**. → Don't walk the rows top-to-bottom.
+[ONTOLOGY](../ONTOLOGY.md) and [MACHINERY](../MACHINERY.md) are _deliberately over-complete_ (they say so). Most `⚪ cand` rows are **alternatives to each other, not requirements** (MCTS vs. A\* vs. beam; e-graph vs. antiunify invention; whole stretches of L4/L5/L6 vocabulary). ARC is solvable by many routes — you will not need all of them, so building them all is _guaranteed_ waste. Over-completeness is a feature for **planning**, a trap for **building**. → Don't walk the rows top-to-bottom.
 
 ## Principle 2 — the A/B/C epistemic filter [H]
 

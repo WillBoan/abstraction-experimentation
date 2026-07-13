@@ -2,7 +2,7 @@
 
 Planned experiments for arc-lab — a **drain-only queue**, rough priority order, top = next. This is _state, not events_ (the counterpart to `EXPERIMENTS.md`): it holds what we currently intend to run, and it only shrinks or gets deliberately re-fed.
 
-**Priority spine (per [RESEARCH-2026-07-08.md](RESEARCH-2026-07-08.md)):** measurement layer → **compression↔transfer correlation** → **selection-correct governance** → gap-climbing (perceive / layered / mask) → basis/ablation science. Rows below follow this order.
+**Priority spine (per [RESEARCH-2026-07-08.md](docs/RESEARCH-2026-07-08.md)):** measurement layer → **compression↔transfer correlation** → **selection-correct governance** → gap-climbing (perceive / layered / mask) → basis/ablation science. Rows below follow this order.
 
 **Discipline** (or this rots like its predecessor):
 

@@ -18,7 +18,7 @@ Operations are provided by **virtual dispatch**: each node kind implements
 :meth:`~Program.depth`, :meth:`~Program.walk`, :meth:`~Program.evaluate_grid`) are
 derived once on the base from those. Adding a node kind therefore *must* implement
 the operations (the abstract methods enforce exhaustiveness) — and must extend the
-s-expression codec in the same change (``tests/program_search/test_codec_completeness.py``).
+s-expression codec in the same change (``tests/program_search/learn/test_codec_completeness.py``).
 
 Because a program is data, it can be enumerated, evaluated, compared, hashed,
 serialised, and — later — abstracted over (frequently-used sub-trees become new

@@ -1,6 +1,6 @@
 # Config / parameter defaults review — 2026-07-11
 
-A dated snapshot (the convention of `RESEARCH-*.md` / `MACHINERY-STRATEGY-*.md`): every `Config` parameter after the execution overhaul — where it lives, its options, the search-cost impact of each, its default, and whether that default is the lowest-cost option. Read against [EXECUTION.md](EXECUTION.md) (the activity/run model) and [ARCHITECTURE.md](ARCHITECTURE.md) (the engine design). Source of truth is the code (`execution/model/config.py`, `search/`, `learn/`); this file is the *review*, not the definition.
+A dated snapshot (the convention of `RESEARCH-*.md` / `MACHINERY-STRATEGY-*.md`): every `Config` parameter after the execution overhaul — where it lives, its options, the search-cost impact of each, its default, and whether that default is the lowest-cost option. Read against [EXECUTION.md](../EXECUTION.md) (the activity/run model) and [ARCHITECTURE.md](../ARCHITECTURE.md) (the engine design). Source of truth is the code (`execution/model/config.py`, `search/`, `learn/`); this file is the *review*, not the definition.
 
 A structural note: several fields deliberately have **no default** (marked *required*) — the "no silent default" choices where a run must state its intent: `Config.library/search_engine/budget`, all three engine capability policies, `beam_width`, and `LearnSpec.learn_engine/iterations`.
 

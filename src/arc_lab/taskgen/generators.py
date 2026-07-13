@@ -1,7 +1,7 @@
 """Named testbed generators for ``arc-lab taskgen <name>``.
 
 Each generator deterministically writes one committed testbed (task content is stable
-across runs — see ``tests/test_taskgen.py``). Generators are registered here as the old
+across runs — see ``tests/taskgen/test_taskgen.py``). Generators are registered here as the old
 E-suite's environments are recalibrated onto the new engine (their `StudySpec`s live in
 ``program_search/execution/studies.py``); a study and its generator share a name.
 """

@@ -177,7 +177,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - Pure symbolic/MDL ARC solving lands single-digit→~20% _as a score_ — not our deliverable; understanding is. We sit **deliberately off the LLM-TTT frontier** (it trades away the determinism/inspectability that make findings mean anything).
   - The **descriptive (perceive/render) half** is the identified highest-leverage empty region — Ferré is a worked existence proof. The **unoccupied position:** descriptive representation × cross-task library learning.
   - **Adopt don't rebuild:** Stitch for F4 invention-at-scale, egg/babble for equivalence-at-scale, Hodel's `arc-dsl` as vocabulary reference; own the substrate + instrumentation. Build the lambda-index keystone as a **Stitch-compatible De Bruijn index** (serves the low-floor thesis _and_ cheap future adoption).
-- **Interpretation / strategy:** captured in [MACHINERY-STRATEGY-2026-07-07.md](MACHINERY-STRATEGY-2026-07-07.md) (the build methodology); frame updated in [RESEARCH-2026-07-07.md](RESEARCH-2026-07-07.md) (supersedes 07-06); [MACHINERY.md](MACHINERY.md) / [ONTOLOGY.md](ONTOLOGY.md) annotated surgically.
+- **Interpretation / strategy:** captured in [MACHINERY-STRATEGY-2026-07-07.md](docs/MACHINERY-STRATEGY-2026-07-07.md) (the build methodology); frame updated in [RESEARCH-2026-07-07.md](docs/archive/RESEARCH-2026-07-07.md) (supersedes 07-06); [MACHINERY.md](MACHINERY.md) / [ONTOLOGY.md](ONTOLOGY.md) annotated surgically.
 - **Next:** the F0 substrate keystone (De Bruijn λ-index); then shift the workload from synthetic microworlds toward real ARC tasks so reality writes the build queue.
 
 ---

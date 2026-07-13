@@ -23,7 +23,7 @@ make format     # auto-fix ruff lint + format
 ## Definition of done
 
 1. `make check` is green (ruff clean, mypy `--strict` clean, all tests pass).
-2. **Regression locks preserved.** The new-world locks pin exact solved task-id sets per preset on `arc1-train` in `tests/program_search/test_locks.py` (the old-world locks in `tests/test_integration.py` guard the old tree until its deletion). A behavior-preserving change must not move them; a feature that changes them updates the lock deliberately.
+2. **Regression locks preserved.** The new-world locks pin exact solved task-id sets per preset on `arc1-train` in `tests/program_search/execution/test_locks.py` (the old-world locks in `tests/test_integration.py` guard the old tree until its deletion). A behavior-preserving change must not move them; a feature that changes them updates the lock deliberately.
 3. For changes with runtime behavior, actually drive it: `uv run arc-lab search <preset> --corpus <corpus>`.
 
 ## Experiment log
@@ -41,7 +41,7 @@ Terminology (ARC's own): **dataset ⊃ corpus (train/eval) ⊃ task ⊃ example 
 - **Activities**: `run_search` (one SEARCH run) · `run_search_learn` (wake-sleep loop = ONE recorded LEARN run + derived SEARCH runs: train-usefulness + transfer) · `run_study` (learn L2, build L3 = L1 + targets, grid `(L1,L2,L3) × budgets × (train,eval)`) + read-side `analyze_run` / `create_study_report`.
 - **Blindness seams**: solvers see pure `Task`s (never `TaskMeta`); `SearchEngine.run(train_examples=…)` structurally cannot see test examples; `predict` + `score_task` are the only functions touching test grids. Targets are observables, never a training signal.
 - **Search** (`program_search/search/`): one generic typed bottom-up engine (`BottomUpSearchEngine`), capability policies as fields (function-hole fill, polymorphism instantiation, constant sources), `Budget` as a `run()` argument. Goal test is `sig == target`; a `Constraint` is only an *extra* inductive-bias filter; `Cost` (`ProgramSize`) is the Occam prior.
-- **Programs are data**: `Program` ABC — `Input | Param | Const | Apply | If | Var | Lam | AppFn | PrimRef` (`substrate/program.py`). Every node kind must round-trip both codecs — enforced by `tests/program_search/test_codec_completeness.py` (ARCHITECTURE.md §11.6).
+- **Programs are data**: `Program` ABC — `Input | Param | Const | Apply | If | Var | Lam | AppFn | PrimRef` (`substrate/program.py`). Every node kind must round-trip both codecs — enforced by `tests/program_search/learn/test_codec_completeness.py` (ARCHITECTURE.md §11.6).
 - **Learning** (`program_search/learn/`): sleep = `LearnEngine.run(library, solutions) → LearnOutcome` (proposers: antiunify / frequent-subtree / Stitch; governance: greedy-MDL). Studies register in `execution/studies.py::STUDIES`; testbed generators in `taskgen/generators.py::GENERATORS`.
 
 Layers: `core/` (grid·task·annotation·dataset·hashing) · `eval/` (scoring rules only) · `program_search/` (`substrate/` · `search/` · `learn/` · `analysis/` · `execution/`) · `taskgen/` · `cli/` (thin) · `viz/`.
@@ -82,12 +82,12 @@ A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed s
 ## Sources of truth (don't duplicate — point here)
 
 - Activity / call-stack / run data model (RunSpec · Config · activities · runs/ layout · CLI): `EXECUTION.md`
-- Search-engine & substrate design (types · scopes · enumeration · deliberate limits register §11.6): `ARCHITECTURE.md` (the superseded run-model snapshot is `ARCHITECTURE-2026-07-09.md`)
+- Search-engine & substrate design (types · scopes · enumeration · deliberate limits register §11.6): `ARCHITECTURE.md` (the superseded run-model snapshot is `docs/archive/ARCHITECTURE-2026-07-09.md`)
 - Preset registry: `src/arc_lab/program_search/execution/presets.py` · Study registry: `execution/studies.py` · Generator registry: `src/arc_lab/taskgen/generators.py`
-- Behavior locks: `tests/program_search/test_locks.py` (old-tree locks: `tests/test_integration.py`, until the deletion pass)
+- Behavior locks: `tests/program_search/execution/test_locks.py` (old-tree locks: `tests/test_integration.py`, until the deletion pass)
 - Commands: `Makefile`
 - Experiment history & findings: `EXPERIMENTS.md` · Planned experiments: `EXPERIMENT_QUEUE.md`
-- Lever maps (primitives / machinery): `ONTOLOGY.md` / `MACHINERY.md`
-- Research frame (dated snapshot the maps are read against): `RESEARCH-2026-07-08.md` (supersedes `RESEARCH-2026-07-07.md`)
-- Machinery build strategy (build vs. adopt vs. defer; dated): `MACHINERY-STRATEGY-2026-07-07.md`
-- Config/param defaults review (every param: options, cost impact, default rationale; dated): `CONFIG-DEFAULTS-2026-07-11.md`
+- Lever maps (primitives / machinery / expressibility control): `ONTOLOGY.md` / `MACHINERY.md` / `SEARCH-SPACE.md`
+- Research frame (dated snapshot the maps are read against): `docs/RESEARCH-2026-07-08.md` (superseded snapshots live in `docs/archive/`)
+- Machinery build strategy (build vs. adopt vs. defer; dated): `docs/MACHINERY-STRATEGY-2026-07-07.md`
+- Config/param defaults review (every param: options, cost impact, default rationale; dated): `docs/CONFIG-DEFAULTS-2026-07-11.md`

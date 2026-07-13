@@ -1,6 +1,6 @@
 # Compression↔transfer correlation — the first experiment the measurement layer enables
 
-**Date:** 2026-07-08 · **Machinery:** the F5 transfer-measurement layer (`learn/harness.py`, `learn/experiments.py`; MACHINERY.md F5) · **Frame:** [RESEARCH-2026-07-08.md](../../RESEARCH-2026-07-08.md) (the measurement-bottleneck thesis).
+**Date:** 2026-07-08 · **Machinery:** the F5 transfer-measurement layer (`learn/harness.py`, `learn/experiments.py`; MACHINERY.md F5) · **Frame:** [RESEARCH-2026-07-08.md](../../docs/RESEARCH-2026-07-08.md) (the measurement-bottleneck thesis).
 
 > logged in [EXPERIMENTS.md](../../EXPERIMENTS.md) (2026-07-08), anchored to commit `cda7c91`. Drains the queued **compression↔transfer correlation** row.
 
