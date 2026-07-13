@@ -30,7 +30,12 @@ class RunSpec:
 
     @property
     def run_id(self) -> str:
-        """The content-addressed run identity — the ``runs/<run_id>/`` directory name."""
+        """The content-addressed run identity — the cache key ``execute()`` dedupes on.
+
+        Not the ``runs/`` dirname on its own: the on-disk dir is
+        ``<started_at>_<run_id>`` (see ``model.run_record.find_run_dir``), so listings
+        sort chronologically. The two are deliberately decoupled.
+        """
         return content_id({"config": self.config.to_dict(), "corpus": self.corpus.content_hash()})
 
     def to_dict(self) -> dict[str, object]:

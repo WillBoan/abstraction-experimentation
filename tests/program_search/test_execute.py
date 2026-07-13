@@ -91,10 +91,12 @@ def test_execute_end_to_end_search_run(tmp_path: Path) -> None:
     record = execute(spec, runs_root=tmp_path)
 
     assert record.completed
-    assert record.run_dir == tmp_path / spec.run_id
+    assert record.run_dir.parent == tmp_path
+    assert record.run_dir.name.endswith(f"_{spec.run_id}")
     runspec = json.loads(record.runspec_path.read_text())
     assert runspec["run_id"] == spec.run_id
     assert runspec["corpus_name"] == "exec-test"
+    assert isinstance(runspec["run_started_at"], str) and runspec["run_started_at"]
 
     results = record.results()
     assert results["task_count"] == 1

@@ -8,7 +8,7 @@ from pathlib import Path
 import typer
 
 from arc_lab.program_search.execution.execute import DEFAULT_RUNS_ROOT
-from arc_lab.program_search.execution.model.run_record import RunRecord
+from arc_lab.program_search.execution.model.run_record import RUNSPEC_FILENAME, RunRecord
 
 
 def list_runs(
@@ -21,11 +21,14 @@ def list_runs(
         return
     rows = []
     for run_dir in sorted(root.iterdir()):
-        record = RunRecord(run_id=run_dir.name, run_dir=run_dir)
+        runspec_path = run_dir / RUNSPEC_FILENAME
+        if not runspec_path.is_file():
+            continue
+        spec = json.loads(runspec_path.read_text(encoding="utf-8"))
+        record = RunRecord(run_id=spec["run_id"], run_dir=run_dir)
         if not record.completed:
             continue
         results = record.results()
-        spec = json.loads(record.runspec_path.read_text(encoding="utf-8"))
         is_learn = spec.get("config", {}).get("learn") is not None
         if is_learn:
             headline = (

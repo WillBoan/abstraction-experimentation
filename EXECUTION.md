@@ -10,7 +10,7 @@ Granularity levels (ARC's own terminology): **dataset ⊃ corpus ⊃ task ⊃ ex
 
 - **Test examples (within-task)** — each `Task`'s own held-out `test` examples. The search sees only the train examples; scoring always happens on the test examples. This never changes, in any flow, on any corpus. _(Naming: the scorer is **`score`**, not "evaluate" — avoiding collision with both the **eval corpus** and `Program.evaluate`, which keeps its canonical interpreter meaning: apply a program to a grid.)_
 - **Train / eval corpus** — the _across-task_ split. The **train corpus** is the set of tasks the learning loop may see; the **eval corpus** is tasks the learning **never saw**. This axis exists only because a learned library exists — it grades whether _the library_ transfers.
-- **Recorded run** — `RunSpec = Config × Corpus` → content-hashed `run_id` → executed once, cached thereafter (`runspec.json` written first, `trace.jsonl` streamed, `results.json` written last; a present `results.json` is served from cache).
+- **Recorded run** — `RunSpec = Config × Corpus` → content-hashed `run_id` → executed once, cached thereafter (`runspec.json` written first, `trace.jsonl` streamed, `results.json` written last; a present `results.json` is served from cache). The `run_id` is the cache key `execute()` dedupes on, not the raw dirname: the on-disk dir is `runs/<started_at>_<run_id>/` (`model.run_record.find_run_dir` resolves by hash suffix) so `runs/` sorts and reads chronologically while the identity stays a pure function of `(config, corpus)`.
 
 Where each corpus is touched:
 
@@ -38,7 +38,7 @@ _(No learned object exists → no across-task question → one corpus is fully s
 
 1. `run_search_across_corpus` — for each task: `SearchEngine.run(task.train, …)`; collect best programs.
 2. `predict` + `score` — pure: apply each task's best programs to its **test inputs**; score against test outputs.
-3. Record to `runs/<run_id>/`. _(Recording is owned by the activity; the idempotency check happens before step 1.)_
+3. Record to `runs/<started_at>_<run_id>/`. _(Recording is owned by the activity; the idempotency check happens before step 1.)_
 
 ## SEARCH + LEARN — train corpus, optional eval corpus
 
@@ -91,7 +91,7 @@ RunSpec                                      # the recorded-run atom — exactly
   │       ├─ reset_programs_each_wake: bool = True
   │       └─ score_each_wake: bool = False   #   telemetry only; never feedback
   ├─ corpus: Corpus ↗                        # the content (WHAT)
-  └─ run_id (derived) = hash(config × corpus.content_hash)    # commit recorded but EXCLUDED
+  └─ run_id (derived) = hash(config × corpus.content_hash)    # commit + run_started_at recorded but EXCLUDED
 
 StudySpec                                    # orchestration, not a run — generates RunSpecs
   ├─ base_config: Config                     #   library = L1, learn = LearnSpec; grid cells derive via
@@ -103,8 +103,8 @@ StudySpec                                    # orchestration, not a run — gene
 ── RECORDS (read side: what happened — derived, never hashed) ───────────────────
 
 RunRecord                                    # the handle execute() returns; input to analyze_run / study report
-  ├─ run_id
-  ├─ artifact paths (runs/<run_id>/…)
+  ├─ run_id                                  #   content-addressed identity (the cache key)
+  ├─ artifact paths (runs/<started_at>_<run_id>/…)   # run_dir is resolved by run_id suffix, not joined directly
   └─ lazily loaded: results / learned_library / trace
 
 TaskScore                                    # score_task's verdict for one task
@@ -135,7 +135,9 @@ arc-lab run-study    ──▶  run_study(study_spec)             ──▶  │
                             └─ create_study_report(records)     │
                                                                  ▼
                           execute(run_spec) → RunRecord
-                            ├─ runs/<run_id>/results.json present? → cached RunRecord (no execution)
+                            ├─ runs/<started_at>_<run_id>/results.json present? → cached RunRecord (no execution)
+                            │    (an existing dir is located by its run_id suffix — find_run_dir; the
+                            │     started_at prefix is only ever set once, at first execution)
                             ├─ config.learn is None  (SEARCH run):
                             │    for task in corpus:
                             │      SearchEngine.run(task.train_examples, library, constraints, cost, budget)

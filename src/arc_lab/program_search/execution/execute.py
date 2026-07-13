@@ -23,6 +23,7 @@ import json
 import logging
 import subprocess
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
@@ -34,7 +35,7 @@ from arc_lab.program_search.substrate.program import Program
 
 from .model.config import Config
 from .model.results import TaskResult, TaskScore
-from .model.run_record import RunRecord
+from .model.run_record import RunRecord, find_run_dir
 from .model.run_spec import RunSpec
 from .predict import predict
 
@@ -47,14 +48,20 @@ DEFAULT_RUNS_ROOT: Final = Path(__file__).resolve().parents[4] / "runs"
 def execute(run_spec: RunSpec, *, runs_root: Path | None = None) -> RunRecord:
     """Execute (or serve from cache) the recorded run ``run_spec`` names."""
     root = DEFAULT_RUNS_ROOT if runs_root is None else runs_root
-    record = RunRecord(run_id=run_spec.run_id, run_dir=root / run_spec.run_id)
+    run_dir = find_run_dir(root, run_spec.run_id)
+    if run_dir is None:
+        run_dir = root / f"{_timestamp()}_{run_spec.run_id}"
+    record = RunRecord(run_id=run_spec.run_id, run_dir=run_dir)
 
     if record.completed:  # idempotency: results.json present ⇒ cached
         logger.info("run %s served from cache (%s)", record.run_id, record.run_dir)
         return record
 
     record.run_dir.mkdir(parents=True, exist_ok=True)
-    _write_json(record.runspec_path, {**run_spec.to_dict(), "commit": _current_commit()})
+    _write_json(
+        record.runspec_path,
+        {**run_spec.to_dict(), "commit": _current_commit(), "run_started_at": _now_iso()},
+    )
 
     if run_spec.config.learn is None:
         payload = _search_results(_run_search(run_spec, record))
@@ -330,3 +337,13 @@ def _current_commit() -> str | None:
     except (OSError, subprocess.SubprocessError):
         return None
     return output.stdout.strip() or None
+
+
+def _now_iso() -> str:
+    """Wall-clock run start — provenance only, never part of the ``run_id`` hash."""
+    return datetime.now(UTC).isoformat()
+
+
+def _timestamp() -> str:
+    """A sortable dirname prefix — pairs with ``run_id`` as ``<timestamp>_<run_id>``."""
+    return datetime.now(UTC).strftime("%Y%m%d_%H%M%S")

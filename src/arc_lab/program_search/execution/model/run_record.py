@@ -29,6 +29,19 @@ TRACE_FILENAME: Final = "trace.jsonl"
 LEARNED_LIBRARY_FILENAME: Final = "learned_library.json"
 
 
+def find_run_dir(root: Path, run_id: str) -> Path | None:
+    """Locate an existing ``runs/<started_at>_<run_id>/`` dir by its content-hash suffix.
+
+    ``run_id`` stays the content-addressed identity (the cache key); the on-disk
+    dirname is prefixed with a start timestamp purely so ``runs/`` sorts and reads
+    chronologically. The two are decoupled — never join ``root / run_id`` directly.
+    """
+    matches = sorted(root.glob(f"*_{run_id}")) if root.is_dir() else []
+    if len(matches) > 1:
+        raise RuntimeError(f"multiple run dirs match run_id {run_id!r} under {root}: {matches}")
+    return matches[0] if matches else None
+
+
 @dataclass(frozen=True, slots=True)
 class RunRecord:
     """A completed (or in-progress) run's artifacts, loaded lazily."""

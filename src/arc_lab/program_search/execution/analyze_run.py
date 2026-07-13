@@ -11,13 +11,16 @@ from __future__ import annotations
 from pathlib import Path
 
 from .execute import DEFAULT_RUNS_ROOT
-from .model.run_record import RunRecord
+from .model.run_record import RunRecord, find_run_dir
 
 
 def analyze_run(run_id: str, *, runs_root: Path | None = None) -> dict[str, object]:
     """A structured summary of a completed run's artifacts, by ``run_id``."""
     root = DEFAULT_RUNS_ROOT if runs_root is None else runs_root
-    record = RunRecord(run_id=run_id, run_dir=root / run_id)
+    run_dir = find_run_dir(root, run_id)
+    if run_dir is None:
+        raise FileNotFoundError(f"run {run_id!r} has no results.json under {root}")
+    record = RunRecord(run_id=run_id, run_dir=run_dir)
     if not record.completed:
         raise FileNotFoundError(f"run {run_id!r} has no results.json under {root}")
 

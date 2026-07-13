@@ -14,17 +14,22 @@ This exists to **capture** what's otherwise lost — not to **govern** how you e
 
 Make a folder when an investigation turns **non-trivial** — there's tuning, probing, comparing, or a decision trail worth keeping. A one-line experiment doesn't need one; it's fine to log it straight to `EXPERIMENTS.md`.
 
+## Investigation vs. experiment
+
+A folder here is an **investigation**: the higher-level question or research thread. It can hold **one experiment or several** — grouping multiple experiments in one folder is exactly what makes cross-experiment comparison easy (shared setup, one notebook synthesizing across them). An **experiment** is what gets an **E-number** (minted in `EXPERIMENTS.md` when it runs); a folder isn't required to enumerate every E-number it contains in its own name (see naming below) — the notebook is the authoritative index of which experiments live here.
+
 ## What a folder usually holds
 
 ```
-experiments/<YYYY-MM-DD>-<e-number(s)>-<short-name>/
-  notebook.md      # the anchor: goal, what you ran & found, decisions, dead-ends
+experiments/<YYYY-MM-DD>-<short-name>/
+  notebook.md      # the anchor: goal, what you ran & found, decisions, dead-ends,
+                    # and — per experiment — the list of its runs, linked to runs/
   artifacts/       # any code/scripts/data produced, with their outputs
 ```
 
-- **Naming:** date-first (sorts chronologically, parallels `EXPERIMENTS.md`'s dated entries), then the experiment number(s), then a short name — e.g. `2026-07-07-e8-e9-mirror-index-bootstrap/`. A tight **contrast pair** (E6/E7, E8/E9) shares one folder; a solo experiment gets its own.
+- **Naming:** date-first (sorts chronologically, parallels `EXPERIMENTS.md`'s dated entries), then a short thematic name. Including the E-number(s) is fine for a tight **contrast pair** sharing one folder (e.g. `2026-07-07-e8-e9-mirror-index-bootstrap/`) — but don't force every E-number an investigation later accumulates into the dirname; an open-ended investigation (three, four, more experiments over time) just gets a thematic name, and `notebook.md` carries the E-number ↔ run mapping.
 - **`artifacts/`** holds **anything the investigation produced worth reproducing** — probe scripts (`.py`, `.sh`, …), their outputs, comparison tables, CSVs, charts, whatever came up — not just code. Pair a script with its output by **matched basename** (`beam_sweep.py` + `beam_sweep.out`, captured with `… 2>&1 | tee artifacts/beam_sweep.out`). It's optional: a tiny investigation might be just a `notebook.md` with an inline snippet.
-- **`notebook.md` is a prompt, not a form.** Things often worth capturing — the goal/question, the setup, a running log of _what you ran and what it showed_ (dead-ends included), the findings and metrics, and the decisions and open questions — but shape it however the investigation calls for. Link out to the `artifacts/` and back to the `EXPERIMENTS.md` entry; don't duplicate the abstract.
+- **`notebook.md` is a prompt, not a form.** Things often worth capturing — the goal/question, the setup, a running log of _what you ran and what it showed_ (dead-ends included), the findings and metrics, and the decisions and open questions — but shape it however the investigation calls for. Link out to the `artifacts/` and back to the `EXPERIMENTS.md` entry; don't duplicate the abstract. For each experiment in the investigation, also list its **runs** — one line per run naming what it was (budget, corpus, library) and a relative link to its `runs/<started_at>_<run_id>/` dir — so a reader can jump straight from the write-up to the actual recorded artifacts (`runspec.json` / `results.json` / `trace.jsonl`).
 
 ## How it interacts with the rest
 
