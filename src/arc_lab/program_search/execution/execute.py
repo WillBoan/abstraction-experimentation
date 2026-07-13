@@ -23,6 +23,7 @@ import json
 import logging
 import subprocess
 import time
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
@@ -98,6 +99,28 @@ def _run_search(run_spec: RunSpec, record: RunRecord) -> list[dict[str, object]]
     return rows
 
 
+def _predict_and_score(
+    task: Task,
+    programs: Sequence[Program],
+    library: Library,
+    *,
+    attempts_per_test: int,
+) -> tuple[bool, tuple[bool, ...]]:
+    """Apply the best programs to ``task``'s test inputs and score them.
+
+    The one place the execution layer touches test grids (via the pure
+    ``predict`` + ``score_task``), shared by the SEARCH branch and the
+    LEARN branch's per-wake telemetry.
+    """
+    prediction = predict(
+        programs,
+        [example.input for example in task.test],
+        library,
+        attempts_per_test=attempts_per_test,
+    )
+    return score_task(task, prediction, attempts=attempts_per_test)
+
+
 def _run_task(task: Task, config: Config) -> dict[str, object]:
     """One task: search on train examples, predict + score on test examples, tallied."""
     started = time.perf_counter()
@@ -109,13 +132,12 @@ def _run_task(task: Task, config: Config) -> dict[str, object]:
             cost=config.cost,
             budget=config.budget,
         )
-        prediction = predict(
+        solved, per_test = _predict_and_score(
+            task,
             result.ranked_programs,
-            [example.input for example in task.test],
             config.library,
             attempts_per_test=config.attempts_per_test,
         )
-        solved, per_test = score_task(task, prediction, attempts=config.attempts_per_test)
         task_result = TaskResult(
             task_id=task.task_id,
             score=TaskScore(solved=solved, per_test=per_test),
@@ -297,13 +319,12 @@ def _wake(
         if result.ranked_programs:
             solutions[task.task_id] = SolvedTask(annotated=entry, program=result.ranked_programs[0])
         if learn.score_each_wake and task.test:  # telemetry only; never feeds back
-            prediction = predict(
+            solved, _ = _predict_and_score(
+                task,
                 result.ranked_programs,
-                [example.input for example in task.test],
                 library,
                 attempts_per_test=config.attempts_per_test,
             )
-            solved, _ = score_task(task, prediction, attempts=config.attempts_per_test)
             scores[task.task_id] = solved
     wake_row: dict[str, object] = {
         "iteration": iteration,
