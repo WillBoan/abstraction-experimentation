@@ -63,9 +63,194 @@ def generate_e1_rot90(out_root: Path) -> Path:
     )
 
 
+def _accent_grid(bg: int, accent_a: int, accent_b: int) -> Grid:
+    """A 3x3 grid: background ``bg`` filling 7 cells, two singleton accent cells.
+
+    The 7-1-1 majority makes ``most_common_color`` unambiguous (no tie-break needed).
+    """
+    return Grid.from_list(
+        [
+            [accent_a, bg, bg],
+            [bg, bg, bg],
+            [bg, bg, accent_b],
+        ]
+    )
+
+
+#: Backgrounds shared by every recolor_bg task -- reused *within* each task so the
+#: search cannot solve via one literal COLOR constant (see `perceive_transform_tasks`).
+_RECOLOR_BG_BACKGROUNDS = (3, 4, 6)
+
+
+def _most_common_color(grid: Grid) -> int:
+    """Reference most-common-color (ties -> lowest value): a plain numpy computation,
+    independent of the `most_common_color` DSL primitive it stands in for."""
+    return int(np.bincount(grid.array.ravel(), minlength=10).argmax())
+
+
+def _recolor_bg_solution(target: int) -> Callable[[Grid], Grid]:
+    """recolor_bg(g, target): replace `g`'s most common color with `target`."""
+
+    def solution(grid: Grid) -> Grid:
+        arr = grid.array
+        arr[arr == _most_common_color(grid)] = target
+        return Grid(arr)
+
+    return solution
+
+
+def perceive_transform_tasks() -> tuple[GeneratedTask, ...]:
+    """perceive->transform testbed: recolor_bg(g,c) = map_color(g, most_common_color(g), c).
+
+    Each task fixes ONE target color across its 3 train examples but varies the
+    background *within* the task (same 3 backgrounds every task) -- no single literal
+    COLOR constant solves all of a task's examples at once, so the search is forced
+    through the perceiving composition `map_color(g, most_common_color(g), c)`. Target
+    color then varies *across* tasks, which is what gives antiunify the differing
+    literal that becomes recolor_bg's free parameter. Train targets {0,2,5,7,9}, held-out
+    (unseen) targets {1,8} -- disjoint from the shared backgrounds {3,4,6}.
+    """
+    grids = [_accent_grid(bg, 1, 2) for bg in _RECOLOR_BG_BACKGROUNDS]
+    tasks: list[GeneratedTask] = []
+    for split, targets in (("train", (0, 2, 5, 7, 9)), ("heldout", (1, 8))):
+        for target in targets:
+            tasks.append(
+                make_task(
+                    f"recolor-bg-{target}",
+                    label="recolor_bg",
+                    split=split,
+                    solution=_recolor_bg_solution(target),
+                    train_inputs=grids,
+                    test_inputs=[grids[0]],
+                )
+            )
+    return tuple(tasks)
+
+
+def generate_perceive_transform(out_root: Path) -> Path:
+    return write_testbed(
+        "perceive-transform",
+        perceive_transform_tasks(),
+        out_root=out_root,
+        note=(
+            "perceive->transform: recolor_bg(g,c) = map_color(g, most_common_color(g), c), "
+            "derived from {map_color, most_common_color} via within-task background "
+            "variation + cross-task target-color variation."
+        ),
+    )
+
+
+_LAYERED_ROT180_TRAIN_GRIDS = (
+    Grid.from_list([[1, 2, 3], [4, 5, 6]]),
+    Grid.from_list([[7, 0], [8, 9], [1, 2]]),
+    Grid.from_list([[3, 4, 5], [6, 7, 8]]),
+    Grid.from_list([[9, 1], [2, 3], [4, 5]]),
+)
+_LAYERED_ROT180_HELDOUT_GRID = Grid.from_list([[6, 7], [8, 9], [0, 1]])
+
+_LAYERED_RECOLOR_FLIPPED_TRAIN_PAIRS = ((1, 2), (3, 4), (5, 6), (7, 0))
+_LAYERED_RECOLOR_FLIPPED_HELDOUT_PAIR = (8, 9)
+
+
+def _rot180_reference(grid: Grid) -> Grid:
+    return Grid(grid.array[::-1, ::-1])
+
+
+def _grid_containing(color: int) -> Grid:
+    """A 2x3 asymmetric grid guaranteed to contain `color` (top-left cell)."""
+    others = [(color + offset) % 10 for offset in range(1, 6)]
+    return Grid.from_list([[color, others[0], others[1]], [others[2], others[3], others[4]]])
+
+
+def _recolor_flipped_solution(a: int, b: int) -> Callable[[Grid], Grid]:
+    """recolor_flipped(g, a, b) = map_color(rot180(g), a, b)."""
+
+    def solution(grid: Grid) -> Grid:
+        arr = grid.array[::-1, ::-1].copy()
+        arr[arr == a] = b
+        return Grid(arr)
+
+    return solution
+
+
+def layered_abstraction_tasks() -> tuple[GeneratedTask, ...]:
+    """layered abstraction testbed: L1 `rot180 = flip_h(flip_v(g))`; L2
+    `recolor_flipped(g,a,b) = map_color(rot180(g),a,b)` built ON the learned L1.
+
+    Every task's own WAKE budget (`max_depth=3`, two applications) reaches rot180
+    tasks directly but not recolor_flipped ones (three applications); only once abs0
+    (rot180) is minted does recolor_flipped collapse to two applications and become
+    reachable at that SAME budget -- so the second generation's WAKE genuinely needs
+    the grown library, not just a post-hoc corpus rewrite. `a`/`b` are fixed within
+    each recolor_flipped task and vary across tasks (each param used once -- no
+    var-sharing needed here, unlike perceive-transform).
+    """
+    tasks: list[GeneratedTask] = []
+    for i, grid in enumerate(_LAYERED_ROT180_TRAIN_GRIDS):
+        tasks.append(
+            make_task(
+                f"rot180-{i:02d}",
+                label="rot180",
+                split="train",
+                solution=_rot180_reference,
+                train_inputs=[grid],
+                test_inputs=[grid],
+            )
+        )
+    tasks.append(
+        make_task(
+            "rot180-heldout",
+            label="rot180",
+            split="heldout",
+            solution=_rot180_reference,
+            train_inputs=[_LAYERED_ROT180_HELDOUT_GRID],
+            test_inputs=[_LAYERED_ROT180_HELDOUT_GRID],
+        )
+    )
+    for a, b in _LAYERED_RECOLOR_FLIPPED_TRAIN_PAIRS:
+        grid = _grid_containing(a)
+        tasks.append(
+            make_task(
+                f"recolor-flipped-{a}-{b}",
+                label="recolor_flipped",
+                split="train",
+                solution=_recolor_flipped_solution(a, b),
+                train_inputs=[grid],
+                test_inputs=[grid],
+            )
+        )
+    a, b = _LAYERED_RECOLOR_FLIPPED_HELDOUT_PAIR
+    heldout_grid = _grid_containing(a)
+    tasks.append(
+        make_task(
+            f"recolor-flipped-{a}-{b}",
+            label="recolor_flipped",
+            split="heldout",
+            solution=_recolor_flipped_solution(a, b),
+            train_inputs=[heldout_grid],
+            test_inputs=[heldout_grid],
+        )
+    )
+    return tuple(tasks)
+
+
+def generate_layered_abstraction(out_root: Path) -> Path:
+    return write_testbed(
+        "layered-abstraction",
+        layered_abstraction_tasks(),
+        out_root=out_root,
+        note=(
+            "layered abstraction: L1 rot180 = flip_h(flip_v(g)); L2 "
+            "recolor_flipped(g,a,b) = map_color(rot180(g),a,b), built on the learned L1."
+        ),
+    )
+
+
 #: Generator registry for the CLI (`arc-lab taskgen <name>`).
 GENERATORS: dict[str, Callable[[Path], Path]] = {
     "e1-rot90": generate_e1_rot90,
+    "perceive-transform": generate_perceive_transform,
+    "layered-abstraction": generate_layered_abstraction,
 }
 
 

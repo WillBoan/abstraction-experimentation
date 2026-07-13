@@ -1,0 +1,42 @@
+{
+  "name": "perceive-transform",
+  "note": "perceive->transform: recolor_bg(g,c) = map_color(g, most_common_color(g), c), derived from {map_color, most_common_color} via within-task background variation + cross-task target-color variation.",
+  "content_hash": "c3a822926b83af5e",
+  "tasks": [
+    {
+      "task_id": "recolor-bg-0",
+      "label": "recolor_bg",
+      "split": "train"
+    },
+    {
+      "task_id": "recolor-bg-2",
+      "label": "recolor_bg",
+      "split": "train"
+    },
+    {
+      "task_id": "recolor-bg-5",
+      "label": "recolor_bg",
+      "split": "train"
+    },
+    {
+      "task_id": "recolor-bg-7",
+      "label": "recolor_bg",
+      "split": "train"
+    },
+    {
+      "task_id": "recolor-bg-9",
+      "label": "recolor_bg",
+      "split": "train"
+    },
+    {
+      "task_id": "recolor-bg-1",
+      "label": "recolor_bg",
+      "split": "heldout"
+    },
+    {
+      "task_id": "recolor-bg-8",
+      "label": "recolor_bg",
+      "split": "heldout"
+    }
+  ]
+}

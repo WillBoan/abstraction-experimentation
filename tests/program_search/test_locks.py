@@ -172,3 +172,71 @@ def test_e1_study_locks_the_learning_loop(tmp_path: Path) -> None:
     assert result.grid[GridCell("L1", shallow, "train")].results()["solved"] == 0
     assert result.grid[GridCell("L2", shallow, "train")].results()["solved"] == 8
     assert result.grid[GridCell("L2", shallow, "eval")].results()["solved"] == 4
+
+
+def test_perceive_transform_study_locks_the_learning_loop(tmp_path: Path) -> None:
+    """The perceiver-consuming-abstraction lock: recolor_bg from {map_color, most_common_color}.
+
+    Sleep mints exactly one abstraction, structurally `map_color(g, most_common_color(g), c)`
+    (grid var-shared across both call sites) -- not merely a behavioral match, since the whole
+    point is that the search is *derived through the perceiver*, not a literal reparameterization
+    of `map_color`. At the shallow (enablement) budget the learned library solves every task
+    (including both held-out, unseen target colors) where the starting library solves none.
+    """
+    from arc_lab.program_search.execution.run_study import GridCell, create_study_report, run_study
+    from arc_lab.program_search.execution.studies import make_study
+    from arc_lab.program_search.substrate.program import Apply, Param
+    from arc_lab.program_search.substrate.types import COLOR, GRID
+
+    spec = make_study("perceive-transform")
+    result = run_study(spec, runs_root=tmp_path)
+    report = create_study_report(result)
+
+    assert report["invented"] == ["abs0"]
+    assert report["behavioral_check"] == [
+        {"target": "recolor_bg", "matched": True, "matched_by": ["abs0"]}
+    ]
+    assert result.libraries["L2"].get("abs0").template == Apply(
+        "map_color",
+        (Param(0, GRID), Apply("most_common_color", (Param(0, GRID),)), Param(1, COLOR)),
+    )
+    shallow = spec.budgets[1]
+    assert result.grid[GridCell("L1", shallow, "train")].results()["solved"] == 0
+    assert result.grid[GridCell("L1", shallow, "eval")].results()["solved"] == 0
+    assert result.grid[GridCell("L2", shallow, "train")].results()["solved"] == 5
+    assert result.grid[GridCell("L2", shallow, "eval")].results()["solved"] == 2
+
+
+def test_layered_abstraction_study_locks_multi_generation_learning(tmp_path: Path) -> None:
+    """The abstractions-on-abstractions lock: L2 minted USING the L1 learned in the same run.
+
+    `layered-abstraction` mixes rot180 tasks (reachable at the learn budget via raw
+    composition) with recolor_flipped tasks (one application too deep, raw). Sleep must
+    mint `abs0 = rot180` from the rot180 tasks FIRST, so that WAKE's next iteration --
+    genuinely re-searching, not rewriting -- can then reach recolor_flipped in one fewer
+    application and sleep mints `abs1` built directly on `abs0`.
+    """
+    from arc_lab.program_search.execution.run_study import GridCell, create_study_report, run_study
+    from arc_lab.program_search.execution.studies import make_study
+    from arc_lab.program_search.substrate.program import Apply, Param
+    from arc_lab.program_search.substrate.types import COLOR, GRID
+
+    spec = make_study("layered-abstraction")
+    result = run_study(spec, runs_root=tmp_path)
+    report = create_study_report(result)
+
+    assert report["invented"] == ["abs0", "abs1"]
+    assert report["behavioral_check"] == [
+        {"target": "rot180", "matched": True, "matched_by": ["abs0"]},
+        {"target": "recolor_flipped", "matched": True, "matched_by": ["abs1"]},
+    ]
+    l2 = result.libraries["L2"]
+    assert l2.get("abs0").template == Apply("flip_h", (Apply("flip_v", (Param(0, GRID),)),))
+    assert l2.get("abs1").template == Apply(
+        "map_color", (Apply("abs0", (Param(0, GRID),)), Param(1, COLOR), Param(2, COLOR))
+    )
+    learn_budget = spec.budgets[1]
+    assert result.grid[GridCell("L1", learn_budget, "train")].results()["solved"] == 4  # rot180 only
+    assert result.grid[GridCell("L1", learn_budget, "eval")].results()["solved"] == 1
+    assert result.grid[GridCell("L2", learn_budget, "train")].results()["solved"] == 8  # both types
+    assert result.grid[GridCell("L2", learn_budget, "eval")].results()["solved"] == 2

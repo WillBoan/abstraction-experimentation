@@ -1,0 +1,57 @@
+{
+  "name": "layered-abstraction",
+  "note": "layered abstraction: L1 rot180 = flip_h(flip_v(g)); L2 recolor_flipped(g,a,b) = map_color(rot180(g),a,b), built on the learned L1.",
+  "content_hash": "4a7d8a567749c267",
+  "tasks": [
+    {
+      "task_id": "rot180-00",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-01",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-02",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-03",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-heldout",
+      "label": "rot180",
+      "split": "heldout"
+    },
+    {
+      "task_id": "recolor-flipped-1-2",
+      "label": "recolor_flipped",
+      "split": "train"
+    },
+    {
+      "task_id": "recolor-flipped-3-4",
+      "label": "recolor_flipped",
+      "split": "train"
+    },
+    {
+      "task_id": "recolor-flipped-5-6",
+      "label": "recolor_flipped",
+      "split": "train"
+    },
+    {
+      "task_id": "recolor-flipped-7-0",
+      "label": "recolor_flipped",
+      "split": "train"
+    },
+    {
+      "task_id": "recolor-flipped-8-9",
+      "label": "recolor_flipped",
+      "split": "heldout"
+    }
+  ]
+}
