@@ -1,6 +1,11 @@
-"""Evaluation: ARC-style scoring and an experiment runner."""
+"""Evaluation: ARC scoring rules — paradigm-agnostic (grids in, booleans out).
 
-from arc_lab.eval.runner import Report, TaskResult, run
-from arc_lab.eval.scoring import score_task
+The old experiment runner (``eval.runner``) is pre-overhaul code that dies with the
+``solvers/`` tree; it is deliberately NOT re-exported here, so importing this package
+never touches the old tree. The execution layer's driver is
+``arc_lab.program_search.execution.execute``.
+"""
 
-__all__ = ["Report", "TaskResult", "run", "score_task"]
+from arc_lab.eval.scoring import score_task, score_test_input
+
+__all__ = ["score_task", "score_test_input"]
