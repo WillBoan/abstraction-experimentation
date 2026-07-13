@@ -1,18 +1,24 @@
 """Programs as data: a typed AST with virtual-dispatch operations.
 
-A program is not a Python closure but an inspectable tree:
+A program is not a Python closure but an inspectable tree of nine node kinds:
 
 * :class:`Input` — the single free variable, the task's input grid;
+* :class:`Param` — an abstraction argument (reads ``env``);
 * :class:`Const` — a literal scalar value (a color, a tiling dimension, …);
-* :class:`Apply` — apply a named primitive to sub-programs.
+* :class:`Apply` — apply a named primitive to sub-programs;
+* :class:`If` — short-circuit branching (only the selected branch evaluates);
+* :class:`Var` — a lambda-bound variable (De Bruijn index into ``scope``);
+* :class:`Lam` — a lambda, one typed binder per node (curried arrows nest);
+* :class:`AppFn` — apply a function-valued sub-program to arguments;
+* :class:`PrimRef` — a primitive as a first-class function value.
 
 Operations are provided by **virtual dispatch**: each node kind implements
 :meth:`~Program.evaluate`, :meth:`~Program.result_type`, :meth:`~Program.to_dict`,
 :meth:`~Program.children`, and ``__str__``. Structural helpers (:meth:`~Program.size`,
 :meth:`~Program.depth`, :meth:`~Program.walk`, :meth:`~Program.evaluate_grid`) are
 derived once on the base from those. Adding a node kind therefore *must* implement
-the operations (the abstract methods enforce it), which is the exhaustiveness the
-old union alias gave us — kept, now with method ergonomics.
+the operations (the abstract methods enforce exhaustiveness) — and must extend the
+s-expression codec in the same change (``tests/program_search/test_codec_completeness.py``).
 
 Because a program is data, it can be enumerated, evaluated, compared, hashed,
 serialised, and — later — abstracted over (frequently-used sub-trees become new

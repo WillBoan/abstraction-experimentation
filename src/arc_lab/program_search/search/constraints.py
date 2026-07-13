@@ -15,7 +15,7 @@ implementation may therefore assume it receives train-consistent programs. The
 default is no constraints (``Config.constraints = ()``).
 
 Constraints receive the task's *train examples only* — they are train-side
-machinery, structurally blind to test grids, like ``Cost.of`` (EXECUTION.md, Sync B).
+machinery, structurally blind to test grids, like ``Cost.of`` (EXECUTION.md).
 """
 
 from __future__ import annotations

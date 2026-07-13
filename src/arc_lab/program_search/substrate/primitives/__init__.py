@@ -1,7 +1,7 @@
 """Concrete primitive libraries.
 
 Each module here defines a group of related primitives and, optionally, a
-ready-made :class:`~arc_lab.solvers.program_search.substrate.library.Library` bundling them.
+ready-made :class:`~arc_lab.program_search.substrate.library.Library` bundling them.
 Solvers pick a library to search over.
 """
 

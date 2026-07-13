@@ -4,7 +4,7 @@ This package sits atop `search` (wake) and `analysis` (compression governance), 
 `Library` via `Library.extended`. The wake-sleep *loop* lives in the execution layer
 (`run_search_learn`, per EXECUTION.md); this package owns one *sleep*:
 
-* :mod:`learn_engine` — the :class:`LearnEngine` ABC + :class:`LearnOutcome` (Sync C).
+* :mod:`learn_engine` — the :class:`LearnEngine` ABC + :class:`LearnOutcome`.
 * :mod:`engines` — concrete engines: :class:`GreedyMDLLearnEngine`, :class:`RefactoringLearnEngine`.
 * :mod:`antiunify` — propose abstraction candidates (least-general-generalization).
 * :mod:`selection` — governance: which candidate earns a name (the `AbstractionSelector` plug point).

@@ -1,18 +1,18 @@
-"""The program-search substrate: the reusable machinery a program-search solver draws on.
+"""The program-search substrate: the language that search and learning operate over.
 
-This package holds *no solving logic*. It provides the pieces that different
-solvers combine in different ways:
+This package holds *no search logic*. It provides the pieces the other layers
+combine:
 
-* :mod:`~arc_lab.solvers.program_search.substrate.types` — the value type system (what makes
+* :mod:`~arc_lab.program_search.substrate.types` — the value type system (what makes
   typed program search tractable);
-* :mod:`~arc_lab.solvers.program_search.substrate.program` — programs as an inspectable AST
+* :mod:`~arc_lab.program_search.substrate.program` — programs as an inspectable AST
   (so they can be enumerated, evaluated, serialised, and later abstracted over);
-* :mod:`~arc_lab.solvers.program_search.substrate.library` — a first-class, extensible set of
+* :mod:`~arc_lab.program_search.substrate.library` — a first-class, extensible set of
   typed primitives;
-* :mod:`~arc_lab.solvers.program_search.substrate.primitives` — concrete primitive libraries.
+* :mod:`~arc_lab.program_search.substrate.primitives` — concrete primitive libraries.
 
-A concrete solver is a choice of *(library, search strategy)* — see
-:class:`~arc_lab.solvers.program_search.solver.ProgramSearchSolver`.
+A configured search is a :class:`~arc_lab.program_search.execution.model.config.Config`
+(library x search engine x budget); the execution layer drives it directly.
 """
 
 from arc_lab.program_search.substrate.library import Library, Primitive, Value

@@ -3,7 +3,7 @@
 A base primitive's ``impl`` is Python code that :meth:`Primitive.to_dict` deliberately drops.
 Reconstructing a serialised library therefore resolves base atoms *by name* against the in-code
 definitions gathered here (learned abstractions instead carry a serialisable ``template`` and are
-rebuilt from it — see :func:`~arc_lab.solvers.program_search.substrate.abstraction.make_abstraction`). This
+rebuilt from it — see :func:`~arc_lab.program_search.substrate.abstraction.make_abstraction`). This
 registry is the single place that knows every hand-coded primitive.
 """
 

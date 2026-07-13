@@ -1,4 +1,4 @@
-"""The sleep interface — Sync point C of EXECUTION.md.
+"""The sleep interface (EXECUTION.md).
 
 ``LearnEngine.run`` is one *sleep*: it consumes the whole corpus's wake solutions at
 once (cross-task compression needs the corpus in view) and returns a
@@ -9,8 +9,7 @@ policy) is not here — those are ``LearnSpec`` params in the run identity
 proposer choice) belongs on concrete engines, which are frozen dataclasses so the
 whole engine hashes into the ``run_id`` via the component serde.
 
-Concrete engines port from the old ``solvers/dsl/learn`` sleep machinery
-(``GreedyMDLSleep`` et al.).
+Concrete engines live in :mod:`engines`.
 """
 
 from __future__ import annotations
@@ -26,7 +25,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class LearnOutcome:
-    """The result of one sleep step (the old ``SleepOutcome``, renamed with the engine).
+    """The result of one sleep step.
 
     ``description_length`` is the corpus's two-part MDL under the grown library
     (lower is better) — the governance objective's value, *not* a task score

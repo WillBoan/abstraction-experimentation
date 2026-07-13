@@ -23,7 +23,8 @@ from arc_lab.program_search.substrate.library import Library
 
 
 def default_registry() -> dict[str, type]:
-    """The known component kinds, resolved lazily so mid-refactor modules import late.
+    """The known component kinds, resolved lazily so the data-only model layer stays
+    importable by anything without dragging in the behavior layers at import time.
 
     (``SearchScopedFrequentSubtree`` is deliberately absent: its ``composes`` callable is
     programmatic-only and cannot serialise into a run identity.)

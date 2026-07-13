@@ -86,7 +86,7 @@ class CompressionMetric:
 
     def program_bits(self, entries: Iterable[SolvedTask], library: Library) -> float:
         """Total code length of the solution programs under ``library``."""
-        # Costs are train-side machinery (Sync B): they see train examples, never the task.
+        # Costs are train-side machinery: they see train examples, never the task.
         return sum(self.cost.of(entry.program, entry.task.train, library) for entry in entries)
 
     def describe(self, entries: Iterable[SolvedTask], library: Library) -> DescriptionLength:

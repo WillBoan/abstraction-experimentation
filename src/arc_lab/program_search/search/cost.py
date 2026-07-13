@@ -9,7 +9,7 @@ The signature includes ``train_examples`` and ``library`` even though a purely
 structural cost like :class:`ProgramSize` ignores them, so that data-dependent
 costs (partial credit, likelihood) share the same interface. Costs receive the
 task's *train examples only* -- ranking is train-side machinery, structurally
-blind to test grids (EXECUTION.md, Sync B).
+blind to test grids (EXECUTION.md).
 """
 
 from __future__ import annotations

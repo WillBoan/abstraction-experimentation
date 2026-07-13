@@ -65,7 +65,9 @@ FunctionHoleFillMode: TypeAlias = Literal["none", "point-free", "lambda-synthesi
 #: deferred/lazy resolution (what ``unrestricted`` actually means elsewhere — pool a canonicalized,
 #: unsearched placeholder, resolve on demand) — not yet built; ``BottomUpSearchEngine.__post_init__``
 #: rejects it whenever it would actually be reached.
-UnpinnedTypeVarMode: TypeAlias = Literal["reject", "eager_grounding_over_universe", "lazy_synthesis"]
+UnpinnedTypeVarMode: TypeAlias = Literal[
+    "reject", "eager_grounding_over_universe", "lazy_synthesis"
+]
 
 #: The library's branching capability token (§5.4): its *presence* in the bag summons branching,
 #: but the enumerator translates it into short-circuit ``If`` nodes — it is never applied eagerly.
@@ -138,8 +140,7 @@ class SearchEngine(ABC):
     """The reusable machinery that performs a program search.
 
     ``run`` takes the task's **train examples only** (never the full ``Task``), so
-    blindness to test examples is structural, not a promise (EXECUTION.md, Sync B).
-    ``task_id`` for logging comes from the caller.
+    blindness to test examples is structural, not a promise (EXECUTION.md).
     """
 
     @abstractmethod
@@ -212,11 +213,15 @@ class BottomUpSearchEngine(SearchEngine):
         budget: Budget,
         goal_type: Type | None = GRID,
     ) -> SearchResult:
-        resolved_goal_type = goal_type if goal_type is not None else derive_goal_type(train_examples)
+        resolved_goal_type = (
+            goal_type if goal_type is not None else derive_goal_type(train_examples)
+        )
         # The redundant `if` restores mypy's flow-narrowing of `ex.output` — train_with_output's
         # filter isn't visible to the type checker across the function call boundary.
         train = [
-            (ex.input, ex.output) for ex in train_with_output(train_examples) if ex.output is not None
+            (ex.input, ex.output)
+            for ex in train_with_output(train_examples)
+            if ex.output is not None
         ]
         contexts = tuple(Context(grid) for grid, _ in train)
         target: Signature = tuple(output for _, output in train)
@@ -350,7 +355,13 @@ class BottomUpSearchEngine(SearchEngine):
                 continue
             if not free_type_vars(hole):
                 yield from self._synthesize_for_hole(
-                    primitive, hole, primitive.return_type, (), scope, budget, state,
+                    primitive,
+                    hole,
+                    primitive.return_type,
+                    (),
+                    scope,
+                    budget,
+                    state,
                     enclosing_target,
                 )
                 continue
@@ -366,16 +377,28 @@ class BottomUpSearchEngine(SearchEngine):
                         if sibling_values is None:
                             continue
                         yield from self._synthesize_for_hole(
-                            primitive, grounded_hole, grounded_return, sibling_values, scope,
-                            budget, state, enclosing_target,
+                            primitive,
+                            grounded_hole,
+                            grounded_return,
+                            sibling_values,
+                            scope,
+                            budget,
+                            state,
+                            enclosing_target,
                         )
                     continue
                 sibling_values = self._evaluate_siblings(sibling_programs, contexts, state)
                 if sibling_values is None:
                     continue
                 yield from self._synthesize_for_hole(
-                    primitive, instantiated_hole, return_type, sibling_values, scope, budget,
-                    state, enclosing_target,
+                    primitive,
+                    instantiated_hole,
+                    return_type,
+                    sibling_values,
+                    scope,
+                    budget,
+                    state,
+                    enclosing_target,
                 )
 
     def _ground_unpinned_hole(
@@ -405,7 +428,7 @@ class BottomUpSearchEngine(SearchEngine):
     def _evaluate_siblings(
         self, programs: tuple[Program, ...], contexts: tuple[Context, ...], state: _RunState
     ) -> tuple[tuple[Value, ...] | None, ...] | None:
-        """Evaluate sibling-argument programs at every context (§ decision 2): one entry per
+        """Evaluate sibling-argument programs at every context: one entry per
         context, ``None`` where a sibling errored *at that context* — mirroring how a partial
         signature stays pooled elsewhere (§5.5), so a sibling total on most-but-not-all training
         contexts can still seed synthesis from the contexts it *is* defined on. Returns ``None``
@@ -472,7 +495,9 @@ class BottomUpSearchEngine(SearchEngine):
         for binder in binders:
             body_scope = body_scope.extend(binder)
         child_target = EnclosingTarget(raw_target, body_type) if raw_target is not None else None
-        body_pool = self._enumerate(body_scope, body_contexts, budget.descend(), state, child_target)
+        body_pool = self._enumerate(
+            body_scope, body_contexts, budget.descend(), state, child_target
+        )
         for entry in body_pool.items_of_type(body_type):
             if body_target is not None and entry.sig != body_target:
                 continue

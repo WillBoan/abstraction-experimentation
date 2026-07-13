@@ -1,4 +1,4 @@
-"""Concrete :class:`LearnEngine`\\ s — the sleep machinery, ported from the old ``SleepStrategy``.
+"""Concrete :class:`LearnEngine`\\ s — the sleep machinery.
 
 One ``run`` is one *sleep*: invent abstraction candidates (an :class:`AbstractionProposer`),
 decide which earn a name (an :class:`AbstractionSelector` under a :class:`CompressionMetric`),
@@ -6,10 +6,10 @@ mint them, fold them into the library, and return a :class:`LearnOutcome`. Engin
 dataclasses: they sit inside ``LearnSpec`` inside ``Config``, so their parameters are run
 identity, hashed via the component serde.
 
-:class:`GreedyMDLLearnEngine` preserves the historical greedy-MDL behavior exactly; the old
-``start_index`` naming seed is now derived from the library (statelessness), and a sleep that
-adds nothing returns the library unchanged — the ``LearnOutcome.converged`` signal the
-execution loop's ``early_stop`` reads.
+:class:`GreedyMDLLearnEngine` is stateless: its naming seed is derived from the library
+(the next free ``absN`` index), and a sleep that adds nothing returns the library
+unchanged — the ``LearnOutcome.converged`` signal the execution loop's ``early_stop``
+reads.
 """
 
 from __future__ import annotations
@@ -41,9 +41,9 @@ def _next_index(library: Library, prefix: str) -> int:
 class GreedyMDLLearnEngine(LearnEngine):
     """Greedily add the single best-compressing abstraction, rewrite, repeat until dry.
 
-    The historical sleep behavior (the old ``GreedyMDLSleep``): an :class:`AbstractionSelector`
-    (default :class:`GreedyMDL`) picks the most-compressing candidate from ``proposer`` each
-    step; ``description_length`` is the corpus's two-part DL under ``metric``.
+    An :class:`AbstractionSelector` (default :class:`GreedyMDL`) picks the most-compressing
+    candidate from ``proposer`` each step; ``description_length`` is the corpus's two-part
+    DL under ``metric``.
     """
 
     proposer: AbstractionProposer

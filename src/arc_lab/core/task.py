@@ -35,7 +35,7 @@ class Example:
 
 #: A task's train examples — the ONLY task data the search stack receives
 #: (``SearchEngine.run`` / ``Cost.of`` / ``Constraint.holds`` / ``BodySampler``), so
-#: blindness to test examples is structural, not a promise (EXECUTION.md, Sync B).
+#: blindness to test examples is structural, not a promise (EXECUTION.md).
 TrainExamples: TypeAlias = tuple[Example, ...]
 
 
@@ -78,7 +78,7 @@ def train_with_output(examples: TrainExamples) -> TrainExamples:
     """The examples of ``examples`` with a known output — the ones usable as evaluation contexts.
 
     A free function over ``TrainExamples`` (not a ``Task`` method): the search stack is
-    structurally blind to ``Task`` (EXECUTION.md, Sync B) — everything downstream of
+    structurally blind to ``Task`` (EXECUTION.md) — everything downstream of
     ``SearchEngine.run`` only ever holds a ``TrainExamples``, never a ``Task``, so this needs to
     be callable without one. The single shared definition keeps every consumer (``run``'s own
     ``contexts``/``target``, and every ``BodySampler``) index-aligned by construction.

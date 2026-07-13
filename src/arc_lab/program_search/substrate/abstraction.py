@@ -1,10 +1,10 @@
 """Learned abstractions: closed templates folded into first-class primitives.
 
 A learned abstraction is a *named factoring of a recurring pattern* — captured as a
-**closed template** (a :class:`~arc_lab.solvers.program_search.substrate.program.Program` whose holes
-are :class:`~arc_lab.solvers.program_search.substrate.program.Param` nodes and which contains no
-:class:`~arc_lab.solvers.program_search.substrate.program.Input`) and exposed as an ordinary typed
-:class:`~arc_lab.solvers.program_search.substrate.library.Primitive`, so search composes it exactly
+**closed template** (a :class:`~arc_lab.program_search.substrate.program.Program` whose holes
+are :class:`~arc_lab.program_search.substrate.program.Param` nodes and which contains no
+:class:`~arc_lab.program_search.substrate.program.Input`) and exposed as an ordinary typed
+:class:`~arc_lab.program_search.substrate.library.Primitive`, so search composes it exactly
 like a hand-coded one (``Enumerate`` dispatches on types only, never on provenance).
 
 Keeping the definition as *data* (the template) rather than an opaque Python closure is

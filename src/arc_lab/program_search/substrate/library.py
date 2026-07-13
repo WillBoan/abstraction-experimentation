@@ -113,7 +113,7 @@ class EnclosingTarget:
 #: use it to propagate (e.g. a positional zip against sibling values) or ignore it and return
 #: ``body_target=None`` (baseline).
 #:
-#: Samplers receive the task's *train examples only* — the blindness seam (EXECUTION.md, Sync B).
+#: Samplers receive the task's *train examples only* — the blindness seam (EXECUTION.md).
 BodySampler: TypeAlias = (
     "Callable[[TrainExamples, tuple[tuple[Value, ...] | None, ...], EnclosingTarget | None], "
     "tuple[tuple[RawContext, ...], tuple[Value, ...] | None]]"
@@ -142,7 +142,7 @@ class Primitive:
     impl: PrimitiveImpl
     variadic_param: Type | None = None
     #: For a *learned* abstraction: its defining template (a closed :class:`Program`
-    #: with :class:`~arc_lab.solvers.program_search.substrate.program.Param` holes). ``None`` for a
+    #: with :class:`~arc_lab.program_search.substrate.program.Param` holes). ``None`` for a
     #: hand-coded primitive. ``impl`` evaluates this template; carrying it here keeps a
     #: learned entry inspectable data, not an opaque closure.
     template: Program | None = None
@@ -255,7 +255,7 @@ class Library:
 
         Base primitives are resolved *by name* against the substrate registry (their ``impl`` is
         code, dropped by :meth:`Primitive.to_dict`); learned abstractions are rebuilt from their
-        ``template`` via :func:`~arc_lab.solvers.program_search.substrate.abstraction.make_abstraction`,
+        ``template`` via :func:`~arc_lab.program_search.substrate.abstraction.make_abstraction`,
         replayed in serialised order — which is dependency order, since abstractions are appended
         and reference only earlier primitives.
         """
