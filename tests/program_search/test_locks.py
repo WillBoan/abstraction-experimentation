@@ -236,7 +236,9 @@ def test_layered_abstraction_study_locks_multi_generation_learning(tmp_path: Pat
         "map_color", (Apply("abs0", (Param(0, GRID),)), Param(1, COLOR), Param(2, COLOR))
     )
     learn_budget = spec.budgets[1]
-    assert result.grid[GridCell("L1", learn_budget, "train")].results()["solved"] == 4  # rot180 only
+    assert (
+        result.grid[GridCell("L1", learn_budget, "train")].results()["solved"] == 4
+    )  # rot180 only
     assert result.grid[GridCell("L1", learn_budget, "eval")].results()["solved"] == 1
     assert result.grid[GridCell("L2", learn_budget, "train")].results()["solved"] == 8  # both types
     assert result.grid[GridCell("L2", learn_budget, "eval")].results()["solved"] == 2

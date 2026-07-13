@@ -166,9 +166,7 @@ def test_hole_assignments_pins_both_binders_from_two_siblings() -> None:
     candidates: list[TypedProgram] = [(seed, COLOR), (_LIST_INT, list_type(INT))]
     result = list(hole_assignments(_FOLD, 0, candidates, itertools.count()))
     matches = [
-        (siblings, hole, ret)
-        for siblings, hole, ret in result
-        if siblings == (seed, _LIST_INT)
+        (siblings, hole, ret) for siblings, hole, ret in result if siblings == (seed, _LIST_INT)
     ]
     assert matches, result
     _, hole_type, return_type = matches[0]

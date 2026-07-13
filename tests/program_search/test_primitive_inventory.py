@@ -237,7 +237,9 @@ def test_blank_and_its_bounds() -> None:
 
 
 def test_translate_shifts_and_fills_with_zero() -> None:
-    assert TRANSLATE.impl(Grid.from_list([[1, 2], [3, 4]]), 1, 0) == Grid.from_list([[0, 0], [1, 2]])
+    assert TRANSLATE.impl(Grid.from_list([[1, 2], [3, 4]]), 1, 0) == Grid.from_list(
+        [[0, 0], [1, 2]]
+    )
     assert TRANSLATE.impl(Grid.from_list([[1, 2]]), 0, -1) == Grid.from_list([[2, 0]])
     assert TRANSLATE.impl(Grid.from_list([[1]]), 5, 5) == Grid.from_list([[0]])  # shifted fully out
 
@@ -257,7 +259,9 @@ def test_concat_over_the_size_cap_is_a_no_op() -> None:
 
 
 def test_pad_and_its_no_op_cases() -> None:
-    assert PAD.impl(Grid.from_list([[5]]), 1, 0) == Grid.from_list([[0, 0, 0], [0, 5, 0], [0, 0, 0]])
+    assert PAD.impl(Grid.from_list([[5]]), 1, 0) == Grid.from_list(
+        [[0, 0, 0], [0, 5, 0], [0, 0, 0]]
+    )
     small = Grid.from_list([[5]])
     assert PAD.impl(small, 0, 0) == small  # thickness < 1: no-op
     assert PAD.impl(small, 15, 0) == small  # would exceed the cap: no-op

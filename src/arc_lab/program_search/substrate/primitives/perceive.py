@@ -62,9 +62,7 @@ NUM_COLORS = Primitive(name="num_colors", param_types=(GRID,), return_type=INT, 
 PALETTE = Primitive(
     name="palette", param_types=(GRID,), return_type=list_type(COLOR), impl=_palette
 )
-SHAPE = Primitive(
-    name="shape", param_types=(GRID,), return_type=pair_type(INT, INT), impl=_shape
-)
+SHAPE = Primitive(name="shape", param_types=(GRID,), return_type=pair_type(INT, INT), impl=_shape)
 
 PERCEIVE_PRIMITIVES = (
     MOST_COMMON_COLOR,

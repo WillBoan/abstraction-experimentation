@@ -80,7 +80,9 @@ def test_sort_by_impl_orders_by_key() -> None:
 
 
 def test_sort_by_impl_rejects_a_non_orderable_key() -> None:
-    to_grid = Primitive(name="to_grid", param_types=(INT,), return_type=GRID, impl=lambda x: Grid.from_list([[x]]))
+    to_grid = Primitive(
+        name="to_grid", param_types=(INT,), return_type=GRID, impl=lambda x: Grid.from_list([[x]])
+    )
     with pytest.raises(TypeError):
         SORT_BY.impl(to_grid, (1, 2))
 
@@ -103,7 +105,9 @@ def _width_or_boom(grid: Grid) -> int:
     return grid.width
 
 
-_WIDTH_OR_BOOM = Primitive(name="width_or_boom", param_types=(GRID,), return_type=INT, impl=_width_or_boom)
+_WIDTH_OR_BOOM = Primitive(
+    name="width_or_boom", param_types=(GRID,), return_type=INT, impl=_width_or_boom
+)
 
 
 def _engine(**overrides: object) -> BottomUpSearchEngine:
@@ -166,7 +170,10 @@ def test_ground_unpinned_hole_reject_yields_nothing() -> None:
     a = TypeVar("a")
     hole = ArrowType((INT,), a)
     state = _RunState(
-        train_examples=(), library=Library(name="e", primitives=()), cost=ProgramSize(), universe=(INT, COLOR)
+        train_examples=(),
+        library=Library(name="e", primitives=()),
+        cost=ProgramSize(),
+        universe=(INT, COLOR),
     )
     assert list(engine._ground_unpinned_hole(hole, a, state)) == []
 
@@ -229,10 +236,18 @@ def test_eager_grounding_does_real_synthesis_work_reject_skips() -> None:
     budget = Budget(max_depth=4, max_arity=1, max_pool=200)
 
     rejected = _engine(unpinned_type_var_mode="reject").run(
-        train_examples=task.train, library=library, constraints=(), cost=ProgramSize(), budget=budget
+        train_examples=task.train,
+        library=library,
+        constraints=(),
+        cost=ProgramSize(),
+        budget=budget,
     )
     grounded = _engine(unpinned_type_var_mode="eager_grounding_over_universe").run(
-        train_examples=task.train, library=library, constraints=(), cost=ProgramSize(), budget=budget
+        train_examples=task.train,
+        library=library,
+        constraints=(),
+        cost=ProgramSize(),
+        budget=budget,
     )
     assert rejected.stats.solved  # Input() alone solves the identity task either way
     assert grounded.stats.solved
@@ -290,7 +305,9 @@ def test_enclosing_target_propagates_one_level_down() -> None:
     )
     library = Library(name="nested", primitives=(outer, inner))
     task = Task(
-        task_id="n", train=(Example(input=Grid.from_list([[1]]), output=Grid.from_list([[7]])),), test=()
+        task_id="n",
+        train=(Example(input=Grid.from_list([[1]]), output=Grid.from_list([[7]])),),
+        test=(),
     )
     _engine().run(
         train_examples=task.train,
@@ -372,7 +389,9 @@ def test_fold_solves_via_a_synthesized_combiner() -> None:
     # and no constant leaves either (the seed comes from whatever's pooled) — kept minimal since
     # sibling-pinned hole synthesis fans out combinatorially with pool size (§ decision 3's cost
     # note applies to ordinary sibling-pinning too, not just eager grounding).
-    to_grid = Primitive(name="to_grid", param_types=(COLOR,), return_type=GRID, impl=lambda c: Grid.from_list([[c]]))
+    to_grid = Primitive(
+        name="to_grid", param_types=(COLOR,), return_type=GRID, impl=lambda c: Grid.from_list([[c]])
+    )
     grid = Grid.from_list([[1, 2, 3]])
     task = Task(task_id="fold", train=(Example(input=grid, output=Grid.from_list([[3]])),), test=())
     library = Library(name="fold", primitives=(FOLD, CELLS, to_grid))
@@ -451,7 +470,9 @@ def _next_color(c: int) -> int:
 #: hand-verified to evaluate correctly); it's tracked there rather than chased further in this test.
 #: This body still exercises the same real mechanism (map's unshared codomain resolved via
 #: eager_grounding_over_universe, wired through real cells/row_to_grid glue) without needing that depth.
-_NEXT_COLOR = Primitive(name="next_color", param_types=(COLOR,), return_type=COLOR, impl=_next_color)
+_NEXT_COLOR = Primitive(
+    name="next_color", param_types=(COLOR,), return_type=COLOR, impl=_next_color
+)
 
 
 def test_map_solves_recolor_end_to_end() -> None:
