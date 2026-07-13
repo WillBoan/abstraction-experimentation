@@ -10,6 +10,7 @@ from arc_lab.program_search.execution.model.results import TaskResult, TaskScore
 from arc_lab.program_search.execution.model.run_record import RunRecord
 from arc_lab.program_search.execution.model.run_spec import RunSpec
 from arc_lab.program_search.execution.model.study_spec import StudySpec, TargetAbstraction
+from arc_lab.program_search.execution.model.trace_spec import TraceSpec
 
 __all__ = [
     "Config",
@@ -20,5 +21,6 @@ __all__ = [
     "TargetAbstraction",
     "TaskResult",
     "TaskScore",
+    "TraceSpec",
     "default_registry",
 ]

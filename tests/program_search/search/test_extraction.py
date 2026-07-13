@@ -12,10 +12,10 @@ from arc_lab.core.task import Example, Task, TrainExamples
 from arc_lab.program_search.search.constraints import Constraint
 from arc_lab.program_search.search.extraction import extract
 from arc_lab.program_search.search.pool import Pool
-from arc_lab.program_search.search.signature import BOTTOM
+from arc_lab.program_search.search.signature import BOTTOM, Signature
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.program import Const, Program
-from arc_lab.program_search.substrate.types import COLOR, GRID, INT
+from arc_lab.program_search.substrate.types import COLOR, GRID, INT, Type
 
 _G = Grid.from_list([[1]])
 _TASK = Task(task_id="t", train=(Example(input=_G, output=_G),), test=())
@@ -34,37 +34,41 @@ class _Only(Constraint):
         return program is self.allowed
 
 
+def _accepted(
+    pool: Pool, goal_type: Type, target: Signature, constraints: tuple[Constraint, ...] = ()
+) -> tuple[Program, ...]:
+    extraction = extract(pool, goal_type, target, constraints, _TASK.train, _LIB)
+    return tuple(entry.program for entry in extraction.accepted)
+
+
 def test_extracts_the_program_whose_signature_equals_target() -> None:
     pool = Pool()
     pool.add_dedup(GRID, (7, 8), _A, 2.0)  # signature == target
     pool.add_dedup(GRID, (7, 9), _B, 1.0)  # different (cheaper) signature — not the target
-    assert extract(pool, GRID, (7, 8), (), _TASK.train, _LIB) == (_A,)
+    assert _accepted(pool, GRID, (7, 8)) == (_A,)
 
 
 def test_no_match_returns_empty() -> None:
     pool = Pool()
     pool.add_dedup(GRID, (7, 9), _B, 1.0)
-    assert extract(pool, GRID, (7, 8), (), _TASK.train, _LIB) == ()
+    assert _accepted(pool, GRID, (7, 8)) == ()
 
 
 def test_wrong_goal_type_is_excluded() -> None:
     pool = Pool()
     pool.add_dedup(INT, (7, 8), _A, 1.0)  # right signature, wrong type
-    assert extract(pool, GRID, (7, 8), (), _TASK.train, _LIB) == ()
+    assert _accepted(pool, GRID, (7, 8)) == ()
 
 
 def test_partial_signature_never_matches_a_total_target() -> None:
     pool = Pool()
     pool.add_dedup(GRID, (7, BOTTOM), _A, 1.0)  # partial: ⊥ at the second context
-    assert extract(pool, GRID, (7, 8), (), _TASK.train, _LIB) == ()
+    assert _accepted(pool, GRID, (7, 8)) == ()
 
 
 def test_constraints_filter_survivors() -> None:
     pool = Pool()
     pool.add_dedup(GRID, (7, 8), _A, 1.0)  # the sole match
-    assert (
-        extract(pool, GRID, (7, 8), (_Only(_B),), _TASK.train, _LIB) == ()
-    )  # constraint rejects it
-    assert extract(pool, GRID, (7, 8), (_Only(_A),), _TASK.train, _LIB) == (
-        _A,
-    )  # constraint accepts it
+    rejected = extract(pool, GRID, (7, 8), (_Only(_B),), _TASK.train, _LIB)
+    assert rejected.accepted == () and len(rejected.constraint_rejected) == 1
+    assert _accepted(pool, GRID, (7, 8), (_Only(_A),)) == (_A,)  # constraint accepts it

@@ -25,6 +25,19 @@ class PoolEntry:
     program: Program
     sig: Signature
     cost: float
+    #: Primitive names / node-kind pseudo-keys exercised in ``program``'s tree (capability
+    #: tracking, ``search/tracking.py``) — cached at insertion so a deferred outcome (displaced,
+    #: evicted, goal-unmatched, ...) can be attributed without re-walking the tree.
+    prim_keys: frozenset[str] = frozenset()
+
+
+@dataclass(frozen=True, slots=True)
+class DedupOutcome:
+    """The result of one ``add_dedup`` call: whether the candidate was inserted, and — if it
+    replaced a costlier same-behaviour witness — that displaced entry (for attribution)."""
+
+    inserted: bool
+    displaced: PoolEntry | None
 
 
 @dataclass(slots=True)
@@ -33,18 +46,26 @@ class Pool:
 
     _by_type_sig: dict[Type, dict[Signature, PoolEntry]] = field(default_factory=dict)
 
-    def add_dedup(self, vtype: Type, signature: Signature, program: Program, cost: float) -> bool:
+    def add_dedup(
+        self,
+        vtype: Type,
+        signature: Signature,
+        program: Program,
+        cost: float,
+        prim_keys: frozenset[str] = frozenset(),
+    ) -> DedupOutcome:
         """Insert ``program`` iff it is the first — or strictly cheaper — witness at ``(vtype, signature)``.
 
-        Returns True if it was inserted (a new behaviour, or a cheaper witness of a known one), False
-        if an existing entry was at most as costly, so ``program`` is deduplicated away.
+        Returns a :class:`DedupOutcome`: ``inserted=False`` if an existing entry was at most as
+        costly, so ``program`` is deduplicated away; ``inserted=True`` otherwise, carrying the
+        displaced entry (if any) so its capability tags can be attributed to ``DISPLACED``.
         """
         sig_map = self._by_type_sig.setdefault(vtype, {})
         existing = sig_map.get(signature)
         if existing is None or cost < existing.cost:
-            sig_map[signature] = PoolEntry(program, signature, cost)
-            return True
-        return False
+            sig_map[signature] = PoolEntry(program, signature, cost, prim_keys)
+            return DedupOutcome(inserted=True, displaced=existing)
+        return DedupOutcome(inserted=False, displaced=None)
 
     def types(self) -> tuple[Type, ...]:
         """The distinct types currently pooled, in first-insertion order (deterministic)."""
@@ -64,30 +85,33 @@ class Pool:
         Not bucketed by type: composition decides argument compatibility by *unification* (a
         polymorphic parameter accepts any type), so it needs the flat typed stream.
         """
-        return ((entry.program, vtype) for vtype, entry in self._entries())
+        return ((entry.program, vtype) for vtype, entry in self.entries())
 
-    def cheapest(self, n: int) -> Pool:
-        """A new pool holding the globally-cheapest ``n`` entries, re-bucketed by type.
+    def cheapest(self, n: int) -> tuple[Pool, tuple[PoolEntry, ...]]:
+        """The globally-cheapest ``n`` entries as a new pool, re-bucketed by type, plus the
+        entries dropped to get there (for ``EVICTED`` attribution).
 
-        A frontier-truncation *primitive*: the policy (how many, type-awareness) lives in the engine's
-        ``_select_frontier``. Ties break by insertion order, keeping the cut deterministic.
+        A frontier-truncation *primitive*: the policy (how many, type-awareness) lives in the
+        engine's ``_select_frontier``. Ties break by insertion order, keeping the cut deterministic.
         """
+        ordered = sorted(self.entries(), key=lambda item: item[1].cost)
         kept: dict[Type, dict[Signature, PoolEntry]] = {}
-        for vtype, entry in sorted(self._entries(), key=lambda item: item[1].cost)[:n]:
+        for vtype, entry in ordered[:n]:
             kept.setdefault(vtype, {})[entry.sig] = entry
-        return Pool(_by_type_sig=kept)
+        dropped = tuple(entry for _, entry in ordered[n:])
+        return Pool(_by_type_sig=kept), dropped
 
     def ranked(self) -> tuple[Program, ...]:
         """Every program in the pool, cheapest first — a whole-pool view, **not** the solution set."""
-        ordered = sorted(self._entries(), key=lambda item: item[1].cost)
+        ordered = sorted(self.entries(), key=lambda item: item[1].cost)
         return tuple(entry.program for _, entry in ordered)
 
     def size(self) -> int:
         """The total number of programs held across all types."""
         return sum(len(sig_map) for sig_map in self._by_type_sig.values())
 
-    def _entries(self) -> Iterable[tuple[Type, PoolEntry]]:
-        """Every ``(type, entry)`` pair — backing the type-aware whole-pool operations."""
+    def entries(self) -> Iterable[tuple[Type, PoolEntry]]:
+        """Every ``(type, entry)`` pair — backs the type-aware whole-pool operations."""
         return (
             (vtype, entry)
             for vtype, sig_map in self._by_type_sig.items()

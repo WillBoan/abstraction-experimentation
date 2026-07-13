@@ -12,11 +12,13 @@ from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task, TrainExamples
 from arc_lab.program_search.execution.execute import execute
 from arc_lab.program_search.execution.model import Config, RunSpec
+from arc_lab.program_search.execution.model.trace_spec import TraceSpec
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.constraints import Constraint
 from arc_lab.program_search.search.cost import Cost
 from arc_lab.program_search.search.search_engine import BottomUpSearchEngine, SearchEngine
 from arc_lab.program_search.search.search_result import SearchResult, SearchStats
+from arc_lab.program_search.search.tracking import SampleSpec, SearchTracker
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.program_search.substrate.types import GRID, Type
@@ -63,6 +65,7 @@ class CountingEngine(SearchEngine):
         cost: Cost,
         budget: Budget,
         goal_type: Type | None = GRID,
+        tracker: SearchTracker | None = None,
     ) -> SearchResult:
         CountingEngine.calls.append(str(train_examples[0].input.to_list()))
         return SearchResult(ranked_programs=(), stats=SearchStats(engine="CountingEngine"))
@@ -79,6 +82,7 @@ class BoomEngine(SearchEngine):
         cost: Cost,
         budget: Budget,
         goal_type: Type | None = GRID,
+        tracker: SearchTracker | None = None,
     ) -> SearchResult:
         raise RuntimeError("search exploded")
 
@@ -156,3 +160,110 @@ def test_execute_isolates_a_broken_task(tmp_path: Path) -> None:
     assert result.error is not None and "search exploded" in result.error
     assert result.score.solved is False
     assert record.results()["solved"] == 0
+
+
+# -- TraceSpec: default sampling, full capture, manifest -----------------------------------
+
+
+def test_execute_default_trace_writes_samples_json(tmp_path: Path) -> None:
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    record = execute(spec, runs_root=tmp_path)  # no explicit trace: the default sampler applies
+    samples = record.samples()
+    assert samples is not None and "t1" in samples
+    assert not record.manifest_path.is_file()  # capture_all was never requested
+
+
+def test_execute_no_sampling_writes_no_samples_json(tmp_path: Path) -> None:
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    record = execute(spec, runs_root=tmp_path, trace=TraceSpec(samples=()))
+    assert record.samples() is None
+
+
+def _per_task_manifest(manifest: dict[str, object], task_id: str) -> dict[str, object]:
+    per_task = manifest["per_task"]
+    assert isinstance(per_task, dict)
+    entry = per_task[task_id]
+    assert isinstance(entry, dict)
+    return entry
+
+
+def test_execute_track_all_writes_capture_and_manifest(tmp_path: Path) -> None:
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    record = execute(spec, runs_root=tmp_path, trace=TraceSpec(capture_all=True))
+    capture_file = record.capture_dir / "t1.jsonl"
+    assert capture_file.is_file()
+    captured_rows = [json.loads(line) for line in capture_file.read_text().splitlines()]
+    assert captured_rows, "at least one considered candidate must be captured"
+    manifest = record.manifest()
+    assert manifest is not None
+    assert manifest["truncated"] is False
+    assert _per_task_manifest(manifest, "t1")["captured"] == len(captured_rows)
+
+
+def test_execute_track_all_max_truncates_loudly(tmp_path: Path) -> None:
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    record = execute(spec, runs_root=tmp_path, trace=TraceSpec(capture_all=True, capture_all_max=1))
+    manifest = record.manifest()
+    assert manifest is not None
+    assert manifest["truncated"] is True
+    task_manifest = _per_task_manifest(manifest, "t1")
+    assert task_manifest["captured"] == 1
+    considered = task_manifest["considered"]
+    assert isinstance(considered, int) and considered > 1  # more considered than captured
+
+
+def test_execute_sample_spec_bucket_shape(tmp_path: Path) -> None:
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    record = execute(
+        spec, runs_root=tmp_path, trace=TraceSpec(samples=(SampleSpec(k=1, mode="first_k"),))
+    )
+    samples = record.samples()
+    assert samples is not None
+    task_samples = samples["t1"]
+    assert isinstance(task_samples, dict) and "k1_first_k" in task_samples
+
+
+def test_force_recapture_reexecutes_a_cached_run(tmp_path: Path) -> None:
+    CountingEngine.calls.clear()
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=CountingEngine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    execute(spec, runs_root=tmp_path)
+    assert len(CountingEngine.calls) == 1
+    execute(spec, runs_root=tmp_path)  # ordinary cache hit: no re-execution
+    assert len(CountingEngine.calls) == 1
+    execute(spec, runs_root=tmp_path, force_recapture=True)
+    assert len(CountingEngine.calls) == 2, "force_recapture must re-execute a completed run"
+
+
+def test_force_recapture_populates_tracing_on_an_already_completed_run(tmp_path: Path) -> None:
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    record = execute(spec, runs_root=tmp_path)  # default trace: no full capture yet
+    assert not record.manifest_path.is_file()
+
+    recaptured = execute(
+        spec, runs_root=tmp_path, trace=TraceSpec(capture_all=True), force_recapture=True
+    )
+    assert recaptured.run_id == record.run_id
+    assert recaptured.manifest_path.is_file()
+    assert (recaptured.capture_dir / "t1.jsonl").is_file()
+    assert recaptured.results()["solved"] == 1  # substantive content is unchanged by recapture

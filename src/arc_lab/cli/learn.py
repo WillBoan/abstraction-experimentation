@@ -11,6 +11,7 @@ from arc_lab.program_search.learn.engines import GreedyMDLLearnEngine
 
 from ._config import resolve_config_arg
 from ._corpora import load_corpus
+from ._trace import build_trace_spec
 
 
 def learn(
@@ -25,6 +26,25 @@ def learn(
         "--set",
         help="Override a Config field by dotted path (applies AFTER the LearnSpec "
         "is attached, so `learn.iterations=3`-style paths work too).",
+    ),
+    sample: list[str] = typer.Option(
+        [],
+        "--sample",
+        help="Reservoir sample spec 'k:mode' (mode: first_k, cheapest_k), repeatable. "
+        "Default: a small first_k sampler. Applies to every wake and derived SEARCH run.",
+    ),
+    track_all: bool = typer.Option(
+        False,
+        "--track-all",
+        help="Capture every considered candidate to capture/iter-<n>/<task>.jsonl per wake.",
+    ),
+    capture_max: int = typer.Option(
+        100_000, "--capture-max", help="Cap on captured candidates per task with --track-all."
+    ),
+    force_recapture: bool = typer.Option(
+        False,
+        "--force-recapture",
+        help="Re-execute already-completed runs to (re)populate tracing artifacts.",
     ),
 ) -> None:
     """Run the wake-sleep loop, then the derived SEARCH runs (2-3 recorded runs)."""
@@ -46,8 +66,16 @@ def learn(
             raise typer.BadParameter(str(exc)) from exc
     train = load_corpus(corpus)
     evaluation = load_corpus(eval_corpus) if eval_corpus is not None else None
+    trace_spec = build_trace_spec(sample, track_all, capture_max)
     typer.echo(f"learning with {config} on {train.name} ({len(train)} tasks)...")
-    result = run_search_learn(learn_config, train, evaluation, runs_root=None)
+    result = run_search_learn(
+        learn_config,
+        train,
+        evaluation,
+        runs_root=None,
+        trace=trace_spec,
+        force_recapture=force_recapture,
+    )
 
     learned = result.learn.results()
     typer.echo(

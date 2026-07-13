@@ -27,6 +27,13 @@ RESULTS_FILENAME: Final = "results.json"
 TRACE_FILENAME: Final = "trace.jsonl"
 #: LEARN runs only: the grown library.
 LEARNED_LIBRARY_FILENAME: Final = "learned_library.json"
+#: Reservoir samples from the run's ``TraceSpec`` — only covers tasks executed in the
+#: ``execute()`` call that wrote it (a resume's already-traced tasks aren't re-sampled).
+SAMPLES_FILENAME: Final = "samples.json"
+#: Full per-candidate capture (``TraceSpec.capture_all``), one JSONL file per task/wake.
+CAPTURE_DIRNAME: Final = "capture"
+#: Capture settings + counts (loud truncation) for whichever tasks used full capture.
+MANIFEST_FILENAME: Final = "manifest.json"
 
 
 def find_run_dir(root: Path, run_id: str) -> Path | None:
@@ -66,6 +73,18 @@ class RunRecord:
         return self.run_dir / LEARNED_LIBRARY_FILENAME
 
     @property
+    def samples_path(self) -> Path:
+        return self.run_dir / SAMPLES_FILENAME
+
+    @property
+    def capture_dir(self) -> Path:
+        return self.run_dir / CAPTURE_DIRNAME
+
+    @property
+    def manifest_path(self) -> Path:
+        return self.run_dir / MANIFEST_FILENAME
+
+    @property
     def completed(self) -> bool:
         """True iff ``results.json`` exists — the cache-hit test ``execute`` runs first."""
         return self.results_path.is_file()
@@ -84,6 +103,28 @@ class RunRecord:
         if not isinstance(rows, list):
             raise ValueError(f"{RESULTS_FILENAME} in {self.run_dir} has no 'tasks' rows")
         return tuple(TaskResult.from_dict(row) for row in rows)
+
+    def samples(self) -> dict[str, object] | None:
+        """The ``TraceSpec`` reservoir samples, or ``None`` if the run predates tracing / used
+        no samplers — unlike ``results()``, absence is not an error (an optional artifact)."""
+        if not self.samples_path.is_file():
+            return None
+        with self.samples_path.open(encoding="utf-8") as handle:
+            data: object = json.load(handle)
+        if not isinstance(data, dict):
+            raise ValueError(f"malformed {SAMPLES_FILENAME} in {self.run_dir}")
+        return data
+
+    def manifest(self) -> dict[str, object] | None:
+        """The capture manifest (settings + counts + loud truncation flags), or ``None`` if
+        ``TraceSpec.capture_all`` was never used for this run."""
+        if not self.manifest_path.is_file():
+            return None
+        with self.manifest_path.open(encoding="utf-8") as handle:
+            data: object = json.load(handle)
+        if not isinstance(data, dict):
+            raise ValueError(f"malformed {MANIFEST_FILENAME} in {self.run_dir}")
+        return data
 
     def trace_rows(self) -> Iterator[dict[str, object]]:
         """Stream the trace rows (skipping a trailing partial line after a crash)."""
@@ -110,3 +151,16 @@ class RunRecord:
         if not isinstance(data, dict):
             raise ValueError(f"malformed {LEARNED_LIBRARY_FILENAME} in {self.run_dir}")
         return Library.from_dict(data)
+
+    def config_library(self) -> Library:
+        """The run's own ``Config.library`` (any run kind), read straight from ``runspec.json`` —
+        no registry needed, mirroring ``learned_library``'s direct ``Library.from_dict``."""
+        from arc_lab.program_search.substrate.library import Library
+
+        with self.runspec_path.open(encoding="utf-8") as handle:
+            data: object = json.load(handle)
+        config = data.get("config") if isinstance(data, dict) else None
+        library_data = config.get("library") if isinstance(config, dict) else None
+        if not isinstance(library_data, dict):
+            raise ValueError(f"malformed {RUNSPEC_FILENAME} in {self.run_dir}: no config.library")
+        return Library.from_dict(library_data)

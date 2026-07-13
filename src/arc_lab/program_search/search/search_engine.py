@@ -2,8 +2,9 @@
 
 A ``SearchEngine`` is frozen configuration: its capability policies and its ``Budget``. A single
 ``run`` builds the full typed pool bottom-up (``_enumerate``) and then reads solutions off it
-(``extract``, §5.8). Per-run mutable scratch — the effort tally and the fresh-type-variable counter —
-lives in ``_RunState`` so the engine itself stays immutable and reusable across runs.
+(``extract``, §5.8). Per-run mutable scratch — the capability tracker (``search/tracking.py``) and
+the fresh-type-variable counter — lives in ``_RunState`` so the engine itself stays immutable and
+reusable across runs.
 
 The full §5 pipeline is in place on this spine: variadic composition (§5.2), higher-order fill and
 lambda synthesis (§5.3), short-circuit ``If`` branching (§5.4), the polymorphism-instantiation
@@ -53,6 +54,7 @@ from .signature import (
     peel_arrow,
     signature_matches_type,
 )
+from .tracking import Outcome, SearchTracker, primitive_keys
 
 FunctionHoleFillMode: TypeAlias = Literal["none", "point-free", "lambda-synthesis"]
 
@@ -90,19 +92,6 @@ def derive_goal_type(train_examples: TrainExamples) -> Type:
     )
 
 
-@dataclass(slots=True)
-class _Tally:
-    """Search-effort counters, accumulated during a run and frozen into ``SearchStats``."""
-
-    considered: int = 0
-    errored: int = 0
-    pruned: int = 0
-    deduped: int = 0
-
-    def as_extra(self) -> dict[str, int]:
-        return {"errored": self.errored, "pruned": self.pruned, "deduped": self.deduped}
-
-
 #: The memoization key of one ``_enumerate`` call (§9): exactly the inputs it is a pure function of.
 #: The top-level ``goal_type``/``target`` stay out (they belong to extraction) — but
 #: ``enclosing_target`` (the recursively-threaded local target lambda synthesis consults, §7) *is*
@@ -127,7 +116,7 @@ class _RunState:
     #: half of the top-level ``EnclosingTarget`` (§7); ``()`` if there are none.
     train_target: tuple[Value, ...] = ()
     universe: tuple[Type, ...] = ()  # the bounded-polymorphism monotype universe (§6.2)
-    tally: _Tally = field(default_factory=_Tally)
+    tracker: SearchTracker = field(default_factory=SearchTracker)
     counter: itertools.count[int] = field(default_factory=itertools.count)
     #: Completed ``_enumerate`` pools by ``(scope, contexts, budget, enclosing_target)``. Per-run
     #: (never on the engine), so the fixed ``train_examples`` a ``body_sampler`` reads cannot leak
@@ -153,6 +142,7 @@ class SearchEngine(ABC):
         cost: Cost,
         budget: Budget,
         goal_type: Type | None = GRID,
+        tracker: SearchTracker | None = None,
     ) -> SearchResult:
         """Search for programs consistent with ``train_examples``, ranked cheapest-first.
 
@@ -165,6 +155,12 @@ class SearchEngine(ABC):
         produce today) but is explicit and overridable; pass ``None`` to route through
         ``derive_goal_type`` instead — currently unbuilt (raises), so the capability gap
         is visible rather than silently absent.
+
+        ``tracker`` is likewise a per-run argument, not engine state: pass a pre-configured
+        ``SearchTracker`` (sampling / full capture attached by ``execute()``, from a
+        ``TraceSpec`` — outside run identity, since telemetry never changes *what* is
+        computed) to observe this run; omit it for a fresh, unconfigured one (the always-on
+        outcome counts still accumulate — only sampling/capture are opt-in).
         """
 
 
@@ -212,6 +208,7 @@ class BottomUpSearchEngine(SearchEngine):
         cost: Cost,
         budget: Budget,
         goal_type: Type | None = GRID,
+        tracker: SearchTracker | None = None,
     ) -> SearchResult:
         resolved_goal_type = (
             goal_type if goal_type is not None else derive_goal_type(train_examples)
@@ -239,19 +236,30 @@ class BottomUpSearchEngine(SearchEngine):
             goal_type=resolved_goal_type,
             train_target=train_target,
             universe=universe,
+            tracker=tracker if tracker is not None else SearchTracker(),
         )
         top_target = EnclosingTarget(train_target, resolved_goal_type) if train_target else None
 
-        pool = self._enumerate(Scope(()), contexts, budget, state, top_target)
-        solutions = extract(pool, resolved_goal_type, target, constraints, train_examples, library)
+        pool = self._enumerate(Scope(()), contexts, budget, state, top_target, top_level=True)
+        extraction = extract(pool, resolved_goal_type, target, constraints, train_examples, library)
+        for entry in extraction.accepted:
+            state.tracker.record(entry.program, entry.prim_keys, Outcome.ACCEPTED)
+        for entry in extraction.constraint_rejected:
+            state.tracker.record(entry.program, entry.prim_keys, Outcome.CONSTRAINT_REJECTED)
+        for vtype, entry in pool.entries():
+            if vtype == resolved_goal_type and entry.sig == target:
+                continue  # already accounted for above (accepted or constraint_rejected)
+            state.tracker.record(entry.program, entry.prim_keys, Outcome.GOAL_UNMATCHED)
+        solutions = tuple(entry.program for entry in extraction.accepted)
 
         return SearchResult(
             ranked_programs=solutions,
             stats=SearchStats(
                 engine=type(self).__name__,
-                considered=state.tally.considered,
+                considered=state.tracker.considered,
                 accepted=len(solutions),
-                extra=state.tally.as_extra(),
+                outcomes=state.tracker.totals(),
+                by_key=state.tracker.by_key(),
             ),
         )
 
@@ -262,9 +270,17 @@ class BottomUpSearchEngine(SearchEngine):
         budget: Budget,
         state: _RunState,
         enclosing_target: EnclosingTarget | None,
+        *,
+        top_level: bool = False,
     ) -> Pool:
         """Build the full typed pool for ``(scope, contexts, enclosing_target)`` up to ``budget``
         (§5), memoized (§9 — see ``_MemoKey`` on why ``enclosing_target`` is part of the key).
+
+        ``top_level`` marks the one call ``run()`` makes directly (as opposed to a lambda-synthesis
+        sub-search, §5.3): a sub-search's pool never faces the top-level goal test, so its
+        survivors finalize as ``GOAL_UNMATCHED`` right here, once, the moment the pool is first
+        computed (never on a memo cache hit). The top-level pool's finalization is deferred to
+        ``run()``, after ``extract()`` classifies it.
         """
         key: _MemoKey = (scope, contexts, budget, enclosing_target)
         cached = state.memo.get(key)
@@ -285,8 +301,11 @@ class BottomUpSearchEngine(SearchEngine):
             self._absorb(frontier, contexts, pool, state)
             for program, vtype, signature in branch_candidates:
                 self._absorb_one(program, vtype, vtype, signature, pool, state)
-            pool = self._select_frontier(pool, budget)
+            pool = self._select_frontier(pool, budget, state)
         state.memo[key] = pool
+        if not top_level:
+            for _, entry in pool.entries():
+                state.tracker.record(entry.program, entry.prim_keys, Outcome.GOAL_UNMATCHED)
         return pool
 
     def _compose(
@@ -591,17 +610,29 @@ class BottomUpSearchEngine(SearchEngine):
         ``output_type`` is what the signature's values inhabit — ``vtype`` for a value program, the
         function's ultimate result for a function value. A *polymorphic* output type is not pruned (its
         free vars match any value); the pool keys on ``vtype``.
+
+        Every candidate's capability keys (primitive names / node kinds, ``search/tracking.py``)
+        are computed once, here, and cached on the ``PoolEntry`` if pooled — its ultimate outcome
+        (displaced / evicted / goal-unmatched / constraint-rejected / accepted) is resolved later,
+        without re-walking the tree.
         """
-        state.tally.considered += 1
+        state.tracker.considered += 1
+        keys = primitive_keys(program)
         if signature is None:
-            state.tally.errored += 1
+            state.tracker.record(program, keys, Outcome.ERRORED)
             return
         if not free_type_vars(output_type) and not signature_matches_type(signature, output_type):
-            state.tally.pruned += 1
+            state.tracker.record(program, keys, Outcome.PRUNED)
             return
         cost = state.cost.of(program, state.train_examples, state.library)
-        if not pool.add_dedup(vtype, signature, program, cost):
-            state.tally.deduped += 1
+        outcome = pool.add_dedup(vtype, signature, program, cost, keys)
+        if not outcome.inserted:
+            state.tracker.record(program, keys, Outcome.DEDUPED)
+            return
+        if outcome.displaced is not None:
+            state.tracker.record(
+                outcome.displaced.program, outcome.displaced.prim_keys, Outcome.DISPLACED
+            )
 
     def _argument_samples(
         self,
@@ -643,9 +674,13 @@ class BottomUpSearchEngine(SearchEngine):
                 break
         return values
 
-    def _select_frontier(self, pool: Pool, budget: Budget) -> Pool:
-        """Keep the cheapest ``budget.max_pool`` entries to carry into the next round (§5.7)."""
-        return pool.cheapest(budget.max_pool)
+    def _select_frontier(self, pool: Pool, budget: Budget, state: _RunState) -> Pool:
+        """Keep the cheapest ``budget.max_pool`` entries to carry into the next round (§5.7),
+        recording ``EVICTED`` for whatever gets dropped to make room."""
+        kept, dropped = pool.cheapest(budget.max_pool)
+        for entry in dropped:
+            state.tracker.record(entry.program, entry.prim_keys, Outcome.EVICTED)
+        return kept
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -654,5 +689,8 @@ class BeamBottomUpSearchEngine(BottomUpSearchEngine):
 
     beam_width: int
 
-    def _select_frontier(self, pool: Pool, budget: Budget) -> Pool:
-        return pool.cheapest(self.beam_width)
+    def _select_frontier(self, pool: Pool, budget: Budget, state: _RunState) -> Pool:
+        kept, dropped = pool.cheapest(self.beam_width)
+        for entry in dropped:
+            state.tracker.record(entry.program, entry.prim_keys, Outcome.EVICTED)
+        return kept

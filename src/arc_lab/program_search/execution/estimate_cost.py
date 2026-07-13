@@ -1,9 +1,9 @@
 """``estimate_cost``: a static worst-case search-cost ceiling for a ``RunSpec`` — no execution.
 
 Reads ``RunSpec.config`` (machinery) and ``RunSpec.corpus`` (content) and returns, per task, a
-round-by-round bound on ``SearchStats.considered`` (``search_engine.py``'s ``_Tally.considered`` —
-every candidate the engine builds and evaluates, whether or not it survives pruning/dedup) without
-ever calling ``SearchEngine.run``.
+round-by-round bound on ``SearchStats.considered`` (``search_engine.py``'s
+``SearchTracker.considered`` — every candidate the engine builds and evaluates, whether or not it
+survives pruning/dedup) without ever calling ``SearchEngine.run``.
 
 **What's modeled exactly:** round-0 leaves (via the real ``seed_leaves``, so no drift from the
 engine's own leaf logic) and fixed/variadic primitive composition (``pool_size ** arity``, summed

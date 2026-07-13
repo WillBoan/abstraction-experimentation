@@ -228,10 +228,10 @@ def test_enumerate_is_memoized_within_a_run() -> None:
     contexts = (Context(grid),)
 
     first = engine._enumerate(Scope(()), contexts, budget, state, None)
-    considered = state.tally.considered
+    considered = state.tracker.considered
     again = engine._enumerate(Scope(()), contexts, budget, state, None)
     assert again is first  # served from the memo…
-    assert state.tally.considered == considered  # …with no re-enumeration work
+    assert state.tracker.considered == considered  # …with no re-enumeration work
 
     shallower = engine._enumerate(Scope(()), contexts, budget.descend(), state, None)
     assert shallower is not first  # a different budget is a different key — no false sharing

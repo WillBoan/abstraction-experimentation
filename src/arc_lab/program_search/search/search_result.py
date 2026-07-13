@@ -19,7 +19,13 @@ class SearchStats:
     engine: str
     considered: int = 0
     accepted: int = 0
-    extra: Mapping[str, int] = field(default_factory=dict)
+    #: The full outcome partition (capability tracking, ``search/tracking.py``): the invariant
+    #: ``considered == sum(outcomes.values())`` holds exactly, including an ``"accepted"`` entry
+    #: that mirrors the ``accepted`` field above — kept both places so ``outcomes`` alone is a
+    #: complete, self-checking partition while ``accepted`` stays for existing callers.
+    outcomes: Mapping[str, int] = field(default_factory=dict)
+    #: The same outcome counts, broken down per primitive-name / node-kind key.
+    by_key: Mapping[str, Mapping[str, int]] = field(default_factory=dict)
 
     @property
     def solved(self) -> bool:
@@ -33,6 +39,6 @@ class SearchStats:
     def summary(self) -> str:
         """The one-line INFO summary, derived from the counters."""
         parts = [f"considered={self.considered}", f"accepted={self.accepted}"]
-        parts += [f"{key}={value}" for key, value in self.extra.items()]
+        parts += [f"{key}={value}" for key, value in self.outcomes.items() if key != "accepted"]
         parts.append(f"solved={self.solved}")
         return f"{self.engine}: " + " ".join(parts)

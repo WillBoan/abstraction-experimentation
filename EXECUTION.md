@@ -121,6 +121,53 @@ Run-count accounting:
 - a LEARN activity = **one** recorded run (per-iteration telemetry lives in its trace; wakes are _not_ separate runs — wake _i_'s library only exists inside the loop's history, so it has no independently addressable identity) **plus** its derived SEARCH runs.
 - `arc-lab learn` therefore produces **2–3 recorded runs**: the learn run + train-corpus evaluation (+ eval-corpus evaluation if provided). Train × eval final evaluation is always **2 separate runs** — different questions, different identities, independently cacheable.
 
+## Tracing — capability sampling & full capture (outside run identity)
+
+Every recorded run carries `SearchStats.outcomes`/`by_key` unconditionally — the outcome
+partition (`search/tracking.py`: every candidate a `SearchEngine` considers resolves to exactly
+one of `errored/pruned/deduped/displaced/evicted/goal_unmatched/constraint_rejected/accepted`,
+broken down per primitive-name/node-kind key). That's free, no config, always on.
+
+Beyond the counts, `TraceSpec` (`execution/model/trace_spec.py`) governs two further, opt-in
+observations of a search, passed to `execute()` as a plain keyword (`trace: TraceSpec | None`)
+— **never** a `Config` field:
+
+- **Sampling** (`TraceSpec.samples`, on by default — a small deterministic `first_k` reservoir
+  per `(key, outcome)` bucket) — a few example programs per primitive/node-kind × outcome,
+  cheap enough to run unconditionally.
+- **Full capture** (`TraceSpec.capture_all`, off by default) — every considered candidate,
+  streamed to `capture/<task_id>.jsonl` (LEARN: `capture/iter-<n>/<task_id>.jsonl`), capped at
+  `capture_all_max` — truncation is recorded loudly in `manifest.json`, never silently dropped.
+
+Run-dir layout, extended:
+
+```
+runs/<started_at>_<run_id>/
+├── runspec.json           # identity + provenance (written first)
+├── trace.jsonl            # per-task/wake rows (resumable checkpoint)
+├── results.json           # aggregate (written last — marks completion)
+├── learned_library.json   # LEARN runs only
+├── samples.json           # optional: TraceSpec.samples reservoirs, keyed by task_id
+│                           #   (LEARN: "iter-<n>/<task_id>") — covers only the tasks THIS
+│                           #   invocation actually ran; a resume's already-traced tasks
+│                           #   aren't re-sampled (a diagnostic artifact, not run identity)
+├── capture/                # optional: TraceSpec.capture_all's per-task JSONL streams
+│   └── <task_id>.jsonl
+└── manifest.json           # optional: capture settings + counts + truncation, per task
+```
+
+**Why `TraceSpec` is not part of `run_id`:** `Config` decides _what is computed_; `TraceSpec`
+decides _what is recorded about_ that computation. Excluding it from the hash is sound
+specifically because this codebase is deterministic (no RNG anywhere — CLAUDE.md's
+"Immutable & deterministic" invariant): re-executing a cached run under a different `TraceSpec`
+provably reproduces the identical search, so telemetry can always be safely (re)attached to an
+existing run directory without risk that it describes a different execution than the one whose
+`results.json` is already cached. `force_recapture=True` on `execute()` (CLI: `--force-recapture`)
+exploits exactly this — it deletes `trace.jsonl`/`results.json` and re-executes from scratch
+purely to repopulate tracing artifacts under a new `TraceSpec`, without changing the run's
+identity or the substantive content of `results.json` (only wall-clock `seconds` and whatever
+the new `TraceSpec` observes can differ).
+
 ## The call stack
 
 `execute` is the **only writer of `runs/`**; the activities orchestrate it; the read side never executes.
@@ -180,12 +227,15 @@ src/arc_lab/
 ├── program_search/          # ← moved up from solvers/ (DONE, committed)
 │   ├── substrate/           # the language: types · program · library · primitives/ · registry · store
 │   ├── search/              # the wake proposer (SearchEngine + its parts)
+│   │   └── tracking.py      #   capability tracking: Outcome partition · SearchTracker (sampling/capture)
 │   ├── learn/               # sleep: learn_engine (ABC + LearnOutcome) · proposers · governance (taskgen moves OUT)
 │   ├── analysis/            # read-side instrument: compression.py (SolvedTask · MDL metrics · ratios)
+│   │                        #   capabilities.py (read-time category/provenance groupings over by_key)
 │   └── execution/           # the layer THIS doc specifies — activities live HERE, not a commands/
 │                            #   package (they ARE the execution layer; the CLI is the separate thin cli/)
 │       ├── model/           #   the run DATA MODEL (frozen, hashable specs + records)
 │       │   ├── config.py · learn_spec.py · run_spec.py · study_spec.py
+│       │   ├── trace_spec.py   #   TraceSpec — sampling/capture config, deliberately OUTSIDE Config
 │       │   └── run_record.py · results.py (TaskScore · TaskResult)
 │       ├── execute.py       #   the recorded-run core (idempotency · trace · record_run)
 │       ├── run_search.py    #   SEARCH activity
@@ -215,6 +265,8 @@ Layering rules:
 | `arc-lab runs` / `configs` / `datasets` / `show` | — | utilities (`solvers` dies with `Solver`; `configs` lists presets) |
 
 **Config precedence:** `dataclass defaults < named preset < config file < CLI --set`. The `<config>` argument to `search`/`learn` is a preset name or a JSON file `{"preset": "<name>", "set": {"<dotted.path>": <value>}}`; `--set path=value` (repeatable) applies last. Overrides are dotted paths into the frozen `Config` (`budget.max_depth=4`, `search_engine.beam_width=64`, `library=d4` by registry name, `learn.iterations=3` on a LEARN config) — `execution/overrides.py`; unknown fields and type mismatches fail loudly, and every override mints its own `run_id` (no cache collisions).
+
+**Tracing flags** (`search`/`learn`, `cli/_trace.py`, see _Tracing_ above): `--sample k:mode` (repeatable; `mode` is `first_k` or `cheapest_k`) overrides the default sampler, `--track-all` turns on full capture (`--capture-max` caps it, default 100k), `--force-recapture` re-executes an already-completed run to (re)populate its tracing artifacts. None of these affect `run_id` — they can be added to a cached run after the fact.
 
 Two deliberate changes vs. the old CLI: **`analyze-run` is read-side only** (the old `analyze` _executed_; execution is `search`/`learn`'s job now, and idempotency makes run-if-missing trivial), and **`taskgen` is its own command** — corpus _generation_ (seeded, deterministic, rare, committed) is disentangled from corpus _consumption_; a study that regenerated corpora inline would silently mint new run identities whenever generation logic changed, killing cache reuse. Study _takes_ corpora, never makes them.
 

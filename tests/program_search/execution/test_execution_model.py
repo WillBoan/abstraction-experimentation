@@ -23,6 +23,7 @@ from arc_lab.program_search.search.constraints import Constraint
 from arc_lab.program_search.search.cost import Cost
 from arc_lab.program_search.search.search_engine import SearchEngine
 from arc_lab.program_search.search.search_result import SearchResult, SearchStats
+from arc_lab.program_search.search.tracking import SearchTracker
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.program_search.substrate.program import Program
@@ -51,6 +52,7 @@ class FakeEngine(SearchEngine):
         cost: Cost,
         budget: Budget,
         goal_type: Type | None = GRID,
+        tracker: SearchTracker | None = None,
     ) -> SearchResult:
         return SearchResult(ranked_programs=(), stats=SearchStats(engine="FakeEngine"))
 

@@ -13,9 +13,13 @@ _C = Const(value=3, value_type=COLOR)
 
 def test_add_dedup_keeps_the_cheapest_witness() -> None:
     pool = Pool()
-    assert pool.add_dedup(GRID, (1,), _A, 2.0) is True  # first witness
-    assert pool.add_dedup(GRID, (1,), _B, 1.0) is True  # strictly cheaper replaces
-    assert pool.add_dedup(GRID, (1,), _C, 3.0) is False  # costlier is deduplicated away
+    first = pool.add_dedup(GRID, (1,), _A, 2.0)
+    assert first.inserted and first.displaced is None  # first witness
+    second = pool.add_dedup(GRID, (1,), _B, 1.0)
+    assert second.inserted and second.displaced is not None  # strictly cheaper replaces
+    assert second.displaced.program is _A
+    third = pool.add_dedup(GRID, (1,), _C, 3.0)
+    assert not third.inserted  # costlier is deduplicated away
     (entry,) = pool.items_of_type(GRID)
     assert entry.program is _B
     assert entry.cost == 1.0
@@ -25,7 +29,7 @@ def test_add_dedup_keeps_the_cheapest_witness() -> None:
 def test_equal_cost_does_not_replace() -> None:
     pool = Pool()
     pool.add_dedup(GRID, (1,), _A, 1.0)
-    assert pool.add_dedup(GRID, (1,), _B, 1.0) is False  # not strictly cheaper
+    assert not pool.add_dedup(GRID, (1,), _B, 1.0).inserted  # not strictly cheaper
     (entry,) = pool.items_of_type(GRID)
     assert entry.program is _A
 
@@ -58,9 +62,11 @@ def test_cheapest_keeps_globally_cheapest_rebucketed() -> None:
     pool.add_dedup(GRID, (1,), _A, 3.0)
     pool.add_dedup(INT, (2,), _B, 1.0)
     pool.add_dedup(COLOR, (3,), _C, 2.0)
-    cut = pool.cheapest(2)
+    cut, dropped = pool.cheapest(2)
     assert cut.size() == 2
     assert set(cut.ranked()) == {_B, _C}  # the two cheapest survive
+    (dropped_entry,) = dropped
+    assert dropped_entry.program is _A  # the costliest is what got dropped
 
 
 def test_ranked_orders_whole_pool_by_cost() -> None:

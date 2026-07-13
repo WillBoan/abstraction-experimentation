@@ -23,6 +23,7 @@ from .execute import execute
 from .model.config import Config
 from .model.run_record import RunRecord
 from .model.run_spec import RunSpec
+from .model.trace_spec import TraceSpec
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,18 +41,40 @@ def run_search_learn(
     eval_corpus: Corpus | None = None,
     *,
     runs_root: Path | None = None,
+    trace: TraceSpec | None = None,
+    force_recapture: bool = False,
 ) -> LearnActivityResult:
-    """Execute the learn run, then the derived SEARCH runs with the grown library."""
+    """Execute the learn run, then the derived SEARCH runs with the grown library.
+
+    ``trace``/``force_recapture`` apply uniformly to all 2-3 recorded runs (outside run
+    identity — see ``TraceSpec``'s docstring): tracing the loop usually means tracing what it
+    produced too.
+    """
     if config.learn is None:
         raise ValueError("run_search_learn takes a LEARN config (learn set); use run_search")
 
-    learn_record = execute(RunSpec(config=config, corpus=train_corpus), runs_root=runs_root)
+    learn_record = execute(
+        RunSpec(config=config, corpus=train_corpus),
+        runs_root=runs_root,
+        trace=trace,
+        force_recapture=force_recapture,
+    )
     grown = learn_record.learned_library()
 
     derived = config.with_(library=grown, learn=None)  # provenance is not identity
-    train_record = execute(RunSpec(config=derived, corpus=train_corpus), runs_root=runs_root)
+    train_record = execute(
+        RunSpec(config=derived, corpus=train_corpus),
+        runs_root=runs_root,
+        trace=trace,
+        force_recapture=force_recapture,
+    )
     eval_record = (
-        execute(RunSpec(config=derived, corpus=eval_corpus), runs_root=runs_root)
+        execute(
+            RunSpec(config=derived, corpus=eval_corpus),
+            runs_root=runs_root,
+            trace=trace,
+            force_recapture=force_recapture,
+        )
         if eval_corpus is not None
         else None
     )

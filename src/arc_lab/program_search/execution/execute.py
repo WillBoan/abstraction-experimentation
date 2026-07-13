@@ -15,6 +15,11 @@ branch: the wake-sleep loop, ONE recorded run whose artifact is the grown librar
 (``learned_library.json``) — its trace checkpoints at iteration grain (each sleep row
 carries the library), and the loop ends with sleep (the final wake is the derived
 SEARCH run the activity executes; see ``run_search_learn``).
+
+``trace: TraceSpec`` governs what gets *observed* about the search (outcome sampling / full
+capture) — never part of ``run_id`` (``model/trace_spec.py``'s docstring has the determinism
+argument for why that's sound). ``force_recapture=True`` re-executes an already-completed run
+purely to (re)populate its telemetry artifacts under a new ``TraceSpec``.
 """
 
 from __future__ import annotations
@@ -23,14 +28,17 @@ import json
 import logging
 import subprocess
 import time
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Final
+from typing import Final, TextIO
 
 from arc_lab.core.task import Task
 from arc_lab.eval.scoring import score_task
 from arc_lab.program_search.analysis.compression import SolvedTask
+from arc_lab.program_search.search.search_result import SearchResult, SearchStats
+from arc_lab.program_search.search.tracking import Outcome, SearchTracker
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.program import Program
 
@@ -38,6 +46,7 @@ from .model.config import Config
 from .model.results import TaskResult, TaskScore
 from .model.run_record import RunRecord, find_run_dir
 from .model.run_spec import RunSpec
+from .model.trace_spec import TraceSpec
 from .predict import predict
 
 logger = logging.getLogger(__name__)
@@ -46,17 +55,36 @@ logger = logging.getLogger(__name__)
 DEFAULT_RUNS_ROOT: Final = Path(__file__).resolve().parents[4] / "runs"
 
 
-def execute(run_spec: RunSpec, *, runs_root: Path | None = None) -> RunRecord:
-    """Execute (or serve from cache) the recorded run ``run_spec`` names."""
+def execute(
+    run_spec: RunSpec,
+    *,
+    runs_root: Path | None = None,
+    trace: TraceSpec | None = None,
+    force_recapture: bool = False,
+) -> RunRecord:
+    """Execute (or serve from cache) the recorded run ``run_spec`` names.
+
+    ``trace`` defaults to ``TraceSpec()`` (small deterministic sampling, no full capture) rather
+    than "no tracing at all" — the default-on sampling tier is cheap enough to always be worth it.
+    ``force_recapture`` bypasses the idempotency cache for an already-completed run and clears its
+    ``trace.jsonl``/``results.json`` so it re-executes from scratch (sound because deterministic:
+    the re-run reproduces identical results, differing only in wall-clock ``seconds`` and whatever
+    the new ``TraceSpec`` observes).
+    """
     root = DEFAULT_RUNS_ROOT if runs_root is None else runs_root
     run_dir = find_run_dir(root, run_spec.run_id)
     if run_dir is None:
         run_dir = root / f"{_timestamp()}_{run_spec.run_id}"
     record = RunRecord(run_id=run_spec.run_id, run_dir=run_dir)
+    trace_spec = trace if trace is not None else TraceSpec()
 
-    if record.completed:  # idempotency: results.json present ⇒ cached
+    if record.completed and not force_recapture:  # idempotency: results.json present ⇒ cached
         logger.info("run %s served from cache (%s)", record.run_id, record.run_dir)
         return record
+    if force_recapture and record.completed:
+        logger.info("run %s: force-recapture, re-executing for a fresh TraceSpec", record.run_id)
+        record.trace_path.unlink(missing_ok=True)
+        record.results_path.unlink()  # absence un-marks completion; execute() below regenerates it
 
     record.run_dir.mkdir(parents=True, exist_ok=True)
     _write_json(
@@ -65,9 +93,9 @@ def execute(run_spec: RunSpec, *, runs_root: Path | None = None) -> RunRecord:
     )
 
     if run_spec.config.learn is None:
-        payload = _search_results(_run_search(run_spec, record))
+        payload = _search_results(_run_search(run_spec, record, trace_spec))
     else:
-        payload = _run_learn(run_spec, record)
+        payload = _run_learn(run_spec, record, trace_spec)
 
     _write_json(
         record.results_path,  # the LAST write — its presence marks the run complete
@@ -77,10 +105,117 @@ def execute(run_spec: RunSpec, *, runs_root: Path | None = None) -> RunRecord:
     return record
 
 
+# -- tracing: sampling + full capture, wired into every search call -------------
+
+
+@dataclass(slots=True)
+class _CaptureSink:
+    """Streams every observed candidate to one JSONL file, capped — the file I/O
+    ``SearchTracker`` itself never does (``search/tracking.py``); this is the plain callable it's
+    handed. Opens its file lazily (only once a candidate actually arrives), so a task that
+    considers nothing never creates an empty capture file.
+    """
+
+    path: Path
+    max_count: int
+    captured: int = 0
+    truncated: bool = False
+    _handle: TextIO | None = field(default=None, repr=False)
+
+    def __call__(self, program: Program, keys: frozenset[str], outcome: Outcome) -> None:
+        if self.captured >= self.max_count:
+            self.truncated = True
+            return
+        if self._handle is None:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self._handle = self.path.open("w", encoding="utf-8")
+        row = {"program": program.to_dict(), "keys": sorted(keys), "outcome": outcome.value}
+        self._handle.write(json.dumps(row, sort_keys=True) + "\n")
+        self.captured += 1
+
+    def close(self) -> None:
+        if self._handle is not None:
+            self._handle.close()
+
+
+@dataclass(frozen=True, slots=True)
+class _TrackedOutcome:
+    """What one tracked search call yields beyond its ``SearchResult`` — the pieces
+    ``execute()`` needs for ``samples.json``/``manifest.json``, not the trace row itself."""
+
+    samples: Mapping[str, object]
+    considered: int
+    capture: _CaptureSink | None
+
+
+def _make_tracker(
+    trace: TraceSpec, capture_path: Path | None
+) -> tuple[SearchTracker, _CaptureSink | None]:
+    sink = (
+        _CaptureSink(path=capture_path, max_count=trace.capture_all_max)
+        if trace.capture_all and capture_path is not None
+        else None
+    )
+    return SearchTracker(samples=trace.samples, capture=sink), sink
+
+
+def _search_with_tracker(
+    task: Task, config: Config, library: Library, tracker: SearchTracker
+) -> SearchResult:
+    return config.search_engine.run(
+        train_examples=task.train,
+        library=library,
+        constraints=config.constraints,
+        cost=config.cost,
+        budget=config.budget,
+        tracker=tracker,
+    )
+
+
+def _write_trace_artifacts(
+    record: RunRecord, trace: TraceSpec, outcomes: Mapping[str, _TrackedOutcome]
+) -> None:
+    """Write ``samples.json``/``manifest.json`` from *this invocation's* freshly-run tasks only —
+    a resumed run's already-traced tasks aren't re-sampled or re-captured (``RunRecord.samples``/
+    ``manifest`` document this as an accepted limitation of a diagnostic-only artifact)."""
+    samples_by_label = {
+        label: outcome.samples for label, outcome in outcomes.items() if outcome.samples
+    }
+    if samples_by_label:
+        _write_json(record.samples_path, samples_by_label)
+    if trace.capture_all:
+        _write_json(record.manifest_path, _capture_manifest(trace, outcomes))
+
+
+def _capture_manifest(
+    trace: TraceSpec, outcomes: Mapping[str, _TrackedOutcome]
+) -> dict[str, object]:
+    per_task: dict[str, object] = {}
+    captured_total = 0
+    truncated = False
+    for label, outcome in outcomes.items():
+        sink = outcome.capture
+        if sink is None:
+            continue
+        per_task[label] = {
+            "considered": outcome.considered,
+            "captured": sink.captured,
+            "truncated": sink.truncated,
+        }
+        captured_total += sink.captured
+        truncated = truncated or sink.truncated
+    return {
+        "capture_all_max": trace.capture_all_max,
+        "captured_total": captured_total,
+        "truncated": truncated,
+        "per_task": per_task,
+    }
+
+
 # -- the SEARCH branch ---------------------------------------------------------
 
 
-def _run_search(run_spec: RunSpec, record: RunRecord) -> list[dict[str, object]]:
+def _run_search(run_spec: RunSpec, record: RunRecord, trace: TraceSpec) -> list[dict[str, object]]:
     """Search + predict + score each task, streaming rows to the trace; resume-aware."""
     config = run_spec.config
     rows = _rewrite_trace(record)  # drops any torn final line; returns the intact rows
@@ -88,14 +223,20 @@ def _run_search(run_spec: RunSpec, record: RunRecord) -> list[dict[str, object]]
     if done:
         logger.info("run %s resuming: %d task(s) served from trace", record.run_id, len(done))
 
-    with record.trace_path.open("a", encoding="utf-8") as trace:
+    outcomes: dict[str, _TrackedOutcome] = {}
+    with record.trace_path.open("a", encoding="utf-8") as trace_handle:
         for task in run_spec.corpus:
             if task.task_id in done:
                 continue
-            row = _run_task(task, config)
-            trace.write(json.dumps(row, sort_keys=True) + "\n")
-            trace.flush()  # each completed task is a durable checkpoint
+            capture_path = (
+                record.capture_dir / f"{task.task_id}.jsonl" if trace.capture_all else None
+            )
+            row, tracked = _run_task(task, config, trace, capture_path)
+            trace_handle.write(json.dumps(row, sort_keys=True) + "\n")
+            trace_handle.flush()  # each completed task is a durable checkpoint
             rows.append(row)
+            outcomes[task.task_id] = tracked
+    _write_trace_artifacts(record, trace, outcomes)
     return rows
 
 
@@ -121,17 +262,55 @@ def _predict_and_score(
     return score_task(task, prediction, attempts=attempts_per_test)
 
 
-def _run_task(task: Task, config: Config) -> dict[str, object]:
+def _stats_dict(stats: SearchStats) -> dict[str, object]:
+    """One task's ``SearchStats`` in trace-row shape — shared by the SEARCH branch's per-task
+    row (``_run_task``) and the LEARN branch's per-wake per-task rows (``_wake``), so both trace
+    identically (EXECUTION.md)."""
+    return {
+        "engine": stats.engine,
+        "considered": stats.considered,
+        "accepted": stats.accepted,
+        "outcomes": dict(stats.outcomes),
+        "by_key": {key: dict(counts) for key, counts in stats.by_key.items()},
+    }
+
+
+def merge_outcome_stats(
+    stats_dicts: Iterable[Mapping[str, object]],
+) -> tuple[dict[str, int], dict[str, dict[str, int]]]:
+    """Sum a group of ``_stats_dict``-shaped mappings' ``outcomes``/``by_key`` into one totals pair.
+
+    Shared by ``_search_results`` (across a run's per-task rows) and ``analyze_run`` (across a
+    LEARN wake's per-task rows) — both are "merge N stats dicts," just over a different axis.
+    """
+    outcomes_total: dict[str, int] = {}
+    by_key_total: dict[str, dict[str, int]] = {}
+    for stats in stats_dicts:
+        outcomes = stats.get("outcomes")
+        if isinstance(outcomes, dict):
+            for outcome, count in outcomes.items():
+                if isinstance(count, int):
+                    outcomes_total[outcome] = outcomes_total.get(outcome, 0) + count
+        by_key = stats.get("by_key")
+        if isinstance(by_key, dict):
+            for key, counts in by_key.items():
+                if not isinstance(counts, dict):
+                    continue
+                bucket = by_key_total.setdefault(key, {})
+                for outcome, count in counts.items():
+                    if isinstance(count, int):
+                        bucket[outcome] = bucket.get(outcome, 0) + count
+    return outcomes_total, by_key_total
+
+
+def _run_task(
+    task: Task, config: Config, trace: TraceSpec, capture_path: Path | None
+) -> tuple[dict[str, object], _TrackedOutcome]:
     """One task: search on train examples, predict + score on test examples, tallied."""
     started = time.perf_counter()
+    tracker, sink = _make_tracker(trace, capture_path)
     try:
-        result = config.search_engine.run(
-            train_examples=task.train,
-            library=config.library,
-            constraints=config.constraints,
-            cost=config.cost,
-            budget=config.budget,
-        )
+        result = _search_with_tracker(task, config, config.library, tracker)
         solved, per_test = _predict_and_score(
             task,
             result.ranked_programs,
@@ -143,12 +322,7 @@ def _run_task(task: Task, config: Config) -> dict[str, object]:
             score=TaskScore(solved=solved, per_test=per_test),
             seconds=time.perf_counter() - started,
         )
-        stats: dict[str, object] | None = {
-            "engine": result.stats.engine,
-            "considered": result.stats.considered,
-            "accepted": result.stats.accepted,
-            "extra": dict(result.stats.extra),
-        }
+        stats: dict[str, object] | None = _stats_dict(result.stats)
         programs = [program.to_dict() for program in result.ranked_programs]
     except Exception as error:  # error isolation: one broken task never aborts the run
         logger.warning("task %s errored: %s", task.task_id, error)
@@ -160,7 +334,14 @@ def _run_task(task: Task, config: Config) -> dict[str, object]:
         )
         stats = None
         programs = []
-    return {**task_result.to_dict(), "programs": programs, "stats": stats}
+    finally:
+        if sink is not None:
+            sink.close()
+    row = {**task_result.to_dict(), "programs": programs, "stats": stats}
+    tracked = _TrackedOutcome(
+        samples=tracker.samples_json(), considered=tracker.considered, capture=sink
+    )
+    return row, tracked
 
 
 # -- recording -----------------------------------------------------------------
@@ -174,9 +355,9 @@ def _rewrite_trace(record: RunRecord) -> list[dict[str, object]]:
     """
     rows = list(record.trace_rows())
     if record.trace_path.is_file():
-        with record.trace_path.open("w", encoding="utf-8") as trace:
+        with record.trace_path.open("w", encoding="utf-8") as trace_handle:
             for row in rows:
-                trace.write(json.dumps(row, sort_keys=True) + "\n")
+                trace_handle.write(json.dumps(row, sort_keys=True) + "\n")
     return rows
 
 
@@ -188,10 +369,14 @@ def _search_results(rows: list[dict[str, object]]) -> dict[str, object]:
         for row in rows
         if isinstance(stats := row.get("stats"), dict) and "considered" in stats
     )
+    task_stats = (stats for row in rows if isinstance(stats := row.get("stats"), dict))
+    outcomes_total, by_key_total = merge_outcome_stats(task_stats)
     return {
         "task_count": len(tasks),
         "solved": sum(result.score.solved for result in tasks),
         "considered_total": considered,
+        "outcomes_total": outcomes_total,
+        "by_key_total": by_key_total,
         "tasks": [result.to_dict() for result in tasks],
     }
 
@@ -199,7 +384,7 @@ def _search_results(rows: list[dict[str, object]]) -> dict[str, object]:
 # -- the LEARN branch (the wake-sleep loop; EXECUTION.md) ------------------------
 
 
-def _run_learn(run_spec: RunSpec, record: RunRecord) -> dict[str, object]:
+def _run_learn(run_spec: RunSpec, record: RunRecord, trace: TraceSpec) -> dict[str, object]:
     """The wake-sleep loop on the train corpus — ONE recorded run, ending with sleep.
 
     Per iteration: **wake** (fresh search per task by default; ``reset_programs_each_wake=False``
@@ -253,16 +438,19 @@ def _run_learn(run_spec: RunSpec, record: RunRecord) -> dict[str, object]:
             }
 
     iterations_run = start_iteration
-    with record.trace_path.open("a", encoding="utf-8") as trace:
+    all_outcomes: dict[str, _TrackedOutcome] = {}
+    with record.trace_path.open("a", encoding="utf-8") as trace_handle:
         for iteration in range(start_iteration, learn.iterations):
             if converged and learn.early_stop:
                 break
             # WAKE — batched over the whole corpus before any sleep (cross-task compression).
             if learn.reset_programs_each_wake:
                 solutions = {}
-            wake_row = _wake(run_spec, library, solutions, iteration)
-            trace.write(json.dumps(wake_row, sort_keys=True) + "\n")
-            trace.flush()
+            wake_row, wake_outcomes = _wake(run_spec, library, solutions, iteration, record, trace)
+            for task_id, tracked in wake_outcomes.items():
+                all_outcomes[f"iter-{iteration}/{task_id}"] = tracked
+            trace_handle.write(json.dumps(wake_row, sort_keys=True) + "\n")
+            trace_handle.flush()
             # SLEEP — one LearnEngine.run over all solutions.
             outcome = learn.learn_engine.run(library, tuple(solutions.values()))
             library = outcome.library
@@ -277,11 +465,12 @@ def _run_learn(run_spec: RunSpec, record: RunRecord) -> dict[str, object]:
                 "converged": outcome.converged,
                 "library": library.to_dict(),  # the checkpoint resume reads
             }
-            trace.write(json.dumps(sleep_row, sort_keys=True) + "\n")
-            trace.flush()
+            trace_handle.write(json.dumps(sleep_row, sort_keys=True) + "\n")
+            trace_handle.flush()
             iterations_run = iteration + 1
 
     _write_json(record.learned_library_path, library.to_dict())
+    _write_trace_artifacts(record, trace, all_outcomes)
     return {
         "iterations_run": iterations_run,
         "converged": converged,
@@ -297,25 +486,42 @@ def _wake(
     library: Library,
     solutions: dict[str, SolvedTask],
     iteration: int,
-) -> dict[str, object]:
-    """One wake: search every (not-yet-carried) task with the current library; mutate ``solutions``."""
+    record: RunRecord,
+    trace: TraceSpec,
+) -> tuple[dict[str, object], dict[str, _TrackedOutcome]]:
+    """One wake: search every (not-yet-carried) task with the current library; mutate ``solutions``.
+
+    Per-task stats are recorded in the same shape as the SEARCH branch's trace rows
+    (``_stats_dict``), so a wake traces identically to a SEARCH run — including the
+    per-primitive/node-kind breakdown, e.g. to see whether a sleep-minted primitive gets used in
+    the very next wake. Returns the wake row (for the trace) plus this wake's per-task
+    ``_TrackedOutcome``s (for the run-wide samples/manifest, keyed by the caller).
+    """
     config = run_spec.config
     learn = config.learn
     assert learn is not None
     considered = 0
+    stats: dict[str, object] = {}
     scores: dict[str, bool] = {}
+    outcomes: dict[str, _TrackedOutcome] = {}
     for entry in run_spec.corpus.entries:  # entries: SolvedTask keeps meta co-located
         task = entry.task
         if task.task_id in solutions:  # only when reset_programs_each_wake=False
             continue
-        result = config.search_engine.run(
-            train_examples=task.train,
-            library=library,
-            constraints=config.constraints,
-            cost=config.cost,
-            budget=config.budget,
+        capture_path = (
+            record.capture_dir / f"iter-{iteration}" / f"{task.task_id}.jsonl"
+            if trace.capture_all
+            else None
         )
+        tracker, sink = _make_tracker(trace, capture_path)
+        result = _search_with_tracker(task, config, library, tracker)
+        if sink is not None:
+            sink.close()
         considered += result.stats.considered
+        stats[task.task_id] = _stats_dict(result.stats)
+        outcomes[task.task_id] = _TrackedOutcome(
+            samples=tracker.samples_json(), considered=tracker.considered, capture=sink
+        )
         if result.ranked_programs:
             solutions[task.task_id] = SolvedTask(annotated=entry, program=result.ranked_programs[0])
         if learn.score_each_wake and task.test:  # telemetry only; never feeds back
@@ -331,14 +537,15 @@ def _wake(
         "phase": "wake",
         "solved": sorted(solutions),
         "considered": considered,
+        "stats": stats,
         "programs": {task_id: st.program.to_dict() for task_id, st in solutions.items()},
     }
     if scores:
         wake_row["scores"] = scores
-    return wake_row
+    return wake_row, outcomes
 
 
-def _write_json(path: Path, data: dict[str, object]) -> None:
+def _write_json(path: Path, data: Mapping[str, object]) -> None:
     with path.open("w", encoding="utf-8") as handle:
         json.dump(data, handle, indent=2, sort_keys=True)
         handle.write("\n")

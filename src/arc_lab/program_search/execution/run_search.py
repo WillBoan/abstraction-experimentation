@@ -14,15 +14,29 @@ from .execute import execute
 from .model.config import Config
 from .model.run_record import RunRecord
 from .model.run_spec import RunSpec
+from .model.trace_spec import TraceSpec
 
 
-def run_search(config: Config, corpus: Corpus, *, runs_root: Path | None = None) -> RunRecord:
+def run_search(
+    config: Config,
+    corpus: Corpus,
+    *,
+    runs_root: Path | None = None,
+    trace: TraceSpec | None = None,
+    force_recapture: bool = False,
+) -> RunRecord:
     """Execute (or serve from cache) one SEARCH recorded run.
 
     ``config.learn`` must be ``None`` — a learn run is a different activity
     (``run_search_learn``), and silently stripping the learn spec would execute a
-    different run than the caller named.
+    different run than the caller named. ``trace``/``force_recapture`` pass straight
+    through to ``execute()`` (outside run identity — see ``TraceSpec``'s docstring).
     """
     if config.learn is not None:
         raise ValueError("run_search takes a SEARCH config (learn=None); use run_search_learn")
-    return execute(RunSpec(config=config, corpus=corpus), runs_root=runs_root)
+    return execute(
+        RunSpec(config=config, corpus=corpus),
+        runs_root=runs_root,
+        trace=trace,
+        force_recapture=force_recapture,
+    )
