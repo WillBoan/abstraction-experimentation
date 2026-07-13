@@ -1,17 +1,17 @@
 # SEARCH-SPACE.md
 
-A map of the **control surface for what programs are _expressible_** — the "what's possible" levers. Sibling to [ONTOLOGY.md](ONTOLOGY.md) (lever 1, the primitive vocabulary / Floor) and [MACHINERY.md](MACHINERY.md) (lever 3, the search / scoring / learning Machinery): those catalog _the things_ (primitives, mechanisms); this one maps _how you toggle which of them are in play for a run_, and why some toggles are the vocabulary itself while others must be an explicit switch. [RESEARCH-2026-07-08.md](RESEARCH-2026-07-08.md) is the frame all three are read against; run-time configuration lives in [ARCHITECTURE.md](ARCHITECTURE.md)'s `Config` (`solvers/dsl/config.py`).
+A map of the **control surface for what programs are _expressible_** — the "what's possible" levers. Sibling to [ONTOLOGY.md](ONTOLOGY.md) (lever 1, the primitive vocabulary / Floor) and [MACHINERY.md](MACHINERY.md) (lever 3, the search / scoring / learning Machinery): those catalog _the things_ (primitives, mechanisms); this one maps _how you toggle which of them are in play for a run_, and why some toggles are the vocabulary itself while others must be an explicit switch. [RESEARCH-2026-07-08.md](docs/RESEARCH-2026-07-08.md) is the frame all three are read against; run-time configuration is the frozen `Config` bundle (`program_search/execution/model/config.py`, presets in `execution/presets.py` — see [EXECUTION.md](EXECUTION.md)), and the expressiveness switches themselves are fields on `program_search/search/search_engine.py::BottomUpSearchEngine`.
 
 It exists because "control the search space" hides at least two independent gates that get conflated: **curating the bag of primitives** and **flipping a capability the bag can't summon**. The load-bearing fact — the reason this needs its own map — is that _vocabulary curation is necessary but not sufficient_: **invention can re-introduce a capability you thought you removed by emptying the bag** (see Table B, higher-order invention). You can't reason about "turn X off for this run" without seeing both gates.
 
-> **Status: phase-1 conceptual model — not yet reconciled with the code.** This is the map of _what control should look like_, derived from first principles, **before** auditing what's actually wired. Several Table-B switches likely already exist as `Config` axes (`Config.library`, `Config.search.kind`, `Config.cost`, …); others may be absent or baked. **Phase-2 job:** for every row below, mark _implemented? / how? / switch-or-bag-only?_ and reconcile against `solvers/dsl/config.py` + `substrate/`. Confidence is `[H]` working-hypothesis throughout until then.
+> **Status: reconciled against the code, 2026-07-13.** Every row below has been audited and carries its implementation status. The wake-side switches (Table B, rows 4–7) live as fields on `program_search/search/search_engine.py::BottomUpSearchEngine`, set per run through `Config`/presets/`--set`; the sleep-side ones (rows 1–3) live in `program_search/learn/`. Two capabilities remain open — the **Object pathway** (Table A) and **recursive invention** (Table B). Resolutions from the audit are in [Grounding notes](#grounding-notes-2026-07-13).
 
 ## How to read / maintain this
 
 - **Two tables, one dividing line.** Table A = capabilities _summoned by the vocabulary_ (control by curating the bag — no switch needed). Table B = capabilities _not fully gated by the bag_ (they need their own config switch). The line between them is the whole point.
 - **The Options column is the experiment surface** — the settings you'd actually vary for a run.
-- The **rendered companion** — [`search-space-control.html`](search-space-control.html) — carries the same two tables plus the co-dependency **graph** (open in a browser; GitHub shows it as source).
-- Deliberately a _map_, not a claim of coverage. Update the Status once phase-2 grounds each row.
+- The **rendered companion** — [`docs/search-space-control.html`](docs/search-space-control.html) — carries the same two tables plus the co-dependency **graph** (open in a browser; GitHub shows it as source).
+- Deliberately a _map_, not a claim of coverage. The Status columns record the 2026-07-13 code audit; re-ground them when the control surface moves.
 
 ## Mental model (the words we're using)
 
@@ -29,28 +29,29 @@ It exists because "control the search space" hides at least two independent gate
 
 Control = **curate the bag**. ON iff a primitive whose _type_ demands/provides it is present. No switch needed.
 
-| Capability | Options | Turned on by (a primitive typed…) |
-| --- | --- | --- |
-| Data nouns in play | Grid · Int/Color · Bool · Object · List[·], Pair[·] | any primitive that produces/consumes that type |
-| Boolean sub-vocabulary (predicates) | none · `is_empty` / `equals` / `contains_color` … | a `… → Bool` primitive |
-| Branching / control flow | absent · present (`if`) | the `if` primitive — drags in short-circuit eval (build-time) **and** requires the row above |
-| Higher-order primitives | none · `map` / `fold` / `filter` / `sort_by` | a primitive with a _function-typed argument_ (also demands the fill-mode switch in B) |
-| Arithmetic & comparison | none · `+ − ×` · `= > <` | `Int→Int`, `Int→Int→Bool` primitives |
-| Object pathway | neither · on-ramp only (`segment`) · off-ramp only (`render`) · both | `Grid→List[Object]` and `List[Object]→Grid` |
-| Type discipline of the bag | ground-only (monomorphic) · schema (polymorphic — type vars) | choosing primitives with vs. without type variables |
+| Capability | Options | Turned on by (a primitive typed…) | Status (2026-07-13) |
+| --- | --- | --- | --- |
+| Data nouns in play | Grid · Int/Color · Bool · Mask · Object · List[·], Pair[·] | any primitive that produces/consumes that type | ✅ all but Object — `substrate/types.py` (`_BASE_TYPES` = Grid/Color/Int/Bool/Fn/Mask; `list`/`pair` constructors). **Object: not implemented** — the one Table-A gap |
+| Boolean sub-vocabulary (predicates) | none · `eq` / `lt` / `gt` / `and` / `or` / `not` … | a `… → Bool` primitive | ✅ `primitives/control.py` |
+| Branching / control flow | absent · present (`if`) | the `if` primitive — drags in short-circuit eval (build-time) **and** requires the row above | ✅ `control.py` — a capability token typed `(Bool, a, a) → a`; its presence in the bag summons short-circuit `If` AST nodes (never applied eagerly; ARCHITECTURE.md §5.4) |
+| Higher-order primitives | none · `map` / `fold` / `filter` / `sort_by` | a primitive with a _function-typed argument_ (also demands the fill-mode switch in B) | ✅ `primitives/higher_order.py` — all four, with real body samplers |
+| Arithmetic & comparison | none · `+ − ×` · `= > <` | `Int→Int`, `Int→Int→Bool` primitives | ✅ `arithmetic.py` (add/sub/mul/floordiv/mod/min/max/abs), comparisons in `control.py` |
+| Object pathway | neither · on-ramp only (`segment`) · off-ramp only (`render`) · both | `Grid→List[Object]` and `List[Object]→Grid` | ❌ **not implemented** — no `Object` type, no `segment`/`render` (`Mask` covers cell selection, not objecthood) |
+| Type discipline of the bag | ground-only (monomorphic) · schema (polymorphic — type vars) | choosing primitives with vs. without type variables | ✅ `types.py` — `TypeVar` + `unify`/instantiate; both disciplines in live libraries |
 
 ## Table B — Not fully gated by vocabulary → give it a switch
 
-Curating the bag can't cleanly toggle these — invention re-summons them through the back door, or they answer _how_, not _what_. Likely home: `Config` in `solvers/dsl/config.py`.
+Curating the bag can't cleanly toggle these — invention re-summons them through the back door, or they answer _how_, not _what_. Home: sleep-side rows in `program_search/learn/`; wake-side rows are fields on `search/search_engine.py::BottomUpSearchEngine` (surfaced per run via `Config`/presets/`--set`).
 
-| Capability | Options | Why it needs its own switch |
-| --- | --- | --- |
-| Higher-order **invention** | off · on (function-typed `Param`s + operator-position abstraction) | can mint `twice` from a _first-order_ bag — the back-door gate; removing HO primitives does **not** stop it |
-| Recursive **invention** | off · on | can mint recursion the bag never held; termination-safety risk |
-| Invention governance (MDL bar) | strict … permissive (threshold) | a policy with no vocabulary proxy |
-| Function-hole fill mode | none (unfillable) · point-free only · full lambda synthesis | even with HO primitives present, _how_ a function-hole is filled is a separate choice (dormant until a hole exists) |
-| Polymorphism instantiation | monomorphize · bounded (task-reachable) · unrestricted | "how far to instantiate type variables" is orthogonal to which primitives exist |
-| Constant policy | finite-enumerate · harvest-from-instance · functionally-derive · parameterize (lift to `Param`) | orthogonal to which primitives are present |
+| Capability | Options | Why it needs its own switch | Status (2026-07-13) |
+| --- | --- | --- | --- |
+| Higher-order **invention** | off · on (function-typed `Param`s + operator-position abstraction) | can mint `twice` from a _first-order_ bag — the back-door gate; removing HO primitives does **not** stop it | ✅ `learn/antiunify.py` — `AntiunifyPairs` (with `bound_var_safe`) + `FrequentSubtree` proposers |
+| Recursive **invention** | off · on | can mint recursion the bag never held; termination-safety risk | ❌ **not implemented** — no recursion-minting proposer; still open |
+| Invention governance (MDL bar) | strict … permissive (threshold) | a policy with no vocabulary proxy | ✅ `GreedyMDL` selector (`learn/selection.py`) over `CompressionMetric`/`TwoPartMDL` (`analysis/compression.py`) |
+| Function-hole fill mode | none (unfillable) · point-free only · full lambda synthesis | even with HO primitives present, _how_ a function-hole is filled is a separate choice (dormant until a hole exists) | ✅ `function_hole_fill_mode: "none" \| "point-free" \| "lambda-synthesis"` — all three implemented and tested |
+| Polymorphism instantiation | monomorphize · bounded (task-reachable) · unrestricted | "how far to instantiate type variables" is orthogonal to which primitives exist | ✅ `polymorphism_instantiation` — all three (`search/polymorphism.py`) |
+| Constant policy | finite-enumerate · harvest-from-instance · parameterize (lift to `Param`) | orthogonal to which primitives are present | ✅ `constant_sources` tuple (`search/leaves.py`); `parameterize` is an engine no-op realized in `learn/`. The phase-1 `functionally-derive` option was deliberately dropped as a leaf source — derived constants are already reachable as compositions (`width(Input())`) |
+| Unpinned-type-var resolution | reject · eager grounding over the type universe · lazy synthesis | how a hole whose type is _still a variable_ gets resolved — orthogonal to instantiation of composed values (a switch the phase-1 map didn't predict) | 🟡 `unpinned_type_var_mode: "reject" \| "eager_grounding_over_universe" \| "lazy_synthesis"` — first two implemented; `lazy_synthesis` unbuilt (raises) |
 
 **Two rows that decompose on purpose:**
 
@@ -72,16 +73,17 @@ One rule generates every cluster: **a type is useful only if the bag holds both 
   ISLAND   Grid ─histogram▶ Histogram  ─╳  (no consumer back)               ✗ dead weight
 ```
 
-Read it: `Bool` has no direct route to a grid — `if` _is_ its off-ramp; drop `if` and predicates become an island, drop predicates and `if`'s condition is unfillable. `Int` gets home only via a **two-hop** off-ramp (`compare`→`Bool`, then `if`→`Grid`); drop either hop and `Int` is an island. Rendered version with colour/ramps: [`search-space-control.html`](search-space-control.html).
+Read it: `Bool` has no direct route to a grid — `if` _is_ its off-ramp; drop `if` and predicates become an island, drop predicates and `if`'s condition is unfillable. `Int` gets home only via a **two-hop** off-ramp (`compare`→`Bool`, then `if`→`Grid`); drop either hop and `Int` is an island. Rendered version with colour/ramps: [`docs/search-space-control.html`](docs/search-space-control.html).
 
 ## The through-line
 
 Types summon capabilities (Table A); some capabilities slip past vocabulary and need their own switch (Table B); and the vocabulary only pays off when its types form a connected on-ramp/off-ramp path from input to output (the graph). **Curating the bag is necessary but never sufficient.**
 
-## Phase-2 checklist (drain when grounding against code)
+## Grounding notes (2026-07-13)
 
-- [ ] For every Table A/B row: _implemented? / how? / switch-or-bag-only?_
-- [ ] Reconcile Table B against `Config` (`solvers/dsl/config.py`) — which switches exist, which are baked, which are absent.
-- [ ] Substrate check: can `Param` carry a **function type**? Is the operator position of `Apply` an _abstractable subterm_ (→ HO invention possible) or a fixed symbol (→ not)?
-- [ ] Search check: function-hole fill mode actually implemented — none / point-free / lambda synthesis?
-- [ ] Once grounded: add reciprocal pointers in [ONTOLOGY.md](ONTOLOGY.md) / [MACHINERY.md](MACHINERY.md), and a line under CLAUDE.md "Sources of truth."
+The phase-2 checklist is drained; per-row verdicts are in the Status columns above. Resolutions worth keeping:
+
+- **Substrate can represent HO invention.** `Param` _can_ carry a function type, and the substrate has first-class function values (`PrimRef`, `AppFn`, `Lam` — `substrate/program.py`), so the operator position is an abstractable subterm, not a fixed symbol.
+- **`functionally-derive` dissolved, not dropped.** It isn't a `ConstantSource` leaf because derived constants are already reachable as ordinary compositions (`width(Input())`) — a source would double-count them.
+- **One switch the phase-1 map missed:** `unpinned_type_var_mode` (last Table-B row) — the map conflated it with polymorphism instantiation, but instantiating composed _values_ and resolving a still-variable _hole type_ are independent knobs.
+- **Still open:** the Object pathway (Table A) and recursive invention (Table B); `unpinned_type_var_mode="lazy_synthesis"` is declared but unbuilt. (The reciprocal pointers — [ONTOLOGY.md](ONTOLOGY.md) / [MACHINERY.md](MACHINERY.md) headers and CLAUDE.md's "Lever maps" line — are in place.)

@@ -1,6 +1,6 @@
 # EXECUTION.md — the activity / call-stack model
 
-How the three activities (**SEARCH**, **SEARCH + LEARN**, **STUDY**) are composed from the execution layer's primitives. Sibling to [ARCHITECTURE.md](ARCHITECTURE.md) (the search-engine design); code lands under `src/arc_lab/program_search/execution/` (the `solvers/program_search/` → `program_search/` rename is **done**; the old `solvers/dsl/` stays on disk until the end-of-overhaul audit — see _Implementation order_).
+How the three activities (**SEARCH**, **SEARCH + LEARN**, **STUDY**) are composed from the execution layer's primitives. Sibling to [ARCHITECTURE.md](ARCHITECTURE.md) (the search-engine design); the code lives under `src/arc_lab/program_search/execution/` (the old `solvers/dsl/` tree stays on disk until the end-of-overhaul audit — see _Implementation history_).
 
 Status: agreed design, 2026-07-11. There is no `Solver` / `ProgramSearchSolver` class — the execution layer drives `Config` (`library × search_engine × budget × constraints × cost × learn?`) directly.
 
@@ -227,58 +227,8 @@ Two deliberate changes vs. the old CLI: **`analyze-run` is read-side only** (the
 5. Fresh search each wake (default): sleep must see solutions _re-expressed_ in the grown library, and search-effort is a measured signal — serving cached solutions would silently destroy both.
 6. The report/analyze step (`analyze_run`, `create_study_report`) is read-only over stored artifacts.
 
-## Implementation order
+## Implementation history
 
-Ordering principles: **leaf dependencies first** · **additive before destructive** (deletions/renames last, tree stays workable throughout) · **cross-fork contact only at named sync points** (the engine/substrate work proceeds in parallel; the forks never edit the same file bodies).
+Built 2026-07-11 in seven phases (foundations → run data model → scoring/predict → `execute` → activities → study → CLI + docs), with three cross-fork sync points (component serde on the real engines; the `run(train_examples, …)` blindness seam; the `LearnEngine`/`LearnOutcome` port). The full phase plan and per-step notes are in this file's git history (pre-2026-07-13); the locks were re-pinned deliberately in `tests/program_search/execution/test_locks.py` (full numbers + interpretation: EXPERIMENTS.md 2026-07-11).
 
-**Phase 0 — Foundations** _(pure, zero-collision)_
-
-1. `core/hashing.py` — `canonical_json` + `hash_id`. Tests: stability, key-order invariance.
-2. `Corpus.content_hash` in `core/dataset.py`. Tests: same content ⇒ same hash; content change ⇒ different; corpus _name_ excluded (content-addressed: identical content under two names is the same corpus for caching).
-
-**Phase 1 — The run data model** (`execution/model/`)
-
-3. `results.py` — `TaskScore`, `TaskResult`.
-4. The serialization contract, once: `kind` discriminator + params, base-class `from_dict` dispatch (mirrors `Program.from_dict`), generic frozen-dataclass↔dict helper.
-5. `learn_spec.py`.
-6. `config.py` rewrite — `attempts_per_test`, `learn: LearnSpec | None`, `with_(...)`, delegating `to_dict`/`from_dict`.
-7. `run_spec.py` (`run_id`) + `run_record.py`.
-8. Tests against **fake components**: round-trip, hash stability, identity properties (SEARCH/LEARN never collide; corpus content moves `run_id`; commit excluded).
-
-> **🔗 Sync A:** `to_dict`/`from_dict` on the real `SearchEngine`/`Cost`/`Constraint`/`LearnEngine` (engine-fork files). Phase 1 completes against fakes; real wiring is a small follow-up.
-
-**Phase 2 — Scoring + predict** _(mostly additive)_
-
-9. `eval/scoring.py`: parameterize attempts (`k`, default 2, fed from `Config`); `Prediction` type moves in (additively; the `solvers/base` import path dies in Phase 6).
-10. `execution/predict.py` + tests with hand-built programs.
-
-**Phase 3 — The core: `execute`**
-
-11. `execute.py` — artifact layout, `runspec.json` first, `trace.jsonl` streamed + resume, `results.json` last, idempotency, `record_run`, `RunRecord` return; SEARCH branch wired to `SearchEngine.run`.
-12. End-to-end test: tiny task + tiny library → run → cache-hit → resume from partial trace.
-
-> **🔗 Sync B: DONE** — `run(train_examples, …)` landed across the engine/cost/constraint/sampler seam (2026-07-11).
-
-> **🔗 Sync C: DONE (2026-07-11).** `LearnEngine`/`LearnOutcome` finalized in `learn/learn_engine.py`; `analysis/compression.py` (SolvedTask, MDL metrics) ported. Concrete engines port from old `solvers/dsl/learn/` — `SleepStrategy`→`LearnEngine` (frozen dataclass, `start_index` derived from the library), `SleepOutcome`→`LearnOutcome` (`score`→`description_length`), antiunify/stitch_shim gain ordinary 3-child `If` handling (+ a reserved `if` head symbol in the Stitch s-expression codec); old `loop.py` dissolves into `run_search_learn` + engine-internal governance; `harness.py` is superseded by `execute`.
-
-**Phase 4 — Activities**
-
-13. `run_search.py` (thin).
-14. `run_search_learn.py` — the loop (batch wake, ends with sleep, reset/telemetry params, per-iteration trace) + derived runs via `load_library`.
-15. `analyze_run.py` — read-side basics.
-
-**Phase 5 — Study: DONE (2026-07-11)**
-
-16. `model/study_spec.py` (`StudySpec` + `TargetAbstraction`; provenance `to_dict`, no `from_dict` — same rationale as `RunSpec`) + `run_study.py` (grid via `base_config.with_(library=Lᵢ, budget=bⱼ, learn=None)` — budget moved from engine field to `Config` field + `run()` arg (machinery vs data), execute-with-cache; `StudyResult` = learn activity + `{L1,L2,L3}` + `GridCell → RunRecord`) + `create_study_report` (pure read: behavioral check via probe-based semantic equivalence — identical templates short-circuit, else both impls compared over typed probe values under type-matched argument permutations, cap recorded as `probe_cap`; solve-rate grid; `speedup_vs_L1` effort rows; per-library×budget transfer rows).
-
-**Phase 6 — Destructive cleanup** _(each its own commit)_
-
-17. Delete `solvers/base.py` (`Solver`) + `eval/runner.py`; consumers of `TaskResult` move to `model/results.py`. _(The `solvers/` → `program_search/` rename is already done.)_ **Folded into step 19 (2026-07-11):** `Solver`/`runner` are load-bearing for the old tree's importability, the old behavior locks, and the old CLI — they form ONE deletion unit with `solvers/dsl/`, `solvers/baseline.py`, the old CLI commands, and the old tests. The intent of this step — the new world depends on none of it — is already satisfied and verified (nothing under `program_search/` or `tests/program_search/` imports them; the execution layer's `TaskResult` is `model/results.py`'s).
-18. **DONE (2026-07-11):** `taskgen/` ported out of `learn/` to top-level `src/arc_lab/taskgen/` (`GeneratedTask` · `make_task` · `write_testbed`), consuming only `core/`. Output format unchanged (ARC-format `testbeds/<name>/tasks/` + manifest, loaded by the existing `core.dataset.load_testbed`); the manifest `content_hash` now uses `core/hashing` (one discipline) — provenance only, so old committed manifests stay valid, but a *regenerated* testbed's manifest hash will differ even for identical content. Old `solvers/dsl/learn/taskgen.py` dies with step 19.
-19. **Audit, then delete `solvers/dsl/`** — the old tree stays on disk until a dedicated comparison pass (old `dsl/` vs the new build: anything missed?) has run. Deleting it is the _last_ destructive step, after that audit. _(User-owned; runs after everything else. Includes step 17's unit.)_
-
-**Phase 7 — CLI + docs**
-
-20. **DONE (2026-07-11):** `cli/` — thin modules per command (`search` · `learn` · `run-study` · `analyze-run` · `taskgen` · `runs` · `configs` · `datasets` · `show`), entry point `arc_lab.cli.main:app`; the old CLI survives as `cli_legacy.py` until the deletion pass. Presets registry `execution/presets.py::PRESETS` (`d4`/`sym`/`synth`/`beam`) replaces the solver `REGISTRY`; study registry `execution/studies.py::STUDIES` (E1 ported; E2-E10 recalibration queued in EXPERIMENT_QUEUE.md); generator registry `taskgen/generators.py::GENERATORS` (`e1-rot90` reproduces the committed testbed exactly).
-21. **DONE (2026-07-11):** CLAUDE.md rewritten against the new world; `ARCHITECTURE-2026-07-09.md` marked SUPERSEDED by this file; EXPERIMENTS.md overhaul entry logged.
-22. **Re-pin the behavior locks deliberately** — **DONE (2026-07-11)**, `tests/program_search/test_locks.py`: `d4` = the old `dsl` seven EXACTLY; `synth` = the old `dsl-synth` eleven EXACTLY (locked at depth 2 — the old "deeper yields the identical set" finding replicates); `sym` = 10 (the seven + all three overlay tasks; the old nine TILE tasks are an understood budget/policy limit — see the lock file — locked on a fixed 30-task slice, full corpus ~32 min); `beam` newly locked at 9 (truncation cost visible); the E1 study locks the learning loop end-to-end (mint -> behavioral match -> enablement 0->8 -> transfer 4/4). Full numbers + interpretation: EXPERIMENTS.md 2026-07-11. The old locks in `tests/test_integration.py` keep guarding the old tree until its deletion pass.
+**One step remains open — audit, then delete the old tree.** `src/arc_lab/solvers/` (incl. `dsl/`, `base.py`, `baseline.py`), `eval/runner.py`, `cli_legacy.py`, and the old top-level `tests/test_*.py` stay on disk until a dedicated comparison pass (old `dsl/` vs the new build: anything missed?) has run; they then delete as ONE unit. Nothing under `program_search/`, `cli/`, or `tests/program_search/` imports them. The old locks in `tests/test_integration.py` guard the old tree until then. _(User-owned; the last destructive step.)_ The eight live-module test files formerly at `tests/test_*.py` were moved to `tests/{core,eval,taskgen}/` (2026-07-13) precisely so this deletion cannot sweep them.

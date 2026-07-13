@@ -1,10 +1,10 @@
 # ARCHITECTURE.md — the program-search engine
 
-The design contract for the **full-capability program-search engine** under `src/arc_lab/solvers/program_search/`. This is the thing we build to; a change that deviates from it updates this file first or is a bug.
+The design contract for the **full-capability program-search engine** under `src/arc_lab/program_search/`. This is the thing we build to; a change that deviates from it updates this file first or is a bug.
 
-**Scope.** This document is the _search engine_ — how programs are proposed, filtered, and ranked (the forward/wake proposer). Two neighbours are **separate specs, written to the same standard**, not covered here: the **`learn/` wake–sleep loop** (invention + MDL governance — §14) and the **run/config/corpus model** ([ARCHITECTURE-2026-07-09.md](ARCHITECTURE-2026-07-09.md), §15). Primitive _semantics_ (what `segment`/`render`/etc. compute) live in [ONTOLOGY.md](ONTOLOGY.md); this spec owns their _types and how search consumes them_.
+**Scope.** This document is the _search engine_ — how programs are proposed, filtered, and ranked (the forward/wake proposer). Two neighbours are **separate specs, written to the same standard**, not covered here: the **`learn/` wake–sleep loop** (invention + MDL governance — §14) and the **run/config/corpus model** ([EXECUTION.md](EXECUTION.md); the superseded snapshot is [docs/archive/ARCHITECTURE-2026-07-09.md](docs/archive/ARCHITECTURE-2026-07-09.md)). Primitive _semantics_ (what `segment`/`render`/etc. compute) live in [ONTOLOGY.md](ONTOLOGY.md); this spec owns their _types and how search consumes them_.
 
-**Read against:** [SEARCH-SPACE.md](SEARCH-SPACE.md) — every capability here maps to a row there (§10). Also [ONTOLOGY.md](ONTOLOGY.md), [MACHINERY.md](MACHINERY.md), [MACHINERY-STRATEGY-2026-07-07.md](MACHINERY-STRATEGY-2026-07-07.md).
+**Read against:** [SEARCH-SPACE.md](SEARCH-SPACE.md) — every capability here maps to a row there (§10). Also [ONTOLOGY.md](ONTOLOGY.md), [MACHINERY.md](MACHINERY.md), [docs/MACHINERY-STRATEGY-2026-07-07.md](docs/MACHINERY-STRATEGY-2026-07-07.md).
 
 ---
 
@@ -52,7 +52,7 @@ The content-hashable run identity is `Config` (the bundle), not a separate class
 
 ## 3. The binding model — `scope` vs. `env`, De Bruijn
 
-The substrate ([substrate/program.py](src/arc_lab/solvers/program_search/substrate/program.py)) has **two separate binding channels** on `evaluate(grid, library, env, scope)`:
+The substrate ([substrate/program.py](src/arc_lab/program_search/substrate/program.py)) has **two separate binding channels** on `evaluate(grid, library, env, scope)`:
 
 - **`scope`** — lambda-bound variables. `Var($i)` reads `scope[-1 - index]`; `Lam` pushes one value per application. A runtime stack.
 - **`env`** — abstraction arguments. `Param(#j)` reads `env[index]`, fixed per abstraction _call_.
@@ -64,7 +64,7 @@ Mapping to the engine:
 
 **De Bruijn** (`Var(index)`, nameless, counting binder-nesting) is the best-practice choice: α-equivalence is structural equality (no wasted dedup on renamings), no variable capture, and the legal `Var`s at a point are exactly `0..len(Γ)-1`. **Gotcha:** indices are relative to binder depth, so an _open_ subterm is valid only at its depth. **Pool-per-scope protocol:** each pool is identified by its `(scope, contexts, budget)` memo key (§9). A **closed** subterm (no free `Var`) is scope-independent — its signature ignores `scope_binding` — so it may be reused across scopes without rewriting; an **open** subterm (containing a `Var`) is enumerated _fresh_ per scope, never imported (its De Bruijn indices are depth-relative). No cross-scope key rewriting is performed beyond the optional `↑`/shift, which is not used in the default path (ARC binders are shallow, so fresh open-enumeration is cheap).
 
-**Scope ordering (authoritative).** `build_grid`'s function is _curried_ `Lam(Lam(body))`, applied row-then-column, so the body sees **`$1` = row, `$0` = col** ([build.py](src/arc_lab/solvers/program_search/substrate/primitives/build.py)). The runtime scope tuple is therefore **`(row, col)`** (row pushed first/outer, col on top). Every `Context` and `body_sampler` below uses `(row, col)`.
+**Scope ordering (authoritative).** `build_grid`'s function is _curried_ `Lam(Lam(body))`, applied row-then-column, so the body sees **`$1` = row, `$0` = col** ([build.py](src/arc_lab/program_search/substrate/primitives/build.py)). The runtime scope tuple is therefore **`(row, col)`** (row pushed first/outer, col on top). Every `Context` and `body_sampler` below uses `(row, col)`.
 
 ---
 
@@ -116,7 +116,7 @@ return SearchResult(ranked_programs=solutions, stats=…)
 
 For every library primitive, generate well-typed applications; the **type flows out of composition** (never recomputed on the finished program), so each pooled entry carries its instantiated type.
 
-- **First-order:** instantiate the primitive's signature with fresh type vars (`instantiate`), `unify` each parameter against a pooled argument's type threading the `Substitution`, and read the instantiated result type via `apply_subst`. (These are the real [types.py](src/arc_lab/solvers/program_search/substrate/types.py) names — §11 uses them, not `fresh`/`substitute`.)
+- **First-order:** instantiate the primitive's signature with fresh type vars (`instantiate`), `unify` each parameter against a pooled argument's type threading the `Substitution`, and read the instantiated result type via `apply_subst`. (These are the real [types.py](src/arc_lab/program_search/substrate/types.py) names — §11 uses them, not `fresh`/`substitute`.)
 - **Variadic primitives** (`overlay`, `tile`; `Primitive.is_variadic`): enumerate applications at each arity `k = 1 … budget.max_arity`, drawing the `k` variadic arguments from the pool at the required type. Costed and deduped like any candidate; `max_arity` bounds the blow-up.
 - **Polymorphism** of any remaining free type var in a result is governed by the `PolymorphismInstantiation` policy (§6.2).
 - **Higher-order** (a function-typed parameter): §5.3.
@@ -241,13 +241,13 @@ Every capability is designed, in a definite **layer** of the build: `library` (t
 
 ## 11. Type-system & substrate design
 
-Built _with_ the engine. Uses the real [types.py](src/arc_lab/solvers/program_search/substrate/types.py) API: `unify`, `apply_subst`, `instantiate` (there is no `fresh`/`substitute` at module scope).
+Built _with_ the engine. Uses the real [types.py](src/arc_lab/program_search/substrate/types.py) API: `unify`, `apply_subst`, `instantiate` (there is no `fresh`/`substitute` at module scope).
 
 **Tag legend.** Each subsection below is either **already in the substrate** (verified present in code) or **[proposed — substrate change]**, which means _the design is complete in that subsection and only the code edit is pending_ — **not** that the capability is under-designed. Representation + algorithm + consumption are given here; field-level naming and serialization are the implementing code's job (the `Program` ABC already mandates `to_dict`/`from_dict`/`evaluate`/`result_type` on every node, so "a node implementing all `Program` operations" commits to those by contract), verified by the code-review pass, not restated here.
 
 ### 11.1 Parametric types — **already in the substrate**
 
-This layer exists in [types.py](src/arc_lab/solvers/program_search/substrate/types.py) today; the spec _describes_ it, it is not a proposed change. `Type = TypeCon | ArrowType | TypeVar`; **`TypeCon(name, args)`** is the n-ary constructor with base types as the nullary case (`GRID = TypeCon("grid")`), and `list_type(e) = TypeCon("list", (e,))` / `pair_type(a,b) = TypeCon("pair", (a,b))` are provided. `unify` (names + arities match, then args pointwise), `apply_subst`, and `instantiate` all recurse through `TypeCon.args`; `TypeVar` binds with occurs-check. So `map : ((a→b), List[a]) → List[b]`, `fold`, `filter`, `sort_by` are typeable now.
+This layer exists in [types.py](src/arc_lab/program_search/substrate/types.py) today; the spec _describes_ it, it is not a proposed change. `Type = TypeCon | ArrowType | TypeVar`; **`TypeCon(name, args)`** is the n-ary constructor with base types as the nullary case (`GRID = TypeCon("grid")`), and `list_type(e) = TypeCon("list", (e,))` / `pair_type(a,b) = TypeCon("pair", (a,b))` are provided. `unify` (names + arities match, then args pointwise), `apply_subst`, and `instantiate` all recurse through `TypeCon.args`; `TypeVar` binds with occurs-check. So `map : ((a→b), List[a]) → List[b]`, `fold`, `filter`, `sort_by` are typeable now.
 
 Two pieces the search layer must confirm/add on top (verify against current code, don't assume):
 
@@ -256,15 +256,15 @@ Two pieces the search layer must confirm/add on top (verify against current code
 
 ### 11.2 Arrow-typed higher-order holes, and how `Lam` is typed — **already in the substrate**
 
-Higher-order primitives type their function argument as a precise `ArrowType`, not opaque `FN`. Because `build_grid`'s function is curried `Lam(Lam(body))` applied row-then-col, its type is `INT → (INT → COLOR)` = `ArrowType((INT,), ArrowType((INT,), COLOR))`, so `build_grid : (INT, INT, ArrowType((INT,), ArrowType((INT,), COLOR))) → GRID` — as typed in [build.py](src/arc_lab/solvers/program_search/substrate/primitives/build.py). Arrow unification is thereby a pruning signal, not just a correctness check.
+Higher-order primitives type their function argument as a precise `ArrowType`, not opaque `FN`. Because `build_grid`'s function is curried `Lam(Lam(body))` applied row-then-col, its type is `INT → (INT → COLOR)` = `ArrowType((INT,), ArrowType((INT,), COLOR))`, so `build_grid : (INT, INT, ArrowType((INT,), ArrowType((INT,), COLOR))) → GRID` — as typed in [build.py](src/arc_lab/program_search/substrate/primitives/build.py). Arrow unification is thereby a pruning signal, not just a correctness check.
 
-The engine never calls `Lam.result_type`. Types flow from composition (§5.2) and are stored as pool keys; a synthesized `Lam`'s arrow type is computed by the enumerator at construction from its peeled binders and body type (§5.3). For _self-describing_ programs outside the engine (serialization, viz, `learn/`), the **`Lam` node carries its binder's param type** (`Lam(param_type, body)` — `Lam` is unary, one param type per node; a curried arrow is a nested chain of them, [program.py](src/arc_lab/solvers/program_search/substrate/program.py)), so `result_type` is a well-defined precise arrow — including for the _unused-binder_ case (a bound var absent from the body, whose param type is otherwise unrecoverable). `FN` remains only for genuinely opaque function values.
+The engine never calls `Lam.result_type`. Types flow from composition (§5.2) and are stored as pool keys; a synthesized `Lam`'s arrow type is computed by the enumerator at construction from its peeled binders and body type (§5.3). For _self-describing_ programs outside the engine (serialization, viz, `learn/`), the **`Lam` node carries its binder's param type** (`Lam(param_type, body)` — `Lam` is unary, one param type per node; a curried arrow is a nested chain of them, [program.py](src/arc_lab/program_search/substrate/program.py)), so `result_type` is a well-defined precise arrow — including for the _unused-binder_ case (a bound var absent from the body, whose param type is otherwise unrecoverable). `FN` remains only for genuinely opaque function values.
 
 **Curried vs uncurried, committed once:** all function holes and function values are **curried**. `build_grid : (INT, INT, INT→(INT→COLOR)) → GRID`; its value is `Lam(Lam(body))`, matching the substrate's curried `fn(i)(j)` application and its `Closure`-only runtime check. Point-free fill of a curried hole therefore admits only curried function values (uncurried primitives fail to unify, above); if an uncurried primitive is genuinely wanted at a curried hole, it must be η-expanded into a curried `Lam` by synthesis, not supplied directly.
 
 ### 11.3 Short-circuit `If` node — **already in the substrate**
 
-A dedicated AST node `If(cond, then, orelse)` implementing all `Program` operations, whose `evaluate` computes `cond` and then **only the selected branch** (so a program containing `If` is correct on test inputs, not just during search — §5.4). `result_type` = the (unified) branch type; `children` = `(cond, then, orelse)`; round-trips via `to_dict`/`from_dict` ([program.py](src/arc_lab/solvers/program_search/substrate/program.py)). The library keeps an `if` **capability entry** `(BOOL, a, a) → a` as the Table-A summoner (§5.4); the enumerator translates it to `If` nodes rather than eager `Apply`. The old eager `IF` impl in [control.py](src/arc_lab/solvers/program_search/substrate/primitives/control.py) is retired: the entry remains as the token, and its impl raises if anything ever tries to apply it eagerly.
+A dedicated AST node `If(cond, then, orelse)` implementing all `Program` operations, whose `evaluate` computes `cond` and then **only the selected branch** (so a program containing `If` is correct on test inputs, not just during search — §5.4). `result_type` = the (unified) branch type; `children` = `(cond, then, orelse)`; round-trips via `to_dict`/`from_dict` ([program.py](src/arc_lab/program_search/substrate/program.py)). The library keeps an `if` **capability entry** `(BOOL, a, a) → a` as the Table-A summoner (§5.4); the enumerator translates it to `If` nodes rather than eager `Apply`. The old eager `IF` impl in [control.py](src/arc_lab/program_search/substrate/primitives/control.py) is retired: the entry remains as the token, and its impl raises if anything ever tries to apply it eagerly.
 
 ### 11.4 `body_sampler` on `Primitive` — **already in the substrate**
 
@@ -279,7 +279,7 @@ A dedicated AST node `If(cond, then, orelse)` implementing all `Program` operati
 Named, bounded decisions about what the _program language_ (and its Stitch s-expression mirror) does not yet spell — each with its lift. Nothing here makes a **value** unreachable; these bound _syntax_, and the register exists so any limit is a decision, never an accident.
 
 1. **No container-literal syntax.** `Const` admits scalars only (int/bool); there is no AST node denoting `[1, 2, 3]`. Container _values_ are fully reachable via constructor primitives (a variadic `list : (a, …) → List[a]` is expressible today — a Table-A bag capability), so a literal form is a deferred _convenience_ (shorter programs, cheaper MDL for constant containers). Lift: a `Const`-with-tuple-value (or dedicated node) + one codec encode line + one inference rule, in lockstep.
-2. **Codec-completeness invariant.** Every `Program` node kind MUST have an s-expression encode + decode rule (`stitch_shim.py`), or sleep silently cannot compress programs containing it. The `If` port is the worked example (reserved `(if c t e)` head, symmetric decode). Any new substrate node extends the codec in the same change — **enforced by `tests/program_search/test_codec_completeness.py`**, whose coverage tables are checked against `Program.__subclasses__()`: a new node kind fails the suite until both codec directions exist.
+2. **Codec-completeness invariant.** Every `Program` node kind MUST have an s-expression encode + decode rule (`stitch_shim.py`), or sleep silently cannot compress programs containing it. The `If` port is the worked example (reserved `(if c t e)` head, symmetric decode). Any new substrate node extends the codec in the same change — **enforced by `tests/program_search/learn/test_codec_completeness.py`**, whose coverage tables are checked against `Program.__subclasses__()`: a new node kind fails the suite until both codec directions exist.
 3. ~~Untyped-context scalar decode defaults to INT~~ — **lifted (2026-07-11)** via typed-literal notation: `to_sexpr` prints a non-INT scalar const as `3:color`, `from_sexpr` decodes it exactly regardless of context, so only genuinely-INT literals are bare. The former edge (a COLOR const in an expectation-free position — args of a metavar-headed application — decoded as INT) is gone; regression-tested in `test_codec_completeness.py`.
 
 ---
@@ -303,7 +303,9 @@ Two SEARCH-SPACE.md Table-B rows are **realized in the wake–sleep loop**, and 
 
 **Deliverable:** a `learn/` architecture spec covering invention representation, the proposal algorithm, recursion admission + termination safety, MDL scoring + acceptance threshold, and how invented primitives re-enter the library under per-run switches. It is required, not optional.
 
-## 15. Open reconciliation
+## 15. Reconciliation — resolved (2026-07-13)
 
-- The run/config/corpus model lives in [ARCHITECTURE-2026-07-09.md](ARCHITECTURE-2026-07-09.md); decide whether this file absorbs it or they are cross-referenced siblings, then fix CLAUDE.md's "Sources of truth" pointer. This is a genuine documentation-integration task (not a capability): the anti-compromise rule in §1 is scoped to _capabilities_, and does not claim this integration is done.
-- `Config` as the bundle (§2) must reconcile with the existing `Config`/`RunSpec` and the known "dead constraint/cost injection" debt — this engine is what makes that injection live.
+Both items this section tracked are closed:
+
+- The run/config/corpus model is owned by [EXECUTION.md](EXECUTION.md); this file and it are cross-referenced siblings, and CLAUDE.md's "Sources of truth" points at each. The pre-overhaul snapshot is archived at [docs/archive/ARCHITECTURE-2026-07-09.md](docs/archive/ARCHITECTURE-2026-07-09.md).
+- `Config` as the bundle (§2) is realized as `execution/model/config.py::Config`, and the once-dead constraint/cost injection is live: `extract` applies `constraints` to goal-test survivors (§5.8) and `cost` ranks the pool (§5.7).

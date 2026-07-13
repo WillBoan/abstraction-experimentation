@@ -4,65 +4,98 @@ A sandbox for experimenting with the [ARC-AGI](https://arcprize.org) benchmarks
 (ARC-AGI-1 and ARC-AGI-2) — and, from there, with ML, program synthesis, and
 abstraction formation more broadly.
 
-The design principle is that **solvers are pluggable strangers behind one narrow
-interface**. The harness — data model, scorer, runner, visualiser — never knows
-which kind of solver it's running, so LLM solvers, DSL/program-search solvers,
-neural solvers, and anything you invent next all coexist without touching it.
+The load-bearing idea: **machinery is data**. There are no solver classes — a
+run is a frozen, content-hashed `RunSpec = Config × Corpus`, where `Config` is
+the machinery itself (`library × search_engine × budget × constraints × cost ×
+attempts_per_test × learn?`) expressed as data. The execution layer drives it
+directly: every run gets a `run_id` that is a pure function of its spec, is
+executed exactly once, and lands in `runs/` — a gitignored, regenerable cache —
+crash-safe and resumable. Rerunning anything already computed is free.
 
-How a run is specified, executed, and recorded — the `RunSpec · Config · Corpus`
-model and the activity tiers (Eval · Synthesize · analyze · Study) — is mapped in
+On top of search sits **wake–sleep library learning**: wake = program search
+over a corpus; sleep = a learn engine compressing the found solutions into new
+library abstractions under MDL governance. Studies then grid learned vs.
+hand-written vs. target libraries across budgets and corpora to measure
+enablement, search-effort speedup, and transfer.
+
+The activity/run model (RunSpec · activities · `runs/` layout) is
+[EXECUTION.md](EXECUTION.md); the search-engine and substrate design is
 [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Layout
 
 ```
 src/arc_lab/
-  core/      grid.py · task.py · dataset.py   immutable, validated domain model
-  viz/       render.py                        render grids/tasks (official palette)
-  eval/      scoring.py · runner.py           ARC top-2 scoring + experiment runner
-  solvers/   base.py (the interface)
-             baseline.py                      identity (the scoring floor)
-             dsl/                             program search: substrate · search ·
-                                              analysis (run artifacts, MDL metrics) ·
-                                              learn (abstraction-learning loop)
-             llm/                             Claude-backed rule induction (optional)
-  cli.py                                      datasets · show · eval · analyze · study · runs
-data/        arc-agi-1, arc-agi-2             the datasets, as git submodules
-testbeds/    committed synthetic task sets for the learn experiments
-runs/        run artifacts — a gitignored, regenerable cache
-tests/                                        unit + end-to-end tests
+  core/                grid · task · annotation · dataset (Corpus) · hashing
+  eval/                ARC scoring rules (top-2), paradigm-neutral
+  program_search/
+    substrate/         the language: types · programs · library · primitives
+    search/            typed bottom-up search engine + constraints · cost · budget
+    learn/             sleep: learn engines · proposers (antiunify · Stitch) · MDL
+    analysis/          read-side metrics (compression, MDL, effort)
+    execution/         RunSpec/Config model · execute() · activities · presets · studies
+  taskgen/             synthetic-corpus generators (writes testbeds/)
+  cli/                 thin: arg-parse + dispatch only
+  viz/                 render grids/tasks (official palette)
+data/                  arc-agi-1, arc-agi-2 — the datasets, as git submodules
+testbeds/              committed synthetic task sets for the learn experiments
+runs/                  run artifacts — a gitignored, regenerable cache
+experiments/           lab notebooks for non-trivial investigations
+tests/                 fast functionality tests + slow regression locks
 ```
+
+(A transitional pre-overhaul tree, `src/arc_lab/solvers/`, remains on disk
+pending a final audit and deletes as one unit — don't build against it.)
 
 ## Setup
 
 Requires [`uv`](https://docs.astral.sh/uv/) and Python 3.11+.
 
 ```bash
-make setup          # init submodules + install (dev + llm extras)
+make setup          # init submodules + install
 # or manually:
 git submodule update --init --recursive
-uv sync --extra llm
+uv sync
+```
+
+Everything runs through `uv` (`uv run …`); never invoke `python`/`pytest` bare.
+
+```bash
+make test           # fast tests — the dev inner loop (~seconds)
+make check          # ruff + mypy --strict + FULL suite incl. slow locks — the gate
+make format         # auto-fix lint + formatting
 ```
 
 ## Quick start
 
 ```bash
-uv run arc-lab datasets                 # list datasets and task counts
-uv run arc-lab show 007bbfb7 --dataset arc1-train   # render a task to PNG
-uv run arc-lab eval dsl --dataset arc1-eval         # score a solver
-uv run arc-lab solvers                  # list registered solvers
-uv run arc-lab analyze dsl-synth --dataset arc1-train   # run artifact: programs + metrics
-uv run arc-lab study e1-rot90           # run an abstraction-formation study
-uv run arc-lab runs                     # list recorded run artifacts
+uv run arc-lab search d4 --corpus arc1-train        # one SEARCH recorded run (cached)
+uv run arc-lab learn synth --corpus e1-rot90:train --eval-corpus e1-rot90:heldout
+                                                    # wake-sleep loop: 2-3 recorded runs
+uv run arc-lab run-study e1-rot90                   # study grid + report (cache hits free)
+uv run arc-lab analyze-run <run_id>                 # read-only metrics over a completed run
+uv run arc-lab taskgen e1-rot90                     # (re)generate a committed testbed
 ```
 
-The **LLM solver** needs the optional `anthropic` dependency and credentials
-(`ANTHROPIC_API_KEY`, or an `ant auth login` profile):
+Utilities:
 
 ```bash
-uv sync --extra llm
-uv run arc-lab eval llm --dataset arc1-eval --limit 10
+uv run arc-lab configs                              # list machinery presets
+uv run arc-lab datasets                             # list datasets and task counts
+uv run arc-lab runs                                 # list recorded runs
+uv run arc-lab show 007bbfb7 --dataset arc1-train   # render a task to PNG
+uv run arc-lab estimate d4 --corpus arc1-train      # worst-case search-cost ceiling, no execution
+uv run arc-lab -vv search ...                       # -v INFO / -vv DEBUG trace on stderr
 ```
+
+**Presets** (`d4` · `sym` · `synth` · `beam`) are named `Config`s in
+`execution/presets.py`. A `--corpus` is a dataset (`arc1-train`), a testbed
+(`e1-rot90`), or a testbed split (`e1-rot90:train` / `:heldout`).
+
+**Overrides:** any `Config` field is settable by dotted path — `--set
+budget.max_depth=4` — and the `<config>` argument may also be a JSON file
+`{"preset": ..., "set": {...}}`. Precedence: `defaults < preset < config file
+< --set`. Every override mints its own `run_id`, so the cache never collides.
 
 ## Datasets
 
@@ -83,11 +116,9 @@ Open it in Chrome and load any task JSON from `data/` to solve it by hand.
 
 ## Extending
 
-Solvers are pluggable: subclass [`Solver`](src/arc_lab/solvers/base.py) and
-register it in [`solvers/__init__.py`](src/arc_lab/solvers/__init__.py) — the
-scorer, runner, and CLI pick it up automatically. Recipes for adding
-primitives, searches, constraints/costs, and learn experiments live in
-[CLAUDE.md](CLAUDE.md).
+Recipes — add a primitive, a search engine, a machinery preset, a constraint or
+cost, a learn engine, a study, a CLI command — live in
+[CLAUDE.md](CLAUDE.md#recipes), the working contract for this repo.
 
 ## Documentation
 
@@ -96,16 +127,15 @@ Details live in the canonical files, not here:
 | File | What it holds |
 | --- | --- |
 | [CLAUDE.md](CLAUDE.md) | working conventions: commands, definition of done, mental model, recipes |
-| [EXPERIMENTS.md](EXPERIMENTS.md) | the experiment event log — findings, including dead ends |
-| [EXPERIMENT_QUEUE.md](EXPERIMENT_QUEUE.md) | planned experiments (drain-only queue) |
+| [EXECUTION.md](EXECUTION.md) | the activity / run model: RunSpec · Config · activities · `runs/` layout · CLI |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | search-engine & substrate design (types, enumeration, deliberate limits) |
 | [ONTOLOGY.md](ONTOLOGY.md) | map of the primitive / abstraction space (the vocabulary lever) |
 | [MACHINERY.md](MACHINERY.md) | map of the search / scoring / learning mechanisms (the machinery lever) |
-| [RESEARCH-2026-07-08.md](RESEARCH-2026-07-08.md) | the research frame — a dated snapshot the maps are read against (supersedes 2026-07-07) |
-| [MACHINERY-STRATEGY-2026-07-07.md](MACHINERY-STRATEGY-2026-07-07.md) | build strategy — how we decide what machinery to build, adopt, or defer (dated) |
+| [SEARCH-SPACE.md](SEARCH-SPACE.md) | map of the search-space-control levers |
+| [EXPERIMENTS.md](EXPERIMENTS.md) | the experiment event log — findings, including dead ends |
+| [EXPERIMENT_QUEUE.md](EXPERIMENT_QUEUE.md) | planned experiments (drain-only queue) |
+| [docs/RESEARCH-2026-07-08.md](docs/RESEARCH-2026-07-08.md) | the research frame — the dated snapshot the maps are read against |
+| [docs/MACHINERY-STRATEGY-2026-07-07.md](docs/MACHINERY-STRATEGY-2026-07-07.md) | build strategy — what machinery to build, adopt, or defer (dated) |
+| [docs/CONFIG-DEFAULTS-2026-07-11.md](docs/CONFIG-DEFAULTS-2026-07-11.md) | config/param defaults review — every param's options, cost, and rationale (dated) |
 
-## Development
-
-```bash
-make check          # ruff + mypy --strict + pytest
-make format         # auto-fix
-```
+Superseded dated snapshots live in [docs/archive/](docs/archive/).
