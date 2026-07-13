@@ -33,7 +33,7 @@ from arc_lab.program_search.substrate.library import Library, Primitive, Value
 from arc_lab.program_search.substrate.types import BOOL, COLOR, GRID, INT, Type
 
 from .execute import execute
-from .model.run_record import RunRecord
+from .model.run_record import RunRecord, considered_total
 from .model.run_spec import RunSpec
 from .model.serde import to_data
 from .model.study_spec import StudySpec
@@ -162,7 +162,7 @@ def _cell_metrics(record: RunRecord) -> dict[str, object]:
     return {
         "solved": results.get("solved"),
         "task_count": results.get("task_count"),
-        "considered_total": results.get("considered_total"),
+        "considered_total": considered_total(results),
     }
 
 
@@ -178,8 +178,7 @@ def _effort_comparison(result: StudyResult) -> list[dict[str, object]]:
             considered: dict[str, int | None] = {}
             for role in LIBRARY_ROLES:
                 record = result.grid[GridCell(library=role, budget=budget, corpus=corpus_role)]
-                value = record.results().get("considered_total")
-                considered[role] = value if isinstance(value, int) else None
+                considered[role] = considered_total(record.results())
             baseline = considered["L1"]
             speedup: dict[str, float | None] = {}
             for role in LIBRARY_ROLES:

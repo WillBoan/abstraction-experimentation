@@ -8,7 +8,11 @@ from pathlib import Path
 import typer
 
 from arc_lab.program_search.execution.execute import DEFAULT_RUNS_ROOT
-from arc_lab.program_search.execution.model.run_record import RUNSPEC_FILENAME, RunRecord
+from arc_lab.program_search.execution.model.run_record import (
+    RUNSPEC_FILENAME,
+    RunRecord,
+    considered_total,
+)
 
 
 def list_runs(
@@ -38,7 +42,7 @@ def list_runs(
         else:
             headline = (
                 f"SEARCH solved={results.get('solved')}/{results.get('task_count')} "
-                f"considered={results.get('considered_total')}"
+                f"considered={considered_total(results)}"
             )
         rows.append(f"{record.run_id}  {results.get('corpus_name', '?'):24s} {headline}")
     if not rows:

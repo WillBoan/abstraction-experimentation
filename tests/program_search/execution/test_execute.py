@@ -12,6 +12,7 @@ from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task, TrainExamples
 from arc_lab.program_search.execution.execute import execute
 from arc_lab.program_search.execution.model import Config, RunSpec
+from arc_lab.program_search.execution.model.run_record import considered_total
 from arc_lab.program_search.execution.model.trace_spec import TraceSpec
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.constraints import Constraint
@@ -105,7 +106,13 @@ def test_execute_end_to_end_search_run(tmp_path: Path) -> None:
     results = record.results()
     assert results["task_count"] == 1
     assert results["solved"] == 1
-    assert isinstance(results["considered_total"], int) and results["considered_total"] > 0
+    total = considered_total(results)
+    assert isinstance(total, int) and total > 0
+    search_stats = results["search_stats"]
+    assert isinstance(search_stats, dict)
+    assert isinstance(search_stats["total"], dict) and isinstance(
+        search_stats["by_primitive"], dict
+    )
 
     (row,) = record.trace_rows()
     assert row["task_id"] == "t1"
@@ -162,38 +169,43 @@ def test_execute_isolates_a_broken_task(tmp_path: Path) -> None:
     assert record.results()["solved"] == 0
 
 
-# -- TraceSpec: default sampling, full capture, manifest -----------------------------------
+# -- TraceSpec: default sampling, full capture, capture summary ----------------------------
 
 
-def test_execute_default_trace_writes_samples_json(tmp_path: Path) -> None:
+def test_execute_default_trace_writes_samples(tmp_path: Path) -> None:
     spec = RunSpec(
         config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
         corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
     )
     record = execute(spec, runs_root=tmp_path)  # no explicit trace: the default sampler applies
-    samples = record.samples()
-    assert samples is not None and "t1" in samples
-    assert not record.manifest_path.is_file()  # capture_all was never requested
+    rows = record.sample_rows()
+    assert rows is not None and rows  # JSONL flat rows
+    assert all(
+        {"task", "candidate_index", "primitive", "outcome", "program"} <= row.keys() for row in rows
+    )
+    assert all(row["task"] == "t1" for row in rows)
+    assert all(isinstance(row["program"], str) for row in rows)  # readable strings, not dicts
+    assert not record.capture_summary_path.is_file()  # capture_all was never requested
 
 
-def test_execute_no_sampling_writes_no_samples_json(tmp_path: Path) -> None:
+def test_execute_no_sampling_writes_no_samples(tmp_path: Path) -> None:
     spec = RunSpec(
         config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
         corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
     )
     record = execute(spec, runs_root=tmp_path, trace=TraceSpec(samples=()))
-    assert record.samples() is None
+    assert record.sample_rows() is None
 
 
-def _per_task_manifest(manifest: dict[str, object], task_id: str) -> dict[str, object]:
-    per_task = manifest["per_task"]
+def _per_task_summary(summary: dict[str, object], task_id: str) -> dict[str, object]:
+    per_task = summary["per_task"]
     assert isinstance(per_task, dict)
     entry = per_task[task_id]
     assert isinstance(entry, dict)
     return entry
 
 
-def test_execute_track_all_writes_capture_and_manifest(tmp_path: Path) -> None:
+def test_execute_track_all_writes_capture_and_summary(tmp_path: Path) -> None:
     spec = RunSpec(
         config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
         corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
@@ -203,10 +215,12 @@ def test_execute_track_all_writes_capture_and_manifest(tmp_path: Path) -> None:
     assert capture_file.is_file()
     captured_rows = [json.loads(line) for line in capture_file.read_text().splitlines()]
     assert captured_rows, "at least one considered candidate must be captured"
-    manifest = record.manifest()
-    assert manifest is not None
-    assert manifest["truncated"] is False
-    assert _per_task_manifest(manifest, "t1")["captured"] == len(captured_rows)
+    assert all(isinstance(row["program"], str) for row in captured_rows)  # readable strings
+    assert all("candidate_index" in row for row in captured_rows)  # sortable back to gen order
+    summary = record.capture_summary()
+    assert summary is not None
+    assert summary["truncated"] is False
+    assert _per_task_summary(summary, "t1")["captured"] == len(captured_rows)
 
 
 def test_execute_track_all_max_truncates_loudly(tmp_path: Path) -> None:
@@ -215,16 +229,16 @@ def test_execute_track_all_max_truncates_loudly(tmp_path: Path) -> None:
         corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
     )
     record = execute(spec, runs_root=tmp_path, trace=TraceSpec(capture_all=True, capture_all_max=1))
-    manifest = record.manifest()
-    assert manifest is not None
-    assert manifest["truncated"] is True
-    task_manifest = _per_task_manifest(manifest, "t1")
-    assert task_manifest["captured"] == 1
-    considered = task_manifest["considered"]
+    summary = record.capture_summary()
+    assert summary is not None
+    assert summary["truncated"] is True
+    task_summary = _per_task_summary(summary, "t1")
+    assert task_summary["captured"] == 1
+    considered = task_summary["considered"]
     assert isinstance(considered, int) and considered > 1  # more considered than captured
 
 
-def test_execute_sample_spec_bucket_shape(tmp_path: Path) -> None:
+def test_execute_sample_rows_are_flat_and_bucketed(tmp_path: Path) -> None:
     spec = RunSpec(
         config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
         corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
@@ -232,10 +246,11 @@ def test_execute_sample_spec_bucket_shape(tmp_path: Path) -> None:
     record = execute(
         spec, runs_root=tmp_path, trace=TraceSpec(samples=(SampleSpec(k=1, mode="first_k"),))
     )
-    samples = record.samples()
-    assert samples is not None
-    task_samples = samples["t1"]
-    assert isinstance(task_samples, dict) and "k1_first_k" in task_samples
+    rows = record.sample_rows()
+    assert rows is not None and rows
+    # one row per (primitive, outcome) bucket, at most k=1 program each
+    buckets = [(row["primitive"], row["outcome"]) for row in rows]
+    assert len(buckets) == len(set(buckets))
 
 
 def test_force_recapture_reexecutes_a_cached_run(tmp_path: Path) -> None:
@@ -258,12 +273,12 @@ def test_force_recapture_populates_tracing_on_an_already_completed_run(tmp_path:
         corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
     )
     record = execute(spec, runs_root=tmp_path)  # default trace: no full capture yet
-    assert not record.manifest_path.is_file()
+    assert not record.capture_summary_path.is_file()
 
     recaptured = execute(
         spec, runs_root=tmp_path, trace=TraceSpec(capture_all=True), force_recapture=True
     )
     assert recaptured.run_id == record.run_id
-    assert recaptured.manifest_path.is_file()
+    assert recaptured.capture_summary_path.is_file()
     assert (recaptured.capture_dir / "t1.jsonl").is_file()
     assert recaptured.results()["solved"] == 1  # substantive content is unchanged by recapture

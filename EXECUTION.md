@@ -123,21 +123,35 @@ Run-count accounting:
 
 ## Tracing — capability sampling & full capture (outside run identity)
 
-Every recorded run carries `SearchStats.outcomes`/`by_key` unconditionally — the outcome
+Every recorded run's `results.json` carries a `search_stats` block unconditionally — the outcome
 partition (`search/tracking.py`: every candidate a `SearchEngine` considers resolves to exactly
-one of `errored/pruned/deduped/displaced/evicted/goal_unmatched/constraint_rejected/accepted`,
-broken down per primitive-name/node-kind key). That's free, no config, always on.
+one of `errored/pruned/deduped/displaced/evicted/goal_unmatched/constraint_rejected/accepted`).
+It has two parts, both in that funnel order: `total` (`considered` + every outcome, zeros filled —
+a stable schema; `considered == sum(outcomes)`) and `by_primitive` (the same counts per
+primitive-name / node-kind key — `__if__`/`__lam__`/`__appfn__`/`__const__` for the syntactic
+capabilities that aren't named primitives — sparse, primitive-sorted). Free, no config, always on;
+the per-task rows in `trace.jsonl` carry the same block, and `analysis/capabilities.py` re-groups
+`by_primitive` into category/provenance rollups at read time.
 
 Beyond the counts, `TraceSpec` (`execution/model/trace_spec.py`) governs two further, opt-in
 observations of a search, passed to `execute()` as a plain keyword (`trace: TraceSpec | None`)
-— **never** a `Config` field:
+— **never** a `Config` field. Both record programs as **readable strings** (`str(program)`, e.g.
+`build_grid(width(input), lam:int(...))`) and stamp each with its `candidate_index` (the 0-based
+consideration order, so a stream written in outcome-resolution order re-sorts to generation order):
 
 - **Sampling** (`TraceSpec.samples`, on by default — a small deterministic `first_k` reservoir
-  per `(key, outcome)` bucket) — a few example programs per primitive/node-kind × outcome,
-  cheap enough to run unconditionally.
+  per `(primitive, outcome)` bucket) — a few example programs per primitive/node-kind × outcome,
+  cheap enough to run unconditionally. Written as flat JSONL rows to `samples.jsonl`.
 - **Full capture** (`TraceSpec.capture_all`, off by default) — every considered candidate,
   streamed to `capture/<task_id>.jsonl` (LEARN: `capture/iter-<n>/<task_id>.jsonl`), capped at
-  `capture_all_max` — truncation is recorded loudly in `manifest.json`, never silently dropped.
+  `capture_all_max` — truncation is recorded loudly in `capture/_capture_summary.json`, never
+  silently dropped.
+
+Both `samples.jsonl` and each `capture/*.jsonl` share a flat row schema, so one tool renders
+either — e.g. `jq -r '[.candidate_index,.outcome,(.primitives|join(";")),.program]|@tsv' … |
+column -t -s$'\t'` prints an aligned table. (JSONL stays the stored format — it streams, appends,
+and carries the variable-length `primitives` list natively; readability is a *view*, not a
+reformat.)
 
 Run-dir layout, extended:
 
@@ -145,15 +159,15 @@ Run-dir layout, extended:
 runs/<started_at>_<run_id>/
 ├── runspec.json           # identity + provenance (written first)
 ├── trace.jsonl            # per-task/wake rows (resumable checkpoint)
-├── results.json           # aggregate (written last — marks completion)
+├── results.json           # aggregate + search_stats (written last — marks completion)
 ├── learned_library.json   # LEARN runs only
-├── samples.json           # optional: TraceSpec.samples reservoirs, keyed by task_id
-│                           #   (LEARN: "iter-<n>/<task_id>") — covers only the tasks THIS
-│                           #   invocation actually ran; a resume's already-traced tasks
-│                           #   aren't re-sampled (a diagnostic artifact, not run identity)
-├── capture/                # optional: TraceSpec.capture_all's per-task JSONL streams
-│   └── <task_id>.jsonl
-└── manifest.json           # optional: capture settings + counts + truncation, per task
+├── samples.jsonl          # optional: TraceSpec.samples — flat rows {task, candidate_index,
+│                           #   primitive, outcome, program}; task is "<task_id>" (LEARN:
+│                           #   "iter-<n>/<task_id>"). Covers only the tasks THIS invocation
+│                           #   ran; a resume's already-traced tasks aren't re-sampled.
+└── capture/                # optional: TraceSpec.capture_all's per-candidate streams
+    ├── _capture_summary.json   # settings + counts + loud truncation, per task (sorts first)
+    └── <task_id>.jsonl         # rows {candidate_index, outcome, primitives, program}
 ```
 
 **Why `TraceSpec` is not part of `run_id`:** `Config` decides _what is computed_; `TraceSpec`
@@ -230,7 +244,7 @@ src/arc_lab/
 │   │   └── tracking.py      #   capability tracking: Outcome partition · SearchTracker (sampling/capture)
 │   ├── learn/               # sleep: learn_engine (ABC + LearnOutcome) · proposers · governance (taskgen moves OUT)
 │   ├── analysis/            # read-side instrument: compression.py (SolvedTask · MDL metrics · ratios)
-│   │                        #   capabilities.py (read-time category/provenance groupings over by_key)
+│   │                        #   capabilities.py (read-time category/provenance groupings over by_primitive)
 │   └── execution/           # the layer THIS doc specifies — activities live HERE, not a commands/
 │                            #   package (they ARE the execution layer; the CLI is the separate thin cli/)
 │       ├── model/           #   the run DATA MODEL (frozen, hashable specs + records)

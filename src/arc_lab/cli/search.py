@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import typer
 
+from arc_lab.program_search.execution.model.run_record import considered_total
 from arc_lab.program_search.execution.run_search import run_search
 
 from ._config import resolve_config_arg
@@ -46,6 +47,6 @@ def search(
     results = record.results()
     typer.echo(
         f"run {record.run_id}: solved {results.get('solved')}/{results.get('task_count')} "
-        f"considered={results.get('considered_total')}"
+        f"considered={considered_total(results)}"
     )
     typer.echo(f"recorded at {record.run_dir}")

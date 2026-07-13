@@ -25,7 +25,7 @@ class SearchStats:
     #: complete, self-checking partition while ``accepted`` stays for existing callers.
     outcomes: Mapping[str, int] = field(default_factory=dict)
     #: The same outcome counts, broken down per primitive-name / node-kind key.
-    by_key: Mapping[str, Mapping[str, int]] = field(default_factory=dict)
+    by_primitive: Mapping[str, Mapping[str, int]] = field(default_factory=dict)
 
     @property
     def solved(self) -> bool:

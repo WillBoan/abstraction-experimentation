@@ -12,6 +12,7 @@ from arc_lab.program_search.search.cost import ProgramSize
 from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.search.search_result import SearchResult
 from arc_lab.program_search.search.tracking import (
+    OUTCOME_NAMES,
     Outcome,
     SampleSpec,
     SearchTracker,
@@ -61,43 +62,52 @@ def test_primitive_keys_walks_nested_lambda_body() -> None:
 # -- SearchTracker: the accumulator --------------------------------------------------------------
 
 
-def test_tracker_totals_and_by_key() -> None:
+def test_tracker_totals_are_funnel_ordered_with_zeros() -> None:
     tracker = SearchTracker()
     tracker.considered += 2
-    tracker.record(Input(), frozenset({"rot90"}), Outcome.ACCEPTED)
-    tracker.record(Input(), frozenset({"rot90", "__if__"}), Outcome.PRUNED)
-    assert tracker.totals() == {"accepted": 1, "pruned": 1}
-    assert tracker.by_key()["rot90"] == {"accepted": 1, "pruned": 1}
-    assert tracker.by_key()["__if__"] == {"pruned": 1}
+    tracker.record(0, Input(), frozenset({"rot90"}), Outcome.ACCEPTED)
+    tracker.record(1, Input(), frozenset({"rot90", "__if__"}), Outcome.PRUNED)
+    totals = tracker.totals()
+    assert totals["accepted"] == 1 and totals["pruned"] == 1
+    assert totals["errored"] == 0  # zeros are filled — a stable, self-documenting schema
+    assert list(totals) == list(OUTCOME_NAMES)  # funnel order
+    assert tracker.considered == sum(totals.values())
+    assert tracker.by_primitive()["rot90"] == {"pruned": 1, "accepted": 1}  # funnel order, sparse
+    assert tracker.by_primitive()["__if__"] == {"pruned": 1}
 
 
-def test_tracker_first_k_sampling_keeps_arrival_order() -> None:
+def test_tracker_sample_rows_first_k_keeps_arrival_order() -> None:
     tracker = SearchTracker(samples=(SampleSpec(k=2, mode="first_k"),))
     programs = [Apply(primitive="rot90", args=(Input(),)) for _ in range(3)]
-    for program in programs:
-        tracker.record(program, frozenset({"rot90"}), Outcome.PRUNED)
-    kept = tracker.samples_json()["k2_first_k"]["rot90|pruned"]
-    assert kept == [programs[0].to_dict(), programs[1].to_dict()]  # the third is over the cap
+    for index, program in enumerate(programs):
+        tracker.record(index, program, frozenset({"rot90"}), Outcome.PRUNED)
+    rows = tracker.sample_rows()
+    assert [row["candidate_index"] for row in rows] == [0, 1]  # first two kept, third over cap
+    assert all(row == {**row, "primitive": "rot90", "outcome": "pruned"} for row in rows)
+    assert rows[0]["program"] == "rot90(input)"  # a readable string, not a dict
 
 
-def test_tracker_cheapest_k_sampling_keeps_the_smallest() -> None:
+def test_tracker_sample_rows_cheapest_k_keeps_the_smallest() -> None:
     tracker = SearchTracker(samples=(SampleSpec(k=1, mode="cheapest_k"),))
-    small = Input()
     large = Apply(primitive="rot90", args=(Apply(primitive="rot90", args=(Input(),)),))
-    tracker.record(large, frozenset({"rot90"}), Outcome.PRUNED)
-    tracker.record(small, frozenset({"rot90"}), Outcome.PRUNED)  # smaller, arrives second
-    kept = tracker.samples_json()["k1_cheapest_k"]["rot90|pruned"]
-    assert kept == [small.to_dict()]
+    small = Apply(primitive="rot90", args=(Input(),))
+    tracker.record(0, large, frozenset({"rot90"}), Outcome.PRUNED)
+    tracker.record(1, small, frozenset({"rot90"}), Outcome.PRUNED)  # smaller, arrives second
+    rows = tracker.sample_rows()
+    assert [row["candidate_index"] for row in rows] == [1]
+    assert rows[0]["program"] == "rot90(input)"
 
 
 def test_tracker_capture_sink_is_called_for_every_record() -> None:
-    seen: list[tuple[str, str]] = []
+    seen: list[tuple[int, str, str]] = []
     tracker = SearchTracker(
-        capture=lambda program, keys, outcome: seen.append((str(program), outcome.value))
+        capture=lambda index, program, primitives, outcome: seen.append(
+            (index, str(program), outcome.value)
+        )
     )
-    tracker.record(Input(), frozenset({"rot90"}), Outcome.ACCEPTED)
-    tracker.record(Input(), frozenset(), Outcome.ERRORED)
-    assert seen == [("input", "accepted"), ("input", "errored")]
+    tracker.record(0, Input(), frozenset({"rot90"}), Outcome.ACCEPTED)
+    tracker.record(1, Input(), frozenset(), Outcome.ERRORED)
+    assert seen == [(0, "input", "accepted"), (1, "input", "errored")]
 
 
 # -- end-to-end: the outcome partition through a real search ------------------------------------
@@ -187,14 +197,14 @@ def test_each_engineered_outcome_is_exercised() -> None:
     assert result.stats.accepted == 1
 
 
-def test_by_key_attributes_outcomes_to_the_right_primitive() -> None:
+def test_by_primitive_attributes_outcomes_to_the_right_primitive() -> None:
     result = _run()
-    by_key = result.stats.by_key
-    assert by_key["boom"] == {"errored": 1}
-    assert by_key["lie_about_type"] == {"pruned": 1}
-    assert by_key["transpose2"] == {"deduped": 1}
-    assert by_key["flip_h"] == {"evicted": 1}
-    assert by_key["transpose"] == {"accepted": 1}
+    by_primitive = result.stats.by_primitive
+    assert by_primitive["boom"] == {"errored": 1}
+    assert by_primitive["lie_about_type"] == {"pruned": 1}
+    assert by_primitive["transpose2"] == {"deduped": 1}
+    assert by_primitive["flip_h"] == {"evicted": 1}
+    assert by_primitive["transpose"] == {"accepted": 1}
 
 
 def test_constraint_rejected_when_the_solution_is_filtered() -> None:

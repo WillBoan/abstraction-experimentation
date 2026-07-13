@@ -38,7 +38,12 @@ from arc_lab.core.task import Task
 from arc_lab.eval.scoring import score_task
 from arc_lab.program_search.analysis.compression import SolvedTask
 from arc_lab.program_search.search.search_result import SearchResult, SearchStats
-from arc_lab.program_search.search.tracking import Outcome, SearchTracker
+from arc_lab.program_search.search.tracking import (
+    OUTCOME_NAMES,
+    Outcome,
+    SearchTracker,
+    funnel_outcomes,
+)
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.program import Program
 
@@ -113,7 +118,8 @@ class _CaptureSink:
     """Streams every observed candidate to one JSONL file, capped — the file I/O
     ``SearchTracker`` itself never does (``search/tracking.py``); this is the plain callable it's
     handed. Opens its file lazily (only once a candidate actually arrives), so a task that
-    considers nothing never creates an empty capture file.
+    considers nothing never creates an empty capture file. Rows are written in *outcome-resolution*
+    order (not generation order); each carries its ``candidate_index`` so a reader can sort back.
     """
 
     path: Path
@@ -122,15 +128,22 @@ class _CaptureSink:
     truncated: bool = False
     _handle: TextIO | None = field(default=None, repr=False)
 
-    def __call__(self, program: Program, keys: frozenset[str], outcome: Outcome) -> None:
+    def __call__(
+        self, candidate_index: int, program: Program, primitives: frozenset[str], outcome: Outcome
+    ) -> None:
         if self.captured >= self.max_count:
             self.truncated = True
             return
         if self._handle is None:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             self._handle = self.path.open("w", encoding="utf-8")
-        row = {"program": program.to_dict(), "keys": sorted(keys), "outcome": outcome.value}
-        self._handle.write(json.dumps(row, sort_keys=True) + "\n")
+        row = {
+            "candidate_index": candidate_index,
+            "outcome": outcome.value,
+            "primitives": sorted(primitives),
+            "program": str(program),
+        }
+        self._handle.write(json.dumps(row) + "\n")
         self.captured += 1
 
     def close(self) -> None:
@@ -141,9 +154,9 @@ class _CaptureSink:
 @dataclass(frozen=True, slots=True)
 class _TrackedOutcome:
     """What one tracked search call yields beyond its ``SearchResult`` — the pieces
-    ``execute()`` needs for ``samples.json``/``manifest.json``, not the trace row itself."""
+    ``execute()`` needs for ``samples.jsonl``/``_capture_summary.json``, not the trace row itself."""
 
-    samples: Mapping[str, object]
+    sample_rows: list[dict[str, object]]
     considered: int
     capture: _CaptureSink | None
 
@@ -175,19 +188,21 @@ def _search_with_tracker(
 def _write_trace_artifacts(
     record: RunRecord, trace: TraceSpec, outcomes: Mapping[str, _TrackedOutcome]
 ) -> None:
-    """Write ``samples.json``/``manifest.json`` from *this invocation's* freshly-run tasks only —
-    a resumed run's already-traced tasks aren't re-sampled or re-captured (``RunRecord.samples``/
-    ``manifest`` document this as an accepted limitation of a diagnostic-only artifact)."""
-    samples_by_label = {
-        label: outcome.samples for label, outcome in outcomes.items() if outcome.samples
-    }
-    if samples_by_label:
-        _write_json(record.samples_path, samples_by_label)
+    """Write ``samples.jsonl``/``capture/_capture_summary.json`` from *this invocation's*
+    freshly-run tasks only — a resumed run's already-traced tasks aren't re-sampled or re-captured
+    (``RunRecord.sample_rows``/``capture_summary`` document this as an accepted limitation of a
+    diagnostic-only artifact). Each sample row is tagged with its ``task`` label (``task_id``, or
+    ``iter-<n>/<task_id>`` for a LEARN wake) since one file holds every task."""
+    sample_rows = [
+        {"task": label, **row} for label, outcome in outcomes.items() for row in outcome.sample_rows
+    ]
+    if sample_rows:
+        _write_jsonl(record.samples_path, sample_rows)
     if trace.capture_all:
-        _write_json(record.manifest_path, _capture_manifest(trace, outcomes))
+        _write_json(record.capture_summary_path, _capture_summary(trace, outcomes))
 
 
-def _capture_manifest(
+def _capture_summary(
     trace: TraceSpec, outcomes: Mapping[str, _TrackedOutcome]
 ) -> dict[str, object]:
     per_task: dict[str, object] = {}
@@ -232,7 +247,7 @@ def _run_search(run_spec: RunSpec, record: RunRecord, trace: TraceSpec) -> list[
                 record.capture_dir / f"{task.task_id}.jsonl" if trace.capture_all else None
             )
             row, tracked = _run_task(task, config, trace, capture_path)
-            trace_handle.write(json.dumps(row, sort_keys=True) + "\n")
+            trace_handle.write(json.dumps(row) + "\n")
             trace_handle.flush()  # each completed task is a durable checkpoint
             rows.append(row)
             outcomes[task.task_id] = tracked
@@ -262,45 +277,56 @@ def _predict_and_score(
     return score_task(task, prediction, attempts=attempts_per_test)
 
 
-def _stats_dict(stats: SearchStats) -> dict[str, object]:
-    """One task's ``SearchStats`` in trace-row shape — shared by the SEARCH branch's per-task
-    row (``_run_task``) and the LEARN branch's per-wake per-task rows (``_wake``), so both trace
-    identically (EXECUTION.md)."""
+def _search_stats(stats: SearchStats) -> dict[str, object]:
+    """One task's ``SearchStats`` as the ``search_stats`` block — ``{total, by_primitive}`` —
+    shared by the SEARCH branch's per-task row (``_run_task``) and the LEARN branch's per-wake
+    per-task rows (``_wake``), so both trace identically (EXECUTION.md). ``total`` = ``considered``
+    plus the full funnel-ordered outcome partition (zeros filled); ``by_primitive`` is sparse.
+    """
     return {
         "engine": stats.engine,
-        "considered": stats.considered,
-        "accepted": stats.accepted,
-        "outcomes": dict(stats.outcomes),
-        "by_key": {key: dict(counts) for key, counts in stats.by_key.items()},
+        "total": {"considered": stats.considered, **stats.outcomes},
+        "by_primitive": {key: dict(counts) for key, counts in stats.by_primitive.items()},
     }
 
 
-def merge_outcome_stats(
-    stats_dicts: Iterable[Mapping[str, object]],
-) -> tuple[dict[str, int], dict[str, dict[str, int]]]:
-    """Sum a group of ``_stats_dict``-shaped mappings' ``outcomes``/``by_key`` into one totals pair.
+def merge_search_stats(
+    search_stats: Iterable[Mapping[str, object]],
+) -> dict[str, object]:
+    """Sum a group of ``_search_stats``-shaped blocks into one ``{total, by_primitive}`` block.
 
     Shared by ``_search_results`` (across a run's per-task rows) and ``analyze_run`` (across a
-    LEARN wake's per-task rows) — both are "merge N stats dicts," just over a different axis.
+    LEARN wake's per-task rows) — both are "merge N search_stats blocks," just over a different
+    axis. ``total`` carries the full funnel-ordered outcome set (zeros filled); ``by_primitive``
+    stays sparse and primitive-sorted.
     """
-    outcomes_total: dict[str, int] = {}
-    by_key_total: dict[str, dict[str, int]] = {}
-    for stats in stats_dicts:
-        outcomes = stats.get("outcomes")
-        if isinstance(outcomes, dict):
-            for outcome, count in outcomes.items():
-                if isinstance(count, int):
-                    outcomes_total[outcome] = outcomes_total.get(outcome, 0) + count
-        by_key = stats.get("by_key")
-        if isinstance(by_key, dict):
-            for key, counts in by_key.items():
+    considered = 0
+    outcome_totals: dict[str, int] = dict.fromkeys(OUTCOME_NAMES, 0)
+    by_primitive: dict[str, dict[str, int]] = {}
+    for block in search_stats:
+        total = block.get("total")
+        if isinstance(total, dict):
+            considered += int(total.get("considered", 0) or 0)
+            for name in OUTCOME_NAMES:
+                value = total.get(name)
+                if isinstance(value, int):
+                    outcome_totals[name] += value
+        primitives = block.get("by_primitive")
+        if isinstance(primitives, dict):
+            for primitive, counts in primitives.items():
                 if not isinstance(counts, dict):
                     continue
-                bucket = by_key_total.setdefault(key, {})
+                bucket = by_primitive.setdefault(primitive, {})
                 for outcome, count in counts.items():
                     if isinstance(count, int):
                         bucket[outcome] = bucket.get(outcome, 0) + count
-    return outcomes_total, by_key_total
+    return {
+        "total": {"considered": considered, **outcome_totals},
+        "by_primitive": {
+            primitive: funnel_outcomes(by_primitive[primitive], include_zeros=False)
+            for primitive in sorted(by_primitive)
+        },
+    }
 
 
 def _run_task(
@@ -322,7 +348,7 @@ def _run_task(
             score=TaskScore(solved=solved, per_test=per_test),
             seconds=time.perf_counter() - started,
         )
-        stats: dict[str, object] | None = _stats_dict(result.stats)
+        search_stats: dict[str, object] | None = _search_stats(result.stats)
         programs = [program.to_dict() for program in result.ranked_programs]
     except Exception as error:  # error isolation: one broken task never aborts the run
         logger.warning("task %s errored: %s", task.task_id, error)
@@ -332,14 +358,14 @@ def _run_task(
             seconds=time.perf_counter() - started,
             error=f"{type(error).__name__}: {error}",
         )
-        stats = None
+        search_stats = None
         programs = []
     finally:
         if sink is not None:
             sink.close()
-    row = {**task_result.to_dict(), "programs": programs, "stats": stats}
+    row = {**task_result.to_dict(), "programs": programs, "search_stats": search_stats}
     tracked = _TrackedOutcome(
-        samples=tracker.samples_json(), considered=tracker.considered, capture=sink
+        sample_rows=tracker.sample_rows(), considered=tracker.considered, capture=sink
     )
     return row, tracked
 
@@ -351,32 +377,25 @@ def _rewrite_trace(record: RunRecord) -> list[dict[str, object]]:
     """Load the intact trace rows and rewrite the file to exactly those rows.
 
     ``trace_rows`` already tolerates a torn final line (a crash mid-write); rewriting
-    means the subsequent append never lands after torn bytes.
+    means the subsequent append never lands after torn bytes. Rows are written unsorted
+    (``search_stats`` is emitted in funnel order and must not be re-alphabetized).
     """
     rows = list(record.trace_rows())
     if record.trace_path.is_file():
         with record.trace_path.open("w", encoding="utf-8") as trace_handle:
             for row in rows:
-                trace_handle.write(json.dumps(row, sort_keys=True) + "\n")
+                trace_handle.write(json.dumps(row) + "\n")
     return rows
 
 
 def _search_results(rows: list[dict[str, object]]) -> dict[str, object]:
     """Aggregate a SEARCH run's task rows into the ``results.json`` payload."""
     tasks = [TaskResult.from_dict(row) for row in rows]
-    considered = sum(
-        int(stats["considered"])
-        for row in rows
-        if isinstance(stats := row.get("stats"), dict) and "considered" in stats
-    )
-    task_stats = (stats for row in rows if isinstance(stats := row.get("stats"), dict))
-    outcomes_total, by_key_total = merge_outcome_stats(task_stats)
+    task_stats = (block for row in rows if isinstance(block := row.get("search_stats"), dict))
     return {
         "task_count": len(tasks),
         "solved": sum(result.score.solved for result in tasks),
-        "considered_total": considered,
-        "outcomes_total": outcomes_total,
-        "by_key_total": by_key_total,
+        "search_stats": merge_search_stats(task_stats),
         "tasks": [result.to_dict() for result in tasks],
     }
 
@@ -449,7 +468,7 @@ def _run_learn(run_spec: RunSpec, record: RunRecord, trace: TraceSpec) -> dict[s
             wake_row, wake_outcomes = _wake(run_spec, library, solutions, iteration, record, trace)
             for task_id, tracked in wake_outcomes.items():
                 all_outcomes[f"iter-{iteration}/{task_id}"] = tracked
-            trace_handle.write(json.dumps(wake_row, sort_keys=True) + "\n")
+            trace_handle.write(json.dumps(wake_row) + "\n")
             trace_handle.flush()
             # SLEEP — one LearnEngine.run over all solutions.
             outcome = learn.learn_engine.run(library, tuple(solutions.values()))
@@ -465,7 +484,7 @@ def _run_learn(run_spec: RunSpec, record: RunRecord, trace: TraceSpec) -> dict[s
                 "converged": outcome.converged,
                 "library": library.to_dict(),  # the checkpoint resume reads
             }
-            trace_handle.write(json.dumps(sleep_row, sort_keys=True) + "\n")
+            trace_handle.write(json.dumps(sleep_row) + "\n")
             trace_handle.flush()
             iterations_run = iteration + 1
 
@@ -492,16 +511,16 @@ def _wake(
     """One wake: search every (not-yet-carried) task with the current library; mutate ``solutions``.
 
     Per-task stats are recorded in the same shape as the SEARCH branch's trace rows
-    (``_stats_dict``), so a wake traces identically to a SEARCH run — including the
+    (``_search_stats``), so a wake traces identically to a SEARCH run — including the
     per-primitive/node-kind breakdown, e.g. to see whether a sleep-minted primitive gets used in
     the very next wake. Returns the wake row (for the trace) plus this wake's per-task
-    ``_TrackedOutcome``s (for the run-wide samples/manifest, keyed by the caller).
+    ``_TrackedOutcome``s (for the run-wide samples/capture-summary, keyed by the caller).
     """
     config = run_spec.config
     learn = config.learn
     assert learn is not None
     considered = 0
-    stats: dict[str, object] = {}
+    search_stats: dict[str, object] = {}
     scores: dict[str, bool] = {}
     outcomes: dict[str, _TrackedOutcome] = {}
     for entry in run_spec.corpus.entries:  # entries: SolvedTask keeps meta co-located
@@ -518,9 +537,9 @@ def _wake(
         if sink is not None:
             sink.close()
         considered += result.stats.considered
-        stats[task.task_id] = _stats_dict(result.stats)
+        search_stats[task.task_id] = _search_stats(result.stats)
         outcomes[task.task_id] = _TrackedOutcome(
-            samples=tracker.samples_json(), considered=tracker.considered, capture=sink
+            sample_rows=tracker.sample_rows(), considered=tracker.considered, capture=sink
         )
         if result.ranked_programs:
             solutions[task.task_id] = SolvedTask(annotated=entry, program=result.ranked_programs[0])
@@ -537,7 +556,7 @@ def _wake(
         "phase": "wake",
         "solved": sorted(solutions),
         "considered": considered,
-        "stats": stats,
+        "search_stats": search_stats,
         "programs": {task_id: st.program.to_dict() for task_id, st in solutions.items()},
     }
     if scores:
@@ -546,9 +565,19 @@ def _wake(
 
 
 def _write_json(path: Path, data: Mapping[str, object]) -> None:
+    """Write ``data`` as pretty JSON in *insertion* order — funnel-ordered stats blocks must not
+    be re-alphabetized. Deterministic anyway (no RNG; every dict is built deterministically), and
+    run identity is hashed separately (``core/hashing.py``), so key order here is free."""
     with path.open("w", encoding="utf-8") as handle:
-        json.dump(data, handle, indent=2, sort_keys=True)
+        json.dump(data, handle, indent=2)
         handle.write("\n")
+
+
+def _write_jsonl(path: Path, rows: list[dict[str, object]]) -> None:
+    """Write ``rows`` one compact JSON object per line (insertion order preserved)."""
+    with path.open("w", encoding="utf-8") as handle:
+        for row in rows:
+            handle.write(json.dumps(row) + "\n")
 
 
 def _current_commit() -> str | None:

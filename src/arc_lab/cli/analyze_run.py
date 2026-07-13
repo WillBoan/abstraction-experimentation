@@ -17,4 +17,5 @@ def analyze_run_command(
         summary = analyze_run(run_id, runs_root=None)
     except FileNotFoundError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    typer.echo(json.dumps(summary, indent=2, sort_keys=True))
+    # Insertion order, not sorted: stats blocks are built in funnel order and must stay that way.
+    typer.echo(json.dumps(summary, indent=2))

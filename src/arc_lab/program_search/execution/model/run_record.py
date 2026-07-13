@@ -9,12 +9,24 @@ the writer (``execute``) and every reader agree.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
 from .results import TaskResult
+
+
+def considered_total(results: Mapping[str, object]) -> int | None:
+    """The run-wide ``considered`` count from a ``results.json`` payload — reads the current
+    ``search_stats.total.considered`` location, so callers don't hand-navigate the nested block."""
+    search_stats = results.get("search_stats")
+    if isinstance(search_stats, dict):
+        total = search_stats.get("total")
+        if isinstance(total, dict) and isinstance(total.get("considered"), int):
+            return int(total["considered"])
+    return None
+
 
 if TYPE_CHECKING:
     from arc_lab.program_search.substrate.library import Library
@@ -27,13 +39,15 @@ RESULTS_FILENAME: Final = "results.json"
 TRACE_FILENAME: Final = "trace.jsonl"
 #: LEARN runs only: the grown library.
 LEARNED_LIBRARY_FILENAME: Final = "learned_library.json"
-#: Reservoir samples from the run's ``TraceSpec`` — only covers tasks executed in the
-#: ``execute()`` call that wrote it (a resume's already-traced tasks aren't re-sampled).
-SAMPLES_FILENAME: Final = "samples.json"
+#: Reservoir samples from the run's ``TraceSpec`` — JSONL, one row per (task, primitive, outcome,
+#: sampled program). Only covers tasks executed in the ``execute()`` call that wrote it (a
+#: resume's already-traced tasks aren't re-sampled).
+SAMPLES_FILENAME: Final = "samples.jsonl"
 #: Full per-candidate capture (``TraceSpec.capture_all``), one JSONL file per task/wake.
 CAPTURE_DIRNAME: Final = "capture"
-#: Capture settings + counts (loud truncation) for whichever tasks used full capture.
-MANIFEST_FILENAME: Final = "manifest.json"
+#: Capture settings + counts (loud truncation) — lives inside ``capture/``; the ``_`` sorts it
+#: first and marks it as metadata about the per-task streams beside it.
+CAPTURE_SUMMARY_FILENAME: Final = "_capture_summary.json"
 
 
 def find_run_dir(root: Path, run_id: str) -> Path | None:
@@ -81,8 +95,8 @@ class RunRecord:
         return self.run_dir / CAPTURE_DIRNAME
 
     @property
-    def manifest_path(self) -> Path:
-        return self.run_dir / MANIFEST_FILENAME
+    def capture_summary_path(self) -> Path:
+        return self.capture_dir / CAPTURE_SUMMARY_FILENAME
 
     @property
     def completed(self) -> bool:
@@ -104,26 +118,32 @@ class RunRecord:
             raise ValueError(f"{RESULTS_FILENAME} in {self.run_dir} has no 'tasks' rows")
         return tuple(TaskResult.from_dict(row) for row in rows)
 
-    def samples(self) -> dict[str, object] | None:
-        """The ``TraceSpec`` reservoir samples, or ``None`` if the run predates tracing / used
+    def sample_rows(self) -> list[dict[str, object]] | None:
+        """The ``TraceSpec`` reservoir samples as flat rows (``task``, ``candidate_index``,
+        ``primitive``, ``outcome``, ``program``), or ``None`` if the run predates tracing / used
         no samplers — unlike ``results()``, absence is not an error (an optional artifact)."""
         if not self.samples_path.is_file():
             return None
+        rows: list[dict[str, object]] = []
         with self.samples_path.open(encoding="utf-8") as handle:
-            data: object = json.load(handle)
-        if not isinstance(data, dict):
-            raise ValueError(f"malformed {SAMPLES_FILENAME} in {self.run_dir}")
-        return data
+            for raw_line in handle:
+                line = raw_line.strip()
+                if not line:
+                    continue
+                row: object = json.loads(line)
+                if isinstance(row, dict):
+                    rows.append(row)
+        return rows
 
-    def manifest(self) -> dict[str, object] | None:
-        """The capture manifest (settings + counts + loud truncation flags), or ``None`` if
+    def capture_summary(self) -> dict[str, object] | None:
+        """The capture summary (settings + counts + loud truncation flags), or ``None`` if
         ``TraceSpec.capture_all`` was never used for this run."""
-        if not self.manifest_path.is_file():
+        if not self.capture_summary_path.is_file():
             return None
-        with self.manifest_path.open(encoding="utf-8") as handle:
+        with self.capture_summary_path.open(encoding="utf-8") as handle:
             data: object = json.load(handle)
         if not isinstance(data, dict):
-            raise ValueError(f"malformed {MANIFEST_FILENAME} in {self.run_dir}")
+            raise ValueError(f"malformed {CAPTURE_SUMMARY_FILENAME} in {self.run_dir}")
         return data
 
     def trace_rows(self) -> Iterator[dict[str, object]]:

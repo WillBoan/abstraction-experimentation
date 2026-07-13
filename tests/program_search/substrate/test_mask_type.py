@@ -61,8 +61,12 @@ def test_equal_masks_dedup_in_a_pool_unequal_dont() -> None:
     b = Mask.from_list([[True]])
     c = Mask.from_list([[False]])
     assert pool.add_dedup(MASK, (a,), Input(), cost=1.0).inserted
-    assert not pool.add_dedup(MASK, (b,), Const(value=0, value_type=MASK), cost=2.0).inserted  # deduped
-    assert pool.add_dedup(MASK, (c,), Const(value=1, value_type=MASK), cost=2.0).inserted  # distinct: kept
+    assert not pool.add_dedup(
+        MASK, (b,), Const(value=0, value_type=MASK), cost=2.0
+    ).inserted  # deduped
+    assert pool.add_dedup(
+        MASK, (c,), Const(value=1, value_type=MASK), cost=2.0
+    ).inserted  # distinct: kept
     assert len(list(pool.items_of_type(MASK))) == 2
 
 

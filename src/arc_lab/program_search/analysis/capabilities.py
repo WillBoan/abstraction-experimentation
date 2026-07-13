@@ -1,5 +1,5 @@
-"""Read-time capability groupings for a run's per-key (primitive-name / node-kind) outcome
-breakdown (``search/tracking.py``'s ``SearchStats.by_key``).
+"""Read-time capability groupings for a run's per-primitive (primitive-name / node-kind) outcome
+breakdown (``search/tracking.py``'s ``SearchStats.by_primitive``).
 
 Category and provenance are analysis-side *opinions*, applied when reading a run's stats —
 never baked into the tracked keys themselves, never stored in a run artifact, and never a field

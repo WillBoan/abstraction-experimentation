@@ -243,13 +243,19 @@ class BottomUpSearchEngine(SearchEngine):
         pool = self._enumerate(Scope(()), contexts, budget, state, top_target, top_level=True)
         extraction = extract(pool, resolved_goal_type, target, constraints, train_examples, library)
         for entry in extraction.accepted:
-            state.tracker.record(entry.program, entry.prim_keys, Outcome.ACCEPTED)
+            state.tracker.record(
+                entry.candidate_index, entry.program, entry.primitives, Outcome.ACCEPTED
+            )
         for entry in extraction.constraint_rejected:
-            state.tracker.record(entry.program, entry.prim_keys, Outcome.CONSTRAINT_REJECTED)
+            state.tracker.record(
+                entry.candidate_index, entry.program, entry.primitives, Outcome.CONSTRAINT_REJECTED
+            )
         for vtype, entry in pool.entries():
             if vtype == resolved_goal_type and entry.sig == target:
                 continue  # already accounted for above (accepted or constraint_rejected)
-            state.tracker.record(entry.program, entry.prim_keys, Outcome.GOAL_UNMATCHED)
+            state.tracker.record(
+                entry.candidate_index, entry.program, entry.primitives, Outcome.GOAL_UNMATCHED
+            )
         solutions = tuple(entry.program for entry in extraction.accepted)
 
         return SearchResult(
@@ -259,7 +265,7 @@ class BottomUpSearchEngine(SearchEngine):
                 considered=state.tracker.considered,
                 accepted=len(solutions),
                 outcomes=state.tracker.totals(),
-                by_key=state.tracker.by_key(),
+                by_primitive=state.tracker.by_primitive(),
             ),
         )
 
@@ -305,7 +311,9 @@ class BottomUpSearchEngine(SearchEngine):
         state.memo[key] = pool
         if not top_level:
             for _, entry in pool.entries():
-                state.tracker.record(entry.program, entry.prim_keys, Outcome.GOAL_UNMATCHED)
+                state.tracker.record(
+                    entry.candidate_index, entry.program, entry.primitives, Outcome.GOAL_UNMATCHED
+                )
         return pool
 
     def _compose(
@@ -616,22 +624,27 @@ class BottomUpSearchEngine(SearchEngine):
         (displaced / evicted / goal-unmatched / constraint-rejected / accepted) is resolved later,
         without re-walking the tree.
         """
+        index = state.tracker.considered
         state.tracker.considered += 1
-        keys = primitive_keys(program)
+        primitives = primitive_keys(program)
         if signature is None:
-            state.tracker.record(program, keys, Outcome.ERRORED)
+            state.tracker.record(index, program, primitives, Outcome.ERRORED)
             return
         if not free_type_vars(output_type) and not signature_matches_type(signature, output_type):
-            state.tracker.record(program, keys, Outcome.PRUNED)
+            state.tracker.record(index, program, primitives, Outcome.PRUNED)
             return
         cost = state.cost.of(program, state.train_examples, state.library)
-        outcome = pool.add_dedup(vtype, signature, program, cost, keys)
+        outcome = pool.add_dedup(vtype, signature, program, cost, primitives, index)
         if not outcome.inserted:
-            state.tracker.record(program, keys, Outcome.DEDUPED)
+            state.tracker.record(index, program, primitives, Outcome.DEDUPED)
             return
         if outcome.displaced is not None:
+            displaced = outcome.displaced
             state.tracker.record(
-                outcome.displaced.program, outcome.displaced.prim_keys, Outcome.DISPLACED
+                displaced.candidate_index,
+                displaced.program,
+                displaced.primitives,
+                Outcome.DISPLACED,
             )
 
     def _argument_samples(
@@ -679,7 +692,9 @@ class BottomUpSearchEngine(SearchEngine):
         recording ``EVICTED`` for whatever gets dropped to make room."""
         kept, dropped = pool.cheapest(budget.max_pool)
         for entry in dropped:
-            state.tracker.record(entry.program, entry.prim_keys, Outcome.EVICTED)
+            state.tracker.record(
+                entry.candidate_index, entry.program, entry.primitives, Outcome.EVICTED
+            )
         return kept
 
 
@@ -692,5 +707,7 @@ class BeamBottomUpSearchEngine(BottomUpSearchEngine):
     def _select_frontier(self, pool: Pool, budget: Budget, state: _RunState) -> Pool:
         kept, dropped = pool.cheapest(self.beam_width)
         for entry in dropped:
-            state.tracker.record(entry.program, entry.prim_keys, Outcome.EVICTED)
+            state.tracker.record(
+                entry.candidate_index, entry.program, entry.primitives, Outcome.EVICTED
+            )
         return kept

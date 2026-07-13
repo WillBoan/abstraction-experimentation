@@ -1,5 +1,5 @@
-"""Capability tracking: the outcome partition and per-key (primitive/node-kind) breakdown of a
-search run, plus opt-in sampling and full capture of the programs behind those counts.
+"""Capability tracking: the outcome partition and per-primitive breakdown of a search run, plus
+opt-in sampling and full capture of the programs behind those counts.
 
 Every candidate the engine considers terminates in exactly one :class:`Outcome` — the partition
 invariant a :class:`SearchTracker` upholds is ``considered == sum(totals().values())``. Three
@@ -7,8 +7,13 @@ outcomes are known immediately when a candidate is absorbed (``ERRORED``, ``PRUN
 ``DEDUPED``); the rest are resolved later, at the moment a pooled candidate's fate is finally
 decided (``DISPLACED`` at a cheaper same-behaviour insertion, ``EVICTED`` at frontier truncation,
 and ``GOAL_UNMATCHED``/``CONSTRAINT_REJECTED``/``ACCEPTED`` at pool finalization) — the
-``PoolEntry`` is the identity that carries a candidate's cached ``prim_keys`` across that gap, so
-no per-program identity tracking is needed.
+``PoolEntry`` is the identity that carries a candidate's cached ``primitives`` and
+``candidate_index`` across that gap, so no separate per-program identity tracking is needed.
+
+Each candidate has a ``candidate_index`` — a 0-based counter stamped when it is first considered
+(``_absorb_one``), so the write-order of a capture stream (which follows *outcome-resolution*
+order, not generation order — the terminal outcomes are recorded in a batch at the end) can be
+re-sorted back into true consideration order by a reader.
 
 Counting is always on (cheap: a handful of dict increments per candidate, riding along with the
 signature evaluation/cost computation ``_absorb_one`` already pays). Sampling (``samples``) and
@@ -28,7 +33,8 @@ from ..substrate.program import AppFn, Apply, Const, If, Lam, PrimRef, Program
 
 
 class Outcome(Enum):
-    """The eight mutually-exclusive terminal states of a considered candidate."""
+    """The eight mutually-exclusive terminal states of a considered candidate, in *funnel* order
+    (the order they are emitted in every serialized stats block)."""
 
     ERRORED = "errored"
     PRUNED = "pruned"
@@ -40,8 +46,15 @@ class Outcome(Enum):
     ACCEPTED = "accepted"
 
 
+#: The funnel order — the canonical order every serialized stats block presents outcomes in.
+OUTCOME_ORDER: tuple[Outcome, ...] = tuple(Outcome)
+#: Outcome names in funnel order (the JSON keys).
+OUTCOME_NAMES: tuple[str, ...] = tuple(outcome.value for outcome in OUTCOME_ORDER)
+_OUTCOME_RANK: dict[str, int] = {name: index for index, name in enumerate(OUTCOME_NAMES)}
+
+
 #: Node kinds that aren't a named primitive but are still a distinct search capability —
-#: pseudo-keys alongside primitive names in the per-key breakdown.
+#: pseudo-keys alongside primitive names in the per-primitive breakdown.
 _NODE_KIND_KEYS: dict[type[Program], str] = {
     If: "__if__",
     Lam: "__lam__",
@@ -65,12 +78,21 @@ def primitive_keys(program: Program) -> frozenset[str]:
     return frozenset(keys)
 
 
+def funnel_outcomes(counts: dict[str, int], *, include_zeros: bool) -> dict[str, int]:
+    """Re-emit an outcome-count dict in funnel order. ``include_zeros`` fills every outcome (a
+    stable, self-documenting schema — for a ``total`` block); otherwise only the present ones
+    (sparse — for a per-primitive row that would otherwise carry mostly zeros)."""
+    if include_zeros:
+        return {name: counts.get(name, 0) for name in OUTCOME_NAMES}
+    return {name: counts[name] for name in OUTCOME_NAMES if name in counts}
+
+
 SampleMode: TypeAlias = Literal["first_k", "cheapest_k"]
 
 
 @dataclass(frozen=True, slots=True)
 class SampleSpec:
-    """One reservoir: keep up to ``k`` programs per ``(key, outcome)`` bucket.
+    """One reservoir: keep up to ``k`` programs per ``(primitive, outcome)`` bucket.
 
     ``first_k`` keeps the first ``k`` encountered per bucket (arrival order, itself
     deterministic — no RNG anywhere in this codebase, so a sample must never depend on one).
@@ -84,31 +106,35 @@ class SampleSpec:
 
 #: A capture sink is a plain callable — the tracker (and thus the search engine) never touches
 #: a file; whoever configures the tracker (``execute()``) owns whatever the callable does.
-CaptureSink: TypeAlias = Callable[[Program, frozenset[str], Outcome], None]
+CaptureSink: TypeAlias = Callable[[int, Program, frozenset[str], Outcome], None]
+
+#: One sampled/captured program: its consideration index and the program itself.
+_Sample: TypeAlias = "tuple[int, Program]"
 
 
 def _offer(
-    reservoir: dict[tuple[str, str], list[Program]],
+    reservoir: dict[tuple[str, str], list[_Sample]],
     spec: SampleSpec,
-    key: str,
+    primitive: str,
     outcome: Outcome,
+    candidate_index: int,
     program: Program,
 ) -> None:
-    bucket = reservoir.setdefault((key, outcome.value), [])
+    bucket = reservoir.setdefault((primitive, outcome.value), [])
     if spec.mode == "first_k":
         if len(bucket) < spec.k:
-            bucket.append(program)
+            bucket.append((candidate_index, program))
         return
-    if len(bucket) < spec.k or program.size() < bucket[-1].size():
-        bucket.append(program)
-        bucket.sort(key=lambda candidate: candidate.size())
+    if len(bucket) < spec.k or program.size() < bucket[-1][1].size():
+        bucket.append((candidate_index, program))
+        bucket.sort(key=lambda entry: entry[1].size())
         del bucket[spec.k :]
 
 
 @dataclass(slots=True)
 class SearchTracker:
-    """Accumulates the outcome partition + per-key breakdown for one ``SearchEngine.run`` call,
-    plus whatever sampling/capture it was configured with."""
+    """Accumulates the outcome partition + per-primitive breakdown for one ``SearchEngine.run``
+    call, plus whatever sampling/capture it was configured with."""
 
     considered: int = 0
     #: Reservoir samplers to maintain — () means no sampling (the cheapest option).
@@ -116,41 +142,63 @@ class SearchTracker:
     #: Set by ``execute()`` when full capture is requested; ``None`` means never called.
     capture: CaptureSink | None = None
     _totals: dict[Outcome, int] = field(default_factory=dict)
-    _by_key: dict[str, dict[Outcome, int]] = field(default_factory=dict)
-    _reservoirs: dict[SampleSpec, dict[tuple[str, str], list[Program]]] = field(
+    _by_primitive: dict[str, dict[Outcome, int]] = field(default_factory=dict)
+    _reservoirs: dict[SampleSpec, dict[tuple[str, str], list[_Sample]]] = field(
         default_factory=dict
     )
 
-    def record(self, program: Program, keys: frozenset[str], outcome: Outcome) -> None:
+    def record(
+        self, candidate_index: int, program: Program, primitives: frozenset[str], outcome: Outcome
+    ) -> None:
         self._totals[outcome] = self._totals.get(outcome, 0) + 1
-        for key in keys:
-            bucket = self._by_key.setdefault(key, {})
+        for primitive in primitives:
+            bucket = self._by_primitive.setdefault(primitive, {})
             bucket[outcome] = bucket.get(outcome, 0) + 1
         for spec in self.samples:
             reservoir = self._reservoirs.setdefault(spec, {})
-            for key in keys:
-                _offer(reservoir, spec, key, outcome, program)
+            for primitive in primitives:
+                _offer(reservoir, spec, primitive, outcome, candidate_index, program)
         if self.capture is not None:
-            self.capture(program, keys, outcome)
+            self.capture(candidate_index, program, primitives, outcome)
 
     def totals(self) -> dict[str, int]:
-        """Outcome totals by name — ``considered == sum(totals().values())``."""
-        return {outcome.value: count for outcome, count in self._totals.items()}
+        """Outcome totals by name, funnel order, all outcomes present (zeros filled) — the stable
+        schema for a ``total`` block. ``considered == sum(totals().values())``."""
+        return funnel_outcomes(
+            {outcome.value: count for outcome, count in self._totals.items()}, include_zeros=True
+        )
 
-    def by_key(self) -> dict[str, dict[str, int]]:
-        """Outcome totals by name, broken down per primitive-name / node-kind key."""
+    def by_primitive(self) -> dict[str, dict[str, int]]:
+        """Outcome totals per primitive-name / node-kind key: primitives sorted, outcomes in
+        funnel order, zeros omitted (a per-primitive row is sparse by design)."""
         return {
-            key: {outcome.value: count for outcome, count in bucket.items()}
-            for key, bucket in self._by_key.items()
+            primitive: funnel_outcomes(
+                {outcome.value: count for outcome, count in self._by_primitive[primitive].items()},
+                include_zeros=False,
+            )
+            for primitive in sorted(self._by_primitive)
         }
 
-    def samples_json(self) -> dict[str, dict[str, list[dict[str, object]]]]:
-        """Every configured reservoir's contents, JSON-ready: ``{"k{k}_{mode}": {"key|outcome":
-        [program dicts, cheapest/first first]}}``."""
-        return {
-            f"k{spec.k}_{spec.mode}": {
-                f"{key}|{outcome}": [program.to_dict() for program in programs]
-                for (key, outcome), programs in reservoir.items()
-            }
-            for spec, reservoir in self._reservoirs.items()
-        }
+    def sample_rows(self) -> list[dict[str, object]]:
+        """The sampled programs as flat rows ``{candidate_index, primitive, outcome, program}``
+        (``program`` a readable string), one per ``(primitive, outcome, candidate_index)``,
+        deduplicated across configured samplers and sorted by primitive, then funnel order, then
+        index — so buckets group visually and the SAME tooling renders this and a capture file."""
+        seen: dict[tuple[str, str, int], Program] = {}
+        for reservoir in self._reservoirs.values():
+            for (primitive, outcome), entries in reservoir.items():
+                for candidate_index, program in entries:
+                    seen[(primitive, outcome, candidate_index)] = program
+        rows: list[dict[str, object]] = []
+        for primitive, outcome, candidate_index in sorted(
+            seen, key=lambda bucket: (bucket[0], _OUTCOME_RANK.get(bucket[1], 99), bucket[2])
+        ):
+            rows.append(
+                {
+                    "candidate_index": candidate_index,
+                    "primitive": primitive,
+                    "outcome": outcome,
+                    "program": str(seen[(primitive, outcome, candidate_index)]),
+                }
+            )
+        return rows

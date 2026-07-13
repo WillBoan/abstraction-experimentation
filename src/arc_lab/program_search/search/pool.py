@@ -28,7 +28,10 @@ class PoolEntry:
     #: Primitive names / node-kind pseudo-keys exercised in ``program``'s tree (capability
     #: tracking, ``search/tracking.py``) — cached at insertion so a deferred outcome (displaced,
     #: evicted, goal-unmatched, ...) can be attributed without re-walking the tree.
-    prim_keys: frozenset[str] = frozenset()
+    primitives: frozenset[str] = frozenset()
+    #: The candidate's 0-based consideration index (``SearchTracker`` — stamped at ``_absorb_one``),
+    #: cached so a deferred outcome recovers the program's true generation order.
+    candidate_index: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,7 +55,8 @@ class Pool:
         signature: Signature,
         program: Program,
         cost: float,
-        prim_keys: frozenset[str] = frozenset(),
+        primitives: frozenset[str] = frozenset(),
+        candidate_index: int = 0,
     ) -> DedupOutcome:
         """Insert ``program`` iff it is the first — or strictly cheaper — witness at ``(vtype, signature)``.
 
@@ -63,7 +67,7 @@ class Pool:
         sig_map = self._by_type_sig.setdefault(vtype, {})
         existing = sig_map.get(signature)
         if existing is None or cost < existing.cost:
-            sig_map[signature] = PoolEntry(program, signature, cost, prim_keys)
+            sig_map[signature] = PoolEntry(program, signature, cost, primitives, candidate_index)
             return DedupOutcome(inserted=True, displaced=existing)
         return DedupOutcome(inserted=False, displaced=None)
 
