@@ -48,7 +48,7 @@ def _bbox_mask(grid: Grid) -> Mask:
     """The filled bounding-box region of the non-background content."""
     row_lo, row_hi, col_lo, col_hi = _bounds(_nonbg_mask(grid))
     out = np.zeros(grid.shape, dtype=np.bool_)
-    out[row_lo : row_hi + 1, col_lo : col_hi + 1] = True
+    out[row_lo : row_hi + 1, col_lo : col_hi + 1] = True  # noqa: E203, RUF100
     return Mask(out)
 
 
