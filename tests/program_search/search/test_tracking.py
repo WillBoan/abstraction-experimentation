@@ -214,3 +214,39 @@ def test_constraint_rejected_when_the_solution_is_filtered() -> None:
     assert outcomes["constraint_rejected"] == 1
     assert result.ranked_programs == ()
     assert result.stats.considered == sum(outcomes.values())
+
+
+# -- the new-layer restriction: each syntactic program is built once, not once per round --------
+
+_GEO_LIBRARY = Library(name="geo", primitives=(_TRANSPOSE, _FLIP_H))
+
+
+def test_new_layer_restriction_considers_each_program_once() -> None:
+    """At ``max_depth=3`` a naive enumerator that composes over the whole pool each round would
+    regenerate every depth-1 program at depth 2 (and dedup it away), so the same syntactic program
+    surfaces as several distinct considered candidates. The new-layer restriction composes only with
+    the previous round's additions, so each distinct program is considered exactly once — a full
+    capture holds no duplicate program string."""
+    seen: list[str] = []
+    tracker = SearchTracker(
+        capture=lambda index, program, primitives, outcome: seen.append(str(program))
+    )
+    task = Task(task_id="t", train=(Example(input=_GRID, output=_transpose(_GRID)),), test=())
+    BottomUpSearchEngine(
+        constant_sources=(),
+        function_hole_fill_mode="none",
+        polymorphism_instantiation="monomorphize",
+        unpinned_type_var_mode="reject",
+    ).run(
+        train_examples=task.train,
+        library=_GEO_LIBRARY,
+        constraints=(),
+        cost=ProgramSize(),
+        budget=Budget(max_depth=3, max_arity=1, max_pool=100),
+        tracker=tracker,
+    )
+    assert seen, "the search must consider candidates"
+    assert len(seen) == len(set(seen)), "no syntactic program is regenerated across rounds"
+    # A depth-1 program is formed once at round 1 and never re-formed when it is a leaf-only
+    # composition at round 2 (which is exactly what the restriction suppresses).
+    assert seen.count("transpose(input)") == 1

@@ -12,6 +12,13 @@ since ``_fill`` only ever *skips* combinations on a failed ``unify``; it never e
 full cartesian product this counts. The per-round pool is capped exactly as ``_select_frontier``
 caps it (``budget.max_pool``, or ``beam_width`` under ``BeamBottomUpSearchEngine``).
 
+The ``pool_size ** arity`` term is *tight* for round 1 (the whole pool is that round's new layer) but
+becomes a *loose* over-approximation from round 2 on: the engine's new-layer restriction
+(``search_engine.py``'s ``_uses_new_layer``) composes only combinations that use at least one
+argument from the previous round, whereas this counts the full cartesian product. It therefore stays
+a valid ceiling (``considered`` only shrinks under the restriction), just no longer exact at
+``max_depth >= 3``; modelling the new-vs-old split to tighten it is a deliberate, unbuilt refinement.
+
 **What's a heuristic, not a ceiling:** short-circuit ``If`` branching and the function-hole
 fill/``AppFn`` path (§5.3-5.4 of ARCHITECTURE.md) are dormant in every current preset
 (``execution/presets.py``), so they are approximated rather than derived from the engine's exact

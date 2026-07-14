@@ -76,6 +76,20 @@ UnpinnedTypeVarMode: TypeAlias = Literal[
 _BRANCHING_ENTRY = "if"
 
 
+def _uses_new_layer(program: Program, new_layer: frozenset[int]) -> bool:
+    """Whether a freshly-composed ``program`` uses at least one argument from the previous round's
+    additions (the new-layer restriction, §5.2). ``new_layer`` holds the ``id()`` of the pooled
+    programs added last round; a composed node's direct ``children`` are exactly the pooled argument
+    programs it was built from (the same objects), so identity membership is exact — and every
+    object compared is a live pool program at this point, so no ``id`` can alias a freed one.
+
+    Completeness: any program first constructible this round has a direct child of the previous
+    round's depth, so this never filters out a genuinely new combination — only re-derivations of
+    programs an earlier round already built.
+    """
+    return any(id(child) in new_layer for child in program.children())
+
+
 def derive_goal_type(train_examples: TrainExamples) -> Type:
     """Derive the run's goal type from the task data — not yet built.
 
@@ -300,13 +314,20 @@ class BottomUpSearchEngine(SearchEngine):
         for depth in range(budget.max_depth):
             branch_candidates: list[tuple[Program, Type, Signature | None]] = []
             if depth > 0:
-                branch_candidates = self._branch_candidates(pool, state)
-                frontier = list(
-                    self._compose(scope, contexts, pool, budget, state, enclosing_target)
+                # The new-layer restriction (§5.2): compose only over combinations that use at least
+                # one argument added in the previous round (``generation == depth - 1``), so a
+                # lower-depth program is built once at its own depth, not regenerated-and-deduped
+                # every round. At depth 1 this is a no-op (the whole pool is the leaf layer).
+                new_layer = frozenset(
+                    id(entry.program) for _, entry in pool.entries() if entry.generation == depth - 1
                 )
-            self._absorb(frontier, contexts, pool, state)
+                branch_candidates = self._branch_candidates(pool, state, new_layer)
+                frontier = list(
+                    self._compose(scope, contexts, pool, budget, state, enclosing_target, new_layer)
+                )
+            self._absorb(frontier, contexts, pool, state, depth)
             for program, vtype, signature in branch_candidates:
-                self._absorb_one(program, vtype, vtype, signature, pool, state)
+                self._absorb_one(program, vtype, vtype, signature, pool, state, depth)
             pool = self._select_frontier(pool, budget, state)
         state.memo[key] = pool
         if not top_level:
@@ -324,6 +345,7 @@ class BottomUpSearchEngine(SearchEngine):
         budget: Budget,
         state: _RunState,
         enclosing_target: EnclosingTarget | None,
+        new_layer: frozenset[int],
     ) -> Iterator[tuple[Program, Type]]:
         """One composition round: applications of every primitive, then the polymorphism policy (§6.2).
 
@@ -332,6 +354,12 @@ class BottomUpSearchEngine(SearchEngine):
         Under ``lambda-synthesis``, each higher-order primitive with a ``body_sampler`` also
         contributes recursively-synthesized ``Lam`` values (§5.3) — pooled as first-class function
         values (§8) that fill its hole through ordinary composition in the next round.
+
+        ``new_layer`` holds the identities of the pooled programs added last round; the new-layer
+        restriction keeps only compositions that use at least one of them (``_uses_new_layer``), so
+        combinations already built in an earlier round are not regenerated. Synthesized lambdas are
+        exempt: their body comes from a nested sub-search's pool, not this scope's, so their children
+        are never in ``new_layer`` — they are (correctly) re-offered each round.
         """
         policy = self.polymorphism_instantiation
         if policy == "unrestricted":
@@ -347,14 +375,16 @@ class BottomUpSearchEngine(SearchEngine):
             for program, result_type in applications(
                 primitive, candidates, state.counter, budget.max_arity
             ):
-                yield from resolve(program, result_type, policy, state.universe)
+                if _uses_new_layer(program, new_layer):
+                    yield from resolve(program, result_type, policy, state.universe)
             if self.function_hole_fill_mode == "lambda-synthesis":
                 yield from self._synthesized_lambdas(
                     primitive, scope, contexts, candidates, budget, state, enclosing_target
                 )
         if self.function_hole_fill_mode != "none":  # apply pooled function values (§8)
             for program, result_type in appfn_applications(candidates, state.counter):
-                yield from resolve(program, result_type, policy, state.universe)
+                if _uses_new_layer(program, new_layer):
+                    yield from resolve(program, result_type, policy, state.universe)
 
     def _synthesized_lambdas(
         self,
@@ -550,7 +580,7 @@ class BottomUpSearchEngine(SearchEngine):
             )
 
     def _branch_candidates(
-        self, pool: Pool, state: _RunState
+        self, pool: Pool, state: _RunState, new_layer: frozenset[int]
     ) -> list[tuple[Program, Type, Signature | None]]:
         """Short-circuit ``If`` candidates for one round (§5.4), iff the library summons branching.
 
@@ -559,7 +589,8 @@ class BottomUpSearchEngine(SearchEngine):
         inherently short-circuit — a partial branch (``⊥`` outside its selected region) still
         contributes, which is what makes domain-splitting ``if`` work. Function-typed branches are
         skipped: their signatures are sampled per argument tuple, not per context, so the per-context
-        combination does not apply.
+        combination does not apply. The new-layer restriction applies as it does to composition: at
+        least one of the condition/branches must be from the previous round (``_uses_new_layer``).
         """
         if _BRANCHING_ENTRY not in state.library:
             return []
@@ -574,6 +605,8 @@ class BottomUpSearchEngine(SearchEngine):
             for condition in conditions:
                 for then, orelse in itertools.permutations(entries, 2):
                     program = If(cond=condition.program, then=then.program, orelse=orelse.program)
+                    if not _uses_new_layer(program, new_layer):
+                        continue
                     signature = combine_if_signature(condition.sig, then.sig, orelse.sig)
                     candidates.append((program, vtype, signature))
         return candidates
@@ -584,9 +617,13 @@ class BottomUpSearchEngine(SearchEngine):
         contexts: tuple[Context, ...],
         pool: Pool,
         state: _RunState,
+        generation: int,
     ) -> None:
         """Evaluate, prune (§5.6), and dedup each candidate. Value candidates go in first, then
         function candidates — whose signatures sample argument values from the now-populated pool (§8).
+
+        ``generation`` is the composition round these candidates belong to, stamped on every pooled
+        entry for the new-layer restriction (``_enumerate``).
         """
         functions: list[tuple[Program, ArrowType]] = []
         for program, vtype in candidates:
@@ -594,7 +631,7 @@ class BottomUpSearchEngine(SearchEngine):
                 functions.append((program, vtype))
             else:
                 signature = compute_signature(program, contexts, state.library)
-                self._absorb_one(program, vtype, vtype, signature, pool, state)
+                self._absorb_one(program, vtype, vtype, signature, pool, state, generation)
         if functions:
             arg_samples = self._argument_samples(functions, contexts, pool, state)
             for program, arrow in functions:
@@ -602,7 +639,7 @@ class BottomUpSearchEngine(SearchEngine):
                     program, arrow, contexts, arg_samples, state.library
                 )
                 _, result_type = peel_arrow(arrow)
-                self._absorb_one(program, arrow, result_type, signature, pool, state)
+                self._absorb_one(program, arrow, result_type, signature, pool, state, generation)
 
     def _absorb_one(
         self,
@@ -612,6 +649,7 @@ class BottomUpSearchEngine(SearchEngine):
         signature: Signature | None,
         pool: Pool,
         state: _RunState,
+        generation: int,
     ) -> None:
         """Prune (fully-undefined or a *concrete* output-type mismatch) and dedup one candidate.
 
@@ -622,7 +660,8 @@ class BottomUpSearchEngine(SearchEngine):
         Every candidate's capability keys (primitive names / node kinds, ``search/tracking.py``)
         are computed once, here, and cached on the ``PoolEntry`` if pooled — its ultimate outcome
         (displaced / evicted / goal-unmatched / constraint-rejected / accepted) is resolved later,
-        without re-walking the tree.
+        without re-walking the tree. ``generation`` (the composition round) is likewise cached on the
+        pooled entry, driving the new-layer restriction (``_enumerate``).
         """
         index = state.tracker.considered
         state.tracker.considered += 1
@@ -634,7 +673,7 @@ class BottomUpSearchEngine(SearchEngine):
             state.tracker.record(index, program, primitives, Outcome.PRUNED)
             return
         cost = state.cost.of(program, state.train_examples, state.library)
-        outcome = pool.add_dedup(vtype, signature, program, cost, primitives, index)
+        outcome = pool.add_dedup(vtype, signature, program, cost, primitives, index, generation)
         if not outcome.inserted:
             state.tracker.record(index, program, primitives, Outcome.DEDUPED)
             return
