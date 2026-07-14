@@ -46,6 +46,12 @@ def learn(
         "--force-recapture",
         help="Re-execute already-completed runs to (re)populate tracing artifacts.",
     ),
+    profile: bool = typer.Option(
+        False,
+        "--profile",
+        help="Profile each recorded run under cProfile; writes profile/summary.txt + stats.prof. "
+        "Needs --force-recapture on already-cached runs.",
+    ),
 ) -> None:
     """Run the wake-sleep loop, then the derived SEARCH runs (2-3 recorded runs)."""
     preset = resolve_config_arg(config, [])
@@ -66,7 +72,7 @@ def learn(
             raise typer.BadParameter(str(exc)) from exc
     train = load_corpus(corpus)
     evaluation = load_corpus(eval_corpus) if eval_corpus is not None else None
-    trace_spec = build_trace_spec(sample, track_all, capture_max)
+    trace_spec = build_trace_spec(sample, track_all, capture_max, profile)
     typer.echo(f"learning with {config} on {train.name} ({len(train)} tasks)...")
     result = run_search_learn(
         learn_config,

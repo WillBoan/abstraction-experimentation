@@ -246,6 +246,30 @@ def test_execute_track_all_writes_capture_and_summary(tmp_path: Path) -> None:
     assert _per_task_summary(summary, "t1")["captured"] == len(captured_rows)
 
 
+def test_execute_profile_writes_summary_and_stats(tmp_path: Path) -> None:
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    record = execute(spec, runs_root=tmp_path, trace=TraceSpec(profile=True))
+    assert record.profile_stats_path.is_file()  # raw pstats dump for later exploration
+    summary = record.profile_summary()
+    assert summary is not None
+    assert "total profiled wall time" in summary
+    assert "phase rollup" in summary
+    assert "evaluation: compute_signature" in summary  # a load-bearing phase anchor is attributed
+
+
+def test_execute_without_profile_writes_no_profile_artifacts(tmp_path: Path) -> None:
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    record = execute(spec, runs_root=tmp_path)  # default TraceSpec: profiling off
+    assert not record.profile_dir.exists()
+    assert record.profile_summary() is None
+
+
 def test_execute_track_all_max_truncates_loudly(tmp_path: Path) -> None:
     spec = RunSpec(
         config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),

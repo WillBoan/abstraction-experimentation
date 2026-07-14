@@ -48,6 +48,10 @@ CAPTURE_DIRNAME: Final = "capture"
 #: Capture settings + counts (loud truncation) — lives inside ``capture/``; the ``_`` sorts it
 #: first and marks it as metadata about the per-task streams beside it.
 CAPTURE_SUMMARY_FILENAME: Final = "_capture_summary.json"
+#: cProfile artifacts (``TraceSpec.profile``): raw stats + a rendered summary, in their own subdir.
+PROFILE_DIRNAME: Final = "profile"
+PROFILE_STATS_FILENAME: Final = "stats.prof"
+PROFILE_SUMMARY_FILENAME: Final = "summary.txt"
 
 
 def find_run_dir(root: Path, run_id: str) -> Path | None:
@@ -116,6 +120,18 @@ class RunRecord:
         return self.capture_dir / CAPTURE_SUMMARY_FILENAME
 
     @property
+    def profile_dir(self) -> Path:
+        return self.run_dir / PROFILE_DIRNAME
+
+    @property
+    def profile_stats_path(self) -> Path:
+        return self.profile_dir / PROFILE_STATS_FILENAME
+
+    @property
+    def profile_summary_path(self) -> Path:
+        return self.profile_dir / PROFILE_SUMMARY_FILENAME
+
+    @property
     def completed(self) -> bool:
         """True iff ``results.json`` exists — the cache-hit test ``execute`` runs first."""
         return self.results_path.is_file()
@@ -162,6 +178,13 @@ class RunRecord:
         if not isinstance(data, dict):
             raise ValueError(f"malformed {CAPTURE_SUMMARY_FILENAME} in {self.run_dir}")
         return data
+
+    def profile_summary(self) -> str | None:
+        """The rendered cProfile summary text (``TraceSpec.profile``), or ``None`` if the run was
+        never profiled - an optional diagnostic artifact, so absence is not an error."""
+        if not self.profile_summary_path.is_file():
+            return None
+        return self.profile_summary_path.read_text(encoding="utf-8")
 
     def trace_rows(self) -> Iterator[dict[str, object]]:
         """Stream the trace rows (skipping a trailing partial line after a crash)."""

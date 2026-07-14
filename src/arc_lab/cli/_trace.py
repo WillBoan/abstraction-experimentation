@@ -28,16 +28,21 @@ def parse_sample_spec(raw: str) -> SampleSpec:
     raise typer.BadParameter(f"mode must be 'first_k' or 'cheapest_k', got {mode!r}")
 
 
-def build_trace_spec(samples: list[str], track_all: bool, capture_max: int) -> TraceSpec:
-    """The ``TraceSpec`` a CLI command's ``--sample``/``--track-all``/``--capture-max`` name.
+def build_trace_spec(
+    samples: list[str], track_all: bool, capture_max: int, profile: bool = False
+) -> TraceSpec:
+    """The ``TraceSpec`` a CLI command's ``--sample``/``--track-all``/``--capture-max``/``--profile``
+    flags name.
 
     No ``--sample`` at all keeps ``TraceSpec``'s own default sampler (small, deterministic,
     cheap enough to always be on) rather than turning sampling off.
     """
+    parsed_samples = tuple(parse_sample_spec(spec) for spec in samples)
     if not samples:
-        return TraceSpec(capture_all=track_all, capture_all_max=capture_max)
+        return TraceSpec(capture_all=track_all, capture_all_max=capture_max, profile=profile)
     return TraceSpec(
-        samples=tuple(parse_sample_spec(spec) for spec in samples),
+        samples=parsed_samples,
         capture_all=track_all,
         capture_all_max=capture_max,
+        profile=profile,
     )

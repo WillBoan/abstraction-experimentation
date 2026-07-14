@@ -24,6 +24,7 @@ purely to (re)populate its telemetry artifacts under a new ``TraceSpec``.
 
 from __future__ import annotations
 
+import cProfile
 import json
 import logging
 import subprocess
@@ -53,6 +54,7 @@ from .model.run_record import RunRecord, find_run_dir
 from .model.run_spec import RunSpec
 from .model.trace_spec import TraceSpec
 from .predict import predict
+from .profiling import write_profile_artifacts
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +86,12 @@ def execute(
     trace_spec = trace if trace is not None else TraceSpec()
 
     if record.completed and not force_recapture:  # idempotency: results.json present ⇒ cached
+        if trace_spec.profile:
+            logger.warning(
+                "run %s: --profile requested but the run is cached; pass force_recapture "
+                "to re-execute and profile it",
+                record.run_id,
+            )
         logger.info("run %s served from cache (%s)", record.run_id, record.run_dir)
         return record
     if force_recapture and record.completed:
@@ -97,10 +105,19 @@ def execute(
         {**run_spec.to_dict(), "commit": _current_commit(), "run_started_at": _now_iso()},
     )
 
-    if run_spec.config.learn is None:
-        payload = _search_results(_run_search(run_spec, record, trace_spec))
-    else:
-        payload = _run_learn(run_spec, record, trace_spec)
+    profiler = cProfile.Profile() if trace_spec.profile else None
+    if profiler is not None:
+        profiler.enable()
+    try:
+        if run_spec.config.learn is None:
+            payload = _search_results(_run_search(run_spec, record, trace_spec))
+        else:
+            payload = _run_learn(run_spec, record, trace_spec)
+    finally:
+        if profiler is not None:
+            profiler.disable()
+    if profiler is not None:
+        write_profile_artifacts(profiler, record)
 
     _write_json(
         record.results_path,  # the LAST write — its presence marks the run complete

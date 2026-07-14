@@ -133,19 +133,27 @@ capabilities that aren't named primitives — sparse, primitive-sorted). Free, n
 the per-task rows in `trace.jsonl` carry the same block, and `analysis/capabilities.py` re-groups
 `by_primitive` into category/provenance rollups at read time.
 
-Beyond the counts, `TraceSpec` (`execution/model/trace_spec.py`) governs two further, opt-in
+Beyond the counts, `TraceSpec` (`execution/model/trace_spec.py`) governs three further, opt-in
 observations of a search, passed to `execute()` as a plain keyword (`trace: TraceSpec | None`)
-— **never** a `Config` field. Both record programs as **readable strings** (`str(program)`, e.g.
-`build_grid(width(input), lam:int(...))`) and stamp each with its `candidate_index` (the 0-based
-consideration order, so a stream written in outcome-resolution order re-sorts to generation order):
+— **never** a `Config` field. The first two record programs as **readable strings**
+(`str(program)`, e.g. `build_grid(width(input), lam:int(...))`) and stamp each with its
+`candidate_index` (the 0-based consideration order, which lets a consumer recover true generation
+order even though the tracker emits outcomes in resolution order):
 
 - **Sampling** (`TraceSpec.samples`, on by default — a small deterministic `first_k` reservoir
   per `(primitive, outcome)` bucket) — a few example programs per primitive/node-kind × outcome,
   cheap enough to run unconditionally. Written as flat JSONL rows to `samples.jsonl`.
-- **Full capture** (`TraceSpec.capture_all`, off by default) — every considered candidate,
-  streamed to `capture/<task_id>.jsonl` (LEARN: `capture/iter-<n>/<task_id>.jsonl`), capped at
-  `capture_all_max` — truncation is recorded loudly in `capture/_capture_summary.json`, never
-  silently dropped.
+- **Full capture** (`TraceSpec.capture_all`, off by default) — the first `capture_all_max`
+  considered candidates, written to `capture/<task_id>.jsonl` (LEARN: `capture/iter-<n>/<task_id>
+  .jsonl`) **in generation order** (`candidate_index` 0,1,2,…, no gaps): the sink buffers by index
+  and sorts at close, so survivors whose outcome resolves late are not dropped in favour of early
+  dedups. Truncation past the cap is recorded loudly in `capture/_capture_summary.json`.
+- **Profiling** (`TraceSpec.profile`, off by default) — a cProfile pass over the run, dumped to
+  `profile/stats.prof` (raw, for `pstats`/`snakeviz`) plus a rendered `profile/summary.txt` (a
+  phase rollup — generation / evaluation / dedup / tracking / cost — and a top-N self-time table;
+  `execution/profiling.py`). Wall-clock and thus non-deterministic, so it lands *only* under
+  `profile/`, never in `results.json`. Takes effect only when the run actually executes (a fresh
+  run, or a cached one under `force_recapture`).
 
 Both `samples.jsonl` and each `capture/*.jsonl` share a flat row schema, so one tool renders
 either — e.g. `jq -r '[.candidate_index,.outcome,(.primitives|join(";")),.program]|@tsv' … |
@@ -165,9 +173,12 @@ runs/<date>/<started_at>_<run_id>/
 │                           #   primitive, outcome, program}; task is "<task_id>" (LEARN:
 │                           #   "iter-<n>/<task_id>"). Covers only the tasks THIS invocation
 │                           #   ran; a resume's already-traced tasks aren't re-sampled.
-└── capture/                # optional: TraceSpec.capture_all's per-candidate streams
-    ├── _capture_summary.json   # settings + counts + loud truncation, per task (sorts first)
-    └── <task_id>.jsonl         # rows {candidate_index, outcome, primitives, program}
+├── capture/                # optional: TraceSpec.capture_all's per-candidate streams
+│   ├── _capture_summary.json   # settings + counts + loud truncation, per task (sorts first)
+│   └── <task_id>.jsonl         # rows {candidate_index, outcome, primitives, program}, gen order
+└── profile/                # optional: TraceSpec.profile — cProfile artifacts
+    ├── stats.prof              # raw pstats dump (explore with pstats / snakeviz)
+    └── summary.txt             # rendered phase rollup + top-N self-time table
 ```
 
 **Why `TraceSpec` is not part of `run_id`:** `Config` decides _what is computed_; `TraceSpec`

@@ -19,6 +19,8 @@ class Budget:
     max_arity: int
     max_pool: int
 
+    # TODO: Add a `stop_after_solutions: int | None = None` field
+
     @property
     def exhausted(self) -> bool:
         """True when no further composition rounds remain (``max_depth`` spent)."""

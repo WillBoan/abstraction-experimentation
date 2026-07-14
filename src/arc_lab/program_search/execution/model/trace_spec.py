@@ -42,3 +42,10 @@ class TraceSpec:
     #: lambda-synthesis, branch injection, ...) is a distinct, not-yet-built tracked dimension;
     #: every current preset (`execution/presets.py`) leaves those mechanisms dormant anyway.
     mechanisms: bool = False
+    #: Profile the run under cProfile and write ``profile/stats.prof`` + ``profile/summary.txt``
+    #: (``execution/profiling.py``). Off by default: the profiler adds per-call overhead, so it is a
+    #: diagnostic switch, not always-on. Like every other field here it stays outside run identity
+    #: (profiling observes the search, never changes it), but its wall-clock output is inherently
+    #: non-deterministic, so it lands only in ``profile/`` and never in ``results.json``. Only takes
+    #: effect when the run actually executes (a fresh run, or a cached one with ``force_recapture``).
+    profile: bool = False

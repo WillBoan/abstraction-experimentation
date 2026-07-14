@@ -32,6 +32,13 @@ class PoolEntry:
     #: The candidate's 0-based consideration index (``SearchTracker`` — stamped at ``_absorb_one``),
     #: cached so a deferred outcome recovers the program's true generation order.
     candidate_index: int = 0
+    #: The composition round (``_enumerate`` depth) that produced this entry. Drives the new-layer
+    #: restriction: round ``d`` only composes candidates that use at least one argument from the
+    #: ``d - 1`` generation, so a lower-depth program is built once (at its own depth) instead of
+    #: being regenerated and deduped every subsequent round. A cheaper witness that *displaces* an
+    #: entry re-stamps the generation, so programs built on it are re-derived once with the cheaper
+    #: cost. Not part of pool identity (keyed on ``(type, signature)``); pure enumeration scratch.
+    generation: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,17 +64,24 @@ class Pool:
         cost: float,
         primitives: frozenset[str] = frozenset(),
         candidate_index: int = 0,
+        generation: int = 0,
     ) -> DedupOutcome:
         """Insert ``program`` iff it is the first — or strictly cheaper — witness at ``(vtype, signature)``.
 
         Returns a :class:`DedupOutcome`: ``inserted=False`` if an existing entry was at most as
         costly, so ``program`` is deduplicated away; ``inserted=True`` otherwise, carrying the
         displaced entry (if any) so its capability tags can be attributed to ``DISPLACED``.
+
+        ``generation`` is the composition round that produced this candidate, cached on the entry for
+        the new-layer restriction (:class:`PoolEntry`); a strictly-cheaper insertion re-stamps it so a
+        displaced behaviour re-enters the "new" layer and its dependents are re-derived once.
         """
         sig_map = self._by_type_sig.setdefault(vtype, {})
         existing = sig_map.get(signature)
         if existing is None or cost < existing.cost:
-            sig_map[signature] = PoolEntry(program, signature, cost, primitives, candidate_index)
+            sig_map[signature] = PoolEntry(
+                program, signature, cost, primitives, candidate_index, generation
+            )
             return DedupOutcome(inserted=True, displaced=existing)
         return DedupOutcome(inserted=False, displaced=None)
 

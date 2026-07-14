@@ -35,11 +35,17 @@ def search(
         "--force-recapture",
         help="Re-execute an already-completed run to (re)populate tracing artifacts.",
     ),
+    profile: bool = typer.Option(
+        False,
+        "--profile",
+        help="Profile the run under cProfile; writes profile/summary.txt + stats.prof. "
+        "Needs --force-recapture on an already-cached run.",
+    ),
 ) -> None:
     """Execute (or serve from cache) one SEARCH recorded run."""
     preset = resolve_config_arg(config, set_)
     loaded = load_corpus(corpus)
-    trace_spec = build_trace_spec(sample, track_all, capture_max)
+    trace_spec = build_trace_spec(sample, track_all, capture_max, profile)
     typer.echo(f"searching {config} on {loaded.name} ({len(loaded)} tasks)...")
     record = run_search(
         preset, loaded, runs_root=None, trace=trace_spec, force_recapture=force_recapture
