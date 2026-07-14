@@ -427,3 +427,21 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 - **Commit:** working tree atop 2759b69
 - **Ran:** `compute_signature` now reuses cached child signatures for `Apply` nodes instead of re-walking whole subtrees (`search/signature.py`, `search_engine.py`); the two study-based locks (`layered-abstraction`, `perceive-transform`) now compute only the 4 grid cells they assert on instead of `run_study`'s full 12-cell diagnostic grid.
 - **Result:** `make check` ~120s → ~49s, all locks unchanged. Details in the commit / `tests/program_search/execution/test_locks.py`.
+
+---
+
+## 2026-07-14 — arc1 preset partition census: `d4` / `synth` (real-ARC bearings, `sym` deferred)
+
+- **Commit:** working tree atop 6066040
+- **Notebook:** [experiments/2026-07-14-capability-census/](experiments/2026-07-14-capability-census/) — full write-up + `analyze-run` artifacts
+- **Question:** the first EXPERIMENT_QUEUE.md real-ARC bearings row — read the search-cost partition (`by_category`/`by_provenance`, outcome mix) for as-shipped presets over full `arc1-train`, not just their solve count.
+- **Ran:** `arc-lab search d4 --corpus arc1-train`, `arc-lab search synth --corpus arc1-train`, then `arc-lab analyze-run` on each. `sym` deferred to a follow-up (measured ~32 CPU-min full-corpus per the 2026-07-13 entry above).
+- **Result:**
+  - Solve counts match the existing locks exactly and `synth`'s solved set is a strict superset of `d4`'s (7 D4 + 4 atomic) — reproduces the 2026-07-06 finding byte-for-byte.
+  - **Metrics:**
+    - `d4`: 7/400 solved, considered=3,600, deduped=490, evicted=0, pruned=0
+    - `synth`: 11/400 solved, considered=2,704,865, deduped=2,090,002, evicted=431,052, pruned=0
+  - `d4`'s partition is trivial (one library = one category `geometry`, one provenance `base`) — `anti_transpose`/`rot270` are considered on every task but never `accepted` (live vocabulary, zero payoff on this corpus, not a Table-A island).
+  - `synth`'s cost is dominated by `constant`-leaf x `map_color` combinatorics: `constant` + `color` categories account for ~99%/~97% of total considered respectively, vs. `geometry` ~19% and `scaling` ~14% — the first quantified confirmation of `docs/CONFIG-DEFAULTS-2026-07-11.md`'s "finite-enumerate is multiplicative under variadics" cost note. `evicted` is 0 for `d4` (no constants, `max_pool=100` never fills) vs 431k for `synth` (pool-cap pressure once constants blow up the frontier); `pruned`=0 for both (no `Constraint`s registered, matching the default).
+- **Interpretation:** the partition-read gives a mechanistic account behind the known solve counts — for `synth`, essentially the entire 2.7M-candidate cost is constant-enumeration x color-recolor, not the D4 geometry it inherited. For `d4`, two of eight primitives are dead weight *for this corpus specifically* (fire but never win), a materially weaker claim than a true vocabulary island.
+- **Next:** run `sym` full-corpus and append; then region-logic (`MASK_BASIC`) and perceiver-recolor (`PERCEIVE_TRANSFORM`) censuses, once their `Config`/bundle-search machinery lands, land in the same notebook folder.
