@@ -127,11 +127,16 @@ def resolve_config(name: str) -> Config:
 
 
 def resolve_library(name: str) -> Library:
-    """Resolve a library name to its frozen :class:`Library`; falls back to a preset's ``.library``
-    so preset names (``sym``/``synth``/``beam``) also work, not just the vocabulary-axis names."""
+    """Resolve a library name to its frozen :class:`Library`: a vocabulary-axis name, a preset name
+    (``sym``/``synth``/``beam``, via its ``.library``), or a candidate name from the bundle sheet
+    (``bundle_sheet.py::BUNDLES`` — e.g. ``FLOOR``, ``MASK_BASIC``), in that order."""
     if name in LIBRARIES:
         return LIBRARIES[name]
     if name in PRESETS:
         return PRESETS[name].library
-    known = ", ".join(sorted({*LIBRARIES, *PRESETS}))
+    from .bundle_sheet import BUNDLES, library_from_names
+
+    if name in BUNDLES:
+        return library_from_names(BUNDLES[name].primitives, library_name=name)
+    known = ", ".join(sorted({*LIBRARIES, *PRESETS, *BUNDLES}))
     raise KeyError(f"unknown library {name!r}; known: {known}")

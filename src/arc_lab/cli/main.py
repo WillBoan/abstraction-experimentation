@@ -16,6 +16,7 @@ import typer
 from . import (
     analyze_run,
     check_library_coherence,
+    check_primitive_bundles,
     configs,
     datasets,
     estimate,
@@ -80,6 +81,7 @@ app.command(name="configs")(configs.list_configs)
 app.command(name="datasets")(datasets.list_datasets)
 app.command(name="show")(show.show)
 app.command(name="check-library-coherence")(check_library_coherence.check_library_coherence_command)
+app.command(name="check-primitive-bundles")(check_primitive_bundles.check_primitive_bundles_command)
 app.command(name="library-graph")(library_graph.library_graph_command)
 
 

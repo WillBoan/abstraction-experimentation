@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import typer
 
+from arc_lab.program_search.execution.bundle_sheet import library_from_names
 from arc_lab.program_search.execution.check_coherence import check_library_coherence
 from arc_lab.program_search.execution.presets import resolve_library
 from arc_lab.program_search.search.leaves import ConstantSource
@@ -16,21 +17,40 @@ _KNOWN_CONSTANT_SOURCES: tuple[ConstantSource, ...] = (
 
 
 def check_library_coherence_command(
-    library: str = typer.Argument(..., help="Library name (see `arc-lab configs`) or preset name."),
+    library: str | None = typer.Argument(
+        None,
+        help="Library/preset/bundle name (see `arc-lab configs`) — omit if using --primitives.",
+    ),
+    primitives: str | None = typer.Option(
+        None,
+        "--primitives",
+        help="Comma-separated base primitive names — an ad hoc bundle, no registration needed.",
+    ),
+    name: str = typer.Option(
+        "adhoc", "--name", help="Display name for an ad hoc --primitives bundle."
+    ),
     constant_sources: list[str] = typer.Option(
         ["finite-enumerate"],
         "--constant-sources",
         help="ConstantSource(s) assumed available (finite-enumerate / harvest-from-instance).",
     ),
 ) -> None:
-    """Check type-closure, goal-directedness, and hole-fill sufficiency for a library."""
+    """Check type-closure, goal-directedness, and hole-fill sufficiency for a bundle."""
+    if (library is None) == (primitives is None):
+        raise typer.BadParameter("pass exactly one of LIBRARY or --primitives")
     for source in constant_sources:
         if source not in _KNOWN_CONSTANT_SOURCES:
             raise typer.BadParameter(
                 f"unknown constant source {source!r}; known: {', '.join(_KNOWN_CONSTANT_SOURCES)}"
             )
+
     try:
-        lib = resolve_library(library)
+        if primitives is not None:
+            names = [p.strip() for p in primitives.split(",") if p.strip()]
+            lib = library_from_names(names, library_name=name)
+        else:
+            assert library is not None  # the exactly-one-of check above guarantees this
+            lib = resolve_library(library)
     except KeyError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
