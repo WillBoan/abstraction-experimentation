@@ -28,10 +28,15 @@ from pathlib import Path
 import pytest
 
 from arc_lab.core.dataset import Corpus, load_dataset
-from arc_lab.program_search.execution.model import RunRecord
+from arc_lab.core.grid import Grid
+from arc_lab.program_search.execution.model import RunRecord, TargetAbstraction
 from arc_lab.program_search.execution.presets import PRESETS
 from arc_lab.program_search.execution.run_search import run_search
+from arc_lab.program_search.execution.run_search_learn import run_search_learn
+from arc_lab.program_search.execution.run_study import _invented, _matches_target
 from arc_lab.program_search.search.budget import Budget
+from arc_lab.program_search.substrate.abstraction import make_abstraction
+from arc_lab.program_search.substrate.library import Library, Primitive
 
 pytestmark = pytest.mark.slow
 
@@ -48,6 +53,22 @@ def _solved_ids(record: RunRecord) -> set[str]:
     tasks = results["tasks"]
     assert isinstance(tasks, list)
     return {row["task_id"] for row in tasks if row["score"]["solved"]}
+
+
+def _behavioral_check(
+    invented: tuple[Primitive, ...],
+    targets: tuple[TargetAbstraction, ...],
+    l1: Library,
+    probes: tuple[Grid, ...],
+) -> list[dict[str, object]]:
+    """Mirrors ``create_study_report``'s behavioral-check loop (``run_study.py``) directly off a
+    learned library, with no computed grid needed — see the two ``_study_locks_`` tests below."""
+    rows: list[dict[str, object]] = []
+    for target in targets:
+        target_primitive = make_abstraction(target.name, target.template, l1)
+        matched_by = [p.name for p in invented if _matches_target(p, target_primitive, probes)]
+        rows.append({"target": target.name, "matched": bool(matched_by), "matched_by": matched_by})
+    return rows
 
 
 #: The D4 seven — identical to the old `dsl` lock's set.
@@ -182,29 +203,42 @@ def test_perceive_transform_study_locks_the_learning_loop(tmp_path: Path) -> Non
     point is that the search is *derived through the perceiver*, not a literal reparameterization
     of `map_color`. At the shallow (enablement) budget the learned library solves every task
     (including both held-out, unseen target colors) where the starting library solves none.
+
+    Drives the LEARN activity plus exactly the four `shallow`-budget cells these assertions need,
+    rather than the full `run_study` grid (3 libraries x 2 budgets x 2 corpora = 12 cells): the
+    other 8 (L3, and the "deep"-budget diagnostic) go unchecked here and are already covered
+    generically and cheaply by `test_run_study.py`'s toy-corpus test — computing them on the real
+    testbed only to discard the result was most of this test's wall time.
     """
-    from arc_lab.program_search.execution.run_study import GridCell, create_study_report, run_study
     from arc_lab.program_search.execution.studies import make_study
     from arc_lab.program_search.substrate.program import Apply, Param
     from arc_lab.program_search.substrate.types import COLOR, GRID
 
     spec = make_study("perceive-transform")
-    result = run_study(spec, runs_root=tmp_path)
-    report = create_study_report(result)
+    learn = run_search_learn(
+        spec.base_config, spec.train_corpus, spec.eval_corpus, runs_root=tmp_path
+    )
+    l1 = spec.base_config.library
+    l2 = learn.learn.learned_library()
 
-    assert report["invented"] == ["abs0"]
-    assert report["behavioral_check"] == [
+    invented = _invented(l1, l2)
+    assert [primitive.name for primitive in invented] == ["abs0"]
+    probes = tuple(example.input for task in spec.train_corpus for example in task.train)
+    assert _behavioral_check(invented, spec.target_abstractions, l1, probes) == [
         {"target": "recolor_bg", "matched": True, "matched_by": ["abs0"]}
     ]
-    assert result.libraries["L2"].get("abs0").template == Apply(
+    assert l2.get("abs0").template == Apply(
         "map_color",
         (Param(0, GRID), Apply("most_common_color", (Param(0, GRID),)), Param(1, COLOR)),
     )
+
     shallow = spec.budgets[1]
-    assert result.grid[GridCell("L1", shallow, "train")].results()["solved"] == 0
-    assert result.grid[GridCell("L1", shallow, "eval")].results()["solved"] == 0
-    assert result.grid[GridCell("L2", shallow, "train")].results()["solved"] == 5
-    assert result.grid[GridCell("L2", shallow, "eval")].results()["solved"] == 2
+    config_l1 = spec.base_config.with_(library=l1, budget=shallow, learn=None)
+    config_l2 = spec.base_config.with_(library=l2, budget=shallow, learn=None)
+    assert run_search(config_l1, spec.train_corpus, runs_root=tmp_path).results()["solved"] == 0
+    assert run_search(config_l1, spec.eval_corpus, runs_root=tmp_path).results()["solved"] == 0
+    assert run_search(config_l2, spec.train_corpus, runs_root=tmp_path).results()["solved"] == 5
+    assert run_search(config_l2, spec.eval_corpus, runs_root=tmp_path).results()["solved"] == 2
 
 
 def test_layered_abstraction_study_locks_multi_generation_learning(tmp_path: Path) -> None:
@@ -215,30 +249,41 @@ def test_layered_abstraction_study_locks_multi_generation_learning(tmp_path: Pat
     mint `abs0 = rot180` from the rot180 tasks FIRST, so that WAKE's next iteration --
     genuinely re-searching, not rewriting -- can then reach recolor_flipped in one fewer
     application and sleep mints `abs1` built directly on `abs0`.
+
+    Drives the LEARN activity plus exactly the four `learn_budget` cells these assertions need,
+    rather than the full `run_study` grid (3 libraries x 2 budgets x 2 corpora = 12 cells): the
+    other 8 (L3, and the "deep"-budget diagnostic) go unchecked here and are already covered
+    generically and cheaply by `test_run_study.py`'s toy-corpus test — computing them on the real
+    testbed only to discard the result was ~80% of this test's wall time (measured 2026-07-13:
+    59s full grid vs 12s learn + the four needed cells).
     """
-    from arc_lab.program_search.execution.run_study import GridCell, create_study_report, run_study
     from arc_lab.program_search.execution.studies import make_study
     from arc_lab.program_search.substrate.program import Apply, Param
     from arc_lab.program_search.substrate.types import COLOR, GRID
 
     spec = make_study("layered-abstraction")
-    result = run_study(spec, runs_root=tmp_path)
-    report = create_study_report(result)
+    learn = run_search_learn(
+        spec.base_config, spec.train_corpus, spec.eval_corpus, runs_root=tmp_path
+    )
+    l1 = spec.base_config.library
+    l2 = learn.learn.learned_library()
 
-    assert report["invented"] == ["abs0", "abs1"]
-    assert report["behavioral_check"] == [
+    invented = _invented(l1, l2)
+    assert [primitive.name for primitive in invented] == ["abs0", "abs1"]
+    probes = tuple(example.input for task in spec.train_corpus for example in task.train)
+    assert _behavioral_check(invented, spec.target_abstractions, l1, probes) == [
         {"target": "rot180", "matched": True, "matched_by": ["abs0"]},
         {"target": "recolor_flipped", "matched": True, "matched_by": ["abs1"]},
     ]
-    l2 = result.libraries["L2"]
     assert l2.get("abs0").template == Apply("flip_h", (Apply("flip_v", (Param(0, GRID),)),))
     assert l2.get("abs1").template == Apply(
         "map_color", (Apply("abs0", (Param(0, GRID),)), Param(1, COLOR), Param(2, COLOR))
     )
+
     learn_budget = spec.budgets[1]
-    assert (
-        result.grid[GridCell("L1", learn_budget, "train")].results()["solved"] == 4
-    )  # rot180 only
-    assert result.grid[GridCell("L1", learn_budget, "eval")].results()["solved"] == 1
-    assert result.grid[GridCell("L2", learn_budget, "train")].results()["solved"] == 8  # both types
-    assert result.grid[GridCell("L2", learn_budget, "eval")].results()["solved"] == 2
+    config_l1 = spec.base_config.with_(library=l1, budget=learn_budget, learn=None)
+    config_l2 = spec.base_config.with_(library=l2, budget=learn_budget, learn=None)
+    assert run_search(config_l1, spec.train_corpus, runs_root=tmp_path).results()["solved"] == 4
+    assert run_search(config_l1, spec.eval_corpus, runs_root=tmp_path).results()["solved"] == 1
+    assert run_search(config_l2, spec.train_corpus, runs_root=tmp_path).results()["solved"] == 8
+    assert run_search(config_l2, spec.eval_corpus, runs_root=tmp_path).results()["solved"] == 2
