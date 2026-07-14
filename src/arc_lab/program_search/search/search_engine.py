@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import itertools
 from abc import ABC, abstractmethod
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Literal, TypeAlias
 
@@ -325,7 +325,18 @@ class BottomUpSearchEngine(SearchEngine):
                 frontier = list(
                     self._compose(scope, contexts, pool, budget, state, enclosing_target, new_layer)
                 )
-            self._absorb(frontier, contexts, pool, state, depth)
+            # Every pooled value program's (non-function) signature, by identity — the composed-
+            # signature fast path (``compute_signature``'s ``child_signatures``): a fresh ``Apply``'s
+            # direct children are exactly these pool objects (§5.2), so their per-context values are
+            # already known and never need re-``evaluate``. Function-typed entries are excluded: their
+            # cached signature is an argument-sampled behavioural fingerprint (``compute_function_
+            # signature``), not a raw per-context value, so a lookup miss there correctly falls back.
+            child_signatures = {
+                id(entry.program): entry.sig
+                for vtype, entry in pool.entries()
+                if not isinstance(vtype, ArrowType)
+            }
+            self._absorb(frontier, contexts, pool, state, depth, child_signatures)
             for program, vtype, signature in branch_candidates:
                 self._absorb_one(program, vtype, vtype, signature, pool, state, depth)
             pool = self._select_frontier(pool, budget, state)
@@ -618,19 +629,23 @@ class BottomUpSearchEngine(SearchEngine):
         pool: Pool,
         state: _RunState,
         generation: int,
+        child_signatures: Mapping[int, Signature],
     ) -> None:
         """Evaluate, prune (§5.6), and dedup each candidate. Value candidates go in first, then
         function candidates — whose signatures sample argument values from the now-populated pool (§8).
 
         ``generation`` is the composition round these candidates belong to, stamped on every pooled
-        entry for the new-layer restriction (``_enumerate``).
+        entry for the new-layer restriction (``_enumerate``). ``child_signatures`` is the composed-
+        signature fast path's cache (``signature.compute_signature``) — value candidates only; a
+        function candidate's signature is argument-sampled, a different computation (``compute_
+        function_signature``), untouched by the fast path.
         """
         functions: list[tuple[Program, ArrowType]] = []
         for program, vtype in candidates:
             if isinstance(vtype, ArrowType):
                 functions.append((program, vtype))
             else:
-                signature = compute_signature(program, contexts, state.library)
+                signature = compute_signature(program, contexts, state.library, child_signatures)
                 self._absorb_one(program, vtype, vtype, signature, pool, state, generation)
         if functions:
             arg_samples = self._argument_samples(functions, contexts, pool, state)

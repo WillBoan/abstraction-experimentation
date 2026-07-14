@@ -20,7 +20,7 @@ from arc_lab.program_search.substrate.library import (
     Value,
     apply_function_value,
 )
-from arc_lab.program_search.substrate.program import Input, Lam, PrimRef, Var
+from arc_lab.program_search.substrate.program import Apply, Const, Input, Lam, PrimRef, Var
 from arc_lab.program_search.substrate.types import (
     BOOL,
     COLOR,
@@ -187,3 +187,56 @@ def test_function_signature_none_when_undefined_everywhere() -> None:
         bad, ArrowType((INT,), INT), (Context(_GRID),), {INT: [0]}, _EMPTY_LIB
     )
     assert sig is None
+
+
+# -- compute_signature: the composed-signature fast path (child_signatures) ----
+
+
+def test_compute_signature_fast_path_matches_full_evaluation() -> None:
+    inc = Primitive(name="inc", param_types=(INT,), return_type=INT, impl=lambda x: x + 1)
+    library = Library(name="t", primitives=(inc,))
+    arg = Const(value=5, value_type=INT)
+    program = Apply(primitive="inc", args=(arg,))
+    contexts = (Context(_GRID), Context(_G2))
+    arg_sig = compute_signature(arg, contexts, library)
+    assert arg_sig is not None
+    fast = compute_signature(program, contexts, library, {id(arg): arg_sig})
+    slow = compute_signature(program, contexts, library)  # no child_signatures: full evaluate
+    assert fast == slow == (6, 6)
+
+
+def test_compute_signature_fast_path_propagates_bottom_from_a_bottom_argument() -> None:
+    var = Var(index=0, value_type=INT)  # raises on an empty scope binding
+    inc = Primitive(name="inc", param_types=(INT,), return_type=INT, impl=lambda x: x + 1)
+    library = Library(name="t", primitives=(inc,))
+    program = Apply(primitive="inc", args=(var,))
+    contexts = (Context(_GRID, ()), Context(_GRID, (5,)))
+    arg_sig = compute_signature(var, contexts, library)
+    assert arg_sig == (BOTTOM, 5)
+    assert arg_sig is not None
+    fast = compute_signature(program, contexts, library, {id(var): arg_sig})
+    slow = compute_signature(program, contexts, library)
+    assert fast == slow == (BOTTOM, 6)
+
+
+def test_compute_signature_fast_path_catches_a_raising_impl_as_bottom() -> None:
+    boom = Primitive(name="boom", param_types=(INT,), return_type=INT, impl=lambda x: 1 // 0)
+    library = Library(name="t", primitives=(boom,))
+    arg = Const(value=1, value_type=INT)
+    program = Apply(primitive="boom", args=(arg,))
+    contexts = (Context(_GRID),)
+    arg_sig = compute_signature(arg, contexts, library)
+    assert arg_sig is not None
+    assert compute_signature(program, contexts, library, {id(arg): arg_sig}) is None
+    assert compute_signature(program, contexts, library) is None  # matches the no-cache path
+
+
+def test_compute_signature_falls_back_when_an_argument_signature_is_missing() -> None:
+    """A function-typed (or otherwise uncached) argument has no ``child_signatures`` entry — the
+    fast path must recognize the miss and fall back to full evaluation, not silently misbehave."""
+    inc = Primitive(name="inc", param_types=(INT,), return_type=INT, impl=lambda x: x + 1)
+    library = Library(name="t", primitives=(inc,))
+    arg = Const(value=5, value_type=INT)
+    program = Apply(primitive="inc", args=(arg,))
+    contexts = (Context(_GRID),)
+    assert compute_signature(program, contexts, library, {}) == (6,)

@@ -21,7 +21,7 @@ from arc_lab.core.grid import Grid
 from arc_lab.core.mask import Mask
 
 from ..substrate.library import Closure, Library, Primitive, Value, apply_function_value
-from ..substrate.program import Program
+from ..substrate.program import Apply, Program
 from ..substrate.types import ArrowType, Type, TypeVar
 from .context import Context
 
@@ -49,7 +49,10 @@ def is_total(signature: Signature) -> bool:
 
 
 def compute_signature(
-    program: Program, contexts: tuple[Context, ...], library: Library
+    program: Program,
+    contexts: tuple[Context, ...],
+    library: Library,
+    child_signatures: Mapping[int, Signature] | None = None,
 ) -> Signature | None:
     """A program's partial signature over ``contexts``: its value at each, ``⊥`` where it raises.
 
@@ -57,7 +60,19 @@ def compute_signature(
     forward search binds no abstraction arguments). Returns ``None`` **only** if the program raises on
     *every* context (fully undefined); one that raises on only some contexts keeps a partial signature
     and stays pooled — that partiality is what makes domain-splitting ``if`` work.
+
+    ``child_signatures`` (``id(program) -> Signature``, bottom-up composition only) lets an ``Apply``
+    node reuse its already-known argument signatures (``_compose_apply_signature``) instead of
+    re-walking its whole subtree via ``evaluate`` — the composed-signature fast path. Falls through to
+    full evaluation whenever the fast path can't apply (not an ``Apply``, or an argument's signature is
+    missing, e.g. a function-typed hole filled directly rather than via a pooled value).
     """
+    if child_signatures is not None and isinstance(program, Apply):
+        handled, fast_result = _compose_apply_signature(
+            program, len(contexts), library, child_signatures
+        )
+        if handled:
+            return fast_result
     values: list[Value | Bottom] = []
     any_defined = False
     for context in contexts:
@@ -69,6 +84,52 @@ def compute_signature(
             values.append(value)
             any_defined = True
     return tuple(values) if any_defined else None
+
+
+def _compose_apply_signature(
+    program: Apply,
+    num_contexts: int,
+    library: Library,
+    child_signatures: Mapping[int, Signature],
+) -> tuple[bool, Signature | None]:
+    """The composed-signature fast path for an ``Apply`` node (§5.2's bottom-up composition):
+    apply the primitive per-context directly to each argument's *already-cached* signature, instead
+    of re-``evaluate``-ing the whole subtree from the raw grids.
+
+    Sound because ``Apply.evaluate`` calls ``primitive.impl`` on nothing but its arguments'
+    evaluated values (no grid/env/scope leaks through) and materializes every argument before the
+    call (a raising argument short-circuits the whole node) — so per context, ``⊥`` propagates from
+    any ``⊥`` argument exactly as a raised exception would, and otherwise the result is
+    ``impl(*arg_values)`` with the same try/except-as-⊥ semantics ``compute_signature`` uses directly.
+
+    Returns ``(False, None)`` — meaning "no fast-path result, caller must fall back to full
+    evaluation" — whenever an argument's signature isn't in ``child_signatures`` (not a plain pooled
+    value program: e.g. a function-typed argument, whose cached signature is a differently-shaped
+    argument-sampled behavioural fingerprint, not a raw per-context value) or has the wrong arity.
+    """
+    if not program.args:
+        return False, None
+    arg_sigs: list[Signature] = []
+    for child in program.args:
+        sig = child_signatures.get(id(child))
+        if sig is None or len(sig) != num_contexts:
+            return False, None
+        arg_sigs.append(sig)
+    prim = library.get(program.primitive)
+    values: list[Value | Bottom] = []
+    any_defined = False
+    for per_context_args in zip(*arg_sigs, strict=True):
+        if BOTTOM in per_context_args:
+            values.append(BOTTOM)
+            continue
+        try:
+            value = prim.impl(*per_context_args)
+        except Exception:
+            values.append(BOTTOM)
+        else:
+            values.append(value)
+            any_defined = True
+    return True, (tuple(values) if any_defined else None)
 
 
 def peel_arrow(arrow_type: ArrowType) -> tuple[list[Type], Type]:
