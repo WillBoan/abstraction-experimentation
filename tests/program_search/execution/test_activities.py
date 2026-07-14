@@ -124,6 +124,11 @@ def test_analyze_run_reads_both_run_kinds(tmp_path: Path) -> None:
     programs = search_summary["programs"]
     assert isinstance(programs, dict)
     assert set(programs) == {"t1", "t2"}
+    # The trace stores programs as codec dicts; analyze_run must decode them to readable source,
+    # not ``str()`` the raw dict (which would leak ``{'op': 'apply', ...}``).
+    found = [p for progs in programs.values() for p in progs]
+    assert found, "the train-usefulness run solves both tasks, so programs must be present"
+    assert all("input" in p and not p.lstrip().startswith("{") for p in found)
     considered = search_summary["considered_by_task"]
     assert isinstance(considered, dict)
     assert all(count > 0 for count in considered.values())

@@ -314,6 +314,40 @@ def test_force_recapture_reexecutes_a_cached_run(tmp_path: Path) -> None:
     assert len(CountingEngine.calls) == 2, "force_recapture must re-execute a completed run"
 
 
+def test_resume_preserves_pre_crash_samples(tmp_path: Path) -> None:
+    """``samples.jsonl`` must cover every task, not just the batch a resume re-ran — otherwise it
+    silently disagrees with the complete ``trace.jsonl``/``results.json``."""
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED), _flip_task("t2", _IN2, _FLIPPED2)),
+    )
+    first = execute(spec, runs_root=tmp_path)  # full run, default sampling
+    assert {row["task"] for row in (first.sample_rows() or [])} == {"t1", "t2"}
+
+    # simulate a crash after t1: drop results.json, truncate the trace to just t1's row
+    rows = list(first.trace_rows())
+    first.results_path.unlink()
+    with first.trace_path.open("w", encoding="utf-8") as trace:
+        trace.write(json.dumps(rows[0]) + "\n")
+
+    resumed = execute(spec, runs_root=tmp_path)  # only t2 re-runs
+    assert {row["task"] for row in (resumed.sample_rows() or [])} == {"t1", "t2"}
+
+
+def test_force_recapture_clears_stale_capture_artifacts(tmp_path: Path) -> None:
+    """Turning capture off on a force_recapture must not leave the prior run's capture/ behind."""
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    captured = execute(spec, runs_root=tmp_path, trace=TraceSpec(capture_all=True))
+    assert (captured.capture_dir / "t1.jsonl").is_file()
+
+    recaptured = execute(spec, runs_root=tmp_path, trace=TraceSpec(), force_recapture=True)
+    assert not recaptured.capture_dir.exists()  # no stale capture tree from the prior TraceSpec
+    assert recaptured.capture_summary() is None
+
+
 def test_force_recapture_populates_tracing_on_an_already_completed_run(tmp_path: Path) -> None:
     spec = RunSpec(
         config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),

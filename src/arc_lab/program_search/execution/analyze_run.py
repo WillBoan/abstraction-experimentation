@@ -8,10 +8,12 @@ observations, matching the discipline that a run artifact stores observations on
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from arc_lab.program_search.analysis.capabilities import group_outcomes
 from arc_lab.program_search.substrate.library import Library
+from arc_lab.program_search.substrate.program import Program
 
 from .execute import DEFAULT_RUNS_ROOT, merge_search_stats
 from .model.run_record import RunRecord, find_run_dir
@@ -41,7 +43,12 @@ def analyze_run(run_id: str, *, runs_root: Path | None = None) -> dict[str, obje
                 continue
             found = row.get("programs")
             if isinstance(found, list):
-                programs[task_id] = [str(program) for program in found]
+                # The trace stores programs as codec dicts (``to_dict``); decode to their readable
+                # source form, matching ``execute._readable_programs`` (never ``str()`` a raw dict).
+                programs[task_id] = [
+                    str(Program.from_dict(program)) if isinstance(program, Mapping) else str(program)
+                    for program in found
+                ]
             total = _stats_total(row.get("search_stats"))
             if total is not None:
                 considered = total.get("considered")

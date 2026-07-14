@@ -27,6 +27,7 @@ from __future__ import annotations
 import cProfile
 import json
 import logging
+import shutil
 import subprocess
 import time
 from collections.abc import Iterable, Mapping, Sequence
@@ -98,6 +99,7 @@ def execute(
         logger.info("run %s: force-recapture, re-executing for a fresh TraceSpec", record.run_id)
         record.trace_path.unlink(missing_ok=True)
         record.results_path.unlink()  # absence un-marks completion; execute() below regenerates it
+        _clear_telemetry(record)  # the new TraceSpec owns telemetry from scratch — no stale carryover
 
     record.run_dir.mkdir(parents=True, exist_ok=True)
     _write_json(
@@ -128,6 +130,19 @@ def execute(
 
 
 # -- tracing: sampling + full capture, wired into every search call -------------
+
+
+def _clear_telemetry(record: RunRecord) -> None:
+    """Delete a completed run's telemetry artifacts so a ``force_recapture`` starts them fresh.
+
+    ``results.json``/``trace.jsonl`` are cleared by the caller (they gate completion/resume);
+    this drops the rest — ``samples.jsonl``, the whole ``capture/`` tree, and any learned library
+    — so a re-execution under a new ``TraceSpec`` never merges onto or leaves stale artifacts a
+    prior spec produced (e.g. a capture/ dir when the new spec has ``capture_all=False``)."""
+    record.samples_path.unlink(missing_ok=True)
+    record.learned_library_path.unlink(missing_ok=True)
+    if record.capture_dir.is_dir():
+        shutil.rmtree(record.capture_dir)
 
 
 @dataclass(slots=True)
@@ -214,26 +229,41 @@ def _search_with_tracker(
 def _write_trace_artifacts(
     record: RunRecord, trace: TraceSpec, outcomes: Mapping[str, _TrackedOutcome]
 ) -> None:
-    """Write ``samples.jsonl``/``capture/_capture_summary.json`` from *this invocation's*
-    freshly-run tasks only — a resumed run's already-traced tasks aren't re-sampled or re-captured
-    (``RunRecord.sample_rows``/``capture_summary`` document this as an accepted limitation of a
-    diagnostic-only artifact). Each sample row is tagged with its ``task`` label (``task_id``, or
-    ``iter-<n>/<task_id>`` for a LEARN wake) since one file holds every task."""
-    sample_rows = [
+    """Write ``samples.jsonl``/``capture/_capture_summary.json`` for this invocation's freshly-run
+    tasks, **merged onto** whatever a prior invocation of the same run already wrote.
+
+    A resumed run only re-runs the not-yet-traced tasks, so ``outcomes`` covers only those; the
+    per-task capture streams (``capture/<task>.jsonl``) each land in their own file and survive
+    untouched, but ``samples.jsonl`` and ``_capture_summary.json`` are single whole-run files.
+    Rewriting them from ``outcomes`` alone would silently drop every pre-resume task, leaving these
+    two artifacts disagreeing with the complete ``trace.jsonl``/``results.json``. So we preserve the
+    prior file's rows for tasks NOT re-run here and combine them with the fresh ones (a ``force_
+    recapture`` clears the priors first, ``_clear_telemetry``, so it always starts from empty). Each
+    sample row is tagged with its ``task`` label (``task_id``, or ``iter-<n>/<task_id>`` for a LEARN
+    wake) since one file holds every task."""
+    fresh = {label for label in outcomes}
+    prior_samples = [
+        row for row in (record.sample_rows() or []) if row.get("task") not in fresh
+    ]
+    fresh_samples = [
         {"task": label, **row} for label, outcome in outcomes.items() for row in outcome.sample_rows
     ]
+    sample_rows = prior_samples + fresh_samples
     if sample_rows:
         _write_jsonl(record.samples_path, sample_rows)
     if trace.capture_all:
-        _write_json(record.capture_summary_path, _capture_summary(trace, outcomes))
+        _write_json(record.capture_summary_path, _capture_summary(record, trace, outcomes))
 
 
 def _capture_summary(
-    trace: TraceSpec, outcomes: Mapping[str, _TrackedOutcome]
+    record: RunRecord, trace: TraceSpec, outcomes: Mapping[str, _TrackedOutcome]
 ) -> dict[str, object]:
-    per_task: dict[str, object] = {}
-    captured_total = 0
-    truncated = False
+    """The capture summary, merging this invocation's per-task counts onto any a prior invocation
+    of the same run wrote (so a resume's summary covers every captured task, not just the last
+    batch). Totals are recomputed over the merged ``per_task`` map."""
+    prior = record.capture_summary() or {}
+    prior_per_task = prior.get("per_task")
+    per_task: dict[str, object] = dict(prior_per_task) if isinstance(prior_per_task, dict) else {}
     for label, outcome in outcomes.items():
         sink = outcome.capture
         if sink is None:
@@ -243,8 +273,12 @@ def _capture_summary(
             "captured": sink.captured,
             "truncated": sink.truncated,
         }
-        captured_total += sink.captured
-        truncated = truncated or sink.truncated
+    captured_total = sum(
+        int(entry.get("captured", 0)) for entry in per_task.values() if isinstance(entry, dict)
+    )
+    truncated = any(
+        bool(entry.get("truncated")) for entry in per_task.values() if isinstance(entry, dict)
+    )
     return {
         "capture_all_max": trace.capture_all_max,
         "captured_total": captured_total,

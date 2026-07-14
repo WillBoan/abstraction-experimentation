@@ -37,7 +37,7 @@ class TraceSpec:
     #: never perturbs the search itself; truncation is recorded loudly in ``manifest.json``, never
     #: silent. No time-based cap exists on purpose: a wall-clock cap would make the artifact
     #: depend on which machine produced it, breaking the "recorded run is deterministic" invariant.
-    capture_all_max: int = 100_000
+    capture_all_max: int = 1000
     #: Reserved — candidate provenance (which search mechanism produced it: composition,
     #: lambda-synthesis, branch injection, ...) is a distinct, not-yet-built tracked dimension;
     #: every current preset (`execution/presets.py`) leaves those mechanisms dormant anyway.
