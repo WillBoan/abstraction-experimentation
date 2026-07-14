@@ -11,9 +11,10 @@ and ``GOAL_UNMATCHED``/``CONSTRAINT_REJECTED``/``ACCEPTED`` at pool finalization
 ``candidate_index`` across that gap, so no separate per-program identity tracking is needed.
 
 Each candidate has a ``candidate_index`` — a 0-based counter stamped when it is first considered
-(``_absorb_one``), so the write-order of a capture stream (which follows *outcome-resolution*
-order, not generation order — the terminal outcomes are recorded in a batch at the end) can be
-re-sorted back into true consideration order by a reader.
+(``_absorb_one``). The tracker *invokes* a capture sink in *outcome-resolution* order, not
+generation order (the terminal outcomes are recorded in a batch at the end), so the index is what
+lets a consumer recover true consideration order — e.g. ``execute()``'s capture sink buffers on it
+and writes the first ``max_count`` candidates back in generation order.
 
 Counting is always on (cheap: a handful of dict increments per candidate, riding along with the
 signature evaluation/cost computation ``_absorb_one`` already pays). Sampling (``samples``) and

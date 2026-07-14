@@ -32,7 +32,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Final, TextIO
+from typing import Final
 
 from arc_lab.core.task import Task
 from arc_lab.eval.scoring import score_task
@@ -115,40 +115,49 @@ def execute(
 
 @dataclass(slots=True)
 class _CaptureSink:
-    """Streams every observed candidate to one JSONL file, capped — the file I/O
-    ``SearchTracker`` itself never does (``search/tracking.py``); this is the plain callable it's
-    handed. Opens its file lazily (only once a candidate actually arrives), so a task that
-    considers nothing never creates an empty capture file. Rows are written in *outcome-resolution*
-    order (not generation order); each carries its ``candidate_index`` so a reader can sort back.
+    """Captures the first ``max_count`` considered candidates (by ``candidate_index``) and, at
+    close, writes them to one JSONL file **in generation order** — the file I/O ``SearchTracker``
+    itself never does (``search/tracking.py``); this is the plain callable it's handed.
+
+    Why buffer rather than stream: the tracker records a candidate's *outcome* the moment it is
+    decided, which is **not** generation order — the immediately-resolved outcomes (errored /
+    pruned / deduped / displaced) are recorded as they happen, but a pooled survivor's terminal
+    outcome (evicted / goal_unmatched / accepted) is recorded in a batch at the very end. Streaming
+    straight to a capped file would therefore fill it with only the early, immediately-resolved
+    candidates and drop every survivor, leaving gaps in the ``candidate_index`` sequence. Instead
+    we keep one row per candidate whose ``candidate_index < max_count`` (each candidate terminates
+    in exactly one outcome, so exactly one row per index — the partition invariant), then sort by
+    index and write at close. The result is exactly the first ``max_count`` candidates the search
+    created, in the order it created them. A task that considers nothing writes no file.
     """
 
     path: Path
     max_count: int
     captured: int = 0
     truncated: bool = False
-    _handle: TextIO | None = field(default=None, repr=False)
+    _rows: dict[int, dict[str, object]] = field(default_factory=dict, repr=False)
 
     def __call__(
         self, candidate_index: int, program: Program, primitives: frozenset[str], outcome: Outcome
     ) -> None:
-        if self.captured >= self.max_count:
-            self.truncated = True
+        if candidate_index >= self.max_count:
+            self.truncated = True  # a later candidate exists beyond the cap
             return
-        if self._handle is None:
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            self._handle = self.path.open("w", encoding="utf-8")
-        row = {
+        self._rows[candidate_index] = {
             "candidate_index": candidate_index,
             "outcome": outcome.value,
             "primitives": sorted(primitives),
             "program": str(program),
         }
-        self._handle.write(json.dumps(row) + "\n")
-        self.captured += 1
 
     def close(self) -> None:
-        if self._handle is not None:
-            self._handle.close()
+        self.captured = len(self._rows)
+        if not self._rows:
+            return
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self.path.open("w", encoding="utf-8") as handle:
+            for index in sorted(self._rows):
+                handle.write(json.dumps(self._rows[index]) + "\n")
 
 
 @dataclass(frozen=True, slots=True)
@@ -388,6 +397,18 @@ def _rewrite_trace(record: RunRecord) -> list[dict[str, object]]:
     return rows
 
 
+def _readable_programs(row: Mapping[str, object]) -> list[str]:
+    """The accepted programs of one task row (serialized in the trace as ``to_dict`` codec dicts),
+    decoded back to their readable source form — the cheapest-first solution set the run settled on,
+    surfaced into ``results.json`` for a human reading it. Empty for an unsolved or errored task."""
+    programs = row.get("programs")
+    if not isinstance(programs, list):
+        return []
+    return [
+        str(Program.from_dict(program)) for program in programs if isinstance(program, Mapping)
+    ]
+
+
 def _search_results(rows: list[dict[str, object]]) -> dict[str, object]:
     """Aggregate a SEARCH run's task rows into the ``results.json`` payload."""
     tasks = [TaskResult.from_dict(row) for row in rows]
@@ -396,7 +417,10 @@ def _search_results(rows: list[dict[str, object]]) -> dict[str, object]:
         "task_count": len(tasks),
         "solved": sum(result.score.solved for result in tasks),
         "search_stats": merge_search_stats(task_stats),
-        "tasks": [result.to_dict() for result in tasks],
+        "tasks": [
+            {**result.to_dict(), "programs": _readable_programs(row)}
+            for result, row in zip(tasks, rows, strict=True)
+        ],
     }
 
 

@@ -238,7 +238,8 @@ def test_execute_track_all_writes_capture_and_summary(tmp_path: Path) -> None:
     captured_rows = [json.loads(line) for line in capture_file.read_text().splitlines()]
     assert captured_rows, "at least one considered candidate must be captured"
     assert all(isinstance(row["program"], str) for row in captured_rows)  # readable strings
-    assert all("candidate_index" in row for row in captured_rows)  # sortable back to gen order
+    # Written in generation order: the first N candidates by index, contiguous from 0, no gaps.
+    assert [row["candidate_index"] for row in captured_rows] == list(range(len(captured_rows)))
     summary = record.capture_summary()
     assert summary is not None
     assert summary["truncated"] is False
