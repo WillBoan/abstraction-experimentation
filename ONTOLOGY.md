@@ -77,8 +77,8 @@ The "gifted" machinery — control abstractions, not domain content. A human get
 
 | Name | Description | Signature | Lvl | Prior | Role | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| const_int | Literal integer value (task-mined constant). | `→ Int` | L0 | — | — | ✅ done |
-| const_color | Literal color value (task-mined constant). | `→ Color` | L0 | — | — | ✅ done |
+| const_int | Literal integer value (task-mined constant). **Not a `substrate/primitives` `Primitive`** — implemented as leaf generation in `search/leaves.py::ConstantSource`, wired via `Config.constant_sources`; absent from `registry.py::BASE_PRIMITIVES`. | `→ Int` | L0 | — | — | ✅ (leaf, not primitive) |
+| const_color | Literal color value (task-mined constant). Same leaf-mechanism caveat as `const_int`. | `→ Color` | L0 | — | — | ✅ (leaf, not primitive) |
 | add / sub / mul | Integer arithmetic on two ints — coordinate math for `build_grid`. `sub` is the D4-rederivation clique; **add/mul ✅ done** as the rest of the *affine* family (`a·x+b`), so the primitive-driven `build_grid` body search (lambda-synthesis fill) composes them (E9 — a wider, honest coordinate search). | `(Int,Int)→Int` | L0 | — | — | ✅ done |
 | floordiv / mod | Integer division & remainder — for coordinate math (zero divisor → ⊥). | `(Int,Int)→Int` | L0 | — | — | ✅ done |
 | min / max / abs | Elementary integer functions. | `(Int,Int)→Int` | L0 | — | — | ✅ done |
@@ -270,8 +270,8 @@ The most abstract layer: recurring whole-task _strategies_. These are the abstra
 
 | Name | Description | Signature | Lvl | Prior | Role | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| symmetry_repair | Fill occlusions using the grid's symmetry (dream: see it invented). | `Grid→Grid` | L6 | G/O | — | ✅ done |
-| mosaic / tiling | Generate output by tiling transformed copies. | `Grid→Grid` | L6 | G | — | ✅ done |
+| symmetry_repair | Fill occlusions using the grid's symmetry (dream: see it invented). Exists only as a bespoke strategy in the transitional `src/arc_lab/solvers/dsl/` tree — **not** a `program_search/substrate/primitives` `Primitive`, absent from `registry.py::BASE_PRIMITIVES`. | `Grid→Grid` | L6 | G/O | — | ✅ (old tree only) |
+| mosaic / tiling | Generate output by tiling transformed copies. Same old-tree-only caveat as `symmetry_repair` — not in `BASE_PRIMITIVES`. | `Grid→Grid` | L6 | G | — | ✅ (old tree only) |
 | select_and_transform | Find the special object and transform it. | `Grid→Grid` | L6 | O | — | 🔜 next |
 | denoise | Remove stray / isolated pixels. | `Grid→Grid` | L6 | O | — | ⚪ cand |
 | gravity | Let objects fall / settle in a direction. | `Grid→Grid` | L6 | O/A | — | ⚪ cand |
@@ -288,7 +288,7 @@ The most abstract layer: recurring whole-task _strategies_. These are the abstra
 
 ## What the map shows
 
-- **Almost everything `done` is L2** (+ two L6 schemas, + task-mined L0 leaves, + the L1 cell floor). L1 now has **both halves**: the stateful pair `read`/`set_cell` (E2/E3) and the pure render `build_grid` (+ `width`/`height`/`sub`/`add`/`mul` and the `Lam`/`Var` substrate), found by the primitive-driven lambda-synthesis body search — which *reuses* learned coordinate idioms, so the loop compresses the D4 ladder (E8/E9). The L3 `Mask` floor has since shipped (`mask` type + intro/elim + set algebra — see the rows above). Whole layers — L4, L5 — remain empty; `OBJECT` remains the missing noun (no type, no `segment`/`render_objects`).
+- **Almost everything `done` is L2** (+ two L6 schemas — old-tree solvers only, not in `BASE_PRIMITIVES` — + task-mined L0 leaves — `const_int`/`const_color`, a `search/leaves.py` mechanism, also not in `BASE_PRIMITIVES` — + the L1 cell floor). L1 now has **both halves**: the stateful pair `read`/`set_cell` (E2/E3) and the pure render `build_grid` (+ `width`/`height`/`sub`/`add`/`mul` and the `Lam`/`Var` substrate), found by the primitive-driven lambda-synthesis body search — which *reuses* learned coordinate idioms, so the loop compresses the D4 ladder (E8/E9). The L3 `Mask` floor has since shipped (`mask` type + intro/elim + set algebra — see the rows above). Whole layers — L4, L5 — remain empty; `OBJECT` remains the missing noun (no type, no `segment`/`render_objects`).
 - **The vocabulary is transform-heavy, perception-poor, render-poor.** Count the `Role` column: `done` rows are almost all `T`. The object half of ARC is gated behind one missing intro (`segment`) and one missing elim (`render_objects`). Ferré's ARC-MDL/MADIL is a worked existence proof that the _descriptive_ (perceive/render) paradigm — a single model that both parses and generates — is viable and human-legible; this is now read as the **highest-leverage empty region** (see [RESEARCH-2026-07-08.md](docs/RESEARCH-2026-07-08.md) §Where we sit).
 - **Cheapest high-value moves — both landed**: the L2 _perceivers_ (`most_common_color`, `count_color`, …) that turn constants into derived values, and the L3 `Mask` intro/elim pair (incl. `crop_to_content`) are `✅ done` rows above (in `BASE_PRIMITIVES`; not yet in any shipped preset's library).
 - **Biggest unlock, biggest cost**: L4 objects — the beam/frontier search prerequisite is shipped (`BeamBottomUpSearchEngine`), so the remaining gate is the `ObjectSet` type + `segment`/`render_objects` intro/elim; still the big search cost, managed by the `max_pool`/beam frontier caps.
