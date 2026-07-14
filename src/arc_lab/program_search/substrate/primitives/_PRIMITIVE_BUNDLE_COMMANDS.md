@@ -25,5 +25,5 @@ uv run arc-lab check-primitive-bundles       # one summary line per bundle
 uv run arc-lab check-primitive-bundles -v    # + full findings per bundle
 ```
 
-- Walks `execution/bundle_sheet.py::BUNDLES` (33 entries seeded from `_PRIMITIVE_BUNDLES2.md`'s Fragments + Floors tables) and prints coherent/incoherent + error/warning counts for each.
+- Walks `execution/bundle_sheet.py::BUNDLES` (the 23 Floors from `_PRIMITIVE_BUNDLES.md`; Fragments and Gap-Exposing bundles are defined in the sheet for name-resolution but excluded from the batch — both are non-closed by design) and prints coherent/incoherent + error/warning counts for each.
 - To add a bundle you're considering: add one `BundleSpec(...)` entry to `BUNDLES` in that file — no other code changes, and it's immediately checkable by both commands (by name in `check-library-coherence`, or automatically in the batch run).
