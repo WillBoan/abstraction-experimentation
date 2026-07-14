@@ -1,0 +1,184 @@
+{
+  "run_id": "378ec77d8210e0ab",
+  "results": {
+    "run_id": "378ec77d8210e0ab",
+    "corpus_name": "arc1-train-sym-dim-stratified",
+    "task_count": 3,
+    "solved": 0,
+    "search_stats": {
+      "total": {
+        "considered": 117214,
+        "errored": 0,
+        "pruned": 0,
+        "deduped": 115030,
+        "displaced": 0,
+        "evicted": 868,
+        "goal_unmatched": 1316,
+        "constraint_rejected": 0,
+        "accepted": 0
+      },
+      "by_primitive": {
+        "__const__": {
+          "deduped": 114859,
+          "evicted": 868,
+          "goal_unmatched": 1292
+        },
+        "anti_transpose": {
+          "deduped": 46167,
+          "evicted": 436,
+          "goal_unmatched": 442
+        },
+        "flip_h": {
+          "deduped": 46167,
+          "evicted": 434,
+          "goal_unmatched": 444
+        },
+        "flip_v": {
+          "deduped": 46167,
+          "evicted": 435,
+          "goal_unmatched": 443
+        },
+        "identity": {
+          "deduped": 24
+        },
+        "overlay": {
+          "deduped": 63379,
+          "evicted": 868,
+          "goal_unmatched": 1273
+        },
+        "rot180": {
+          "deduped": 46166,
+          "evicted": 431,
+          "goal_unmatched": 448
+        },
+        "rot270": {
+          "deduped": 46166,
+          "evicted": 432,
+          "goal_unmatched": 447
+        },
+        "rot90": {
+          "deduped": 46166,
+          "evicted": 417,
+          "goal_unmatched": 462
+        },
+        "tile": {
+          "deduped": 51480
+        },
+        "transpose": {
+          "deduped": 46167,
+          "evicted": 436,
+          "goal_unmatched": 442
+        }
+      }
+    },
+    "tasks": [
+      {
+        "task_id": "00d62c1b",
+        "score": {
+          "solved": false,
+          "per_test": [
+            false
+          ]
+        },
+        "seconds": 1.3761599579593167,
+        "error": null,
+        "programs": []
+      },
+      {
+        "task_id": "11852cab",
+        "score": {
+          "solved": false,
+          "per_test": [
+            false
+          ]
+        },
+        "seconds": 1.466893250006251,
+        "error": null,
+        "programs": []
+      },
+      {
+        "task_id": "1f85a75f",
+        "score": {
+          "solved": false,
+          "per_test": [
+            false
+          ]
+        },
+        "seconds": 1.4148352920310572,
+        "error": null,
+        "programs": []
+      }
+    ]
+  },
+  "programs": {
+    "00d62c1b": [],
+    "11852cab": [],
+    "1f85a75f": []
+  },
+  "considered_by_task": {
+    "00d62c1b": 51550,
+    "11852cab": 32832,
+    "1f85a75f": 32832
+  },
+  "outcomes_by_task": {
+    "00d62c1b": {
+      "errored": 0,
+      "pruned": 0,
+      "deduped": 51234,
+      "displaced": 0,
+      "evicted": 0,
+      "goal_unmatched": 316,
+      "constraint_rejected": 0,
+      "accepted": 0
+    },
+    "11852cab": {
+      "errored": 0,
+      "pruned": 0,
+      "deduped": 31903,
+      "displaced": 0,
+      "evicted": 429,
+      "goal_unmatched": 500,
+      "constraint_rejected": 0,
+      "accepted": 0
+    },
+    "1f85a75f": {
+      "errored": 0,
+      "pruned": 0,
+      "deduped": 31893,
+      "displaced": 0,
+      "evicted": 439,
+      "goal_unmatched": 500,
+      "constraint_rejected": 0,
+      "accepted": 0
+    }
+  },
+  "by_category": {
+    "constant": {
+      "deduped": 114859,
+      "evicted": 868,
+      "goal_unmatched": 1292
+    },
+    "geometry": {
+      "deduped": 323190,
+      "evicted": 3021,
+      "goal_unmatched": 3128
+    },
+    "combinators": {
+      "deduped": 114859,
+      "evicted": 868,
+      "goal_unmatched": 1273
+    }
+  },
+  "by_provenance": {
+    "structural": {
+      "deduped": 114859,
+      "evicted": 868,
+      "goal_unmatched": 1292
+    },
+    "base": {
+      "deduped": 438049,
+      "evicted": 3889,
+      "goal_unmatched": 4401
+    }
+  }
+}
