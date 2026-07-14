@@ -19,9 +19,13 @@ from arc_lab.program_search.search.search_engine import (
     BottomUpSearchEngine,
 )
 from arc_lab.program_search.substrate.library import Library
+from arc_lab.program_search.substrate.primitives.build import BUILD_AFFINE_LIBRARY, BUILD_LIBRARY
+from arc_lab.program_search.substrate.primitives.cells import CELL_LIBRARY
 from arc_lab.program_search.substrate.primitives.color import MAP_COLOR
 from arc_lab.program_search.substrate.primitives.combinators import COMBINATORS
 from arc_lab.program_search.substrate.primitives.geometry import D4_LIBRARY
+from arc_lab.program_search.substrate.primitives.higher_order import HOF_LIBRARY
+from arc_lab.program_search.substrate.primitives.mask import MASK_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.scaling import SCALE
 
 from .model.config import Config
@@ -30,12 +34,19 @@ from .model.config import Config
 SYMMETRY_LIBRARY = D4_LIBRARY.extended(name="d4+combinators", extra=COMBINATORS)
 #: D4 transforms plus atomic color and scaling primitives (the old ``atomic`` library).
 ATOMIC_LIBRARY = D4_LIBRARY.extended(name="atomic", extra=(MAP_COLOR, SCALE))
+#: The L3 mask floor, standalone (mask intro/elim + set algebra) — not yet in any search preset.
+MASK_LIBRARY = Library(name="mask", primitives=MASK_PRIMITIVES)
 
 #: The vocabulary axis, addressed by name.
 LIBRARIES: dict[str, Library] = {
     "d4": D4_LIBRARY,
     "symmetry": SYMMETRY_LIBRARY,
     "atomic": ATOMIC_LIBRARY,
+    "build": BUILD_LIBRARY,
+    "build-affine": BUILD_AFFINE_LIBRARY,
+    "cells": CELL_LIBRARY,
+    "hof": HOF_LIBRARY,
+    "mask": MASK_LIBRARY,
 }
 
 
@@ -113,3 +124,14 @@ def resolve_config(name: str) -> Config:
     except KeyError:
         known = ", ".join(sorted(PRESETS))
         raise KeyError(f"unknown config preset {name!r}; known: {known}") from None
+
+
+def resolve_library(name: str) -> Library:
+    """Resolve a library name to its frozen :class:`Library`; falls back to a preset's ``.library``
+    so preset names (``sym``/``synth``/``beam``) also work, not just the vocabulary-axis names."""
+    if name in LIBRARIES:
+        return LIBRARIES[name]
+    if name in PRESETS:
+        return PRESETS[name].library
+    known = ", ".join(sorted({*LIBRARIES, *PRESETS}))
+    raise KeyError(f"unknown library {name!r}; known: {known}")

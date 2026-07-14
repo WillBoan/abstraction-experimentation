@@ -15,6 +15,7 @@ import typer
 
 from . import (
     analyze_run,
+    check_library_coherence,
     configs,
     datasets,
     estimate,
@@ -77,6 +78,7 @@ app.command(name="runs")(runs.list_runs)
 app.command(name="configs")(configs.list_configs)
 app.command(name="datasets")(datasets.list_datasets)
 app.command(name="show")(show.show)
+app.command(name="check-library-coherence")(check_library_coherence.check_library_coherence_command)
 
 
 if __name__ == "__main__":  # pragma: no cover
