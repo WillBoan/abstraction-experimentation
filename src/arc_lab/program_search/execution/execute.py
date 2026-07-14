@@ -79,7 +79,7 @@ def execute(
     root = DEFAULT_RUNS_ROOT if runs_root is None else runs_root
     run_dir = find_run_dir(root, run_spec.run_id)
     if run_dir is None:
-        run_dir = root / f"{_timestamp()}_{run_spec.run_id}"
+        run_dir = root / _new_run_subpath(run_spec.run_id)
     record = RunRecord(run_id=run_spec.run_id, run_dir=run_dir)
     trace_spec = trace if trace is not None else TraceSpec()
 
@@ -601,6 +601,10 @@ def _now_iso() -> str:
     return datetime.now(UTC).isoformat()
 
 
-def _timestamp() -> str:
-    """A sortable dirname prefix — pairs with ``run_id`` as ``<timestamp>_<run_id>``."""
-    return datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+def _new_run_subpath(run_id: str) -> Path:
+    """The relative run-dir path for a fresh run: ``<date>/<timestamp>_<run_id>``. Both the date
+    folder and the timestamp prefix derive from a *single* ``now`` reading, so they never disagree
+    across a midnight boundary. The ``<date>`` groups ``runs/`` for navigability; the timestamp
+    prefix keeps each day's runs chronologically sorted (identity stays the ``run_id`` suffix)."""
+    now = datetime.now(UTC)
+    return Path(now.strftime("%Y-%m-%d"), f"{now.strftime('%Y%m%d_%H%M%S')}_{run_id}")

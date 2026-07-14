@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar
@@ -96,7 +97,8 @@ def test_execute_end_to_end_search_run(tmp_path: Path) -> None:
     record = execute(spec, runs_root=tmp_path)
 
     assert record.completed
-    assert record.run_dir.parent == tmp_path
+    assert record.run_dir.parent.parent == tmp_path  # grouped under a <date> subfolder
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", record.run_dir.parent.name)
     assert record.run_dir.name.endswith(f"_{spec.run_id}")
     runspec = json.loads(record.runspec_path.read_text())
     assert runspec["run_id"] == spec.run_id
@@ -132,6 +134,26 @@ def test_execute_is_idempotent(tmp_path: Path) -> None:
     record = execute(spec, runs_root=tmp_path)  # cache hit: no execution
     assert len(CountingEngine.calls) == 1
     assert record.completed
+
+
+def test_execute_cache_hits_a_legacy_flat_run_dir(tmp_path: Path) -> None:
+    """A run recorded before date-grouping (flat ``runs/<dir>``) still resolves as a cache hit —
+    no re-execution, no duplicate nested copy."""
+    CountingEngine.calls.clear()
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=CountingEngine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    record = execute(spec, runs_root=tmp_path)
+    assert len(CountingEngine.calls) == 1
+    # relocate the run dir up one level, simulating the pre-grouping flat layout
+    flat_dir = tmp_path / record.run_dir.name
+    record.run_dir.rename(flat_dir)
+    record.run_dir.parent.rmdir()  # remove the now-empty <date> folder
+
+    again = execute(spec, runs_root=tmp_path)
+    assert len(CountingEngine.calls) == 1, "the flat legacy dir must be found, not re-run"
+    assert again.run_dir == flat_dir
 
 
 def test_execute_resumes_from_partial_trace_with_torn_line(tmp_path: Path) -> None:

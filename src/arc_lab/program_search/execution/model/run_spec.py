@@ -33,8 +33,8 @@ class RunSpec:
         """The content-addressed run identity — the cache key ``execute()`` dedupes on.
 
         Not the ``runs/`` dirname on its own: the on-disk dir is
-        ``<started_at>_<run_id>`` (see ``model.run_record.find_run_dir``), so listings
-        sort chronologically. The two are deliberately decoupled.
+        ``<date>/<started_at>_<run_id>`` (see ``model.run_record.find_run_dir``), so ``runs/``
+        groups by date and sorts chronologically. The two are deliberately decoupled.
         """
         return content_id({"config": self.config.to_dict(), "corpus": self.corpus.content_hash()})
 

@@ -51,16 +51,33 @@ CAPTURE_SUMMARY_FILENAME: Final = "_capture_summary.json"
 
 
 def find_run_dir(root: Path, run_id: str) -> Path | None:
-    """Locate an existing ``runs/<started_at>_<run_id>/`` dir by its content-hash suffix.
+    """Locate an existing ``runs/<date>/<started_at>_<run_id>/`` dir by its content-hash suffix.
 
-    ``run_id`` stays the content-addressed identity (the cache key); the on-disk
-    dirname is prefixed with a start timestamp purely so ``runs/`` sorts and reads
-    chronologically. The two are decoupled — never join ``root / run_id`` directly.
+    ``run_id`` stays the content-addressed identity (the cache key); the on-disk dirname is
+    prefixed with a start timestamp purely so ``runs/`` sorts chronologically, and grouped under a
+    ``<date>`` subfolder for navigability. The two are decoupled — never join ``root / run_id``.
+    Both the current date-grouped layout (``root/<date>/<dir>``) and the legacy flat one
+    (``root/<dir>``) are searched, so runs recorded before grouping still resolve as cache hits.
     """
-    matches = sorted(root.glob(f"*_{run_id}")) if root.is_dir() else []
+    if not root.is_dir():
+        return None
+    matches = sorted(root.glob(f"*_{run_id}")) + sorted(root.glob(f"*/*_{run_id}"))
     if len(matches) > 1:
         raise RuntimeError(f"multiple run dirs match run_id {run_id!r} under {root}: {matches}")
     return matches[0] if matches else None
+
+
+def iter_run_dirs(root: Path) -> list[Path]:
+    """Every run directory under ``root``, sorted — a run dir is one that holds a ``runspec.json``,
+    found in both the date-grouped (``root/<date>/<dir>``) and legacy flat (``root/<dir>``)
+    layouts. The two globs are disjoint (a date folder holds no ``runspec.json``; a run dir's
+    ``capture/`` subdir holds none either), so there is no double-counting."""
+    if not root.is_dir():
+        return []
+    specs = sorted(root.glob(f"*/{RUNSPEC_FILENAME}")) + sorted(
+        root.glob(f"*/*/{RUNSPEC_FILENAME}")
+    )
+    return [spec.parent for spec in specs]
 
 
 @dataclass(frozen=True, slots=True)

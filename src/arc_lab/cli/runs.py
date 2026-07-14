@@ -12,6 +12,7 @@ from arc_lab.program_search.execution.model.run_record import (
     RUNSPEC_FILENAME,
     RunRecord,
     considered_total,
+    iter_run_dirs,
 )
 
 
@@ -24,10 +25,8 @@ def list_runs(
         typer.echo(f"no runs under {root}")
         return
     rows = []
-    for run_dir in sorted(root.iterdir()):
+    for run_dir in iter_run_dirs(root):
         runspec_path = run_dir / RUNSPEC_FILENAME
-        if not runspec_path.is_file():
-            continue
         spec = json.loads(runspec_path.read_text(encoding="utf-8"))
         record = RunRecord(run_id=spec["run_id"], run_dir=run_dir)
         if not record.completed:
