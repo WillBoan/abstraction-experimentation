@@ -31,17 +31,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from arc_lab.program_search.execution.type_closure import (
+    BRANCHING_TOKEN,
+    compute_closure,
+    flatten_arrow,
+    leaf_seed_names,
+    required_names,
+)
 from arc_lab.program_search.search.leaves import ConstantSource
 from arc_lab.program_search.substrate.library import Library, Primitive
-from arc_lab.program_search.substrate.types import ArrowType, Type, TypeCon, TypeVar
-
-#: The library's branching token (mirrors ``estimate_cost.py``'s ``_BRANCHING_ENTRY``): present as
-#: a name to summon short-circuit ``If``, never applied as an ordinary primitive — excluded from the
-#: closure/production computation, but still counted as body vocabulary (§3) when present.
-_BRANCHING_TOKEN = "if"
-
-#: Type-constructor names with an intrinsic leaf source, independent of any library content.
-_ALWAYS_LEAF_NAMES = frozenset({"grid"})
+from arc_lab.program_search.substrate.types import ArrowType, TypeCon, TypeVar
 
 #: Below this many distinct body-vocabulary primitives, a hole-fill is flagged as "thin" (§3) — a
 #: named, not-derived threshold: 0 means "can only ever be identity/const", 1 means one lone
@@ -79,69 +78,14 @@ class CoherenceReport:
         return not any(finding.severity == "error" for finding in self.findings)
 
 
-def _leaf_seed_names(constant_sources: tuple[ConstantSource, ...]) -> frozenset[str]:
-    """Type-constructor names available at round 0 without any primitive: ``grid`` always; the
-    scalar leaves ``constant_sources`` actually mints (mirrors ``leaves.py::seed_leaves`` exactly)."""
-    names = set(_ALWAYS_LEAF_NAMES)
-    if "finite-enumerate" in constant_sources:
-        names |= {"int", "color", "bool"}
-    if "harvest-from-instance" in constant_sources:
-        names |= {"int", "color"}
-    return frozenset(names)
-
-
-def _required_names(primitive: Primitive) -> tuple[str, ...]:
-    """The type-constructor names ``primitive`` needs reachable — ``TypeVar``/``ArrowType`` params
-    are excluded (a type variable is satisfiable by anything already reachable; a function-typed
-    hole is owned by the hole-fill check, §3, not type-closure)."""
-    types: list[Type] = list(primitive.param_types)
-    if primitive.variadic_param is not None:
-        types.append(primitive.variadic_param)
-    return tuple(t.name for t in types if isinstance(t, TypeCon))
-
-
-def _closure(
-    primitives: tuple[Primitive, ...], seed_names: frozenset[str]
-) -> tuple[frozenset[str], tuple[Primitive, ...]]:
-    """Fixed-point reachability: the type names reachable from ``seed_names`` by repeatedly applying
-    any primitive whose required names are all already reachable, plus the primitives that turned
-    out applicable (in library order) — a primitive not in the second tuple is a type-closure
-    island: something it consumes is never produced anywhere in this bundle."""
-    reachable = set(seed_names)
-    activated: dict[str, Primitive] = {}
-    changed = True
-    while changed:
-        changed = False
-        for primitive in primitives:
-            if primitive.name == _BRANCHING_TOKEN or primitive.name in activated:
-                continue
-            if all(name in reachable for name in _required_names(primitive)):
-                activated[primitive.name] = primitive
-                changed = True
-                if isinstance(primitive.return_type, TypeCon):
-                    reachable.add(primitive.return_type.name)
-    return frozenset(reachable), tuple(activated.values())
-
-
-def _flatten_arrow(arrow: ArrowType) -> tuple[tuple[Type, ...], Type]:
-    """Peel a curried ``ArrowType`` chain (``build_grid``'s ``(int) -> (int) -> color``) down to its
-    flat parameter list and final result type."""
-    params: list[Type] = list(arrow.params)
-    result: Type = arrow.result
-    while isinstance(result, ArrowType):
-        params.extend(result.params)
-        result = result.result
-    return tuple(params), result
-
-
 def _type_closure_findings(
     primitives: tuple[Primitive, ...], reachable: frozenset[str], activated_names: frozenset[str]
 ) -> list[CoherenceFinding]:
     findings: list[CoherenceFinding] = []
     for primitive in primitives:
-        if primitive.name == _BRANCHING_TOKEN or primitive.name in activated_names:
+        if primitive.name == BRANCHING_TOKEN or primitive.name in activated_names:
             continue
-        missing = sorted({name for name in _required_names(primitive) if name not in reachable})
+        missing = sorted({name for name in required_names(primitive) if name not in reachable})
         for name in missing:
             if name in {"int", "color", "bool"}:
                 findings.append(
@@ -192,16 +136,6 @@ def _goal_directedness_finding(
     )
 
 
-def _is_vocabulary_primitive(primitive: Primitive, local_reachable: frozenset[str]) -> bool:
-    """Whether ``primitive`` is usable, non-trivial vocabulary inside a hole's body: every consumed
-    type is locally reachable (``TypeVar`` params make it polymorphic, so always usable regardless
-    of the hole's own element type)."""
-    return all(
-        isinstance(t, TypeVar) or (isinstance(t, TypeCon) and t.name in local_reachable)
-        for t in primitive.param_types
-    )
-
-
 def _generic_vocabulary(
     hof: Primitive, library: tuple[Primitive, ...], reachable: frozenset[str]
 ) -> list[str]:
@@ -233,14 +167,14 @@ def _hole_fill_findings(
     for param in hof.param_types:
         if not isinstance(param, ArrowType):
             continue
-        bound_types, result_type = _flatten_arrow(param)
+        bound_types, result_type = flatten_arrow(param)
         is_generic = any(isinstance(t, TypeVar) for t in (*bound_types, result_type))
 
         if is_generic:
             vocabulary = _generic_vocabulary(hof, library, reachable)
         else:
             local_seed = set(seed_names) | {t.name for t in bound_types if isinstance(t, TypeCon)}
-            local_reachable, local_activated = _closure(library, frozenset(local_seed))
+            local_reachable, local_activated = compute_closure(library, frozenset(local_seed))
             if isinstance(result_type, TypeCon) and result_type.name not in local_reachable:
                 findings.append(
                     CoherenceFinding(
@@ -283,8 +217,8 @@ def check_library_coherence(
 ) -> CoherenceReport:
     """The full coherence report for ``library`` under an assumed ``constant_sources`` policy."""
     primitives = library.primitives
-    seed_names = _leaf_seed_names(constant_sources)
-    reachable, activated = _closure(primitives, seed_names)
+    seed_names = leaf_seed_names(constant_sources)
+    reachable, activated = compute_closure(primitives, seed_names)
     activated_names = frozenset(p.name for p in activated)
 
     findings: list[CoherenceFinding] = []
@@ -302,7 +236,7 @@ def check_library_coherence(
         sorted(
             p.name
             for p in primitives
-            if p.name != _BRANCHING_TOKEN and p.name not in activated_names
+            if p.name != BRANCHING_TOKEN and p.name not in activated_names
         )
     )
 

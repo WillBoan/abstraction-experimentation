@@ -20,6 +20,7 @@ from . import (
     datasets,
     estimate,
     learn,
+    library_graph,
     run_study,
     runs,
     search,
@@ -79,6 +80,7 @@ app.command(name="configs")(configs.list_configs)
 app.command(name="datasets")(datasets.list_datasets)
 app.command(name="show")(show.show)
 app.command(name="check-library-coherence")(check_library_coherence.check_library_coherence_command)
+app.command(name="library-graph")(library_graph.library_graph_command)
 
 
 if __name__ == "__main__":  # pragma: no cover
