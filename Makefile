@@ -1,12 +1,12 @@
-.PHONY: help setup sync lint format typecheck test check eval-dsl clean
+.PHONY: help setup sync lint format typecheck test check clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  %-14s %s\n", $$1, $$2}'
 
-setup:  ## Init submodules and install everything (incl. dev + llm extras)
+setup:  ## Init submodules and install everything (incl. dev extras)
 	git submodule update --init --recursive
-	uv sync --extra llm
+	uv sync
 
 sync:  ## Install/update dependencies
 	uv sync
@@ -28,9 +28,6 @@ test-all:  ## Run the full suite incl. the slow regression/research locks, in pa
 	uv run pytest -n auto
 
 check: lint typecheck test-all  ## Lint, type-check, and run the FULL suite (the gate; all locks)
-
-eval-dsl:  ## Score the DSL solver on ARC-1 evaluation
-	uv run arc-lab eval dsl --dataset arc1-eval
 
 clean:  ## Remove caches and build artifacts
 	rm -rf .pytest_cache .mypy_cache .ruff_cache dist build

@@ -17,7 +17,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-llm = ["anthropic>=0.40"]
 stitch = ["stitch_core>=0.1"]  # library-learning engine; the loop runs without it (lazy-imported)
 
 [project.scripts]
@@ -49,13 +48,12 @@ extend-exclude = ["experiments"]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "N", "PLC", "PLE", "PLW"]
 ignore = [
     "E501",     # line length handled by the formatter
-    "PLC0415",  # we deliberately lazy-import heavy/optional deps (anthropic, pyplot)
+    "PLC0415",  # we deliberately lazy-import heavy/optional deps (pyplot, stitch_core)
 ]
 
 [tool.ruff.lint.per-file-ignores]
 # Typer requires function-call defaults (typer.Option/Argument) for its options.
 "src/arc_lab/cli/*.py" = ["B008"]
-"src/arc_lab/cli_legacy.py" = ["B008"]
 
 [tool.mypy]
 # 3.12 so mypy can parse numpy 2.5's PEP 695 type stubs; runtime still supports 3.11.
@@ -65,7 +63,7 @@ files = ["src", "tests"]
 plugins = []
 
 [[tool.mypy.overrides]]
-module = ["matplotlib.*", "anthropic.*", "stitch_core.*"]
+module = ["matplotlib.*", "stitch_core.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

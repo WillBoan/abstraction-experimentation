@@ -44,9 +44,6 @@ experiments/           lab notebooks for non-trivial investigations
 tests/                 fast functionality tests + slow regression locks
 ```
 
-(A transitional pre-overhaul tree, `src/arc_lab/solvers/`, remains on disk
-pending a final audit and deletes as one unit — don't build against it.)
-
 ## Setup
 
 Requires [`uv`](https://docs.astral.sh/uv/) and Python 3.11+.

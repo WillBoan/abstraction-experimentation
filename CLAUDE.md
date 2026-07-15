@@ -6,7 +6,7 @@ Operational guide for agents working in this repo. Human-facing overview is in [
 
 `arc-lab`: a sandbox for the ARC-AGI benchmarks and, more broadly, ML / program-synthesis / abstraction-formation experimentation. The load-bearing design decision: **machinery is data** — there are no solver classes; a run is a frozen, content-hashed `RunSpec = Config × Corpus`, and the execution layer (`program_search/execution/`) drives `Config` directly. The activity/call-stack model is **[EXECUTION.md](EXECUTION.md)**; the search-engine design is **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
-> **Transitional note:** the pre-overhaul tree (`src/arc_lab/solvers/` incl. `dsl/`, `eval/runner.py`, `cli_legacy.py`, and the old top-level `tests/test_*.py`) stays on disk until a user-run audit pass, then deletes as one unit. Never build against it; `_notes/` is the user's private notes — off-limits.
+> `_notes/` is the user's private notes — off-limits.
 
 ## The one command that matters
 
