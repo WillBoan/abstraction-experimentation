@@ -138,7 +138,7 @@ def _leaf_count(task: Task, engine: BottomUpSearchEngine, library: Library) -> i
     """Round-0 leaves: the real ``seed_leaves`` (no drift) plus function-value leaves if fillable."""
     train = train_with_output(task.train)
     contexts = tuple(Context(example.input) for example in train)
-    leaves = sum(1 for _ in seed_leaves(Scope(()), contexts, engine.constant_sources))
+    leaves = sum(1 for _ in seed_leaves(Scope(()), contexts, engine.constant_sources, library))
     if engine.function_hole_fill_mode != "none":
         leaves += sum(1 for prim in library.primitives if prim.name != _BRANCHING_ENTRY)
     return leaves

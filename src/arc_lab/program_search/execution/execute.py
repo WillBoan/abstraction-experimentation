@@ -99,7 +99,9 @@ def execute(
         logger.info("run %s: force-recapture, re-executing for a fresh TraceSpec", record.run_id)
         record.trace_path.unlink(missing_ok=True)
         record.results_path.unlink()  # absence un-marks completion; execute() below regenerates it
-        _clear_telemetry(record)  # the new TraceSpec owns telemetry from scratch — no stale carryover
+        _clear_telemetry(
+            record
+        )  # the new TraceSpec owns telemetry from scratch — no stale carryover
 
     record.run_dir.mkdir(parents=True, exist_ok=True)
     _write_json(
@@ -242,9 +244,7 @@ def _write_trace_artifacts(
     sample row is tagged with its ``task`` label (``task_id``, or ``iter-<n>/<task_id>`` for a LEARN
     wake) since one file holds every task."""
     fresh = {label for label in outcomes}
-    prior_samples = [
-        row for row in (record.sample_rows() or []) if row.get("task") not in fresh
-    ]
+    prior_samples = [row for row in (record.sample_rows() or []) if row.get("task") not in fresh]
     fresh_samples = [
         {"task": label, **row} for label, outcome in outcomes.items() for row in outcome.sample_rows
     ]
@@ -338,15 +338,19 @@ def _predict_and_score(
 
 
 def _search_stats(stats: SearchStats) -> dict[str, object]:
-    """One task's ``SearchStats`` as the ``search_stats`` block — ``{total, by_primitive}`` —
-    shared by the SEARCH branch's per-task row (``_run_task``) and the LEARN branch's per-wake
-    per-task rows (``_wake``), so both trace identically (EXECUTION.md). ``total`` = ``considered``
-    plus the full funnel-ordered outcome partition (zeros filled); ``by_primitive`` is sparse.
+    """One task's ``SearchStats`` as the ``search_stats`` block — ``{total, by_primitive,
+    solved_at_generation}`` — shared by the SEARCH branch's per-task row (``_run_task``) and the
+    LEARN branch's per-wake per-task rows (``_wake``), so both trace identically (EXECUTION.md).
+    ``total`` = ``considered`` plus the full funnel-ordered outcome partition (zeros filled);
+    ``by_primitive`` is sparse. ``solved_at_generation`` is per-task only — deliberately excluded
+    from ``merge_search_stats``'s corpus-wide aggregate below, since summing it across tasks would
+    be meaningless.
     """
     return {
         "engine": stats.engine,
         "total": {"considered": stats.considered, **stats.outcomes},
         "by_primitive": {key: dict(counts) for key, counts in stats.by_primitive.items()},
+        "solved_at_generation": stats.solved_at_generation,
     }
 
 
@@ -455,9 +459,18 @@ def _readable_programs(row: Mapping[str, object]) -> list[str]:
     programs = row.get("programs")
     if not isinstance(programs, list):
         return []
-    return [
-        str(Program.from_dict(program)) for program in programs if isinstance(program, Mapping)
-    ]
+    return [str(Program.from_dict(program)) for program in programs if isinstance(program, Mapping)]
+
+
+def _solved_at_generation(row: Mapping[str, object]) -> int | None:
+    """The composition round the task's accepted solution was found at (``SearchStats.
+    solved_at_generation``), read back out of the row's ``search_stats`` block and surfaced into
+    ``results.json`` alongside the readable programs — ``None`` for an unsolved or errored task."""
+    stats = row.get("search_stats")
+    if not isinstance(stats, Mapping):
+        return None
+    value = stats.get("solved_at_generation")
+    return value if isinstance(value, int) else None
 
 
 def _search_results(rows: list[dict[str, object]]) -> dict[str, object]:
@@ -469,7 +482,11 @@ def _search_results(rows: list[dict[str, object]]) -> dict[str, object]:
         "solved": sum(result.score.solved for result in tasks),
         "search_stats": merge_search_stats(task_stats),
         "tasks": [
-            {**result.to_dict(), "programs": _readable_programs(row)}
+            {
+                **result.to_dict(),
+                "programs": _readable_programs(row),
+                "solved_at_generation": _solved_at_generation(row),
+            }
             for result, row in zip(tasks, rows, strict=True)
         ],
     }

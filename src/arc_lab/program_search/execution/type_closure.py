@@ -28,7 +28,14 @@ _ALWAYS_LEAF_NAMES = frozenset({"grid"})
 
 def leaf_seed_names(constant_sources: tuple[ConstantSource, ...]) -> frozenset[str]:
     """Type-constructor names available at round 0 without any primitive: ``grid`` always; the
-    scalar leaves ``constant_sources`` actually mints (mirrors ``leaves.py::seed_leaves`` exactly)."""
+    scalar leaves ``constant_sources`` could mint.
+
+    An *over*-approximation of ``leaves.py::seed_leaves``, which gates each base-type leaf on
+    whether the library actually uses that type (``_type_in_use``) — this function has no library
+    to check against, so it assumes every scalar type a source *could* mint is present. Harmless for
+    a reachability closure: a spuriously-"reachable" type can never wrongly activate a primitive
+    that needs something else too, only ever be over-generous about a type nothing consumes anyway.
+    """
     names = set(_ALWAYS_LEAF_NAMES)
     if "finite-enumerate" in constant_sources:
         names |= {"int", "color", "bool"}

@@ -14,8 +14,9 @@ from typing import Literal, TypeAlias
 
 from arc_lab.core.grid import Grid
 
+from ..substrate.library import Library
 from ..substrate.program import Const, Input, Program, Var
-from ..substrate.types import BOOL, COLOR, GRID, INT, Type
+from ..substrate.types import BOOL, COLOR, GRID, INT, ArrowType, Type, TypeCon
 from .context import Context
 from .scope import Scope
 
@@ -34,8 +35,14 @@ def seed_leaves(
     scope: Scope,
     contexts: tuple[Context, ...],
     constant_sources: tuple[ConstantSource, ...],
+    library: Library,
 ) -> Iterator[tuple[Program, Type]]:
-    """The round-0 leaves: ``Input()``, the in-scope bound variables, and the policy constants."""
+    """The round-0 leaves: ``Input()``, the in-scope bound variables, and the policy constants.
+
+    ``library`` gates *which* base-type constants a policy actually mints (:func:`_type_in_use`):
+    a library with no ``BOOL``-typed primitive (and no ``if``) has no use for a ``BOOL`` leaf, and
+    minting one anyway is pure dead weight in every pool it's absorbed into.
+    """
     yield Input(), GRID
     for index in range(len(scope)):
         binder = scope.type_of(index)
@@ -43,35 +50,71 @@ def seed_leaves(
     grids = _distinct_input_grids(contexts)
     for source in constant_sources:
         if source == "finite-enumerate":
-            yield from _finite_enumerate(grids)
+            yield from _finite_enumerate(grids, library)
         elif source == "harvest-from-instance":
-            yield from _harvest_from_instance(grids)
+            yield from _harvest_from_instance(grids, library)
         elif source == "parameterize":
             pass  # no-op here; `parameterize` only matters for LEARN, not SEARCH
 
 
-def _finite_enumerate(grids: Iterable[Grid]) -> Iterator[tuple[Program, Type]]:
-    """A fixed, typed, bounded set: ``INT`` 0..max-dim, ``COLOR`` 0..9, ``BOOL`` {False, True}."""
-    max_dimension = max((max(grid.height, grid.width) for grid in grids), default=0)
-    for value in range(max_dimension + 1):
-        yield Const(value=value, value_type=INT), INT
-    for color in range(10):
-        yield Const(value=color, value_type=COLOR), COLOR
-    for flag in (False, True):
-        yield Const(value=flag, value_type=BOOL), BOOL
+def _type_in_use(vtype: Type, library: Library) -> bool:
+    """Whether ``vtype`` occurs anywhere in ``library``'s primitive signatures — including nested
+    inside a container or an arrow-typed hole (e.g. ``BOOL`` inside ``filter``'s ``(a -> bool)``
+    predicate hole, not just as a bare top-level parameter) — gating which base-type constant
+    leaves are worth minting at all."""
+
+    def occurs(t: Type) -> bool:
+        if t == vtype:
+            return True
+        if isinstance(t, ArrowType):
+            return occurs(t.result) or any(occurs(param) for param in t.params)
+        if isinstance(t, TypeCon):
+            return any(occurs(arg) for arg in t.args)
+        return False
+
+    return any(
+        occurs(primitive.return_type) or any(occurs(param) for param in primitive.param_types)
+        for primitive in library.primitives
+    )
 
 
-def _harvest_from_instance(grids: Iterable[Grid]) -> Iterator[tuple[Program, Type]]:
-    """The literals present in the instance: the colors used and the grid dimensions."""
+def _finite_enumerate(grids: Iterable[Grid], library: Library) -> Iterator[tuple[Program, Type]]:
+    """A fixed, typed, bounded set: ``INT`` 0..max-dim, ``COLOR`` 0..9, ``BOOL`` {False, True} —
+    only for whichever of these base types ``library`` actually uses somewhere."""
+    if _type_in_use(INT, library):
+        max_dimension = max((max(grid.height, grid.width) for grid in grids), default=0)
+        for value in range(max_dimension + 1):
+            yield Const(value=value, value_type=INT), INT
+    if _type_in_use(COLOR, library):
+        for color in range(10):
+            yield Const(value=color, value_type=COLOR), COLOR
+    if _type_in_use(BOOL, library):
+        for flag in (False, True):
+            yield Const(value=flag, value_type=BOOL), BOOL
+
+
+def _harvest_from_instance(
+    grids: Iterable[Grid], library: Library
+) -> Iterator[tuple[Program, Type]]:
+    """The literals present in the instance: the colors used and the grid dimensions — only for
+    whichever of ``COLOR``/``INT`` ``library`` actually uses somewhere."""
+    want_color = _type_in_use(COLOR, library)
+    want_int = _type_in_use(INT, library)
+    if not want_color and not want_int:
+        return
     colors: set[int] = set()
     dimensions: set[int] = set()
     for grid in grids:
-        colors.update(color for row in grid.to_list() for color in row)
-        dimensions.update((grid.height, grid.width))
-    for color in sorted(colors):
-        yield Const(value=color, value_type=COLOR), COLOR
-    for dimension in sorted(dimensions):
-        yield Const(value=dimension, value_type=INT), INT
+        if want_color:
+            colors.update(color for row in grid.to_list() for color in row)
+        if want_int:
+            dimensions.update((grid.height, grid.width))
+    if want_color:
+        for color in sorted(colors):
+            yield Const(value=color, value_type=COLOR), COLOR
+    if want_int:
+        for dimension in sorted(dimensions):
+            yield Const(value=dimension, value_type=INT), INT
 
 
 def _distinct_input_grids(contexts: tuple[Context, ...]) -> list[Grid]:

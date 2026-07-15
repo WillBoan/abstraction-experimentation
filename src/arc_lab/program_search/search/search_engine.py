@@ -276,6 +276,9 @@ class BottomUpSearchEngine(SearchEngine):
                 entry.candidate_index, entry.program, entry.primitives, Outcome.GOAL_UNMATCHED
             )
         solutions = tuple(entry.program for entry in extraction.accepted)
+        # Pool.add_dedup keys on (type, signature), so at most one entry can ever match
+        # (resolved_goal_type, target) — extraction.accepted has at most one entry (§5.7/§5.8).
+        solved_at_generation = extraction.accepted[0].generation if extraction.accepted else None
 
         return SearchResult(
             ranked_programs=solutions,
@@ -285,6 +288,7 @@ class BottomUpSearchEngine(SearchEngine):
                 accepted=len(solutions),
                 outcomes=state.tracker.totals(),
                 by_primitive=state.tracker.by_primitive(),
+                solved_at_generation=solved_at_generation,
             ),
         )
 
@@ -313,7 +317,7 @@ class BottomUpSearchEngine(SearchEngine):
             return cached
         pool = Pool()
         frontier: list[tuple[Program, Type]] = [
-            *seed_leaves(scope, contexts, self.constant_sources),
+            *seed_leaves(scope, contexts, self.constant_sources, state.library),
             *self._function_leaves(state),
         ]
         for depth in range(budget.max_depth):
