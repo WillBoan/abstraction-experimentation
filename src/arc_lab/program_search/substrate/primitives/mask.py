@@ -81,7 +81,7 @@ def _crop_to_mask(grid: Grid, mask: Mask) -> Grid:
     """Crop the grid to the mask's bounding box (the whole rectangle, unselected cells included)."""
     _require_same_shape(grid, mask, "crop_to_mask")
     row_lo, row_hi, col_lo, col_hi = _bounds(mask)
-    return Grid(grid.array[row_lo : row_hi + 1, col_lo : col_hi + 1])
+    return Grid(grid.array[row_lo : row_hi + 1, col_lo : col_hi + 1])  # noqa: E203, RUF100
 
 
 def _paint_through_mask(grid: Grid, mask: Mask, color: int) -> Grid:

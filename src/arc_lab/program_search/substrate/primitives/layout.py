@@ -35,7 +35,8 @@ def _translate(grid: Grid, d_row: int, d_col: int) -> Grid:
     col_lo, col_hi = max(0, d_col), min(width, width + d_col)
     if row_lo < row_hi and col_lo < col_hi:
         out[row_lo:row_hi, col_lo:col_hi] = src[
-            row_lo - d_row : row_hi - d_row, col_lo - d_col : col_hi - d_col
+            row_lo - d_row : row_hi - d_row,  # noqa: E203, RUF100
+            col_lo - d_col : col_hi - d_col,  # noqa: E203, RUF100
         ]
     return Grid(out)
 

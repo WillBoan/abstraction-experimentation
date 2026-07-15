@@ -56,7 +56,7 @@ def _from_cells(width: int, height: int, cells: Value) -> Grid:
     rows: list[list[int]] = []
     for i in range(height):
         row: list[int] = []
-        for color in cells[i * width : (i + 1) * width]:
+        for color in cells[i * width : (i + 1) * width]:  # noqa: E203, RUF100
             if not isinstance(color, int) or isinstance(color, bool):
                 raise TypeError(f"from_cells expects a list of colors, got {type(color).__name__}")
             row.append(color)
