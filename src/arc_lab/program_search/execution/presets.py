@@ -28,6 +28,7 @@ from arc_lab.program_search.substrate.primitives.higher_order import HOF_LIBRARY
 from arc_lab.program_search.substrate.primitives.mask import MASK_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.scaling import SCALE
 
+from .bundle_sheet import resolve_bundle
 from .model.config import Config
 
 #: D4 transforms plus the overlay and tile combinators (the old ``symmetry`` library).
@@ -36,6 +37,17 @@ SYMMETRY_LIBRARY = D4_LIBRARY.extended(name="d4+combinators", extra=COMBINATORS)
 ATOMIC_LIBRARY = D4_LIBRARY.extended(name="atomic", extra=(MAP_COLOR, SCALE))
 #: The L3 mask floor, standalone (mask intro/elim + set algebra) — not yet in any search preset.
 MASK_LIBRARY = Library(name="mask", primitives=MASK_PRIMITIVES)
+
+#: The three rungs of the `fundamental-floor grain contrast` ladder (EXPERIMENT_QUEUE.md):
+#: GEOM (a direct D4 primitive, no build_grid) -> UNIVERSAL_FLOOR (build_grid + full coordinate
+#: arithmetic/comparison) -> MINIMAL_COMPLETE_FLOOR (build_grid + read + if + eq only, no
+#: arithmetic, no width/height — the "zero added prior" completeness witness). Each
+#: ``resolve_bundle`` also yields the bundle sheet's own recommended ``constant_sources``.
+GEOM_LIBRARY, GEOM_CONSTANTS = resolve_bundle("GEOM")
+UNIVERSAL_FLOOR_LIBRARY, UNIVERSAL_FLOOR_CONSTANTS = resolve_bundle("UNIVERSAL_FLOOR")
+MINIMAL_COMPLETE_FLOOR_LIBRARY, MINIMAL_COMPLETE_FLOOR_CONSTANTS = resolve_bundle(
+    "MINIMAL_COMPLETE_FLOOR"
+)
 
 #: The vocabulary axis, addressed by name.
 LIBRARIES: dict[str, Library] = {
@@ -113,6 +125,46 @@ PRESETS: dict[str, Config] = {
             beam_width=32,
         ),
         budget=Budget(max_depth=3, max_arity=2, max_pool=500),
+    ),
+    # Geometry floor via the bundle sheet's GEOM (D4 minus `identity`) — the trivial grain rung
+    # for `fundamental-floor grain contrast` (EXPERIMENT_QUEUE.md): rot180 is a direct
+    # 1-application primitive here, so no build_grid/lambda-synthesis is needed.
+    "geom": Config(
+        library=GEOM_LIBRARY,
+        search_engine=BottomUpSearchEngine(
+            constant_sources=GEOM_CONSTANTS,
+            function_hole_fill_mode="none",
+            polymorphism_instantiation="monomorphize",
+            unpinned_type_var_mode="reject",
+        ),
+        budget=Budget(max_depth=2, max_arity=1, max_pool=100),
+    ),
+    # UNIVERSAL_FLOOR: build_grid + full coordinate arithmetic/comparison — the "grain contrast"
+    # middle rung. Same budget as `minimal-complete-floor` deliberately, so the two are directly
+    # comparable on the same task.
+    "universal-floor": Config(
+        library=UNIVERSAL_FLOOR_LIBRARY,
+        search_engine=BottomUpSearchEngine(
+            constant_sources=UNIVERSAL_FLOOR_CONSTANTS,
+            function_hole_fill_mode="lambda-synthesis",
+            polymorphism_instantiation="monomorphize",
+            unpinned_type_var_mode="reject",
+        ),
+        budget=Budget(max_depth=6, max_arity=2, max_pool=1000),
+    ),
+    # MINIMAL_COMPLETE_FLOOR: build_grid + read + if + eq only (no arithmetic, no width/height)
+    # -- the "zero added prior" completeness witness. Same budget as `universal-floor`
+    # deliberately: whether it solves at this depth (and how expensive) IS the grain-contrast
+    # measurement, not a known input (see EXPERIMENT_QUEUE.md / EXPERIMENTS.md E13).
+    "minimal-complete-floor": Config(
+        library=MINIMAL_COMPLETE_FLOOR_LIBRARY,
+        search_engine=BottomUpSearchEngine(
+            constant_sources=MINIMAL_COMPLETE_FLOOR_CONSTANTS,
+            function_hole_fill_mode="lambda-synthesis",
+            polymorphism_instantiation="monomorphize",
+            unpinned_type_var_mode="reject",
+        ),
+        budget=Budget(max_depth=6, max_arity=2, max_pool=1000),
     ),
 }
 
