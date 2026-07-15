@@ -14,8 +14,18 @@ from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.substrate.abstraction import make_abstraction
 from arc_lab.program_search.substrate.library import Library
+from arc_lab.program_search.substrate.primitives.build import BUILD_LIBRARY
 from arc_lab.program_search.substrate.primitives.geometry import D4_LIBRARY
-from arc_lab.program_search.substrate.program import Apply, Const, If, Input, Param, Program
+from arc_lab.program_search.substrate.program import (
+    Apply,
+    Const,
+    If,
+    Input,
+    Lam,
+    Param,
+    Program,
+    Var,
+)
 from arc_lab.program_search.substrate.types import BOOL, GRID, INT
 
 _GRID = Grid.from_list([[1, 2], [3, 4]])
@@ -60,6 +70,35 @@ def test_rewrite_folds_inside_if_branches() -> None:
     program = If(cond=Const(True, BOOL), then=_ROT180, orelse=Input())
     rewritten = rewrite_with(program, "abs0", template)
     assert rewritten == If(cond=Const(True, BOOL), then=Apply("abs0", (Input(),)), orelse=Input())
+
+
+# -- bound-var safety (the E6/E7 soundness fix) ----------------------------------
+
+
+def _build_grid_with_col(col: Program) -> Program:
+    # build_grid(width(g), height(g), lam(lam(read(g, $0, col)))) over a grid sub-program `g`.
+    g = Input()
+    body = Apply("read", (g, Var(0, INT), col))
+    lam = Lam(param_type=INT, body=Lam(param_type=INT, body=body))
+    return Apply("build_grid", (Apply("width", (g,)), Apply("height", (g,)), lam))
+
+
+def test_bound_var_safe_proposer_refuses_to_hoist_a_bound_var() -> None:
+    # Two build_grid programs differing only in a *bound-var* coordinate. The naive proposer holes
+    # the $i into an abstraction param (unsound); the bound-var-safe one refuses, so no sound
+    # cross-member generalisation exists and it offers nothing.
+    p = _build_grid_with_col(Var(1, INT))  # col = $1
+    q = _build_grid_with_col(  # col = width - $1 - 1 (a reflection, contains $1)
+        Apply(
+            "sub",
+            (
+                Apply("sub", (Apply("width", (Input(),)), Var(1, INT))),
+                Const(1, INT),
+            ),
+        )
+    )
+    assert len(AntiunifyPairs().propose([p, q], BUILD_LIBRARY)) >= 1
+    assert AntiunifyPairs(bound_var_safe=True).propose([p, q], BUILD_LIBRARY) == []
 
 
 # -- the greedy engine ----------------------------------------------------------
