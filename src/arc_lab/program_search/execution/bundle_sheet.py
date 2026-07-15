@@ -69,6 +69,8 @@ _FRAGMENTS: dict[str, BundleSpec] = {
     "PERCEIVE_INT": BundleSpec(("count_color", "num_colors", "palette", "shape")),
     "CELLS_IO": BundleSpec(("cells", "from_cells")),
     "CELL_STATEFUL": BundleSpec(("read", "set_cell")),
+    # The convenience union documented in _PRIMITIVE_BUNDLES.md: CELLS_IO + CELL_STATEFUL.
+    "CELL_IO": BundleSpec(("cells", "from_cells", "read", "set_cell")),
     "CELL_TARGETS": BundleSpec(("swap_cells", "move_cell")),
     "RECOLOR_OPS": BundleSpec(("map_color", "swap_colors", "filter_color")),
     "MASK_INTRO": BundleSpec(("mask_by_color", "nonbg_mask", "bbox_mask")),
