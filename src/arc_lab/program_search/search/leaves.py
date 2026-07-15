@@ -1,15 +1,10 @@
-"""Leaf seeding (§5.1) and the literal constant sources (§6.3) of ARCHITECTURE.md.
+"""The round-0 leaves of a bottom-up search:
 
-The round-0 leaves of a bottom-up search: the input grid, the bound variables in scope (the open-term
-leaves), and literal constants. Two sources inject ``Const`` nodes — ``finite-enumerate`` (a bounded
-typed set) and ``harvest-from-instance`` (the literals present in the instance).
-
-Constants are derived from the **input grids in the contexts**, never the task outputs: ``_enumerate``
-is a pure function of ``(scope, contexts, budget)`` (§9), so it cannot see outputs. This costs nothing
-in completeness — ``finite-enumerate`` covers every color, and output-specific dimensions are *derived*
-by composition (size-general), not harvested as literals. Input-derived values generally
-(``width(Input())``, most-common-color) are likewise compositions (§5.2), not leaves; ``parameterize``
-mints nothing here (it belongs to ``learn/``, §14), its enum value kept only for a shared vocabulary.
+- the input grid
+- the bound variables in scope (the open-term leaves)
+- literal constants (derived from the **input grids in the contexts**, never the task outputs)
+  - `finite-enumerate` (a bounded typed set)
+  - `harvest-from-instance` (the literals present in the instance)
 """
 
 from __future__ import annotations
@@ -24,9 +19,15 @@ from ..substrate.types import BOOL, COLOR, GRID, INT, Type
 from .context import Context
 from .scope import Scope
 
-#: A literal-constant policy. ``finite-enumerate`` / ``harvest-from-instance`` mint ``Const`` leaves;
-#: ``parameterize`` mints nothing here (realized in ``learn/``) — kept for a shared config vocabulary.
-ConstantSource: TypeAlias = Literal["finite-enumerate", "harvest-from-instance", "parameterize"]
+#: Policies for how to source constants:
+ConstantSource: TypeAlias = Literal[
+    # finite-enumerate: Mint a fixed, typed, bounded set of constants: INT 0..max-dim, COLOR 0..9, BOOL {False, True}.
+    "finite-enumerate",
+    # harvest-from-instance: Mint the literals present in the instance: the colors used and the grid dimensions.
+    "harvest-from-instance",
+    # parameterize: Mints nothing in SEARCH (used in LEARN, not SEARCH).
+    "parameterize",
+]
 
 
 def seed_leaves(
@@ -45,7 +46,8 @@ def seed_leaves(
             yield from _finite_enumerate(grids)
         elif source == "harvest-from-instance":
             yield from _harvest_from_instance(grids)
-        # "parameterize" mints nothing here — realized in learn/ (§6.3, §14).
+        elif source == "parameterize":
+            pass  # no-op here; `parameterize` only matters for LEARN, not SEARCH
 
 
 def _finite_enumerate(grids: Iterable[Grid]) -> Iterator[tuple[Program, Type]]:
