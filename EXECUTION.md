@@ -10,7 +10,7 @@ Granularity levels (ARC's own terminology): **dataset ⊃ corpus ⊃ task ⊃ ex
 
 - **Test examples (within-task)** — each `Task`'s own held-out `test` examples. The search sees only the train examples; scoring always happens on the test examples. This never changes, in any flow, on any corpus. _(Naming: the scorer is **`score`**, not "evaluate" — avoiding collision with both the **eval corpus** and `Program.evaluate`, which keeps its canonical interpreter meaning: apply a program to a grid.)_
 - **Train / eval corpus** — the _across-task_ split. The **train corpus** is the set of tasks the learning loop may see; the **eval corpus** is tasks the learning **never saw**. This axis exists only because a learned library exists — it grades whether _the library_ transfers.
-- **Recorded run** — `RunSpec = Config × Corpus` → content-hashed `run_id` → executed once, cached thereafter (`runspec.json` written first, `trace.jsonl` streamed, `results.json` written last; a present `results.json` is served from cache). The `run_id` is the cache key `execute()` dedupes on, not the raw dirname: the on-disk dir is `runs/<date>/<started_at>_<run_id>/` (`model.run_record.find_run_dir` resolves by hash suffix, across the date subfolders *and* the legacy flat layout) so `runs/` groups by date and sorts chronologically while the identity stays a pure function of `(config, corpus)`.
+- **Recorded run** — `RunSpec = Config × Corpus` → content-hashed `run_id` → executed once, cached thereafter (`runspec.json` written first, `trace.jsonl` streamed, `results.json` written last; a present `results.json` is served from cache). The `run_id` is the cache key `execute()` dedupes on, not the raw dirname: the on-disk dir is `runs/<date>/<started_at>_<run_id>/` (`model.run_record.find_run_dir` resolves by hash suffix, across the date subfolders _and_ the legacy flat layout) so `runs/` groups by date and sorts chronologically while the identity stays a pure function of `(config, corpus)`.
 
 Where each corpus is touched:
 
@@ -23,7 +23,7 @@ The two axes never substitute for each other: the corpus axis decides _which tas
 
 ## The primitives
 
-- `SearchEngine.run(train_examples, library, constraints, cost, budget) → SearchResult` — the only entry point for searching one task. Takes the task's **train examples only** (not the full `Task`; the `TrainExamples` alias in `core/task.py`), so blindness to test examples is structural, not a promise. `budget` is an *argument*, not an engine field: the engine is machinery (HOW — algorithm + capability policies); the budget is per-run data (HOW MUCH), varied independently (e.g. across a study grid) and living on `Config`. _(**Sync B: DONE.** `Cost.of`, `Constraint.holds`, `extract`, and `BodySampler` take the same `train_examples`; `task_id` for logging comes from the caller.)_
+- `SearchEngine.run(train_examples, library, constraints, cost, budget) → SearchResult` — the only entry point for searching one task. Takes the task's **train examples only** (not the full `Task`; the `TrainExamples` alias in `core/task.py`), so blindness to test examples is structural, not a promise. `budget` is an _argument_, not an engine field: the engine is machinery (HOW — algorithm + capability policies); the budget is per-run data (HOW MUCH), varied independently (e.g. across a study grid) and living on `Config`. _(**Sync B: DONE.** `Cost.of`, `Constraint.holds`, `extract`, and `BodySampler` take the same `train_examples`; `task_id` for logging comes from the caller.)_
 - `predict(programs, test_inputs, library) → attempts` — **pure**: select the best k programs (ARC: 2 attempts) and apply them to the test inputs via `Program.evaluate_grid`. The apply-to-test step formerly inside `Solver.predict` (the `Solver` class is gone; this function is its surviving functionality).
 - `score(attempts, test_outputs) → TaskScore` — **pure**: grid comparison, either-of-2-attempts (essentially the existing `score_task`). `predict` + `score` are the only functions that touch test grids. Recording is owned by the _activity_, never by these.
 - `LearnEngine.run(library, solutions: tuple[SolvedTask, ...]) → LearnOutcome` — sleep. Consumes the whole corpus's wake solutions at once (cross-task compression needs the corpus in view). `SolvedTask` = (annotated task, found program), in `analysis/compression.py`. `LearnOutcome` = grown `library` + `added` primitives + `rewritten` solutions + `description_length` (the MDL objective — deliberately **not** named "score": `score_task` is the unrelated test-example scorer), with a derived `converged` (nothing added) that drives `early_stop`. A `LearnEngine` is a frozen dataclass: it is run identity, hashed via the component serde.
@@ -123,43 +123,15 @@ Run-count accounting:
 
 ## Tracing — capability sampling & full capture (outside run identity)
 
-Every recorded run's `results.json` carries a `search_stats` block unconditionally — the outcome
-partition (`search/tracking.py`: every candidate a `SearchEngine` considers resolves to exactly
-one of `errored/pruned/deduped/displaced/evicted/goal_unmatched/constraint_rejected/accepted`).
-It has two parts, both in that funnel order: `total` (`considered` + every outcome, zeros filled —
-a stable schema; `considered == sum(outcomes)`) and `by_primitive` (the same counts per
-primitive-name / node-kind key — `__if__`/`__lam__`/`__appfn__`/`__const__` for the syntactic
-capabilities that aren't named primitives — sparse, primitive-sorted). Free, no config, always on;
-the per-task rows in `trace.jsonl` carry the same block, and `analysis/capabilities.py` re-groups
-`by_primitive` into category/provenance rollups at read time.
+Every recorded run's `results.json` carries a `search_stats` block unconditionally — the outcome partition (`search/tracking.py`: every candidate a `SearchEngine` considers resolves to exactly one of `errored/pruned/deduped/displaced/evicted/goal_unmatched/constraint_rejected/accepted`). It has two parts, both in that funnel order: `total` (`considered` + every outcome, zeros filled — a stable schema; `considered == sum(outcomes)`) and `by_primitive` (the same counts per primitive-name / node-kind key — `__if__`/`__lam__`/`__appfn__`/`__const__` for the syntactic capabilities that aren't named primitives — sparse, primitive-sorted). Free, no config, always on; the per-task rows in `trace.jsonl` carry the same block, and `analysis/capabilities.py` re-groups `by_primitive` into category/provenance rollups at read time.
 
-Beyond the counts, `TraceSpec` (`execution/model/trace_spec.py`) governs three further, opt-in
-observations of a search, passed to `execute()` as a plain keyword (`trace: TraceSpec | None`)
-— **never** a `Config` field. The first two record programs as **readable strings**
-(`str(program)`, e.g. `build_grid(width(input), lam:int(...))`) and stamp each with its
-`candidate_index` (the 0-based consideration order, which lets a consumer recover true generation
-order even though the tracker emits outcomes in resolution order):
+Beyond the counts, `TraceSpec` (`execution/model/trace_spec.py`) governs three further, opt-in observations of a search, passed to `execute()` as a plain keyword (`trace: TraceSpec | None`) — **never** a `Config` field. The first two record programs as **readable strings** (`str(program)`, e.g. `build_grid(width(input), lam:int(...))`) and stamp each with its `candidate_index` (the 0-based consideration order, which lets a consumer recover true generation order even though the tracker emits outcomes in resolution order):
 
-- **Sampling** (`TraceSpec.samples`, on by default — a small deterministic `first_k` reservoir
-  per `(primitive, outcome)` bucket) — a few example programs per primitive/node-kind × outcome,
-  cheap enough to run unconditionally. Written as flat JSONL rows to `samples.jsonl`.
-- **Full capture** (`TraceSpec.capture_all`, off by default) — the first `capture_all_max`
-  considered candidates, written to `capture/<task_id>.jsonl` (LEARN: `capture/iter-<n>/<task_id>
-  .jsonl`) **in generation order** (`candidate_index` 0,1,2,…, no gaps): the sink buffers by index
-  and sorts at close, so survivors whose outcome resolves late are not dropped in favour of early
-  dedups. Truncation past the cap is recorded loudly in `capture/_capture_summary.json`.
-- **Profiling** (`TraceSpec.profile`, off by default) — a cProfile pass over the run, dumped to
-  `profile/stats.prof` (raw, for `pstats`/`snakeviz`) plus a rendered `profile/summary.txt` (a
-  phase rollup — generation / evaluation / dedup / tracking / cost — and a top-N self-time table;
-  `execution/profiling.py`). Wall-clock and thus non-deterministic, so it lands *only* under
-  `profile/`, never in `results.json`. Takes effect only when the run actually executes (a fresh
-  run, or a cached one under `force_recapture`).
+- **Sampling** (`TraceSpec.samples`, on by default — a small deterministic `first_k` reservoir per `(primitive, outcome)` bucket) — a few example programs per primitive/node-kind × outcome, cheap enough to run unconditionally. Written as flat JSONL rows to `samples.jsonl`.
+- **Full capture** (`TraceSpec.capture_all`, off by default) — the first `capture_all_max` considered candidates, written to `capture/<task_id>.jsonl` (LEARN: `capture/iter-<n>/<task_id> .jsonl`) **in generation order** (`candidate_index` 0,1,2,…, no gaps): the sink buffers by index and sorts at close, so survivors whose outcome resolves late are not dropped in favour of early dedups. Truncation past the cap is recorded loudly in `capture/_capture_summary.json`.
+- **Profiling** (`TraceSpec.profile`, off by default) — a cProfile pass over the run, dumped to `profile/stats.prof` (raw, for `pstats`/`snakeviz`) plus a rendered `profile/summary.txt` (a phase rollup — generation / evaluation / dedup / tracking / cost — and a top-N self-time table; `execution/profiling.py`). Wall-clock and thus non-deterministic, so it lands _only_ under `profile/`, never in `results.json`. Takes effect only when the run actually executes (a fresh run, or a cached one under `force_recapture`).
 
-Both `samples.jsonl` and each `capture/*.jsonl` share a flat row schema, so one tool renders
-either — e.g. `jq -r '[.candidate_index,.outcome,(.primitives|join(";")),.program]|@tsv' … |
-column -t -s$'\t'` prints an aligned table. (JSONL stays the stored format — it streams, appends,
-and carries the variable-length `primitives` list natively; readability is a *view*, not a
-reformat.)
+Both `samples.jsonl` and each `capture/*.jsonl` share a flat row schema, so one tool renders either — e.g. `jq -r '[.candidate_index,.outcome,(.primitives|join(";")),.program]|@tsv' … | column -t -s$'\t'` prints an aligned table. (JSONL stays the stored format — it streams, appends, and carries the variable-length `primitives` list natively; readability is a _view_, not a reformat.)
 
 Run-dir layout, extended:
 
@@ -181,17 +153,7 @@ runs/<date>/<started_at>_<run_id>/
     └── summary.txt             # rendered phase rollup + top-N self-time table
 ```
 
-**Why `TraceSpec` is not part of `run_id`:** `Config` decides _what is computed_; `TraceSpec`
-decides _what is recorded about_ that computation. Excluding it from the hash is sound
-specifically because this codebase is deterministic (no RNG anywhere — CLAUDE.md's
-"Immutable & deterministic" invariant): re-executing a cached run under a different `TraceSpec`
-provably reproduces the identical search, so telemetry can always be safely (re)attached to an
-existing run directory without risk that it describes a different execution than the one whose
-`results.json` is already cached. `force_recapture=True` on `execute()` (CLI: `--force-recapture`)
-exploits exactly this — it deletes `trace.jsonl`/`results.json` and re-executes from scratch
-purely to repopulate tracing artifacts under a new `TraceSpec`, without changing the run's
-identity or the substantive content of `results.json` (only wall-clock `seconds` and whatever
-the new `TraceSpec` observes can differ).
+**Why `TraceSpec` is not part of `run_id`:** `Config` decides _what is computed_; `TraceSpec` decides _what is recorded about_ that computation. Excluding it from the hash is sound specifically because this codebase is deterministic (no RNG anywhere — CLAUDE.md's "Immutable & deterministic" invariant): re-executing a cached run under a different `TraceSpec` provably reproduces the identical search, so telemetry can always be safely (re)attached to an existing run directory without risk that it describes a different execution than the one whose `results.json` is already cached. `force_recapture=True` on `execute()` (CLI: `--force-recapture`) exploits exactly this — it deletes `trace.jsonl`/`results.json` and re-executes from scratch purely to repopulate tracing artifacts under a new `TraceSpec`, without changing the run's identity or the substantive content of `results.json` (only wall-clock `seconds` and whatever the new `TraceSpec` observes can differ).
 
 ## The call stack
 
