@@ -246,11 +246,66 @@ def generate_layered_abstraction(out_root: Path) -> Path:
     )
 
 
+def _pattern_grid(size: int, offset: int) -> Grid:
+    """A deterministic ``size`` x ``size`` grid varying by ``offset`` (no RNG, per CLAUDE.md).
+
+    Coefficients ``(1, 2)`` are load-bearing: coefficients that sum to a multiple of the modulus
+    (e.g. the first draft's ``(3, 7)``) make ``transpose`` *algebraically identical* to ``rot180``
+    for this row/col-linear formula, at every size and offset — a real accidental-symmetry bug,
+    not just a style choice. Verified collision-free against all 7 other D4 members (both 3x3 and
+    10x10, offsets 0-9) before use.
+    """
+    return Grid(
+        np.array(
+            [[(row * 1 + col * 2 + offset) % 10 for col in range(size)] for row in range(size)],
+            dtype=np.int8,
+        )
+    )
+
+
+def _rot180_grain_task(size: int, task_id: str) -> GeneratedTask:
+    """A fixed ``size`` x ``size`` rot180 task, 4 varied train examples (rules out a per-cell
+    hardcoded-literal-output shortcut — EXPERIMENT_QUEUE.md's `fundamental-floor grain contrast`)
+    + 1 held-out-content test example."""
+    train = [_pattern_grid(size, offset) for offset in (0, 1, 2, 3)]
+    test = [_pattern_grid(size, 4)]
+    return make_task(
+        task_id,
+        label="rot180",
+        split="train",
+        solution=_rot180_reference,
+        train_inputs=train,
+        test_inputs=test,
+    )
+
+
+def grain_contrast_tasks() -> tuple[GeneratedTask, ...]:
+    """`fundamental-floor grain contrast`: rot180 on a fixed 3x3 and a fixed 10x10 grid, read
+    across the floor ladder (`MINIMAL_COMPLETE_FLOOR` -> `UNIVERSAL_FLOOR` -> `GEOM`)."""
+    return (
+        _rot180_grain_task(3, "grain-rot180-3x3"),
+        _rot180_grain_task(10, "grain-rot180-10x10"),
+    )
+
+
+def generate_grain_contrast(out_root: Path) -> Path:
+    return write_testbed(
+        "grain-contrast",
+        grain_contrast_tasks(),
+        out_root=out_root,
+        note=(
+            "fundamental-floor grain contrast: rot180 on a fixed 3x3 and a fixed 10x10 grid, "
+            "4 varied train examples each."
+        ),
+    )
+
+
 #: Generator registry for the CLI (`arc-lab taskgen <name>`).
 GENERATORS: dict[str, Callable[[Path], Path]] = {
     "e1-rot90": generate_e1_rot90,
     "perceive-transform": generate_perceive_transform,
     "layered-abstraction": generate_layered_abstraction,
+    "grain-contrast": generate_grain_contrast,
 }
 
 

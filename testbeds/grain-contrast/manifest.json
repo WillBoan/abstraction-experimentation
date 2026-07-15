@@ -1,0 +1,17 @@
+{
+  "name": "grain-contrast",
+  "note": "fundamental-floor grain contrast: rot180 on a fixed 3x3 and a fixed 10x10 grid, 4 varied train examples each.",
+  "content_hash": "253d48cd91ec9cfe",
+  "tasks": [
+    {
+      "task_id": "grain-rot180-3x3",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "grain-rot180-10x10",
+      "label": "rot180",
+      "split": "train"
+    }
+  ]
+}
