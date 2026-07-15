@@ -224,6 +224,8 @@ class BottomUpSearchEngine(SearchEngine):
         goal_type: Type | None = GRID,
         tracker: SearchTracker | None = None,
     ) -> SearchResult:
+        # goal_type=None only fires the not-yet-built derivation path (see derive_goal_type) —
+        # GRID is the only goal type this codebase's Task model can currently produce.
         resolved_goal_type = (
             goal_type if goal_type is not None else derive_goal_type(train_examples)
         )
@@ -235,8 +237,11 @@ class BottomUpSearchEngine(SearchEngine):
             if ex.output is not None
         ]
         contexts = tuple(Context(grid) for grid, _ in train)
+        # Same values, two roles: `target` (Signature, allows Bottom) is the goal-test comparison;
+        # `train_target` (concrete Value) feeds enclosing-target propagation for hole-filling.
         target: Signature = tuple(output for _, output in train)
         train_target: tuple[Value, ...] = tuple(output for _, output in train)
+
         universe = (
             monotype_universe(library, budget.max_depth)
             if self.polymorphism_instantiation == "bounded"
@@ -319,7 +324,9 @@ class BottomUpSearchEngine(SearchEngine):
                 # lower-depth program is built once at its own depth, not regenerated-and-deduped
                 # every round. At depth 1 this is a no-op (the whole pool is the leaf layer).
                 new_layer = frozenset(
-                    id(entry.program) for _, entry in pool.entries() if entry.generation == depth - 1
+                    id(entry.program)
+                    for _, entry in pool.entries()
+                    if entry.generation == depth - 1
                 )
                 branch_candidates = self._branch_candidates(pool, state, new_layer)
                 frontier = list(
