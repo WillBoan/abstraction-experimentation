@@ -35,7 +35,17 @@ from ..substrate.program import AppFn, Apply, Const, If, Lam, PrimRef, Program
 
 class Outcome(Enum):
     """The eight mutually-exclusive terminal states of a considered candidate, in *funnel* order
-    (the order they are emitted in every serialized stats block)."""
+    (the order they are emitted in every serialized stats block).
+
+    - ERRORED: The candidate's evaluation raised an exception.
+    - PRUNED: The candidate's signature doesn't match its type.
+    - DEDUPED: The candidate's signature matches a previously-considered candidate's, and is more expensive.
+    - DISPLACED: The candidate made it into the pool, but was later displaced by a cheaper same-behaviour candidate.
+    - EVICTED: The candidate made it into the pool, but was later evicted by frontier truncation.
+    - GOAL_UNMATCHED: The candidate made it to `extract`, but its output didn't match the goal.
+    - CONSTRAINT_REJECTED: The candidate made it to `extract`, but failed one or more constraints.
+    - ACCEPTED: The candidate made it to the end, and was returned as a potential solution by `SearchEngine.run`.
+    """
 
     ERRORED = "errored"
     PRUNED = "pruned"
@@ -129,7 +139,7 @@ def _offer(
     if len(bucket) < spec.k or program.size() < bucket[-1][1].size():
         bucket.append((candidate_index, program))
         bucket.sort(key=lambda entry: entry[1].size())
-        del bucket[spec.k :]
+        del bucket[spec.k :]  # noqa: E203, RUF100
 
 
 @dataclass(slots=True)
