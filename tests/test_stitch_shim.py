@@ -10,9 +10,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
-from arc_lab.core.annotation import AnnotatedTask
-from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.analysis.compression import SolvedTask
 from arc_lab.solvers.dsl.learn.sleep import GreedyMDLSleep
 from arc_lab.solvers.dsl.learn.stitch_shim import StitchProposer, _compress, from_sexpr, to_sexpr
@@ -20,6 +17,9 @@ from arc_lab.solvers.dsl.substrate.library import Library, Primitive
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_AFFINE_LIBRARY, BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, Param, Program, Var
 from arc_lab.solvers.dsl.substrate.types import BOOL, COLOR, FN, GRID, INT
+
+from arc_lab.core.annotation import AnnotatedTask
+from arc_lab.core.task import Task
 
 _G, _I = GRID, INT
 

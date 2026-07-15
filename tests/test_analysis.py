@@ -5,9 +5,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from arc_lab.core.annotation import AnnotatedTask
-from arc_lab.core.dataset import Dataset
-from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.analysis import (
     CompressionMetric,
     RunSummary,
@@ -24,6 +21,10 @@ from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Input, Param
 from arc_lab.solvers.dsl.substrate.types import GRID
+
+from arc_lab.core.annotation import AnnotatedTask
+from arc_lab.core.dataset import Dataset
+from arc_lab.core.task import Task
 
 
 def _flip_task(task_id: str = "flip") -> Task:
@@ -174,12 +175,13 @@ def test_analyze_resumes_from_partial_trace(tmp_path: Path) -> None:
 
 def test_execute_with_sleep_synthesizes_and_writes_learned_library(tmp_path: Path) -> None:
     # The sleep knob makes execute a Synthesize run: grow the library on the train split, then eval.
-    from arc_lab.core.annotation import AnnotatedTask, Split, Synthetic, TaskMeta
-    from arc_lab.core.dataset import Corpus
     from arc_lab.solvers.dsl.analysis.artifact import LEARNED_LIBRARY_FILE
     from arc_lab.solvers.dsl.config import SleepSpec
     from arc_lab.solvers.dsl.learn.experiments import make_study
     from arc_lab.solvers.dsl.substrate.library import Library
+
+    from arc_lab.core.annotation import AnnotatedTask, Split, Synthetic, TaskMeta
+    from arc_lab.core.dataset import Corpus
 
     exp = make_study("e1-rot90")
     corpus = Corpus(

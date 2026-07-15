@@ -9,12 +9,12 @@ an abstraction (loop vars stay internal — only `#0` is an argument).
 from __future__ import annotations
 
 import numpy as np
-
-from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, Param, Program, Var
 from arc_lab.solvers.dsl.substrate.types import GRID, INT
+
+from arc_lab.core.grid import Grid
 
 _G = GRID
 _INT = INT

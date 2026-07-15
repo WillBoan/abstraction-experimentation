@@ -7,7 +7,6 @@ where the input equals color 2.
 
 from __future__ import annotations
 
-from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search import BuildGridBodySearch
 from arc_lab.solvers.dsl.search.type_directed import candidate_applications
 from arc_lab.solvers.dsl.substrate.library import Library
@@ -16,6 +15,8 @@ from arc_lab.solvers.dsl.substrate.primitives.cells import READ
 from arc_lab.solvers.dsl.substrate.primitives.control import EQ, IF
 from arc_lab.solvers.dsl.substrate.program import Const
 from arc_lab.solvers.dsl.substrate.types import BOOL, COLOR, INT
+
+from arc_lab.core.task import Task
 
 
 def _task() -> Task:

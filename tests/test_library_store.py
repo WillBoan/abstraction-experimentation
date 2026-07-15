@@ -5,8 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
-from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_AFFINE_LIBRARY
@@ -15,6 +13,8 @@ from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Input, Param
 from arc_lab.solvers.dsl.substrate.store import library_hash, load_library, save_library
 from arc_lab.solvers.dsl.substrate.types import GRID
+
+from arc_lab.core.grid import Grid
 
 
 def _learned_library() -> Library:

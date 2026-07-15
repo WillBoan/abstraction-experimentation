@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
-from arc_lab.core.grid import Grid
-from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search import Enumerate
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Input, Param, Program
 from arc_lab.solvers.dsl.substrate.types import GRID
+
+from arc_lab.core.grid import Grid
+from arc_lab.core.task import Task
 
 _G = GRID
 

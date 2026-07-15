@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from arc_lab.core.grid import Grid
-from arc_lab.core.task import Task
-from arc_lab.eval.scoring import score_task
 from arc_lab.solvers import make_solver
 from arc_lab.solvers.baseline import IdentitySolver
 from arc_lab.solvers.dsl import ProgramSearchSolver
+
+from arc_lab.core.grid import Grid
+from arc_lab.core.task import Task
+from arc_lab.eval.scoring import score_task
 
 _G = Grid.from_list
 

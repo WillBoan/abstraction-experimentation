@@ -7,9 +7,6 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-
-from arc_lab.core.annotation import AnnotatedTask
-from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.analysis.artifact import RunSpec, TaskRecord
 from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, SolvedTask, TwoPartMDL
 from arc_lab.solvers.dsl.analysis.runner import RunSummary
@@ -51,6 +48,9 @@ from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Input, Lam, Param, Program, Var
 from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT
+
+from arc_lab.core.annotation import AnnotatedTask
+from arc_lab.core.task import Task
 
 _G = GRID
 _C = COLOR

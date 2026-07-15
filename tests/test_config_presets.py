@@ -6,14 +6,15 @@ These presets replaced the config-as-subclass solvers; the regression locks
 
 from __future__ import annotations
 
-from arc_lab.core.grid import Grid
-from arc_lab.core.task import Example, Task
-from arc_lab.eval.scoring import score_task
 from arc_lab.solvers.dsl.config import PRESETS, Config
 from arc_lab.solvers.dsl.search.composite import CompositeSearch
 from arc_lab.solvers.dsl.search.cost import ProgramSize
 from arc_lab.solvers.dsl.search.enumerate import BeamSearch, Enumerate
 from arc_lab.solvers.dsl.solver import ProgramSearchSolver
+
+from arc_lab.core.grid import Grid
+from arc_lab.core.task import Example, Task
+from arc_lab.eval.scoring import score_task
 
 #: name -> (library name, search class)
 _EXPECTED = {

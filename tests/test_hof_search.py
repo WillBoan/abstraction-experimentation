@@ -10,7 +10,6 @@ the function-typed hole, so `twice` is skipped — exactly as `build_grid`'s FN 
 
 from __future__ import annotations
 
-from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.enumerate import Enumerate
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
@@ -18,6 +17,8 @@ from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import AppFn, Param, Program
 from arc_lab.solvers.dsl.substrate.types import GRID, ArrowType
+
+from arc_lab.core.task import Task
 
 _G = GRID
 _GG = ArrowType((_G,), _G)  # GRID -> GRID

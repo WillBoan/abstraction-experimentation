@@ -11,14 +11,14 @@ from collections.abc import Callable
 
 import numpy as np
 import numpy.typing as npt
-
-from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search import BuildGridSearch
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_AFFINE_LIBRARY, BUILD_LIBRARY
 from arc_lab.solvers.dsl.substrate.program import Apply, Const, Param, Program
 from arc_lab.solvers.dsl.substrate.types import COLOR, GRID, INT
+
+from arc_lab.core.task import Task
 
 _Ref = Callable[[npt.NDArray[np.int_]], npt.NDArray[np.int_]]
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 import itertools
 
 import pytest
-
 from arc_lab.solvers.dsl.substrate.types import (
     COLOR,
     GRID,

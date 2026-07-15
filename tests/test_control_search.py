@@ -9,13 +9,13 @@ across both ``if`` branches and ground ``eq`` at ``INT``.
 from __future__ import annotations
 
 import numpy as np
-
-from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search.enumerate import Enumerate
 from arc_lab.solvers.dsl.substrate.library import Library
 from arc_lab.solvers.dsl.substrate.primitives.build import HEIGHT, WIDTH
 from arc_lab.solvers.dsl.substrate.primitives.control import CONTROL_PRIMITIVES
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
+
+from arc_lab.core.task import Task
 
 
 def _branch_task() -> Task:

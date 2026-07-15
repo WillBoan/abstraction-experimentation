@@ -8,10 +8,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
-from arc_lab.core.dataset import dataset_path, load_dataset
 from arc_lab.eval.runner import run
 from arc_lab.solvers import make_solver
+
+from arc_lab.core.dataset import dataset_path, load_dataset
 from arc_lab.viz import render_task
 
 pytestmark = pytest.mark.skipif(

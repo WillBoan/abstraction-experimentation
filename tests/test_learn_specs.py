@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from arc_lab.solvers.dsl.analysis.compression import CompressionMetric, TwoPartMDL
 from arc_lab.solvers.dsl.config import MetricSpec, ProposerSpec, SleepSpec
 from arc_lab.solvers.dsl.learn.antiunify import (

@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from arc_lab.core.grid import Grid
-from arc_lab.core.task import Task
-from arc_lab.eval.scoring import score_task
 from arc_lab.solvers.dsl.config import ATOMIC_LIBRARY, PRESETS
 from arc_lab.solvers.dsl.search import BeamSearch, Enumerate, ProgramSize
 from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate import COLOR, GRID, INT, Apply, Const, Input
 from arc_lab.solvers.dsl.substrate.library import Library, Primitive
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
+
+from arc_lab.core.grid import Grid
+from arc_lab.core.task import Task
+from arc_lab.eval.scoring import score_task
 
 _G = Grid.from_list
 

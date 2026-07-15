@@ -4,14 +4,14 @@ symmetry solver that composes them."""
 from __future__ import annotations
 
 import pytest
-
-from arc_lab.core.grid import Grid
-from arc_lab.core.task import Task
-from arc_lab.eval.scoring import score_task
 from arc_lab.solvers import make_solver
 from arc_lab.solvers.dsl.config import SYMMETRY_LIBRARY
 from arc_lab.solvers.dsl.search import CompositeSearch, OverlaySearch, SingleApply, TileSearch
 from arc_lab.solvers.dsl.substrate import COLOR, INT, Apply, Const, Input, Program
+
+from arc_lab.core.grid import Grid
+from arc_lab.core.task import Task
+from arc_lab.eval.scoring import score_task
 
 _G = Grid.from_list
 

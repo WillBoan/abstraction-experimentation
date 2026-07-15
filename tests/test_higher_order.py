@@ -10,7 +10,6 @@ curried metavars) is Phase F, so `from_sexpr` round-tripping is not asserted her
 
 from __future__ import annotations
 
-from arc_lab.core.grid import Grid
 from arc_lab.solvers.dsl.learn.stitch_shim import from_sexpr, to_sexpr
 from arc_lab.solvers.dsl.substrate.abstraction import make_abstraction
 from arc_lab.solvers.dsl.substrate.primitives.build import BUILD_LIBRARY
@@ -25,6 +24,8 @@ from arc_lab.solvers.dsl.substrate.program import (
     Program,
 )
 from arc_lab.solvers.dsl.substrate.types import GRID, INT, ArrowType
+
+from arc_lab.core.grid import Grid
 
 _G, _I = GRID, INT
 _DIM = ArrowType((_G,), _I)  # a GRID -> INT perceiver

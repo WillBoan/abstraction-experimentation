@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from arc_lab.core.grid import Grid
-from arc_lab.core.task import Task
 from arc_lab.solvers.dsl.search import (
     ConsistentWithTraining,
     Constraint,
@@ -14,6 +12,9 @@ from arc_lab.solvers.dsl.search.base import Search, SearchResult, SearchStats
 from arc_lab.solvers.dsl.solver import ProgramSearchSolver
 from arc_lab.solvers.dsl.substrate import Apply, Input, Library, Program
 from arc_lab.solvers.dsl.substrate.primitives.geometry import D4_LIBRARY
+
+from arc_lab.core.grid import Grid
+from arc_lab.core.task import Task
 
 _G = Grid.from_list
 
