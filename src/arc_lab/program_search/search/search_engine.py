@@ -14,6 +14,7 @@ policy (§6.2), and memoized recursion (§9).
 from __future__ import annotations
 
 import itertools
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -55,6 +56,8 @@ from .signature import (
     signature_matches_type,
 )
 from .tracking import Outcome, SearchTracker, primitive_keys
+
+logger = logging.getLogger(__name__)
 
 FunctionHoleFillMode: TypeAlias = Literal["none", "point-free", "lambda-synthesis"]
 
@@ -136,6 +139,47 @@ class _RunState:
     #: (never on the engine), so the fixed ``train_examples`` a ``body_sampler`` reads cannot leak
     #: across runs. Cached pools are treated as read-only by every caller.
     memo: dict[_MemoKey, Pool] = field(default_factory=dict)
+
+
+#: Skip decile progress logging below this many candidates this round — a single candidate
+#: could otherwise jump several deciles at once on a cheap generation, which reads as noise.
+_ABSORB_LOG_MIN_TOTAL = 50
+
+
+def _log_extra(state: _RunState, generation: int, max_depth: int) -> dict[str, object]:
+    """The ``task=``/``gen=`` fields for ``run.log``. ``generation`` is 1-indexed here for
+    display only — internally (``depth``, ``PoolEntry.generation``, ``results.json``'s
+    ``solved_at_generation``) generations stay 0-indexed; this is a presentation-only +1, not a
+    data-model change, and means a round's number in ``run.log`` is one more than its
+    ``solved_at_generation`` in ``results.json``."""
+    return {"task_id": state.tracker.task_id, "generation": f"{generation + 1}/{max_depth}"}
+
+
+def _log_absorb_progress(
+    state: _RunState, generation: int, max_depth: int, total_this_generation: int
+) -> None:
+    """Log once per 10%-decile of ``total_this_generation`` that ``composed`` (this round's
+    running absorbed count, ``GenerationTracker``) crosses — skipped entirely below
+    ``_ABSORB_LOG_MIN_TOTAL`` candidates. Caller (``BottomUpSearchEngine._absorb_one``) already
+    guards on ``logger.isEnabledFor(logging.INFO)``."""
+    if total_this_generation < _ABSORB_LOG_MIN_TOTAL:
+        return
+    gen_tracker = state.tracker.generation_at(generation)
+    decile = gen_tracker.composed * 10 // total_this_generation
+    previous_decile = (gen_tracker.composed - 1) * 10 // total_this_generation
+    if decile == previous_decile:
+        return
+    logger.info(
+        "Absorbed %d/%d (%.0f%%): errored=%d pruned=%d deduped=%d entered_pool=%d",
+        gen_tracker.composed,
+        total_this_generation,
+        100 * gen_tracker.composed / total_this_generation,
+        gen_tracker.errored,
+        gen_tracker.pruned,
+        gen_tracker.deduped,
+        gen_tracker.entered_pool,
+        extra=_log_extra(state, generation, max_depth),
+    )
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -321,6 +365,20 @@ class BottomUpSearchEngine(SearchEngine):
             *self._function_leaves(state),
         ]
         for depth in range(budget.max_depth):
+            # Round-level tracking/logging is only for the run's one top-level search — a
+            # lambda-synthesis sub-search recurses into this same loop with its own (smaller,
+            # budget-descended) depth numbering starting again at 0, which would otherwise
+            # collide with (and silently corrupt) the top-level search's own generation
+            # 0, 1, 2, ... entries (``SearchTracker.begin_generation``).
+            track_generation = depth if top_level else None
+            if top_level:
+                state.tracker.begin_generation(pool.size())
+            if track_generation is not None and logger.isEnabledFor(logging.INFO):
+                logger.info(
+                    "Generation starting: pool_size_start=%d",
+                    pool.size(),
+                    extra=_log_extra(state, track_generation, budget.max_depth),
+                )
             branch_candidates: list[tuple[Program, Type, Signature | None]] = []
             if depth > 0:
                 # The new-layer restriction (§5.2): compose only over combinations that use at least
@@ -334,7 +392,16 @@ class BottomUpSearchEngine(SearchEngine):
                 )
                 branch_candidates = self._branch_candidates(pool, state, new_layer)
                 frontier = list(
-                    self._compose(scope, contexts, pool, budget, state, enclosing_target, new_layer)
+                    self._compose(
+                        scope,
+                        contexts,
+                        pool,
+                        budget,
+                        state,
+                        enclosing_target,
+                        new_layer,
+                        track_generation=track_generation,
+                    )
                 )
             # Every pooled value program's (non-function) signature, by identity — the composed-
             # signature fast path (``compute_signature``'s ``child_signatures``): a fresh ``Apply``'s
@@ -347,10 +414,53 @@ class BottomUpSearchEngine(SearchEngine):
                 for vtype, entry in pool.entries()
                 if not isinstance(vtype, ArrowType)
             }
-            self._absorb(frontier, contexts, pool, state, depth, child_signatures)
+            total_this_generation = len(frontier) + len(branch_candidates)
+            self._absorb(
+                frontier,
+                contexts,
+                pool,
+                state,
+                depth,
+                child_signatures,
+                track_generation=track_generation,
+                max_depth=budget.max_depth,
+                total_this_generation=total_this_generation,
+            )
             for program, vtype, signature in branch_candidates:
-                self._absorb_one(program, vtype, vtype, signature, pool, state, depth)
-            pool = self._select_frontier(pool, budget, state)
+                self._absorb_one(
+                    program,
+                    vtype,
+                    vtype,
+                    signature,
+                    pool,
+                    state,
+                    depth,
+                    track_generation=track_generation,
+                    max_depth=budget.max_depth,
+                    total_this_generation=total_this_generation,
+                )
+            if top_level:
+                state.tracker.mark_pool_size_before_truncation(depth, pool.size())
+            pool = self._select_frontier(pool, budget, state, track_generation=track_generation)
+            if top_level:
+                state.tracker.end_generation(depth, pool.size())
+            if track_generation is not None and logger.isEnabledFor(logging.INFO):
+                gen_tracker = state.tracker.generation_at(track_generation)
+                logger.info(
+                    "Generation done: pool %d -> %d (before truncation: %d); composed=%d "
+                    "(errored=%d pruned=%d deduped=%d entered_pool=%d); displaced=%d; evicted=%d",
+                    gen_tracker.pool_size_start,
+                    gen_tracker.pool_size_end,
+                    gen_tracker.pool_size_before_truncation,
+                    gen_tracker.composed,
+                    gen_tracker.errored,
+                    gen_tracker.pruned,
+                    gen_tracker.deduped,
+                    gen_tracker.entered_pool,
+                    gen_tracker.displaced,
+                    gen_tracker.evicted,
+                    extra=_log_extra(state, track_generation, budget.max_depth),
+                )
         state.memo[key] = pool
         if not top_level:
             for _, entry in pool.entries():
@@ -368,6 +478,8 @@ class BottomUpSearchEngine(SearchEngine):
         state: _RunState,
         enclosing_target: EnclosingTarget | None,
         new_layer: frozenset[int],
+        *,
+        track_generation: int | None,
     ) -> Iterator[tuple[Program, Type]]:
         """One composition round: applications of every primitive, then the polymorphism policy (§6.2).
 
@@ -382,6 +494,11 @@ class BottomUpSearchEngine(SearchEngine):
         combinations already built in an earlier round are not regenerated. Synthesized lambdas are
         exempt: their body comes from a nested sub-search's pool, not this scope's, so their children
         are never in ``new_layer`` — they are (correctly) re-offered each round.
+
+        ``track_generation`` (``None`` for a lambda-synthesis sub-search — see ``_enumerate``) gates
+        the per-primitive progress log below; composition's own total yield isn't knowable until
+        every primitive has been visited, so unlike absorption there's no percentage here, only a
+        running count.
         """
         policy = self.polymorphism_instantiation
         if policy == "unrestricted":
@@ -391,17 +508,33 @@ class BottomUpSearchEngine(SearchEngine):
             ]
         else:
             candidates = list(pool.typed_programs())
-        for primitive in state.library.primitives:
+        primitives = state.library.primitives
+        total_primitives = len(primitives)
+        yielded = 0
+        for index, primitive in enumerate(primitives, 1):
             if primitive.name == _BRANCHING_ENTRY:
                 continue  # the branching token becomes If nodes (§5.4), never an eager Apply
             for program, result_type in applications(
                 primitive, candidates, state.counter, budget.max_arity
             ):
                 if _uses_new_layer(program, new_layer):
-                    yield from resolve(program, result_type, policy, state.universe)
+                    for candidate in resolve(program, result_type, policy, state.universe):
+                        yielded += 1
+                        yield candidate
             if self.function_hole_fill_mode == "lambda-synthesis":
-                yield from self._synthesized_lambdas(
+                for candidate in self._synthesized_lambdas(
                     primitive, scope, contexts, candidates, budget, state, enclosing_target
+                ):
+                    yielded += 1
+                    yield candidate
+            if track_generation is not None and logger.isEnabledFor(logging.INFO):
+                logger.info(
+                    "Composing - primitive %d/%d (%s), %d candidates yielded so far",
+                    index,
+                    total_primitives,
+                    primitive.name,
+                    yielded,
+                    extra=_log_extra(state, track_generation, budget.max_depth),
                 )
         if self.function_hole_fill_mode != "none":  # apply pooled function values (§8)
             for program, result_type in appfn_applications(candidates, state.counter):
@@ -641,6 +774,10 @@ class BottomUpSearchEngine(SearchEngine):
         state: _RunState,
         generation: int,
         child_signatures: Mapping[int, Signature],
+        *,
+        track_generation: int | None,
+        max_depth: int,
+        total_this_generation: int,
     ) -> None:
         """Evaluate, prune (§5.6), and dedup each candidate. Value candidates go in first, then
         function candidates — whose signatures sample argument values from the now-populated pool (§8).
@@ -650,6 +787,10 @@ class BottomUpSearchEngine(SearchEngine):
         signature fast path's cache (``signature.compute_signature``) — value candidates only; a
         function candidate's signature is argument-sampled, a different computation (``compute_
         function_signature``), untouched by the fast path.
+
+        ``track_generation``/``max_depth``/``total_this_generation`` are purely for progress
+        tracking/logging (``_absorb_one``) — ``track_generation`` is ``None`` for a lambda-synthesis
+        sub-search's own absorption (see ``_enumerate``), independent of ``generation`` above.
         """
         functions: list[tuple[Program, ArrowType]] = []
         for program, vtype in candidates:
@@ -657,7 +798,18 @@ class BottomUpSearchEngine(SearchEngine):
                 functions.append((program, vtype))
             else:
                 signature = compute_signature(program, contexts, state.library, child_signatures)
-                self._absorb_one(program, vtype, vtype, signature, pool, state, generation)
+                self._absorb_one(
+                    program,
+                    vtype,
+                    vtype,
+                    signature,
+                    pool,
+                    state,
+                    generation,
+                    track_generation=track_generation,
+                    max_depth=max_depth,
+                    total_this_generation=total_this_generation,
+                )
         if functions:
             arg_samples = self._argument_samples(functions, contexts, pool, state)
             for program, arrow in functions:
@@ -665,7 +817,18 @@ class BottomUpSearchEngine(SearchEngine):
                     program, arrow, contexts, arg_samples, state.library
                 )
                 _, result_type = peel_arrow(arrow)
-                self._absorb_one(program, arrow, result_type, signature, pool, state, generation)
+                self._absorb_one(
+                    program,
+                    arrow,
+                    result_type,
+                    signature,
+                    pool,
+                    state,
+                    generation,
+                    track_generation=track_generation,
+                    max_depth=max_depth,
+                    total_this_generation=total_this_generation,
+                )
 
     def _absorb_one(
         self,
@@ -676,6 +839,10 @@ class BottomUpSearchEngine(SearchEngine):
         pool: Pool,
         state: _RunState,
         generation: int,
+        *,
+        track_generation: int | None,
+        max_depth: int,
+        total_this_generation: int,
     ) -> None:
         """Prune (fully-undefined or a *concrete* output-type mismatch) and dedup one candidate.
 
@@ -688,29 +855,46 @@ class BottomUpSearchEngine(SearchEngine):
         (displaced / evicted / goal-unmatched / constraint-rejected / accepted) is resolved later,
         without re-walking the tree. ``generation`` (the composition round) is likewise cached on the
         pooled entry, driving the new-layer restriction (``_enumerate``).
+
+        ``track_generation`` is a *separate* concept from ``generation`` above: it's ``None`` for a
+        lambda-synthesis sub-search's own absorption (``_enumerate``'s ``top_level=False`` calls),
+        in which case this candidate still counts toward the whole-run ``considered``/``_totals``/
+        ``_by_primitive`` (unaffected), it just isn't attributed to any ``GenerationTracker`` round
+        or logged — ``SearchTracker.record``/``mark_entered_pool`` already no-op on ``None``.
+        ``max_depth``/``total_this_generation`` feed the periodic absorption-progress log
+        (``_log_absorb_progress``), gated on ``track_generation is not None``.
         """
         index = state.tracker.considered
         state.tracker.considered += 1
         primitives = primitive_keys(program)
         if signature is None:
-            state.tracker.record(index, program, primitives, Outcome.ERRORED)
-            return
-        if not free_type_vars(output_type) and not signature_matches_type(signature, output_type):
-            state.tracker.record(index, program, primitives, Outcome.PRUNED)
-            return
-        cost = state.cost.of(program, state.train_examples, state.library)
-        outcome = pool.add_dedup(vtype, signature, program, cost, primitives, index, generation)
-        if not outcome.inserted:
-            state.tracker.record(index, program, primitives, Outcome.DEDUPED)
-            return
-        if outcome.displaced is not None:
-            displaced = outcome.displaced
             state.tracker.record(
-                displaced.candidate_index,
-                displaced.program,
-                displaced.primitives,
-                Outcome.DISPLACED,
+                index, program, primitives, Outcome.ERRORED, generation=track_generation
             )
+        elif not free_type_vars(output_type) and not signature_matches_type(signature, output_type):
+            state.tracker.record(
+                index, program, primitives, Outcome.PRUNED, generation=track_generation
+            )
+        else:
+            cost = state.cost.of(program, state.train_examples, state.library)
+            outcome = pool.add_dedup(vtype, signature, program, cost, primitives, index, generation)
+            if not outcome.inserted:
+                state.tracker.record(
+                    index, program, primitives, Outcome.DEDUPED, generation=track_generation
+                )
+            else:
+                state.tracker.mark_entered_pool(track_generation)
+                if outcome.displaced is not None:
+                    displaced = outcome.displaced
+                    state.tracker.record(
+                        displaced.candidate_index,
+                        displaced.program,
+                        displaced.primitives,
+                        Outcome.DISPLACED,
+                        generation=track_generation,
+                    )
+        if track_generation is not None and logger.isEnabledFor(logging.INFO):
+            _log_absorb_progress(state, track_generation, max_depth, total_this_generation)
 
     def _argument_samples(
         self,
@@ -752,13 +936,22 @@ class BottomUpSearchEngine(SearchEngine):
                 break
         return values
 
-    def _select_frontier(self, pool: Pool, budget: Budget, state: _RunState) -> Pool:
+    def _select_frontier(
+        self, pool: Pool, budget: Budget, state: _RunState, *, track_generation: int | None
+    ) -> Pool:
         """Keep the cheapest ``budget.max_pool`` entries to carry into the next round (§5.7),
-        recording ``EVICTED`` for whatever gets dropped to make room."""
+        recording ``EVICTED`` for whatever gets dropped to make room. ``track_generation`` tags an
+        eviction to the *current* round (this truncation's own cause), not a dropped entry's
+        possibly-older origin round (``PoolEntry.generation``) — ``None`` for a lambda-synthesis
+        sub-search's own frontier (``_enumerate``)."""
         kept, dropped = pool.cheapest(budget.max_pool)
         for entry in dropped:
             state.tracker.record(
-                entry.candidate_index, entry.program, entry.primitives, Outcome.EVICTED
+                entry.candidate_index,
+                entry.program,
+                entry.primitives,
+                Outcome.EVICTED,
+                generation=track_generation,
             )
         return kept
 
@@ -769,10 +962,16 @@ class BeamBottomUpSearchEngine(BottomUpSearchEngine):
 
     beam_width: int
 
-    def _select_frontier(self, pool: Pool, budget: Budget, state: _RunState) -> Pool:
+    def _select_frontier(
+        self, pool: Pool, budget: Budget, state: _RunState, *, track_generation: int | None
+    ) -> Pool:
         kept, dropped = pool.cheapest(self.beam_width)
         for entry in dropped:
             state.tracker.record(
-                entry.candidate_index, entry.program, entry.primitives, Outcome.EVICTED
+                entry.candidate_index,
+                entry.program,
+                entry.primitives,
+                Outcome.EVICTED,
+                generation=track_generation,
             )
         return kept

@@ -30,7 +30,8 @@ import logging
 import shutil
 import subprocess
 import time
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -61,6 +62,55 @@ logger = logging.getLogger(__name__)
 
 #: Repo-root ``runs/`` — the gitignored, regenerable artifact cache.
 DEFAULT_RUNS_ROOT: Final = Path(__file__).resolve().parents[4] / "runs"
+
+#: The whole search/execution logger subtree — the same one ``cli/main.py``'s
+#: ``_configure_logging`` toggles for console output via ``-v``/``-vv``.
+_PROGRESS_LOGGER_NAME: Final = "arc_lab.program_search"
+_LOG_FILE_FORMAT: Final = "%(asctime)s %(levelname)s task=%(task_id)s gen=%(generation)s %(message)s"
+
+
+class _DefaultLogFieldsFilter(logging.Filter):
+    """Fills in ``"-"`` for ``task_id``/``generation`` on any record that doesn't set them via
+    ``extra=`` — most ``arc_lab.program_search`` log calls don't (e.g. this module's own
+    "resuming"/per-task-error lines), and ``Formatter`` would otherwise raise on the first one it
+    sees, since the file handler is shared by the whole subtree, not just the new progress lines.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not hasattr(record, "task_id"):
+            record.task_id = "-"
+        if not hasattr(record, "generation"):
+            record.generation = "-"
+        return True
+
+
+@contextmanager
+def _run_log_handler(record: RunRecord) -> Iterator[None]:
+    """Attach a ``FileHandler`` writing ``record.log_path`` in real time for the duration of the
+    ``with`` block — always on regardless of the CLI's ``-v``/``-vv`` (console output is a
+    separate, untouched concern: the root handler ``cli/main.py``'s ``_configure_logging``
+    installs). Scoped to the whole ``arc_lab.program_search`` subtree, so every log call in the
+    search/execution path lands in ``run.log``, not just the new progress lines — one coherent
+    real-time log per run.
+
+    Detaches the handler and restores the prior level in a ``finally`` (even on exception), so a
+    crash never leaks the handler into a later ``execute()`` call in the same process —
+    ``run_study.py`` runs many sequentially.
+    """
+    target_logger = logging.getLogger(_PROGRESS_LOGGER_NAME)
+    handler = logging.FileHandler(record.log_path, mode="a", encoding="utf-8")
+    handler.setFormatter(logging.Formatter(_LOG_FILE_FORMAT))
+    handler.addFilter(_DefaultLogFieldsFilter())
+    previous_level = target_logger.level
+    if previous_level == logging.NOTSET or previous_level > logging.INFO:
+        target_logger.setLevel(logging.INFO)
+    target_logger.addHandler(handler)
+    try:
+        yield
+    finally:
+        target_logger.removeHandler(handler)
+        target_logger.setLevel(previous_level)
+        handler.close()
 
 
 def execute(
@@ -109,25 +159,26 @@ def execute(
         {**run_spec.to_dict(), "commit": _current_commit(), "run_started_at": _now_iso()},
     )
 
-    profiler = cProfile.Profile() if trace_spec.profile else None
-    if profiler is not None:
-        profiler.enable()
-    try:
-        if run_spec.config.learn is None:
-            payload = _search_results(_run_search(run_spec, record, trace_spec))
-        else:
-            payload = _run_learn(run_spec, record, trace_spec)
-    finally:
+    with _run_log_handler(record):
+        profiler = cProfile.Profile() if trace_spec.profile else None
         if profiler is not None:
-            profiler.disable()
-    if profiler is not None:
-        write_profile_artifacts(profiler, record)
+            profiler.enable()
+        try:
+            if run_spec.config.learn is None:
+                payload = _search_results(_run_search(run_spec, record, trace_spec))
+            else:
+                payload = _run_learn(run_spec, record, trace_spec)
+        finally:
+            if profiler is not None:
+                profiler.disable()
+        if profiler is not None:
+            write_profile_artifacts(profiler, record)
 
-    _write_json(
-        record.results_path,  # the LAST write — its presence marks the run complete
-        {"run_id": record.run_id, "corpus_name": run_spec.corpus.name, **payload},
-    )
-    logger.info("run %s recorded to %s", record.run_id, record.run_dir)
+        _write_json(
+            record.results_path,  # the LAST write — its presence marks the run complete
+            {"run_id": record.run_id, "corpus_name": run_spec.corpus.name, **payload},
+        )
+        logger.info("run %s recorded to %s", record.run_id, record.run_dir)
     return record
 
 
@@ -205,14 +256,14 @@ class _TrackedOutcome:
 
 
 def _make_tracker(
-    trace: TraceSpec, capture_path: Path | None
+    trace: TraceSpec, capture_path: Path | None, task_id: str
 ) -> tuple[SearchTracker, _CaptureSink | None]:
     sink = (
         _CaptureSink(path=capture_path, max_count=trace.capture_all_max)
         if trace.capture_all and capture_path is not None
         else None
     )
-    return SearchTracker(samples=trace.samples, capture=sink), sink
+    return SearchTracker(samples=trace.samples, capture=sink, task_id=task_id), sink
 
 
 def _search_with_tracker(
@@ -398,7 +449,7 @@ def _run_task(
 ) -> tuple[dict[str, object], _TrackedOutcome]:
     """One task: search on train examples, predict + score on test examples, tallied."""
     started = time.perf_counter()
-    tracker, sink = _make_tracker(trace, capture_path)
+    tracker, sink = _make_tracker(trace, capture_path, task.task_id)
     try:
         result = _search_with_tracker(task, config, config.library, tracker)
         solved, per_test = _predict_and_score(
@@ -624,7 +675,7 @@ def _wake(
             if trace.capture_all
             else None
         )
-        tracker, sink = _make_tracker(trace, capture_path)
+        tracker, sink = _make_tracker(trace, capture_path, task.task_id)
         result = _search_with_tracker(task, config, library, tracker)
         if sink is not None:
             sink.close()

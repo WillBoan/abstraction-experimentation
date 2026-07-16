@@ -363,3 +363,30 @@ def test_force_recapture_populates_tracing_on_an_already_completed_run(tmp_path:
     assert recaptured.capture_summary_path.is_file()
     assert (recaptured.capture_dir / "t1.jsonl").is_file()
     assert recaptured.results()["solved"] == 1  # substantive content is unchanged by recapture
+
+
+def test_execute_writes_run_log(tmp_path: Path) -> None:
+    """``run.log`` is always populated on a fresh run — independent of any console verbosity
+    configuration, since ``_run_log_handler`` bumps the logger's own level for the run's duration."""
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    record = execute(spec, runs_root=tmp_path)
+
+    assert record.log_path.is_file()
+    contents = record.log_path.read_text(encoding="utf-8")
+    assert contents.strip(), "run.log must not be empty"
+    assert f"recorded to {record.run_dir}" in contents  # execute()'s own completion line
+    assert "task=t1" in contents  # the per-task search's progress lines carry the task id
+
+
+def test_execute_cache_hit_does_not_error_with_an_existing_run_log(tmp_path: Path) -> None:
+    spec = RunSpec(
+        config=Config(library=D4_LIBRARY, search_engine=_real_engine(), budget=_BUDGET),
+        corpus=_corpus(_flip_task("t1", _IN, _FLIPPED)),
+    )
+    execute(spec, runs_root=tmp_path)
+    record = execute(spec, runs_root=tmp_path)  # cache hit: no re-execution, no new handler setup
+    assert record.completed
+    assert record.log_path.is_file()  # left over from the first, non-cached execution

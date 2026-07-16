@@ -13,6 +13,7 @@ from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.search.search_result import SearchResult
 from arc_lab.program_search.search.tracking import (
     OUTCOME_NAMES,
+    GenerationTracker,
     Outcome,
     SampleSpec,
     SearchTracker,
@@ -250,3 +251,98 @@ def test_new_layer_restriction_considers_each_program_once() -> None:
     # A depth-1 program is formed once at round 1 and never re-formed when it is a leaf-only
     # composition at round 2 (which is exactly what the restriction suppresses).
     assert seen.count("transpose(input)") == 1
+
+
+# -- GenerationTracker: the per-round summary, Outcome-free and separate from _totals -------------
+
+
+def test_generation_tracker_defaults_to_zero() -> None:
+    gen_tracker = GenerationTracker()
+    assert gen_tracker.pool_size_start == 0
+    assert gen_tracker.pool_size_before_truncation is None
+    assert gen_tracker.pool_size_end is None
+    assert gen_tracker.composed == gen_tracker.errored == gen_tracker.pruned == 0
+    assert gen_tracker.deduped == gen_tracker.entered_pool == 0
+    assert gen_tracker.displaced == gen_tracker.evicted == 0
+
+
+def test_record_with_generation_bumps_the_matching_field_and_composed() -> None:
+    tracker = SearchTracker()
+    tracker.begin_generation(pool_size_start=10)
+    tracker.record(0, Input(), frozenset(), Outcome.ERRORED, generation=0)
+    tracker.record(1, Input(), frozenset(), Outcome.PRUNED, generation=0)
+    tracker.record(2, Input(), frozenset(), Outcome.DEDUPED, generation=0)
+    gen_tracker = tracker.generation_at(0)
+    assert (gen_tracker.errored, gen_tracker.pruned, gen_tracker.deduped) == (1, 1, 1)
+    assert gen_tracker.composed == 3  # errored + pruned + deduped, all counted
+
+
+def test_record_displaced_bumps_displaced_but_not_composed() -> None:
+    """Displacement isn't part of `composed` (invariant: composed == errored + pruned + deduped +
+    entered_pool) — a displaced entry was already counted as `entered_pool` when it was first
+    absorbed, so counting it again here would double-count it."""
+    tracker = SearchTracker()
+    tracker.begin_generation(pool_size_start=0)
+    tracker.record(0, Input(), frozenset(), Outcome.DISPLACED, generation=0)
+    gen_tracker = tracker.generation_at(0)
+    assert gen_tracker.displaced == 1
+    assert gen_tracker.composed == 0
+
+
+def test_record_without_generation_does_not_touch_generations_but_still_updates_totals() -> None:
+    tracker = SearchTracker()
+    tracker.begin_generation(pool_size_start=0)
+    tracker.record(0, Input(), frozenset({"rot90"}), Outcome.ERRORED)  # generation=None (default)
+    assert tracker.totals()["errored"] == 1
+    assert tracker.generation_at(0).errored == 0  # untouched
+
+
+def test_record_of_whole_run_outcomes_is_excluded_from_generation_tracking() -> None:
+    """ACCEPTED/GOAL_UNMATCHED/CONSTRAINT_REJECTED are only ever recorded once, at whole-run
+    extraction after every round has finished — there's no live "current round" for them, so
+    even if a caller passed `generation=`, `GenerationTracker` must stay untouched."""
+    tracker = SearchTracker()
+    tracker.begin_generation(pool_size_start=0)
+    tracker.record(0, Input(), frozenset(), Outcome.ACCEPTED, generation=0)
+    tracker.record(1, Input(), frozenset(), Outcome.GOAL_UNMATCHED, generation=0)
+    tracker.record(2, Input(), frozenset(), Outcome.CONSTRAINT_REJECTED, generation=0)
+    gen_tracker = tracker.generation_at(0)
+    assert gen_tracker.composed == 0
+    assert tracker.totals()["accepted"] == 1  # still landed in the whole-run totals
+
+
+def test_mark_entered_pool_bumps_entered_pool_and_composed() -> None:
+    tracker = SearchTracker()
+    tracker.begin_generation(pool_size_start=0)
+    tracker.mark_entered_pool(0)
+    tracker.mark_entered_pool(0)
+    gen_tracker = tracker.generation_at(0)
+    assert gen_tracker.entered_pool == 2
+    assert gen_tracker.composed == 2
+
+
+def test_mark_entered_pool_is_a_no_op_for_none() -> None:
+    tracker = SearchTracker()
+    tracker.mark_entered_pool(None)  # a lambda-synthesis sub-search's own absorption — no crash
+
+
+def test_begin_end_generation_track_pool_size_snapshots_per_round() -> None:
+    tracker = SearchTracker()
+    tracker.begin_generation(pool_size_start=1)
+    tracker.mark_pool_size_before_truncation(0, 40)
+    tracker.end_generation(0, 12)
+    tracker.begin_generation(pool_size_start=12)
+    tracker.mark_pool_size_before_truncation(1, 90)
+    tracker.end_generation(1, 20)
+    round0 = tracker.generation_at(0)
+    assert (round0.pool_size_start, round0.pool_size_before_truncation, round0.pool_size_end) == (
+        1,
+        40,
+        12,
+    )
+    round1 = tracker.generation_at(1)
+    assert (round1.pool_size_start, round1.pool_size_before_truncation, round1.pool_size_end) == (
+        12,
+        90,
+        20,
+    )

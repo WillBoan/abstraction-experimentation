@@ -33,6 +33,9 @@ if TYPE_CHECKING:
 
 #: Written FIRST — a run's identity survives a crash.
 RUNSPEC_FILENAME: Final = "runspec.json"
+#: Real-time execution log — written throughout the run (``execute.py``'s ``_run_log_handler``),
+#: always on regardless of the CLI's ``-v``/``-vv`` flags (those only govern console output).
+LOG_FILENAME: Final = "run.log"
 #: Written LAST — its presence marks the run complete (the idempotency check).
 RESULTS_FILENAME: Final = "results.json"
 #: Streamed per task — the resumable checkpoint; a gitignored, regenerable cache.
@@ -94,6 +97,10 @@ class RunRecord:
     @property
     def runspec_path(self) -> Path:
         return self.run_dir / RUNSPEC_FILENAME
+
+    @property
+    def log_path(self) -> Path:
+        return self.run_dir / LOG_FILENAME
 
     @property
     def results_path(self) -> Path:

@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+import logging
+
+import pytest
+
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task
+from arc_lab.program_search.search import search_engine as search_engine_module
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.cost import ProgramSize
 from arc_lab.program_search.search.polymorphism import PolymorphismInstantiation
@@ -11,6 +16,7 @@ from arc_lab.program_search.search.search_engine import (
     BeamBottomUpSearchEngine,
     BottomUpSearchEngine,
 )
+from arc_lab.program_search.search.tracking import SearchTracker
 from arc_lab.program_search.substrate.library import (
     Library,
     Primitive,
@@ -191,3 +197,80 @@ def test_beam_engine_also_solves() -> None:
         budget=_budget(max_depth=2),
     )
     assert Apply(primitive="transpose", args=(Input(),)) in result.ranked_programs
+
+
+# -- progress logging: the four generation-level log sites (run.log) ----------------------------
+
+
+def test_progress_logging_emits_all_four_generation_log_sites(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The absorption-progress site is decile-gated behind a minimum candidate count per
+    # generation (noise avoidance on cheap rounds) — lowered here so this tiny task still
+    # exercises it, rather than needing a library large enough to naturally clear the threshold.
+    monkeypatch.setattr(search_engine_module, "_ABSORB_LOG_MIN_TOTAL", 1)
+    task = Task(
+        task_id="progress-task", train=(Example(input=_GRID, output=_transpose(_GRID)),), test=()
+    )
+    tracker = SearchTracker(task_id=task.task_id)
+    with caplog.at_level(logging.INFO, logger="arc_lab.program_search.search.search_engine"):
+        _ENGINE.run(
+            train_examples=task.train,
+            library=_GEO,
+            constraints=(),
+            cost=ProgramSize(),
+            budget=_budget(max_depth=2),
+            tracker=tracker,
+        )
+    messages = [record.getMessage() for record in caplog.records]
+    assert any(m.startswith("Generation starting: pool_size_start=") for m in messages)
+    assert any("primitive 1/1 (transpose)" in m for m in messages)
+    assert any(m.startswith("Absorbed") for m in messages)
+    assert any(m.startswith("Generation done: pool ") for m in messages)
+    assert caplog.records, "expected at least one log record"
+    for record in caplog.records:
+        assert record.task_id == "progress-task"  # type: ignore[attr-defined]
+        assert record.generation != "-"  # type: ignore[attr-defined]
+
+
+def test_progress_logging_is_silent_below_info_level(caplog: pytest.LogCaptureFixture) -> None:
+    task = Task(task_id="t", train=(Example(input=_GRID, output=_transpose(_GRID)),), test=())
+    with caplog.at_level(logging.WARNING, logger="arc_lab.program_search.search.search_engine"):
+        _ENGINE.run(
+            train_examples=task.train,
+            library=_GEO,
+            constraints=(),
+            cost=ProgramSize(),
+            budget=_budget(max_depth=2),
+        )
+    assert caplog.records == []
+
+
+def test_progress_logging_never_fires_for_a_lambda_synthesis_sub_search(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A lambda-synthesis sub-search recurses into the same round loop with its own (smaller)
+    depth numbering — round-level logging must stay scoped to the top-level search only, or a
+    nested generation 0 would be misreported as (and collide with) the top-level's own."""
+    rot180 = _rot90(_rot90(_GRID))
+    task = Task(task_id="ho", train=(Example(input=_GRID, output=rot180),), test=())
+    engine = BottomUpSearchEngine(
+        constant_sources=(),
+        function_hole_fill_mode="point-free",
+        polymorphism_instantiation="monomorphize",
+        unpinned_type_var_mode="reject",
+    )
+    with caplog.at_level(logging.INFO, logger="arc_lab.program_search.search.search_engine"):
+        result = engine.run(
+            train_examples=task.train,
+            library=Library(name="ho", primitives=(_TWICE, _ROT90)),
+            constraints=(),
+            cost=ProgramSize(),
+            budget=_budget(max_depth=2),
+        )
+    assert result.stats.solved
+    # Every log record's generation numbering must be consistent with the *top-level* search's
+    # own max_depth, never a sub-search's smaller descended one.
+    for record in caplog.records:
+        gen = record.generation  # type: ignore[attr-defined]
+        assert gen == "-" or gen.endswith("/2")

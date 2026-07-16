@@ -142,12 +142,58 @@ def _offer(
         del bucket[spec.k :]  # noqa: E203, RUF100
 
 
+#: The composition round's own outcome-partition fields that ``record(generation=...)`` also
+#: bumps on the matching ``GenerationTracker`` — ``goal_unmatched``/``constraint_rejected``/
+#: ``accepted`` are excluded: those are only ever recorded once, at whole-run extraction, after
+#: every round has already finished, so there is no live "current round" to attribute them to.
+_GENERATION_OUTCOME_FIELDS: dict[Outcome, str] = {
+    Outcome.ERRORED: "errored",
+    Outcome.PRUNED: "pruned",
+    Outcome.DEDUPED: "deduped",
+    Outcome.DISPLACED: "displaced",
+}
+
+
+@dataclass(slots=True)
+class GenerationTracker:
+    """One composition round's live summary: pool size before/after, and where every candidate
+    newly absorbed that round ended up. Deliberately ``Outcome``-free — unlike ``SearchTracker``'s
+    own ``_totals``/``_by_primitive``, this never feeds sampling or capture (those bucket
+    individual candidates across the *whole* run, not per-round aggregates), so there's no
+    structural reason for it to speak ``Outcome`` at all.
+
+    Only tracked for a run's one top-level search, never for a lambda-synthesis sub-search's own
+    (much smaller, budget-descended) round loop — see ``SearchTracker.begin_generation``.
+    """
+
+    pool_size_start: int = 0
+    pool_size_before_truncation: int | None = None
+    pool_size_end: int | None = None
+    #: New candidates absorbed this round: composed applications, ``If``-branch candidates, and
+    #: (at generation 0) the leaf/seed layer — all absorbed through the same ``_absorb_one``
+    #: choke point. Invariant: ``composed == errored + pruned + deduped + entered_pool``, mirroring
+    #: ``SearchTracker``'s own ``considered == sum(totals().values())``.
+    composed: int = 0
+    errored: int = 0
+    pruned: int = 0
+    deduped: int = 0
+    entered_pool: int = 0
+    #: Entries (of any origin generation) displaced by *this* round's absorption.
+    displaced: int = 0
+    #: Entries (of any origin generation) evicted by *this* round's frontier truncation.
+    evicted: int = 0
+
+
 @dataclass(slots=True)
 class SearchTracker:
     """Accumulates the outcome partition + per-primitive breakdown for one ``SearchEngine.run``
     call, plus whatever sampling/capture it was configured with."""
 
     considered: int = 0
+    #: The task this tracker was constructed for (``execute()``'s ``_make_tracker``) — pure
+    #: metadata for logging (never influences search behavior), so it doesn't touch the
+    #: train/test blindness seam.
+    task_id: str | None = None
     #: Reservoir samplers to maintain — () means no sampling (the cheapest option).
     samples: tuple[SampleSpec, ...] = ()
     #: Set by ``execute()`` when full capture is requested; ``None`` means never called.
@@ -157,9 +203,19 @@ class SearchTracker:
     _reservoirs: dict[SampleSpec, dict[tuple[str, str], list[_Sample]]] = field(
         default_factory=dict
     )
+    #: One entry per round of the run's top-level search (never a lambda-synthesis sub-search's
+    #: own round loop — ``begin_generation``'s docstring). A list, not a dict keyed by round
+    #: number, since rounds run ``0..max_depth-1`` contiguously.
+    _generations: list[GenerationTracker] = field(default_factory=list)
 
     def record(
-        self, candidate_index: int, program: Program, primitives: frozenset[str], outcome: Outcome
+        self,
+        candidate_index: int,
+        program: Program,
+        primitives: frozenset[str],
+        outcome: Outcome,
+        *,
+        generation: int | None = None,
     ) -> None:
         self._totals[outcome] = self._totals.get(outcome, 0) + 1
         for primitive in primitives:
@@ -171,6 +227,41 @@ class SearchTracker:
                 _offer(reservoir, spec, primitive, outcome, candidate_index, program)
         if self.capture is not None:
             self.capture(candidate_index, program, primitives, outcome)
+        if generation is not None:
+            field_name = _GENERATION_OUTCOME_FIELDS.get(outcome)
+            if field_name is not None:
+                gen_tracker = self._generations[generation]
+                setattr(gen_tracker, field_name, getattr(gen_tracker, field_name) + 1)
+                if outcome is not Outcome.DISPLACED:  # displaced isn't part of `composed`
+                    gen_tracker.composed += 1
+
+    def begin_generation(self, pool_size_start: int) -> None:
+        """Start tracking a new round of the run's *top-level* search — never call this for a
+        lambda-synthesis sub-search's own round loop (``BottomUpSearchEngine._enumerate``'s
+        ``top_level=False`` calls): those recurse with the same shared tracker but their own
+        ``depth`` numbering starting again at 0, which would otherwise collide with (and
+        silently corrupt) the top-level search's own generation 0, 1, 2, ... entries."""
+        self._generations.append(GenerationTracker(pool_size_start=pool_size_start))
+
+    def mark_entered_pool(self, generation: int | None) -> None:
+        """A candidate was freshly pooled (survived absorption, terminal fate still open) —
+        not a ``record()`` call since ``entered_pool`` isn't a terminal ``Outcome``. A no-op
+        when ``generation`` is ``None`` (a lambda-synthesis sub-search's own absorption —
+        mirrors ``record()``'s own ``generation=None`` no-op)."""
+        if generation is None:
+            return
+        gen_tracker = self._generations[generation]
+        gen_tracker.entered_pool += 1
+        gen_tracker.composed += 1
+
+    def mark_pool_size_before_truncation(self, generation: int, pool_size: int) -> None:
+        self._generations[generation].pool_size_before_truncation = pool_size
+
+    def end_generation(self, generation: int, pool_size_end: int) -> None:
+        self._generations[generation].pool_size_end = pool_size_end
+
+    def generation_at(self, generation: int) -> GenerationTracker:
+        return self._generations[generation]
 
     def totals(self) -> dict[str, int]:
         """Outcome totals by name, funnel order, all outcomes present (zeros filled) — the stable
