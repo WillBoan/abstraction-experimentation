@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import itertools
 import logging
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -144,6 +145,12 @@ class _RunState:
 #: Skip decile progress logging below this many candidates this round — a single candidate
 #: could otherwise jump several deciles at once on a cheap generation, which reads as noise.
 _ABSORB_LOG_MIN_TOTAL = 50
+
+#: Only log a lambda-synthesis sub-search's summary when it's non-trivial by either measure —
+#: most `_synthesize_for_hole` calls resolve instantly via `_enumerate`'s memo cache or a tiny
+#: sub-search, and logging every one of them would flood run.log with near-zero-cost lines.
+_LAMBDA_SYNTHESIS_LOG_MIN_SECONDS = 0.5
+_LAMBDA_SYNTHESIS_LOG_MIN_CONSIDERED = 500
 
 
 def _log_extra(state: _RunState, generation: int, max_depth: int) -> dict[str, object]:
@@ -523,7 +530,14 @@ class BottomUpSearchEngine(SearchEngine):
                         yield candidate
             if self.function_hole_fill_mode == "lambda-synthesis":
                 for candidate in self._synthesized_lambdas(
-                    primitive, scope, contexts, candidates, budget, state, enclosing_target
+                    primitive,
+                    scope,
+                    contexts,
+                    candidates,
+                    budget,
+                    state,
+                    enclosing_target,
+                    track_generation=track_generation,
                 ):
                     yielded += 1
                     yield candidate
@@ -550,6 +564,8 @@ class BottomUpSearchEngine(SearchEngine):
         budget: Budget,
         state: _RunState,
         enclosing_target: EnclosingTarget | None,
+        *,
+        track_generation: int | None,
     ) -> Iterator[tuple[Program, Type]]:
         """Lambda synthesis (§5.3): recursively enumerate bodies for the primitive's arrow holes.
 
@@ -575,6 +591,7 @@ class BottomUpSearchEngine(SearchEngine):
                     budget,
                     state,
                     enclosing_target,
+                    track_generation=track_generation,
                 )
                 continue
             for sibling_programs, instantiated_hole, return_type in hole_assignments(
@@ -597,6 +614,7 @@ class BottomUpSearchEngine(SearchEngine):
                             budget,
                             state,
                             enclosing_target,
+                            track_generation=track_generation,
                         )
                     continue
                 sibling_values = self._evaluate_siblings(sibling_programs, contexts, state)
@@ -611,6 +629,7 @@ class BottomUpSearchEngine(SearchEngine):
                     budget,
                     state,
                     enclosing_target,
+                    track_generation=track_generation,
                 )
 
     def _ground_unpinned_hole(
@@ -673,6 +692,8 @@ class BottomUpSearchEngine(SearchEngine):
         budget: Budget,
         state: _RunState,
         enclosing_target: EnclosingTarget | None,
+        *,
+        track_generation: int | None,
     ) -> Iterator[tuple[Program, Type]]:
         """Recursively search bodies for one (fully-resolved, possibly sibling-pinned) arrow hole
         and wrap them in nested ``Lam``\\ s (§5.3). ``sibling_values`` is ``()`` for a hole concrete
@@ -687,6 +708,13 @@ class BottomUpSearchEngine(SearchEngine):
         the target's type — checked here, once, rather than trusted to the sampler. ``unify`` can
         succeed with an *empty* substitution (e.g. ``GRID`` unifying with ``GRID``), so the check is
         ``is not None``, not truthiness.
+
+        ``track_generation`` (``None`` for a nested lambda-synthesis call — a hole's body can itself
+        contain a higher-order primitive) tags a summary log of the recursive ``_enumerate`` call
+        below, logged only when it's non-trivial by duration or ``considered`` delta
+        (``_LAMBDA_SYNTHESIS_LOG_MIN_SECONDS``/``_LAMBDA_SYNTHESIS_LOG_MIN_CONSIDERED``) — most calls
+        resolve instantly via the memo cache or a tiny sub-search, and logging every one would flood
+        ``run.log``.
         """
         assert primitive.body_sampler is not None
         local_target = (
@@ -707,9 +735,26 @@ class BottomUpSearchEngine(SearchEngine):
         for binder in binders:
             body_scope = body_scope.extend(binder)
         child_target = EnclosingTarget(raw_target, body_type) if raw_target is not None else None
+        started = time.perf_counter()
+        considered_before = state.tracker.considered
         body_pool = self._enumerate(
             body_scope, body_contexts, budget.descend(), state, child_target
         )
+        if track_generation is not None and logger.isEnabledFor(logging.INFO):
+            elapsed = time.perf_counter() - started
+            considered_delta = state.tracker.considered - considered_before
+            if (
+                elapsed >= _LAMBDA_SYNTHESIS_LOG_MIN_SECONDS
+                or considered_delta >= _LAMBDA_SYNTHESIS_LOG_MIN_CONSIDERED
+            ):
+                logger.info(
+                    "Lambda synthesis - primitive %s, hole %s: %.1fs, considered=%d",
+                    primitive.name,
+                    hole,
+                    elapsed,
+                    considered_delta,
+                    extra=_log_extra(state, track_generation, budget.max_depth),
+                )
         for entry in body_pool.items_of_type(body_type):
             if body_target is not None and entry.sig != body_target:
                 continue

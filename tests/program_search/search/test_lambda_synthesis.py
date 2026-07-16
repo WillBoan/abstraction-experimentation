@@ -8,8 +8,13 @@ generalized propagation into the recursively-threaded ``EnclosingTarget`` (§7) 
 
 from __future__ import annotations
 
+import logging
+
+import pytest
+
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task, TrainExamples, train_with_output
+from arc_lab.program_search.search import search_engine as search_engine_module
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.context import Context
 from arc_lab.program_search.search.cost import ProgramSize
@@ -17,6 +22,7 @@ from arc_lab.program_search.search.leaves import ConstantSource
 from arc_lab.program_search.search.scope import Scope
 from arc_lab.program_search.search.search_engine import BottomUpSearchEngine, _RunState
 from arc_lab.program_search.search.search_result import SearchResult
+from arc_lab.program_search.search.tracking import SearchTracker
 from arc_lab.program_search.substrate.library import (
     BodySampler,
     Closure,
@@ -172,6 +178,48 @@ def test_propagation_considers_fewer_candidates_than_the_baseline() -> None:
     propagated = _run_paint(_propagated_sampler).stats.considered
     baseline = _run_paint(_baseline_sampler).stats.considered
     assert propagated < baseline
+
+
+# -- progress logging: the lambda-synthesis summary line (run.log) --------------------------
+
+
+def test_lambda_synthesis_logs_a_summary_when_non_trivial(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Both thresholds are wall-clock/candidate-count gated to avoid flooding run.log with the
+    # near-instant sub-searches that make up most lambda-synthesis calls — lowered here so this
+    # tiny fixture still exercises the log line, rather than needing a slow, large one.
+    monkeypatch.setattr(search_engine_module, "_LAMBDA_SYNTHESIS_LOG_MIN_SECONDS", 0.0)
+    monkeypatch.setattr(search_engine_module, "_LAMBDA_SYNTHESIS_LOG_MIN_CONSIDERED", 0)
+    task = Task(
+        task_id="paint-task",
+        train=(Example(input=Grid.from_list([[3]]), output=Grid.from_list([[5]])),),
+        test=(),
+    )
+    tracker = SearchTracker(task_id=task.task_id)
+    engine = _engine(constant_sources=("finite-enumerate",))
+    with caplog.at_level(logging.INFO, logger="arc_lab.program_search.search.search_engine"):
+        engine.run(
+            train_examples=task.train,
+            library=_paint_primitive(_propagated_sampler),
+            constraints=(),
+            cost=ProgramSize(),
+            budget=_budget(max_depth=3),
+            tracker=tracker,
+        )
+    lambda_records = [r for r in caplog.records if r.getMessage().startswith("Lambda synthesis")]
+    assert lambda_records, "expected at least one lambda-synthesis summary line"
+    for record in lambda_records:
+        assert "primitive paint" in record.getMessage()
+        assert record.task_id == "paint-task"  # type: ignore[attr-defined]
+        assert record.generation.endswith("/3")  # type: ignore[attr-defined]
+
+
+def test_lambda_synthesis_is_silent_when_trivial(caplog: pytest.LogCaptureFixture) -> None:
+    """Default thresholds keep this tiny fixture's (near-instant) sub-searches out of run.log."""
+    with caplog.at_level(logging.INFO, logger="arc_lab.program_search.search.search_engine"):
+        _run_paint(_propagated_sampler)
+    assert not any(r.getMessage().startswith("Lambda synthesis") for r in caplog.records)
 
 
 # -- the payoff: build_grid solves a size-general task end-to-end ----------------------------
