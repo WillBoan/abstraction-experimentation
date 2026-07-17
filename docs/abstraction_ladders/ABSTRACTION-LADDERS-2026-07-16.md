@@ -1,11 +1,11 @@
 # Abstraction Ladder Experiments — design (2026-07-16)
 
-The design snapshot for the **Abstraction Ladder Experiments**: a batch of LEARN experiments measuring whether — and by how much — learned abstractions convert an intractable search into a sequence of tractable ones. This document is the merged output of the 2026-07-16 design sessions; it records the concept, the metrics, the ladder-construction methodology, the run structure, and the open decisions.
+The design snapshot for the **Abstraction Ladder Experiments**: a batch of LEARN experiments measuring whether — and by how much — learned abstractions convert an intractable search into a sequence of tractable ones. This document is the merged output of the 2026-07-16 design sessions; it records the concept, the quantities & metrics, the ladder-construction methodology, the run structure, and the open decisions.
 
 ## 1. Core experiment design
 
 - Focus: "Abstraction Ladders" – a series of abstractions that build on each other, where each Rung of the Ladder is a new abstraction that can be learned from the previous Rungs.
-  - We may have multiple Learn runs per Ladder, if we want to measure the impact of different parameters/metaparameters (eg budget, floor, etc).
+  - We may have multiple LEARN runs per Ladder, to measure the impact of different params (eg budget, proposer — §3.2). Varying a _design choice_ (eg the Floor) makes a _different_ Ladder.
   - Each Ladder should consist of:
     - **Floor** (the starting library of primitives)
     - **Top Rung** (solving the target Task)
@@ -28,8 +28,8 @@ Corpus:
     - (At least 1, possibly more.)
   - **Bridging Rung Tasks** – Tasks whose solution programs demonstrate the use of the Bridging Rung abstractions.
     - (At least 2 per Bridging Rung, possibly more.)
-      - [This could be a metaparameter: Number of Tasks per Bridging Rung.]
-  - A small **heldout split** (a few tasks per rung level, excluded from learning) — needed for transfer and the break-even horizon (§5.2).
+      - [A design choice (§3.3) — swept via Ladder families, RQ2.]
+  - A small **heldout split** (a few tasks per rung level, excluded from learning) — needed for transfer and the break-even horizon (§3.5).
 - Overall, the Tasks should err on the side of being relatively easier, so that the search cost is not too high, and the focus is on the abstraction learning.
   - Likely many synthetic Tasks.
 - Some Tasks may be able to be generated from the bridging abstractions.
@@ -41,7 +41,7 @@ Batch design:
 - We can likely start with 1 ladder, and go from there.
 - Likely: Structure the batch as families that each vary ONE axis (eg height, jump depth, tasks-per-rung), plus short calibration ladders (height 2 — raw cost actually measurable), and possibly 1-2 real-ARC-anchored ladders.
   - (TBD after running the first few Ladders.)
-- Each Ladder may have multiple Learn runs, with different parameters/metaparameters, to measure the impact of those on the results.
+- Each Ladder may have multiple LEARN runs, with different params, to measure the impact of those on the results.
 
 ## 2. Definitions
 
@@ -53,7 +53,7 @@ Batch design:
     - A closed template over `L_{i-1}` (a `TargetAbstraction`), together with its **demonstrating tasks** (>= 2) whose cheapest solutions exercise it.
   - **Demonstration relationships** — a Rung `i`'s Tasks' solution programs stand in two distinct relationships (both stated over `L_{i-1}`, ie pre-mint):
     1. **vs the Rung's library (`L_{i-1}`)** — always _fragment-only_: every solution is a _proper composition_ of existing primitives (a Task whose cheapest solution is a bare primitive belongs to a lower Rung; equivalent to "jump depth >= 2"). Not merely definitional — verified on _retained cheapest_ solutions by the certificate, since it can fail via skip paths.
-    2. **vs the Rung's target abstraction** — per Task, either **full-solution** (solution = the template, instantiated) or **fragment** (the template is a proper subprogram of the solution). A Rung carries a _mix_; the mix is a metaparameter (RQ2). Does not apply to the Top Rung (no target abstraction).
+    2. **vs the Rung's target abstraction** — per Task, either **full-solution** (solution = the template, instantiated) or **fragment** (the template is a proper subprogram of the solution). A Rung carries a _mix_; the mix is a design choice (RQ2). Does not apply to the Top Rung (no target abstraction).
     - This affects which `AbstractionProposer` is required:
       - \>= 2 full-solution tasks ⇒ `AntiunifyPairs` viable
       - fragment occurrences with _identical_ instantiations ⇒ needs at least `FrequentSubtree`
@@ -72,7 +72,10 @@ Batch design:
   - **Search cost** / **Considered count** = The number of candidate programs considered by the search engine to find a solution program.
     - (_observable; depends on the specific search engine and params_)
     - (_The main currency for measuring search cost._)
-    - **cost-to-first-solution** — cumulative considered count, at the end of the generation where the first solution program is found. (That program is guaranteed to be the cheapest of that generation, but not overall.)
+    - **cost-to-first-solution** — the considered count paid up to the first solution. Two recorded variants (both derivable from the atoms; headline chosen post-data — §7):
+      - **(exact)** — the `candidate_index` at which the first accepted program was absorbed.
+      - **(generation-end)** — cumulative considered count at the end of the solve generation. (That generation's best solution is the cheapest of that generation, but not necessarily overall.)
+      - (They differ by at most one generation's composed count — but the last generation dominates in the steep-growth regime, so they can diverge substantially.)
     - **cost-to-cheapest-solution** — cumulative considered count, to find the _overall cheapest_ solution program. Can exceed cost-to-first.
     - **cost-paid-full** — total considered count at budget exhaustion. Can exceed cost-to-first / cost-to-cheapest, if _early stop_ is not enabled.
   - **Solve generation** — the 0-indexed composition round at which the first accepted program appeared.
@@ -116,6 +119,7 @@ Batch design:
   - **Effective branching factor (`b_eff`)** = the fitted per-generation growth of composed candidates over a run's pre-saturation rounds. A summary statistic per (task, library, budget) cell — not a constant of nature.
   - **Enablement** = tasks solvable under `L_i` but not `L_{i-1}`, at a fixed budget.
   - **Budget compression** = `d_raw` vs `max(d_i)` — the reduction in _required search depth_ to reach the Top Rung.
+  - **Validity window** = the range of `max_depth` over which the Ladder property holds — lower edge: every jump affordable; upper edge: no (inlined) double jump reachable. Depth-only, hence necessary but not sufficient (the certificate completes it at the reference config). Its _width_ is a per-Ladder robustness property.
 
 ### 2.1 Cost model (candidate — to be measured, not assumed)
 
@@ -129,109 +133,86 @@ If cost-to-depth grows steeply, the sum of shallow terms is far smaller than the
 - **Pre-saturation** (pool still growing): steep growth; the ladder buys _cost collapse_.
 - **Pool-saturated** (`max_pool` binding): growth flattens; the ladder instead buys _reachability_ — a rung is a round-0 leaf that cannot be evicted.
 
-## 3. Core research questions
+## 3. Quantities
 
-### RQ1 – Quantify the amortization: Compare raw cost vs laddered cost
+The experiment is a function: **(design choices x params) → observables**. Shape properties are the statically-known structure of the domain; analysis conventions and arms govern how outputs may be compared.
 
-- To what extent does the Ladder impact the search cost to reach the Top Rung?
-- Overall: Is it "worth it"?
-- Amortization ratio, computed in BOTH accountings:
-  - **Marginal ratio** = (raw cost) / (marginal laddered cost + learning cost) — the _ceiling_: what the ladder concept could deliver with perfect scheduling, stopping, and mints.
-  - **End-to-end ratio** = (raw cost) / (end-to-end laddered cost + learning cost) — the _achieved_ value with today's loop mechanics.
-  - Their quotient = the **loop-overhead factor**, decomposable along the laddered-cost breakdown (§2): re-search + overshoot + termination + learned-vs-oracle gap. (Raw cost cancels, so the quotient is exact even when both ratios are censored lower bounds.)
-  - (Vocabulary tax and re-search overhead live _inside_ the denominators — no separate terms. Learning cost enters in considered-count-equivalents via the calibration weight `w` — §2.)
-- Secondary: characterize `cost_L(d)` itself (shape; where it saturates), via the calibration ladders.
+### 3.1 Ontology: categories of quantities
 
-### RQ2 – Quantify the effects on the amortization of various params/metaparams
+Every quantity in these experiments belongs to one category. The test: _what do you have to do to learn its value?_
 
-- Params:
-  - budget.max_depth
-  - budget.max_arity
-  - budget.max_pool
-  - beam_width (if `BeamBottomUpSearchEngine`)
-  - constant_sources
-  - function_hole_fill_mode
-  - polymorphism_instantiation
-  - unpinned_type_var_mode
-  - function_sample_size
-- Learning-side params:
-  - proposer (`AntiunifyPairs` / `FrequentSubtree` / `StitchProposer`)
-  - governance (`GreedyMDL` threshold)
-  - `LearnSpec.iterations`
-- Core metaparams:
-  - What the Floor is
-  - What the Top Rung is
-  - number of bridging rungs
-  - raw total depth
-  - average jump depth
-  - max jump depth
-- Other metaparams:
-  - corpus size/design
-    - How many different programs per Bridging Rung?
-    - How many Tasks per Bridging Rung?
-    - Per-rung relationship-(2) mix: how many demonstrating Tasks are full-solution vs fragment (§2)? Plus fragment-parameter variability — coupled to the `AbstractionProposer` choice via §2's mapping.
-    - How many different programs at the Top Rung?
-    - How many Tasks at the Top Rung?
-  - Are only next-Rung Tasks included vs all Tasks?
-- Sweep rationale (approximate; itself checkable from the sweep data): search params mostly move the _cost-per-depth_; ladder metaparams mostly move the _depth profile_. Known exceptions move both (the Floor; `constant_sources`).
-
-### RQ3 – Quantify the effects on the amortization of what programs/fragments get seen by abstraction formation
-
-- We run the LEARN runs with different metaparams for _what programs/fragments get seen by abstraction formation_, and we cross-analyze the results.
-  - OPTION: 0-1 solution programs per task. (_how it works currently_)
-  - OPTION: Up to K solution programs per task.
-  - OPTION: Up to K non-solution, Grid→Grid programs per task.
-  - OPTION: Up to K non-solution, non-Grid→Grid programs per task.
-  - OPTION: Solution sub-programs (from lambda synthesis)
-- (Possibly also things like distractors, shared structure, weaker per-rung task design, etc.)
-
-## 4. Methodology
-
-### 4.1 Ladder construction methodology
-
-Two construction methods:
-
-1. **Anchored bisection**: Adding a Rung in the _middle_ of a Ladder
-   - Start with (1) a Floor and (2) a Ladder with at least 1 Rung on top of that Floor.
-   - Choose (3) a Rung in the Ladder to add a new Rung below it.
-   - Derive:
-     - (4) a new, "mid-level" abstraction that can be learned from the Rung/Floor immediately below, and that can be used to help reduce search cost to reach the Rung immediately above.
-     - (5) the new Rung's demonstrating programs — each relating to the abstraction as full-solution or fragment (relationship (2), §2); the mix is a metaparameter.
-     - (6) 2+ Tasks where the solution is one of those programs.
-2. **Forward extension**: Adding a Rung to the _top_ of a Ladder
-   - Start with (1) a Floor and (2) an abstraction that's able to be built on/expressed with that Floor.
-   - Derive:
-     - (3) the abstraction's demonstrating programs — full-solution and/or fragment (relationship (2), §2); the mix is a metaparameter; and
-     - (4) 2+ Tasks where the solution is one of those programs.
-       - (Tasks later added _above_ this Rung will use it as a fragment automatically — relationship (1).)
+| # | Category | What it is | Lives in | Known via | Used as |
+| --- | --- | --- | --- | --- | --- |
+| 1 | **Params** (§3.2) | Machinery knobs | `Config` | chosen | sweep axes (direct, per cell) |
+| 2 | **Design choices** (§3.3) | The Ladder's identity | `LadderSpec` | chosen | sweep axes (via Ladder families) |
+| 3 | **Shape properties** (§3.4) | Static deriveds of (design, reference config) | `LadderSpec` (computed fields) | lint | stratification axes |
+| 4 | **Observables** (§3.5) | Runtime quantities: atoms → views | run records | execution | outcomes |
+| 5 | **Analysis conventions** (§3.6) | Read-side choices | reports | declared | interpretation rules |
+| 6 | **Arms** (§3.7) | A run-cell's epistemic role | derived from the cell, recorded first-class | derivation | comparison legality |
 
 Notes:
 
-- Only method (1) connects a _designated_ Floor to a _designated_ Top Rung; method (2) grows upward to wherever it lands.
-- Overall, ideally, the Ladders should "make sense" (I think this will happen naturally if we do (1) and (2) above, but we should keep an eye on it).
-- Ideally:
-  - The search cost for each jump (from the Floor/each Rung to the Rung above) should be _tractable_ — with headroom, since the same jump depth costs more at later iterations as the library grows.
-  - The search cost for a double-jump (from the Floor/each Rung to the Rung 2 above) should be less tractable.
-    - Checked statically on the _inlined_ double-jump depth (§2), and confirmed empirically by the oracle chain: `L_{i-1}` should solve zero rung-`i+1` tasks. (The empirical check also catches _skip paths_ — unintended shortcut solutions the static check can't see.)
-- Log failed bisections (no viable mid-rung found for a jump) as findings, noting whether candidates failed as _not learnable from below_ or _not useful for above_.
+- A Ladder run-cell = `LadderSpec` x `Config` — mirroring `RunSpec = Config x Corpus`: category 1 is the `Config` factor, category 2 the `LadderSpec` factor.
+- The categories recur at three **scopes**: cell (one run), Ladder, batch (family structure/membership = design choices at batch scope; batch metrics = observables at batch scope).
+- **Budget's dual role.** Budget is a param (category 1) — but the Ladder's validity claims are claims _about_ budgets. The Ladder doesn't own a budget; it owns two claims recorded in its spec: the pinned **reference config** (the anchor at which lint + certificate assert the tractability sandwich) and the **validity window** (a shape property in `max_depth` coordinates). Sweeping budget never changes the Ladder — it changes which claim-region the cell sits in, and thus its arm: inside the window ⇒ honest cell; below ⇒ stall regime; above ⇒ rung-necessity probe.
+  - Budget's components play different roles: `max_depth` = the horizon (the window's axis); `max_pool` = the regime selector (§2.1); `max_arity` = a branching modifier. The static window is depth-only — necessary, not sufficient; the empirical certificate at the reference config covers the rest.
+- Deliberate absences: **replicates/seeds** (no RNG anywhere — every cell is one exact point; no statistics machinery needed beyond aggregation) and **invariants** (the fixed background: determinism, the goal test, the blindness seams — rung annotations recorded but solver-invisible — which must never migrate into category 1).
+- Terminology: "metaparameter" is retired — it blurred categories 2 and 3.
 
-### 4.2 Run structure per Ladder
+### 3.2 Params
 
-A ladder with R rungs (rung R = Top), at one (params, budget) cell:
+Used by: one **reference config** chosen per Ladder (pinned in the `LadderSpec` — §3.1); swept directly, per cell; recorded per cell.
 
-- **1 LEARN run** — the climb itself (wake-sleep; `iterations ≥ R+1` headroom; `early_stop` on).
-- **R−1 oracle SEARCH runs** — Libraries `L_1` .. `L_{R-1}`, gifted, over the **full corpus**, at the **same wake budget** (or the columns aren't comparable).
-  - (`L_0` comes free: iteration 0's wake _is_ a Floor search over the corpus; via content-hashed caching its recorded run should coincide with the L_0 column. — needs verification in `execute.py`.)
-  - (The `L_0` column doubles as the censored raw baseline on every higher-rung task — free.)
-- **1 off-chain SEARCH run** — Floor + Top-Rung-only
-  - To answer: Do intermediate rungs matter for the top task, or only the final abstraction?
-  - (Optional, but cheap.)
+- budget.max_depth
+- budget.max_arity
+- budget.max_pool
+- beam_width (if `BeamBottomUpSearchEngine`)
+- constant_sources
+- function_hole_fill_mode
+- polymorphism_instantiation
+- unpinned_type_var_mode
+- function_sample_size
+- proposer (`AntiunifyPairs` / `FrequentSubtree` / `StitchProposer`)
+- governance (`GreedyMDL` threshold)
+- `LearnSpec.iterations`
+- (RQ3, once built: what-AF-sees options — top-K retention, fragment selectors / partial-credit scoring)
 
-## 5. Metrics
+Sweep policy: budget sweeps get arm labels from validity-window position (§3.1): inside = honest cells; below = stall regime; above = rung-necessity probes.
+
+### 3.3 Design choices
+
+Used by: constructed via the methods (§5.1); fixed per Ladder — they _are_ the Ladder's identity, so varying one makes a _different_ Ladder; swept across Ladders via families.
+
+- What the Floor is
+- What the Top Rung is
+- The Rungs: how many, which templates
+- Corpus design:
+  - How many different programs per Bridging Rung?
+  - How many Tasks per Bridging Rung?
+  - Per-rung relationship-(2) mix: how many demonstrating Tasks are full-solution vs fragment (§2)? Plus fragment-parameter variability — coupled to the `AbstractionProposer` choice via §2's mapping.
+  - How many different programs at the Top Rung?
+  - How many Tasks at the Top Rung?
+  - The heldout split (which tasks, how many per rung level)
+- Are only next-Rung Tasks included vs all Tasks?
+  - (Boundary case: as different corpora this is a design choice; as a per-iteration scheduler it is machinery — an oracle-schedule arm, §3.7.)
+
+### 3.4 Shape properties
+
+Used by: computed + recorded by the lint; verified empirically by the certificate; the batch's **stratification** axes — not settable, achieved via design.
+
+- height
+- raw total depth (`d_raw`)
+- `d_i` profile (average / max jump depth)
+- inlined double-jump depths
+- per-rung fan-in
+- validity window (and its width)
+- MDL break-even margins
+
+### 3.5 Observables (atoms → views)
 
 Discipline: **record atoms exhaustively at run time; every named metric is a read-side view** computed afterward (`analyze-run` / report style). The primary derived object is the **cost matrix** — cost(task, library, budget) over the oracle-chain columns plus the learned trajectory's iterations. A new view never requires a re-run.
 
-### 5.1 Atoms (recorded per run x task)
+Atoms (recorded per run x task):
 
 - solved?, solve generation
 - per-generation funnel (composed / errored / pruned / deduped / entered_pool / displaced / evicted; pool sizes)
@@ -240,9 +221,10 @@ Discipline: **record atoms exhaustively at run time; every named metric is a rea
 - accepted program + its primitive keys
 - sampled/captured programs (the reservoirs — these observe later-evicted candidates too)
 - per-iteration LEARN trace: library before/after, mints (template, size, MDL gain), solved-task set
-- sleep-cost counters (see 5.3)
+- the cell's **arm** (§3.7) — derived from the cell's contents, recorded first-class
+- sleep-cost counters: proposal count; antiunify-pair count
 
-### 5.2 Views (read-side, per Ladder)
+Views (read-side, per Ladder):
 
 - **Jump cost / double-jump cost** per rung — each in both **oracle** and **learned** flavors; their divergence isolates learner imperfection.
 - **Marginal rung value** = cost(rung-`i+1` tasks | `L_{i-1}`) / cost(rung-`i+1` tasks | `L_i`) — what rung `i` bought. Usually a lower bound (censored numerator).
@@ -259,12 +241,99 @@ Discipline: **record atoms exhaustively at run time; every named metric is a rea
 - EVENTUALLY (RQ3): views conditioned on what programs/fragments get seen by abstraction formation.
   - (Resolved Q: a top-K non-solution Grid→Grid selector ranked by cheapness WOULD flood with trivia like `Input()` — a fragment arm needs a _selection policy_ (size floor + signature dedup + type filter, or partial-credit scoring). No `max_pool` change needed: the sampling reservoirs already observe candidates at absorption, including later-evicted ones.)
 
-### 5.3 Sleep-cost metrics
+### 3.6 Analysis conventions
 
-- proposal count
-- antiunify-pair count
+Used by: declared once (per batch), applied at read time; never swept, never measured.
 
-### 5.4 Approaches for measuring / estimating the raw cost
+- The calibration weight `w` (sleep → wake currency conversion — §2).
+- The headline cost-to-first variant (exact vs generation-end — §2, §7).
+- Aggregation rules (per rung: sum for cost accounting; per-task values retained for variance).
+
+### 3.7 Arms
+
+Used by: derived from a cell's contents; recorded first-class (§3.5); gate which cells may legitimately enter which comparisons.
+
+- **honest climb** — the LEARN run: learned libraries, full corpus, no scheduling knowledge.
+- **oracle-library** — gifted `L_i` SEARCH runs (the oracle chain).
+- **oracle-schedule** — curriculum / fixed `iterations = R` variants (scheduling knowledge injected).
+- **raw-censored baseline** — Floor searches on higher-rung tasks (unsolved at budget ⇒ lower bounds).
+- **calibration** — short Ladders where raw cost is actually measurable.
+
+Comparison legality (examples): the end-to-end amortization ratio takes its numerator from raw-censored / calibration arms and its denominator from the honest arm; marginal rung value compares adjacent oracle-library columns; the learned-vs-oracle gap compares honest vs oracle-library at the same cell. An oracle-arm number must never be quoted as an achieved result.
+
+## 4. Core research questions
+
+### RQ1 – Quantify the amortization: Compare raw cost vs laddered cost
+
+- To what extent does the Ladder impact the search cost to reach the Top Rung?
+- Overall: Is it "worth it"?
+- Amortization ratio, computed in BOTH accountings:
+  - **Marginal ratio** = (raw cost) / (marginal laddered cost + learning cost) — the _ceiling_: what the ladder concept could deliver with perfect scheduling, stopping, and mints.
+  - **End-to-end ratio** = (raw cost) / (end-to-end laddered cost + learning cost) — the _achieved_ value with today's loop mechanics.
+  - Their quotient = the **loop-overhead factor**, decomposable along the laddered-cost breakdown (§2): re-search + overshoot + termination + learned-vs-oracle gap. (Raw cost cancels, so the quotient is exact even when both ratios are censored lower bounds.)
+  - (Vocabulary tax and re-search overhead live _inside_ the denominators — no separate terms. Learning cost enters in considered-count-equivalents via the calibration weight `w` — §2, §3.6.)
+- Secondary: characterize `cost_L(d)` itself (shape; where it saturates), via the calibration ladders.
+
+### RQ2 – Quantify the effects on the amortization of params and design choices
+
+- How do the RQ1 metrics (both ratios, the loop-overhead factor, `b_eff`) respond along each axis?
+  - Axes: params (§3.2, swept directly per cell) and design choices (§3.3, swept via Ladder families); results stratified by shape properties (§3.4).
+- Sweep rationale (approximate; itself checkable from the sweep data): params mostly move the _cost-per-depth_; design mostly moves the _depth profile_. Known exceptions move both (the Floor; `constant_sources`).
+
+### RQ3 – Quantify the effects on the amortization of what programs/fragments get seen by abstraction formation
+
+- We run the LEARN runs with different machinery params (§3.2, once built) for _what programs/fragments get seen by abstraction formation_, and we cross-analyze the results.
+  - OPTION: 0-1 solution programs per task. (_how it works currently_)
+  - OPTION: Up to K solution programs per task.
+  - OPTION: Up to K non-solution, Grid→Grid programs per task.
+  - OPTION: Up to K non-solution, non-Grid→Grid programs per task.
+  - OPTION: Solution sub-programs (from lambda synthesis)
+- (Possibly also things like distractors, shared structure, weaker per-rung task design, etc.)
+
+## 5. Methodology
+
+### 5.1 Ladder construction methodology
+
+Two construction methods:
+
+1. **Anchored bisection**: Adding a Rung in the _middle_ of a Ladder
+   - Start with (1) a Floor and (2) a Ladder with at least 1 Rung on top of that Floor.
+   - Choose (3) a Rung in the Ladder to add a new Rung below it.
+   - Derive:
+     - (4) a new, "mid-level" abstraction that can be learned from the Rung/Floor immediately below, and that can be used to help reduce search cost to reach the Rung immediately above.
+     - (5) the new Rung's demonstrating programs — each relating to the abstraction as full-solution or fragment (relationship (2), §2); the mix is a design choice.
+     - (6) 2+ Tasks where the solution is one of those programs.
+2. **Forward extension**: Adding a Rung to the _top_ of a Ladder
+   - Start with (1) a Floor and (2) an abstraction that's able to be built on/expressed with that Floor.
+   - Derive:
+     - (3) the abstraction's demonstrating programs — full-solution and/or fragment (relationship (2), §2); the mix is a design choice; and
+     - (4) 2+ Tasks where the solution is one of those programs.
+       - (Tasks later added _above_ this Rung will use it as a fragment automatically — relationship (1).)
+
+Notes:
+
+- Only method (1) connects a _designated_ Floor to a _designated_ Top Rung; method (2) grows upward to wherever it lands.
+- Overall, ideally, the Ladders should "make sense" (I think this will happen naturally if we do (1) and (2) above, but we should keep an eye on it).
+- Ideally:
+  - The search cost for each jump (from the Floor/each Rung to the Rung above) should be _tractable_ at the **reference config** (§3.1) — with headroom, since the same jump depth costs more at later iterations as the library grows.
+  - The search cost for a double-jump (from the Floor/each Rung to the Rung 2 above) should be less tractable.
+    - Checked statically on the _inlined_ double-jump depth (§2), and confirmed empirically by the oracle chain: `L_{i-1}` should solve zero rung-`i+1` tasks. (The empirical check also catches _skip paths_ — unintended shortcut solutions the static check can't see.)
+    - Both claims are anchored at the reference config; outside the **validity window** they deliberately lapse (§3.1).
+- Log failed bisections (no viable mid-rung found for a jump) as findings, noting whether candidates failed as _not learnable from below_ or _not useful for above_.
+
+### 5.2 Run structure per Ladder
+
+A ladder with R rungs (rung R = Top), at one `Config` cell (§3.1):
+
+- **1 LEARN run** — the climb itself (wake-sleep; `iterations ≥ R+1` headroom; `early_stop` on).
+- **R−1 oracle SEARCH runs** — Libraries `L_1` .. `L_{R-1}`, gifted, over the **full corpus**, at the **same wake budget** (or the columns aren't comparable).
+  - (`L_0` comes free — but **not** as a separately-cached run. `execute.py`'s LEARN branch records iteration 0's wake _inline_ in the LEARN run's trace (keyed `iter-0/<task_id>`), never as a standalone `run_id`, so no Floor SEARCH run cache-collides with it. Instead the **`L_0` column is read from the LEARN run's iteration-0 wake row**, which carries per-task `search_stats` in the identical shape a SEARCH run records (considered / outcomes / by_primitive / solved_at_generation / — once added — the per-generation funnel and solution sink), plus the solved set, accepted programs, and iter-0 samples/capture. Iteration 0 always searches every task under the Floor (`solutions` starts empty regardless of `reset_programs_each_wake`). Verified against `execute.py::_wake`; the climb-trace report extracts it, no extra run.)
+  - (The `L_0` column doubles as the censored raw baseline on every higher-rung task — free.)
+- **1 off-chain SEARCH run** — Floor + Top-Rung-only
+  - To answer: Do intermediate rungs matter for the top task, or only the final abstraction?
+  - (Optional, but cheap.)
+
+### 5.3 Approaches for measuring / estimating the raw cost
 
 Actually measuring the total raw search cost will be often very intractable.
 
@@ -283,20 +352,21 @@ Machinery that needs to be implemented in order to run the experiments:
 
 1. Serialize the per-generation funnel into the run record (currently logging-only).
 2. Expose accepted candidates' `candidate_index` per task (cost-to-first / cost-to-cheapest).
-3. `LadderSpec` — generalizes `StudySpec`: leveled `TargetAbstraction`s, per-task rung annotation as solver-invisible meta, the oracle-chain grid; recorded shape metadata (height, `d_i` profile, per-rung fan-in, per-rung relationship-(2) mix, construction method).
+3. `LadderSpec` — generalizes `StudySpec`: leveled `TargetAbstraction`s, per-task rung annotation as solver-invisible meta, the oracle-chain grid; pins the **reference config** (§3.1); recorded shape metadata (§3.4: height, `d_i` profile, per-rung fan-in, per-rung relationship-(2) mix, validity window, construction method).
 4. Ladder Linter (a static check that a Ladder/`LadderSpec` is well-formed).
    - Checks:
      - Overall `LadderSpec` is well-formed.
      - All templates are well-typed over `L_{i-1}`.
-     - Each Rung's compositional depth ≤ wake budget.
-     - Raw compositional depth > wake budget.
-     - Double-jump (_inlined_) depth > wake budget, per consecutive pair.
+     - Each Rung's compositional depth ≤ the reference budget.
+     - Raw compositional depth > the reference budget.
+     - Double-jump (_inlined_) depth > the reference budget, per consecutive pair.
      - Each Rung has >= 2 demonstrating tasks.
      - Each Task has >= 2 train examples.
      - Background-within/target-across: for each argument position of each rung template, classify it as derived or free, and apply the corresponding rule — derived ⇒ varies within-task; free ⇒ fixed within-task, varied across demonstrating tasks.
      - Each Task's train examples have within-task variation (killing literal shortcuts).
      - MDL break-even check.
      - Task collision check: no shallower program coincides with the intended solution on all train examples (checkable against the cheap end of the program space).
+     - Compute + record the validity window (§3.1).
 5. Ladder certificate (read-side, over the oracle-chain runs): each jump tractable in fact; zero skip paths (`L_{i-1}` solves no rung-`i+1` task); demonstration health. Gates a ladder's admission to the batch.
 6. Climb-trace report (read-side, over the LEARN trace + oracle-chain records).
 7. Sleep-cost counters
@@ -312,12 +382,12 @@ Machinery that needs to be implemented in order to run the experiments:
 
 ## 7. Open decisions
 
-- **Rung necessity.** Enforce double-jump intractability for _every_ consecutive pair (clean attribution), or admit ladders with a skippable rung, recorded as a covariate?
 - **Ladder #1.** Proposal: height 3, synthetic anchor, built by method (1).
-- **cost-to-first granularity.** End-of-generation (funnel-only; the current §2 definition) vs candidate-index (exact; uniform with cost-to-cheapest; what checklist item 2 exposes). Pick one.
 
 Resolved:
 
+- **Rung necessity — RESOLVED (2026-07-17).** Necessity is budget-relative, so both: enforce the full sandwich strictly at the **reference config** (lint + certificate), and treat necessity as an _observable_ everywhere else — budget sweeps outside the **validity window** are legitimate cells whose arm is relabeled (stall regime below; rung-necessity probe above), never Ladder defects. (§3.1)
+- **cost-to-first granularity — RESOLVED (2026-07-17).** Record both variants (§2): **exact** (candidate-index) and **generation-end** (funnel-only) — both derive from already-planned atoms. Choose the headline after seeing how far they diverge (the last generation dominates in the steep-growth regime, so divergence is expected and informative).
 - **Demonstration-shape default — RESOLVED (2026-07-17).** Framed via the two demonstration relationships (§2): relationship (1) is always fragment-only by definition; relationship (2) is the free choice. Early experiments: full-solution only for relationship (2). Later: fragment mixes as an explicit dimension/family, tracking the per-rung mix, with the proposer mapping (§2) as a coupled param.
 
 ---
