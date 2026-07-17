@@ -1,0 +1,199 @@
+{
+  "d4-tower": {
+    "floor": [
+      "flip_h",
+      "transpose"
+    ],
+    "rungs": [
+      "rot90"
+    ],
+    "top": "rot180",
+    "matrix": {
+      "rot90": [
+        "2",
+        "1"
+      ],
+      "rot180": [
+        "4",
+        "2"
+      ]
+    },
+    "witnesses": {
+      "rot90@L0": "transpose(flip_h(p0))",
+      "rot180@L0": "flip_h(transpose(flip_h(transpose(p0))))",
+      "rot90@L1": "rot90(p0)",
+      "rot180@L1": "rot90(rot90(p0))"
+    }
+  },
+  "e12-layered": {
+    "floor": [
+      "flip_h",
+      "flip_v",
+      "map_color"
+    ],
+    "rungs": [
+      "rot180"
+    ],
+    "top": "recolor_flipped",
+    "matrix": {
+      "rot180": [
+        "2",
+        "1"
+      ],
+      "recolor_flipped": [
+        "3",
+        "2"
+      ]
+    },
+    "witnesses": {
+      "rot180@L0": "flip_h(flip_v(p0))",
+      "recolor_flipped@L0": "flip_h(flip_v(map_color(p0, p1, p2)))",
+      "rot180@L1": "rot180(p0)",
+      "recolor_flipped@L1": "map_color(rot180(p0), p1, p2)"
+    }
+  },
+  "quad-tower": {
+    "floor": [
+      "flip_h",
+      "flip_v",
+      "concat_h",
+      "concat_v"
+    ],
+    "rungs": [
+      "mirror_h",
+      "quad"
+    ],
+    "top": "quad2",
+    "matrix": {
+      "mirror_h": [
+        "2",
+        "1",
+        "1"
+      ],
+      "quad": [
+        "6",
+        "3",
+        "1"
+      ],
+      "quad2": [
+        ">6",
+        ">6T",
+        "2"
+      ]
+    },
+    "witnesses": {
+      "mirror_h@L0": "concat_h(p0, flip_h(p0))",
+      "quad@L0": "concat_h(concat_v(p0, flip_v(p0)), flip_h(concat_v(p0, flip_v(p0))))",
+      "mirror_h@L1": "mirror_h(p0)",
+      "quad@L1": "mirror_h(concat_v(p0, flip_v(p0)))",
+      "mirror_h@L2": "mirror_h(p0)",
+      "quad@L2": "quad(p0)",
+      "quad2@L2": "quad(quad(p0))"
+    }
+  },
+  "tile-tower": {
+    "floor": [
+      "concat_h",
+      "concat_v"
+    ],
+    "rungs": [
+      "row3",
+      "grid3x3"
+    ],
+    "top": "grid9x9",
+    "matrix": {
+      "row3": [
+        "2",
+        "1",
+        "1"
+      ],
+      "grid3x3": [
+        ">6",
+        "3",
+        "1"
+      ],
+      "grid9x9": [
+        ">6",
+        ">6",
+        "2"
+      ]
+    },
+    "witnesses": {
+      "row3@L0": "concat_h(p0, concat_h(p0, p0))",
+      "row3@L1": "row3(p0)",
+      "grid3x3@L1": "row3(concat_v(p0, concat_v(p0, p0)))",
+      "row3@L2": "row3(p0)",
+      "grid3x3@L2": "grid3x3(p0)",
+      "grid9x9@L2": "grid3x3(grid3x3(p0))"
+    }
+  },
+  "perceive-tower": {
+    "floor": [
+      "flip_h",
+      "flip_v",
+      "map_color",
+      "most_common_color"
+    ],
+    "rungs": [
+      "rot180",
+      "recolor_bg"
+    ],
+    "top": "recolor_bg_flipped",
+    "matrix": {
+      "rot180": [
+        "2",
+        "1",
+        "1"
+      ],
+      "recolor_bg": [
+        "2",
+        "2",
+        "1"
+      ],
+      "recolor_bg_flipped": [
+        "4",
+        "3",
+        "2"
+      ]
+    },
+    "witnesses": {
+      "rot180@L0": "flip_h(flip_v(p0))",
+      "recolor_bg@L0": "map_color(p0, most_common_color(p0), p1)",
+      "recolor_bg_flipped@L0": "flip_h(flip_v(map_color(p0, most_common_color(p0), p1)))",
+      "rot180@L1": "rot180(p0)",
+      "recolor_bg@L1": "map_color(p0, most_common_color(p0), p1)",
+      "recolor_bg_flipped@L1": "map_color(rot180(p0), most_common_color(p0), p1)",
+      "rot180@L2": "rot180(p0)",
+      "recolor_bg@L2": "recolor_bg(p0, p1)",
+      "recolor_bg_flipped@L2": "recolor_bg(rot180(p0), p1)"
+    }
+  },
+  "mask-crop-flip": {
+    "floor": [
+      "flip_h",
+      "transpose",
+      "nonbg_mask",
+      "crop_to_mask"
+    ],
+    "rungs": [
+      "crop_to_content"
+    ],
+    "top": "crop_flip",
+    "matrix": {
+      "crop_to_content": [
+        "2",
+        "1"
+      ],
+      "crop_flip": [
+        "3",
+        "2"
+      ]
+    },
+    "witnesses": {
+      "crop_to_content@L0": "crop_to_mask(p0, nonbg_mask(p0))",
+      "crop_flip@L0": "flip_h(crop_to_mask(p0, nonbg_mask(p0)))",
+      "crop_to_content@L1": "crop_to_content(p0)",
+      "crop_flip@L1": "crop_to_content(flip_h(p0))"
+    }
+  }
+}

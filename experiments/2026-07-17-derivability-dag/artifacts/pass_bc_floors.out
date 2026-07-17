@@ -1,0 +1,95 @@
+
+=== floor d4_gen_min (2 blocks, max_size 6, 0s) ===
+  size 0: abs
+  size 0: overlay
+  size 2: rot270
+  size 2: rot90
+  size 3: anti_transpose
+  size 3: flip_v
+  size 4: rot180
+  underivable (<= 6): add, and, bbox_mask, blank, cells, concat_h, concat_v, count_color, crop_to_content, crop_to_mask, downsample, filter_color, floordiv, gt, height, least_common_color, lt, map_color, mask_by_color, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, most_common_color, mul, nonbg_mask, not, num_colors, or, pad, paint_through_mask, palette, read, scale, set_cell, sub, swap_colors, tile_repeat, translate, width
+  --- height-2 ladder skeletons (rung collapses top to <= 3) ---
+    d4_gen_min: +anti_transpose => rot180  (4 -> 2): anti_transpose(transpose(p0))
+    d4_gen_min: +flip_v => rot180  (4 -> 2): flip_h(flip_v(p0))
+    d4_gen_min: +rot270 => rot180  (4 -> 2): rot270(rot270(p0))
+    d4_gen_min: +rot90 => rot180  (4 -> 2): rot90(rot90(p0))
+
+=== floor recolor_gen (1 blocks, max_size 6, 0s) ===
+  size 0: abs
+  size 0: overlay
+  underivable (<= 6): add, and, anti_transpose, bbox_mask, blank, cells, concat_h, concat_v, count_color, crop_to_content, crop_to_mask, downsample, filter_color, flip_h, flip_v, floordiv, gt, height, least_common_color, lt, mask_by_color, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, most_common_color, mul, nonbg_mask, not, num_colors, or, pad, paint_through_mask, palette, read, rot180, rot270, rot90, scale, set_cell, sub, swap_colors, tile_repeat, translate, transpose, width
+
+=== floor perceive_recolor (3 blocks, max_size 6, 1s) ===
+  size 0: abs
+  size 0: overlay
+  underivable (<= 6): add, and, anti_transpose, bbox_mask, blank, cells, concat_h, concat_v, count_color, crop_to_content, crop_to_mask, downsample, filter_color, flip_h, flip_v, floordiv, gt, height, lt, mask_by_color, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, mul, nonbg_mask, not, num_colors, or, pad, paint_through_mask, palette, read, rot180, rot270, rot90, scale, set_cell, sub, swap_colors, tile_repeat, translate, transpose, width
+
+=== floor mask_min (2 blocks, max_size 6, 0s) ===
+  size 0: abs
+  size 0: overlay
+  size 2: crop_to_content
+  underivable (<= 6): add, and, anti_transpose, bbox_mask, blank, cells, concat_h, concat_v, count_color, downsample, filter_color, flip_h, flip_v, floordiv, gt, height, least_common_color, lt, map_color, mask_by_color, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, most_common_color, mul, not, num_colors, or, pad, paint_through_mask, palette, read, rot180, rot270, rot90, scale, set_cell, sub, swap_colors, tile_repeat, translate, transpose, width
+
+=== floor mask_basic_gen (7 blocks, max_size 4, 0s) ===
+  size 0: abs
+  size 0: overlay
+  size 2: crop_to_content
+  size 2: map_color
+  size 2: mask_difference
+  size 4: swap_colors
+  underivable (<= 4): add, and, anti_transpose, bbox_mask, blank, cells, concat_h, concat_v, count_color, downsample, filter_color, flip_h, flip_v, floordiv, gt, height, least_common_color, lt, max, min, mod, most_common_color, mul, not, num_colors, or, pad, palette, read, rot180, rot270, rot90, scale, set_cell, sub, tile_repeat, translate, transpose, width
+  --- height-2 ladder skeletons (rung collapses top to <= 3) ---
+    mask_basic_gen: +map_color => swap_colors  (4 -> 3): paint_through_mask(map_color(p0, p1, p2), mask_by_color(p0, p2), p1)
+
+=== floor layout_gen (6 blocks, max_size 5, 6s) ===
+  size 0: abs
+  size 0: overlay
+  underivable (<= 5): add, and, anti_transpose, bbox_mask, cells, count_color, crop_to_content, crop_to_mask, filter_color, flip_h, flip_v, floordiv, gt, height, least_common_color, lt, map_color, mask_by_color, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, most_common_color, mul, nonbg_mask, not, num_colors, or, paint_through_mask, palette, read, rot180, rot270, rot90, scale, set_cell, sub, swap_colors, tile_repeat, transpose, width
+
+=== floor cell_stateful (2 blocks, max_size 6, 0s) ===
+  size 0: abs
+  size 0: overlay
+  underivable (<= 6): add, and, anti_transpose, bbox_mask, blank, cells, concat_h, concat_v, count_color, crop_to_content, crop_to_mask, downsample, filter_color, flip_h, flip_v, floordiv, gt, height, least_common_color, lt, map_color, mask_by_color, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, most_common_color, mul, nonbg_mask, not, num_colors, or, pad, paint_through_mask, palette, rot180, rot270, rot90, scale, sub, swap_colors, tile_repeat, translate, transpose, width
+
+=== floor arith_basic (3 blocks, max_size 6, 7s) ===
+  size 0: abs
+  size 0: overlay
+  underivable (<= 6): and, anti_transpose, bbox_mask, blank, cells, concat_h, concat_v, count_color, crop_to_content, crop_to_mask, downsample, filter_color, flip_h, flip_v, floordiv, gt, height, least_common_color, lt, map_color, mask_by_color, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, most_common_color, nonbg_mask, not, num_colors, or, pad, paint_through_mask, palette, read, rot180, rot270, rot90, scale, set_cell, swap_colors, tile_repeat, translate, transpose, width
+
+=== floor atomic (9 blocks, max_size 4, 0s) ===
+  size 0: abs
+  size 0: overlay
+  underivable (<= 4): add, and, bbox_mask, blank, cells, concat_h, concat_v, count_color, crop_to_content, crop_to_mask, downsample, filter_color, floordiv, gt, height, least_common_color, lt, mask_by_color, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, most_common_color, mul, nonbg_mask, not, num_colors, or, pad, paint_through_mask, palette, read, set_cell, sub, swap_colors, tile_repeat, translate, width
+
+=== floor d4gen_layout (5 blocks, max_size 5, 6s) ===
+  size 0: abs
+  size 0: overlay
+  size 2: rot180
+  size 2: rot270
+  size 2: rot90
+  size 3: anti_transpose
+  underivable (<= 5): add, and, bbox_mask, blank, cells, count_color, crop_to_content, crop_to_mask, downsample, filter_color, floordiv, gt, height, least_common_color, lt, map_color, mask_by_color, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, most_common_color, mul, nonbg_mask, not, num_colors, or, pad, paint_through_mask, palette, read, scale, set_cell, sub, swap_colors, tile_repeat, translate, width
+
+=== floor d4gen_mask_min (5 blocks, max_size 5, 0s) ===
+  size 0: abs
+  size 0: overlay
+  size 2: crop_to_content
+  size 2: rot270
+  size 2: rot90
+  size 3: anti_transpose
+  size 3: flip_v
+  size 4: rot180
+  underivable (<= 5): add, and, bbox_mask, blank, cells, concat_h, concat_v, count_color, downsample, filter_color, floordiv, gt, height, least_common_color, lt, map_color, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, most_common_color, mul, not, num_colors, or, pad, paint_through_mask, palette, read, scale, set_cell, sub, swap_colors, tile_repeat, translate, width
+  --- height-2 ladder skeletons (rung collapses top to <= 3) ---
+    d4gen_mask_min: +anti_transpose => rot180  (4 -> 2): anti_transpose(transpose(p0))
+    d4gen_mask_min: +flip_v => rot180  (4 -> 2): flip_h(flip_v(p0))
+    d4gen_mask_min: +rot270 => rot180  (4 -> 2): rot270(rot270(p0))
+    d4gen_mask_min: +rot90 => rot180  (4 -> 2): rot90(rot90(p0))
+
+=== floor perceive_mask (5 blocks, max_size 5, 0s) ===
+  size 0: abs
+  size 0: overlay
+  size 3: swap_colors
+  underivable (<= 5): add, and, anti_transpose, bbox_mask, blank, cells, concat_h, concat_v, count_color, crop_to_content, downsample, filter_color, flip_h, flip_v, floordiv, gt, height, least_common_color, lt, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, mul, nonbg_mask, not, num_colors, or, pad, palette, read, rot180, rot270, rot90, scale, set_cell, sub, tile_repeat, translate, transpose, width
+
+wrote /Users/williamboan/Documents/Career Transition - Projects/abstraction-experimentation/experiments/2026-07-17-derivability-dag/artifacts/pass_bc_results.json

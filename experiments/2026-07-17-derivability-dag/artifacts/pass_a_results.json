@@ -1,0 +1,507 @@
+{
+  "abs": {
+    "status": "derivable",
+    "size": 0,
+    "witnesses": [
+      {
+        "term": "p0",
+        "support": [],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "add": {
+    "status": "derivable",
+    "size": 3,
+    "witnesses": [
+      {
+        "term": "sub(p0, sub(sub(p0, p0), p1))",
+        "support": [
+          "sub"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "and": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "anti_transpose": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "flip_h(rot90(p0))",
+        "support": [
+          "flip_h",
+          "rot90"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "bbox_mask": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "blank": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "cells": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "concat_h": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "concat_v": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "count_color": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "crop_to_content": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "crop_to_mask(p0, bbox_mask(p0))",
+        "support": [
+          "bbox_mask",
+          "crop_to_mask"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "crop_to_mask": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "downsample": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "filter_color": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "flip_h": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "anti_transpose(rot270(p0))",
+        "support": [
+          "anti_transpose",
+          "rot270"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "flip_v": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "anti_transpose(rot90(p0))",
+        "support": [
+          "anti_transpose",
+          "rot90"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "floordiv": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "from_cells": {
+    "status": "skip"
+  },
+  "gt": {
+    "status": "derivable",
+    "size": 1,
+    "witnesses": [
+      {
+        "term": "lt(p1, p0)",
+        "support": [
+          "lt"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "height": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "width(anti_transpose(p0))",
+        "support": [
+          "anti_transpose",
+          "width"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "least_common_color": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "lt": {
+    "status": "derivable",
+    "size": 1,
+    "witnesses": [
+      {
+        "term": "gt(p1, p0)",
+        "support": [
+          "gt"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "map_color": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "overlay(p1, p0, swap_colors(p0, p1, p2))",
+        "support": [
+          "overlay",
+          "swap_colors"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "mask_by_color": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "mask_complement": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "mask_difference": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "mask_intersect(p0, mask_complement(p1))",
+        "support": [
+          "mask_complement",
+          "mask_intersect"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "mask_intersect": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "mask_difference(p0, mask_complement(p1))",
+        "support": [
+          "mask_complement",
+          "mask_difference"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "mask_union": {
+    "status": "derivable",
+    "size": 3,
+    "witnesses": [
+      {
+        "term": "mask_complement(mask_difference(mask_complement(p0), p1))",
+        "support": [
+          "mask_complement",
+          "mask_difference"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "max": {
+    "status": "derivable",
+    "size": 3,
+    "witnesses": [
+      {
+        "term": "add(p0, sub(p1, min(p0, p1)))",
+        "support": [
+          "add",
+          "min",
+          "sub"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "min": {
+    "status": "derivable",
+    "size": 3,
+    "witnesses": [
+      {
+        "term": "add(p0, sub(p1, max(p0, p1)))",
+        "support": [
+          "add",
+          "max",
+          "sub"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "mod": {
+    "status": "derivable",
+    "size": 3,
+    "witnesses": [
+      {
+        "term": "sub(p0, mul(p1, floordiv(p0, p1)))",
+        "support": [
+          "floordiv",
+          "mul",
+          "sub"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "most_common_color": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "move_cell": {
+    "status": "skip"
+  },
+  "mul": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "nonbg_mask": {
+    "status": "derivable",
+    "size": 3,
+    "witnesses": [
+      {
+        "term": "mask_complement(mask_by_color(p0, most_common_color(p0)))",
+        "support": [
+          "mask_by_color",
+          "mask_complement",
+          "most_common_color"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "not": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "num_colors": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "or": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "overlay": {
+    "status": "derivable",
+    "size": 0,
+    "witnesses": [
+      {
+        "term": "p1",
+        "support": [],
+        "verified": true
+      }
+    ],
+    "truncated": true
+  },
+  "pad": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": true
+  },
+  "paint_through_mask": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "palette": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "read": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": true
+  },
+  "rot180": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "anti_transpose(transpose(p0))",
+        "support": [
+          "anti_transpose",
+          "transpose"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "rot270": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "anti_transpose(flip_h(p0))",
+        "support": [
+          "anti_transpose",
+          "flip_h"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "rot90": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "anti_transpose(flip_v(p0))",
+        "support": [
+          "anti_transpose",
+          "flip_v"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "scale": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "set_cell": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": true
+  },
+  "sub": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": false
+  },
+  "swap_cells": {
+    "status": "skip"
+  },
+  "swap_colors": {
+    "status": "derivable",
+    "size": 3,
+    "witnesses": [
+      {
+        "term": "paint_through_mask(map_color(p0, p1, p2), mask_by_color(p0, p2), p1)",
+        "support": [
+          "map_color",
+          "mask_by_color",
+          "paint_through_mask"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "tile_repeat": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": true
+  },
+  "translate": {
+    "status": "underivable",
+    "max_size": 3,
+    "truncated": true
+  },
+  "transpose": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "anti_transpose(rot180(p0))",
+        "support": [
+          "anti_transpose",
+          "rot180"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  },
+  "width": {
+    "status": "derivable",
+    "size": 2,
+    "witnesses": [
+      {
+        "term": "height(anti_transpose(p0))",
+        "support": [
+          "anti_transpose",
+          "height"
+        ],
+        "verified": true
+      }
+    ],
+    "truncated": false
+  }
+}

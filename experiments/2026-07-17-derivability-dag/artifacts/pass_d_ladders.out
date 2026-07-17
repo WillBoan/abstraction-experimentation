@@ -1,0 +1,68 @@
+
+=== ladder d4-tower ===
+  floor: {flip_h, transpose}
+  rungs: ['rot90']   top: rot180
+  goal                L0         L1       
+  rot90               2          1        
+  rot180              4          2        
+  jump 0->1 (rot90): transpose(flip_h(p0))
+  top over L_1 (rot180): rot90(rot90(p0))
+  [0s]
+
+=== ladder e12-layered ===
+  floor: {flip_h, flip_v, map_color}
+  rungs: ['rot180']   top: recolor_flipped
+  goal                L0         L1       
+  rot180              2          1        
+  recolor_flipped     3          2        
+  jump 0->1 (rot180): flip_h(flip_v(p0))
+  top over L_1 (recolor_flipped): map_color(rot180(p0), p1, p2)
+  [0s]
+
+=== ladder quad-tower ===
+  floor: {flip_h, flip_v, concat_h, concat_v}
+  rungs: ['mirror_h', 'quad']   top: quad2
+  goal                L0         L1         L2       
+  mirror_h            2          1          1        
+  quad                6          3          1        
+  quad2               >6         >6T        2        
+  jump 0->1 (mirror_h): concat_h(p0, flip_h(p0))
+  jump 1->2 (quad): mirror_h(concat_v(p0, flip_v(p0)))
+  top over L_2 (quad2): quad(quad(p0))
+  [4s]
+
+=== ladder tile-tower ===
+  floor: {concat_h, concat_v}
+  rungs: ['row3', 'grid3x3']   top: grid9x9
+  goal                L0         L1         L2       
+  row3                2          1          1        
+  grid3x3             >6         3          1        
+  grid9x9             >6         >6         2        
+  jump 0->1 (row3): concat_h(p0, concat_h(p0, p0))
+  jump 1->2 (grid3x3): row3(concat_v(p0, concat_v(p0, p0)))
+  top over L_2 (grid9x9): grid3x3(grid3x3(p0))
+  [0s]
+
+=== ladder perceive-tower ===
+  floor: {flip_h, flip_v, map_color, most_common_color}
+  rungs: ['rot180', 'recolor_bg']   top: recolor_bg_flipped
+  goal                L0         L1         L2       
+  rot180              2          1          1        
+  recolor_bg          2          2          1        
+  recolor_bg_flipped  4          3          2        
+  jump 0->1 (rot180): flip_h(flip_v(p0))
+  jump 1->2 (recolor_bg): map_color(p0, most_common_color(p0), p1)
+  top over L_2 (recolor_bg_flipped): recolor_bg(rot180(p0), p1)
+  [0s]
+
+=== ladder mask-crop-flip ===
+  floor: {flip_h, transpose, nonbg_mask, crop_to_mask}
+  rungs: ['crop_to_content']   top: crop_flip
+  goal                L0         L1       
+  crop_to_content     2          1        
+  crop_flip           3          2        
+  jump 0->1 (crop_to_content): crop_to_mask(p0, nonbg_mask(p0))
+  top over L_1 (crop_flip): crop_to_content(flip_h(p0))
+  [0s]
+
+wrote /Users/williamboan/Documents/Career Transition - Projects/abstraction-experimentation/experiments/2026-07-17-derivability-dag/artifacts/pass_d_results.json

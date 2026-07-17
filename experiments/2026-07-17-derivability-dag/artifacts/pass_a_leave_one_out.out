@@ -1,0 +1,83 @@
+55 monomorphic blocks: abs, add, and, anti_transpose, bbox_mask, blank, cells, concat_h, concat_v, count_color, crop_to_content, crop_to_mask, downsample, filter_color, flip_h, flip_v, floordiv, from_cells, gt, height, least_common_color, lt, map_color, mask_by_color, mask_complement, mask_difference, mask_intersect, mask_union, max, min, mod, most_common_color, move_cell, mul, nonbg_mask, not, num_colors, or, overlay, pad, paint_through_mask, palette, read, rot180, rot270, rot90, scale, set_cell, sub, swap_cells, swap_colors, tile_repeat, translate, transpose, width
+
+abs                  size 0: p0  [  0.0s, 105 terms, 16 valid]
+add                  size 3: sub(p0, sub(sub(p0, p0), p1))  [  0.1s, 1558 terms, 16 valid]
+and                  none <= size 3  [  0.0s, 13 terms, 16 valid]
+anti_transpose       size 2: flip_h(rot90(p0))  [  0.8s, 3988 terms, 16 valid]
+bbox_mask            none <= size 3  [  0.1s, 678 terms, 16 valid]
+blank                none <= size 3  [  0.1s, 2207 terms, 13 valid]
+cells                none <= size 3  [  0.1s, 645 terms, 16 valid]
+concat_h             none <= size 3  [  0.4s, 2662 terms, 11 valid]
+concat_v             none <= size 3  [  0.4s, 2627 terms, 14 valid]
+count_color          none <= size 3  [  0.3s, 1609 terms, 16 valid]
+crop_to_content      size 2: crop_to_mask(p0, bbox_mask(p0))  [  0.7s, 3490 terms, 16 valid]
+crop_to_mask         none <= size 3  [  0.1s, 810 terms, 8 valid]
+downsample           none <= size 3  [  0.7s, 5142 terms, 15 valid]
+filter_color         none <= size 3  [  0.3s, 1392 terms, 16 valid]
+flip_h               size 2: anti_transpose(rot270(p0))  [  0.8s, 3951 terms, 16 valid]
+flip_v               size 2: anti_transpose(rot90(p0))  [  0.8s, 3953 terms, 16 valid]
+floordiv             none <= size 3  [  0.1s, 1127 terms, 15 valid]
+from_cells           SKIP (too few valid sample tuples)
+gt                   size 1: lt(p1, p0)  [  0.1s, 2206 terms, 16 valid]
+height               size 2: width(anti_transpose(p0))  [  0.1s, 658 terms, 16 valid]
+least_common_color   none <= size 3  [  0.1s, 666 terms, 16 valid]
+lt                   size 1: gt(p1, p0)  [  0.1s, 2206 terms, 16 valid]
+map_color            size 2: overlay(p1, p0, swap_colors(p0, p1, p2))  [  0.6s, 3496 terms, 16 valid]
+mask_by_color        none <= size 3  [  0.3s, 1588 terms, 16 valid]
+mask_complement      none <= size 3  [  0.0s, 2 terms, 16 valid]
+mask_difference      size 2: mask_intersect(p0, mask_complement(p1))  [  0.0s, 14 terms, 16 valid]
+mask_intersect       size 2: mask_difference(p0, mask_complement(p1))  [  0.0s, 15 terms, 16 valid]
+mask_union           size 3: mask_complement(mask_difference(mask_complement(p0), p1))  [  0.0s, 14 terms, 16 valid]
+max                  size 3: add(p0, sub(p1, min(p0, p1)))  [  0.1s, 1987 terms, 16 valid]
+min                  size 3: add(p0, sub(p1, max(p0, p1)))  [  0.1s, 2034 terms, 16 valid]
+mod                  size 3: sub(p0, mul(p1, floordiv(p0, p1)))  [  0.1s, 1427 terms, 15 valid]
+most_common_color    none <= size 3  [  0.1s, 683 terms, 16 valid]
+move_cell            SKIP (too few valid sample tuples)
+mul                  none <= size 3  [  0.1s, 1295 terms, 16 valid]
+nonbg_mask           size 3: mask_complement(mask_by_color(p0, most_common_color(p0)))  [  0.1s, 645 terms, 16 valid]
+not                  none <= size 3  [  0.0s, 1 terms, 16 valid]
+num_colors           none <= size 3  [  0.2s, 670 terms, 16 valid]
+or                   none <= size 3  [  0.0s, 13 terms, 16 valid]
+overlay              size 0: p1  [  1.0s, 6140 terms, TRUNC, 16 valid]
+pad                  none <= size 3  [  1.2s, 7063 terms, TRUNC, 16 valid]
+paint_through_mask   none <= size 3  [  0.4s, 2122 terms, 8 valid]
+palette              none <= size 3  [  0.1s, 711 terms, 16 valid]
+read                 none <= size 3  [  9.0s, 11241 terms, TRUNC, 6 valid]
+rot180               size 2: anti_transpose(transpose(p0))  [  1.0s, 3957 terms, 16 valid]
+rot270               size 2: anti_transpose(flip_h(p0))  [  0.8s, 3972 terms, 16 valid]
+rot90                size 2: anti_transpose(flip_v(p0))  [  0.8s, 3976 terms, 16 valid]
+scale                none <= size 3  [  0.6s, 5336 terms, 16 valid]
+set_cell             none <= size 3  [ 11.4s, 17146 terms, TRUNC, 6 valid]
+sub                  none <= size 3  [  0.1s, 1069 terms, 16 valid]
+swap_cells           SKIP (too few valid sample tuples)
+swap_colors          size 3: paint_through_mask(map_color(p0, p1, p2), mask_by_color(p0, p2), p1)  [  0.6s, 3951 terms, 16 valid]
+tile_repeat          none <= size 3  [  7.9s, 12097 terms, TRUNC, 16 valid]
+translate            none <= size 3  [  8.1s, 11547 terms, TRUNC, 16 valid]
+transpose            size 2: anti_transpose(rot180(p0))  [  0.8s, 3996 terms, 16 valid]
+width                size 2: height(anti_transpose(p0))  [  0.1s, 671 terms, 16 valid]
+
+wrote /Users/williamboan/Documents/Career Transition - Projects/abstraction-experimentation/experiments/2026-07-17-derivability-dag/artifacts/pass_a_results.json
+
+=== 'uses' DAG edges (target -> minimal-witness support) ===
+  add <- {sub}
+  anti_transpose <- {flip_h, rot90}
+  crop_to_content <- {bbox_mask, crop_to_mask}
+  flip_h <- {anti_transpose, rot270}
+  flip_v <- {anti_transpose, rot90}
+  gt <- {lt}
+  height <- {anti_transpose, width}
+  lt <- {gt}
+  map_color <- {overlay, swap_colors}
+  mask_difference <- {mask_complement, mask_intersect}
+  mask_intersect <- {mask_complement, mask_difference}
+  mask_union <- {mask_complement, mask_difference}
+  max <- {add, min, sub}
+  min <- {add, max, sub}
+  mod <- {floordiv, mul, sub}
+  nonbg_mask <- {mask_by_color, mask_complement, most_common_color}
+  rot180 <- {anti_transpose, transpose}
+  rot270 <- {anti_transpose, flip_h}
+  rot90 <- {anti_transpose, flip_v}
+  swap_colors <- {map_color, mask_by_color, paint_through_mask}
+  transpose <- {anti_transpose, rot180}
+  width <- {anti_transpose, height}
