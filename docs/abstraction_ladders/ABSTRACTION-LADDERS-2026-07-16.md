@@ -51,6 +51,13 @@ Batch design:
   - **Top Rung (rung R)** = The final abstraction that solves the most difficult Task(s) in the Corpus, and is the "goal" of the Ladder.
   - **Bridging Rung / Bridging Abstraction (`r_i`)** = An intermediate abstraction that helps bridge the gap between the Floor and the Top Rung, reducing the search cost to reach the Top Rung.
     - A closed template over `L_{i-1}` (a `TargetAbstraction`), together with its **demonstrating tasks** (>= 2) whose cheapest solutions exercise it.
+  - **Demonstration relationships** — a Rung `i`'s Tasks' solution programs stand in two distinct relationships (both stated over `L_{i-1}`, ie pre-mint):
+    1. **vs the Rung's library (`L_{i-1}`)** — always _fragment-only_: every solution is a _proper composition_ of existing primitives (a Task whose cheapest solution is a bare primitive belongs to a lower Rung; equivalent to "jump depth >= 2"). Not merely definitional — verified on _retained cheapest_ solutions by the certificate, since it can fail via skip paths.
+    2. **vs the Rung's target abstraction** — per Task, either **full-solution** (solution = the template, instantiated) or **fragment** (the template is a proper subprogram of the solution). A Rung carries a _mix_; the mix is a metaparameter (RQ2). Does not apply to the Top Rung (no target abstraction).
+    - This affects which `AbstractionProposer` is required:
+      - \>= 2 full-solution tasks ⇒ `AntiunifyPairs` viable
+      - fragment occurrences with _identical_ instantiations ⇒ needs at least `FrequentSubtree`
+      - fragment occurrences with _varying_ parameters ⇒ needs `StitchProposer`
   - **Jump** = the transition from Rung `i-1` to Rung `i`. Static size: **jump depth** (`d_i`, compositional). Measured size: **jump cost** (`c_i`, considered count).
     - A **double jump** goes from `L_{i-1}` directly to Rung `i+1`, skipping `r_i`. Its depth is computed on the _inlined_ template (rung-`i` call sites expanded) — NOT as `d_i + d_{i+1}`.
   - **Cumulative Library (`L_i`)** — `L_0 ∪ {r_1..r_i}`.
@@ -162,7 +169,7 @@ If cost-to-depth grows steeply, the sum of shallow terms is far smaller than the
   - corpus size/design
     - How many different programs per Bridging Rung?
     - How many Tasks per Bridging Rung?
-    - How many of the Bridging Rung Tasks are full-solution vs fragment-only?
+    - Per-rung relationship-(2) mix: how many demonstrating Tasks are full-solution vs fragment (§2)? Plus fragment-parameter variability — coupled to the `AbstractionProposer` choice via §2's mapping.
     - How many different programs at the Top Rung?
     - How many Tasks at the Top Rung?
   - Are only next-Rung Tasks included vs all Tasks?
@@ -184,20 +191,19 @@ If cost-to-depth grows steeply, the sum of shallow terms is far smaller than the
 
 Two construction methods:
 
-1. **Anchored bisection**: Adding a Rung in the middle of a Ladder
+1. **Anchored bisection**: Adding a Rung in the _middle_ of a Ladder
    - Start with (1) a Floor and (2) a Ladder with at least 1 Rung on top of that Floor.
    - Choose (3) a Rung in the Ladder to add a new Rung below it.
    - Derive:
      - (4) a new, "mid-level" abstraction that can be learned from the Rung/Floor immediately below, and that can be used to help reduce search cost to reach the Rung immediately above.
-     - (5) 1+ programs that use that new abstraction.
-       - The abstraction could be the _full_ program; or it could be a _fragment_ of the full program.
-         - [And we should maybe track this, as a metaparameter: "How many of the Bridging Rung Tasks are full-solution vs fragment-only?"]
+     - (5) the new Rung's demonstrating programs — each relating to the abstraction as full-solution or fragment (relationship (2), §2); the mix is a metaparameter.
      - (6) 2+ Tasks where the solution is one of those programs.
-2. **Forward extension**: Adding a Rung to the top of a Ladder
+2. **Forward extension**: Adding a Rung to the _top_ of a Ladder
    - Start with (1) a Floor and (2) an abstraction that's able to be built on/expressed with that Floor.
    - Derive:
-     - (3) 1+ programs that use that abstraction as _part_ of it (though not all of it); and
+     - (3) the abstraction's demonstrating programs — full-solution and/or fragment (relationship (2), §2); the mix is a metaparameter; and
      - (4) 2+ Tasks where the solution is one of those programs.
+       - (Tasks later added _above_ this Rung will use it as a fragment automatically — relationship (1).)
 
 Notes:
 
@@ -277,7 +283,7 @@ Machinery that needs to be implemented in order to run the experiments:
 
 1. Serialize the per-generation funnel into the run record (currently logging-only).
 2. Expose accepted candidates' `candidate_index` per task (cost-to-first / cost-to-cheapest).
-3. `LadderSpec` — generalizes `StudySpec`: leveled `TargetAbstraction`s, per-task rung annotation as solver-invisible meta, the oracle-chain grid; recorded shape metadata (height, `d_i` profile, per-rung fan-in, construction method).
+3. `LadderSpec` — generalizes `StudySpec`: leveled `TargetAbstraction`s, per-task rung annotation as solver-invisible meta, the oracle-chain grid; recorded shape metadata (height, `d_i` profile, per-rung fan-in, per-rung relationship-(2) mix, construction method).
 4. Ladder Linter (a static check that a Ladder/`LadderSpec` is well-formed).
    - Checks:
      - Overall `LadderSpec` is well-formed.
@@ -306,9 +312,12 @@ Machinery that needs to be implemented in order to run the experiments:
 
 ## 7. Open decisions
 
-- **Demonstration-shape default.** Method (2) mandates proper-fragment use ("part of it, though not all of it"); method (1) allows full-or-fragment. Constraint to weigh: full-solution demos suit `AntiunifyPairs`; embedded-with-identical-literals suit `FrequentSubtree`; embedded-with-varying-params need `StitchProposer`. Candidate default: full-solution at each rung's own level (embedded use arrives naturally via the rung above), keeping fragment-only as an experimental condition.
 - **Rung necessity.** Enforce double-jump intractability for _every_ consecutive pair (clean attribution), or admit ladders with a skippable rung, recorded as a covariate?
 - **Ladder #1.** Proposal: height 3, synthetic anchor, built by method (1).
 - **cost-to-first granularity.** End-of-generation (funnel-only; the current §2 definition) vs candidate-index (exact; uniform with cost-to-cheapest; what checklist item 2 exposes). Pick one.
+
+Resolved:
+
+- **Demonstration-shape default — RESOLVED (2026-07-17).** Framed via the two demonstration relationships (§2): relationship (1) is always fragment-only by definition; relationship (2) is the free choice. Early experiments: full-solution only for relationship (2). Later: fragment mixes as an explicit dimension/family, tracking the per-rung mix, with the proposer mapping (§2) as a coupled param.
 
 ---
