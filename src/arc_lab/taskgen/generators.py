@@ -300,12 +300,144 @@ def generate_grain_contrast(out_root: Path) -> Path:
     )
 
 
+# -- al1-mirror: the first Abstraction Ladder testbed --------------------------------
+
+
+def _mirror_recolor_solution(a: int, b: int) -> Callable[[Grid], Grid]:
+    """mirror_recolor(g, a, b) = map_color(rot180(g), a, b) -- rung 2, built on rot180."""
+
+    def solution(grid: Grid) -> Grid:
+        arr = grid.array[::-1, ::-1].copy()
+        arr[arr == a] = b
+        return Grid(arr)
+
+    return solution
+
+
+def _al1_top_solution(a: int, b: int) -> Callable[[Grid], Grid]:
+    """top(g, a, b) = flip_v(mirror_recolor(g, a, b)) -- the goal, using mirror_recolor as a fragment."""
+    inner = _mirror_recolor_solution(a, b)
+
+    def solution(grid: Grid) -> Grid:
+        return Grid(inner(grid).array[::-1, :])  # flip_v (rows reversed)
+
+    return solution
+
+
+def _al1_grids(color: int) -> list[Grid]:
+    """Three distinct 2x3 grids, each asymmetric under rot180 and containing ``color`` (so a
+    recolor of that color is active -- keeping the intended composition the cheapest solution)."""
+    patterns = [
+        [[color, (color + 1) % 10, (color + 2) % 10], [(color + 3) % 10, (color + 4) % 10, color]],
+        [[(color + 2) % 10, color, (color + 5) % 10], [color, (color + 3) % 10, (color + 6) % 10]],
+        [[(color + 7) % 10, (color + 6) % 10, color], [(color + 1) % 10, color, (color + 2) % 10]],
+    ]
+    return [Grid.from_list(rows) for rows in patterns]
+
+
+def al1_mirror_tasks() -> tuple[GeneratedTask, ...]:
+    """Abstraction Ladder #1: L0 {flip_h, flip_v, map_color} -> rot180 -> mirror_recolor -> top.
+
+    At the reference budget (max_depth=3) rot180 is reachable raw (2 applications) but
+    mirror_recolor (3) and the top (4) are not -- they collapse only once the rung below is
+    minted, so the wake-sleep loop must climb. Every task carries 2 train examples + 1 test;
+    (a,b) are fixed within a mirror_recolor/top task and vary across them so AntiunifyPairs mints
+    the general two-parameter form. See docs/abstraction_ladders/ABSTRACTION-LADDERS-2026-07-16.md.
+    """
+    tasks: list[GeneratedTask] = []
+    # rung 1: rot180 -- pure GRID->GRID, so no literal shortcut; 2 train + 1 heldout.
+    for i in range(2):
+        grids = _al1_grids(1 + i)
+        tasks.append(
+            make_task(
+                f"rot180-{i:02d}",
+                label="rot180",
+                split="train",
+                solution=_rot180_reference,
+                train_inputs=grids[:2],
+                test_inputs=grids[2:],
+            )
+        )
+    held = _al1_grids(5)
+    tasks.append(
+        make_task(
+            "rot180-heldout",
+            label="rot180",
+            split="heldout",
+            solution=_rot180_reference,
+            train_inputs=held[:2],
+            test_inputs=held[2:],
+        )
+    )
+    # rung 2: mirror_recolor -- (a,b) vary across tasks; unreachable at L0, minted after rot180.
+    for a, b in ((1, 2), (3, 4)):
+        grids = _al1_grids(a)
+        tasks.append(
+            make_task(
+                f"mirror-recolor-{a}-{b}",
+                label="mirror_recolor",
+                split="train",
+                solution=_mirror_recolor_solution(a, b),
+                train_inputs=grids[:2],
+                test_inputs=grids[2:],
+            )
+        )
+    grids = _al1_grids(2)
+    tasks.append(
+        make_task(
+            "mirror-recolor-2-3",
+            label="mirror_recolor",
+            split="heldout",
+            solution=_mirror_recolor_solution(2, 3),
+            train_inputs=grids[:2],
+            test_inputs=grids[2:],
+        )
+    )
+    # top: flip_v(mirror_recolor(g,a,b)) -- the goal, reachable only once both rungs are minted.
+    grids = _al1_grids(1)
+    tasks.append(
+        make_task(
+            "top-1-2",
+            label="top",
+            split="train",
+            solution=_al1_top_solution(1, 2),
+            train_inputs=grids[:2],
+            test_inputs=grids[2:],
+        )
+    )
+    grids = _al1_grids(3)
+    tasks.append(
+        make_task(
+            "top-3-4",
+            label="top",
+            split="heldout",
+            solution=_al1_top_solution(3, 4),
+            train_inputs=grids[:2],
+            test_inputs=grids[2:],
+        )
+    )
+    return tuple(tasks)
+
+
+def generate_al1_mirror(out_root: Path) -> Path:
+    return write_testbed(
+        "al1-mirror",
+        al1_mirror_tasks(),
+        out_root=out_root,
+        note=(
+            "Abstraction Ladder #1: L0{flip_h,flip_v,map_color} -> rot180 -> "
+            "mirror_recolor(g,a,b)=map_color(rot180(g),a,b) -> top=flip_v(mirror_recolor(g,a,b))."
+        ),
+    )
+
+
 #: Generator registry for the CLI (`arc-lab taskgen <name>`).
 GENERATORS: dict[str, Callable[[Path], Path]] = {
     "e1-rot90": generate_e1_rot90,
     "perceive-transform": generate_perceive_transform,
     "layered-abstraction": generate_layered_abstraction,
     "grain-contrast": generate_grain_contrast,
+    "al1-mirror": generate_al1_mirror,
 }
 
 
