@@ -6,7 +6,7 @@
 - **Anchor competence:** <the named capability the top tasks embody — chosen FIRST>
 - **Construction method:** <(1) anchored bisection | (2) forward extension>
 - **Reference config:** <Floor (`L_0`) library · reference budget · learn params (proposer / governance / iterations)> — the anchor for every sandwich claim (design doc §3.1)
-- **Validity window (est.):** <(lower, upper) in `max_depth` coords — computed + recorded by lint later>
+- **Validity window (est.):** <(lower, upper) inclusive, in `depth_limit` units — computed + recorded by lint later>
 
 ## Top Rung (goal layer — no abstraction is minted here)
 
@@ -20,7 +20,7 @@
 | --- | ---- | ------------------------- | ----- | ------------------------- | ------ | ---------- |
 | 1   |      |                           |       |                           |        |            |
 
-Sandwich check (leaf = 0; `max_generation = max_depth - 1`, design doc §2): every `d_i <=` reference `max_generation`, with headroom · every inlined double-jump `>` reference `max_generation` · every top `d_raw >` reference `max_generation`.
+Sandwich check (leaf = 0; `depth_limit` = the inclusive depth cap, design doc §2): every `d_i <=` reference `depth_limit`, with headroom · every inlined double-jump `>` reference `depth_limit` · every top `d_raw >` reference `depth_limit`.
 
 ## Per-rung detail
 
