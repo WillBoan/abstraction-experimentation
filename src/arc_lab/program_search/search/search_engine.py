@@ -331,21 +331,38 @@ class BottomUpSearchEngine(SearchEngine):
             state.tracker.record(
                 entry.candidate_index, entry.program, entry.primitives, Outcome.GOAL_UNMATCHED
             )
-        solutions = tuple(entry.program for entry in extraction.accepted)
-        # Pool.add_dedup keys on (type, signature), so at most one entry can ever match
-        # (resolved_goal_type, target) — extraction.accepted has at most one entry (§5.7/§5.8).
-        solved_at_generation = extraction.accepted[0].generation if extraction.accepted else None
-
-        # Solution-sink telemetry (dormant): recorded but NOT used for the return here — the
-        # ranked_programs / accepted / solved_at_generation above stay pool-based this commit.
+        # Sink-based return: the globally-cheapest goal-matching program the run found — even one
+        # the pool later evicted from the frontier (the completeness fix). The outcome partition
+        # above stays pool-based (invariant intact; an evicted solution stays EVICTED), so the
+        # `solved > accepted` gap is a measured eviction-loss signal. Constraints (an extra filter,
+        # usually empty) still apply — the cheapest sink record that passes them. Cheapest only
+        # (<=1) this commit, to preserve `attempts_per_test` parity; a later commit returns the full
+        # ranking. Sink records are ordered (cost, candidate_index) — the SAME key the pool's
+        # dedup retains by, so on a non-eviction task this reproduces the pool's program exactly.
         sink = state.tracker.solutions
+        returned = next(
+            (
+                record
+                for record in sink.records()
+                if all(
+                    constraint.holds(record.program, train_examples, library)
+                    for constraint in constraints
+                )
+            ),
+            None,
+        )
+        ranked_programs = (returned.program,) if returned is not None else ()
+        solved_at_generation = returned.generation if returned is not None else None
+
         cheapest = sink.cheapest()
         return SearchResult(
-            ranked_programs=solutions,
+            ranked_programs=ranked_programs,
             stats=SearchStats(
                 engine=type(self).__name__,
                 considered=state.tracker.considered,
-                accepted=len(solutions),
+                # `accepted` stays the pool-partition count (mirrors the ACCEPTED outcome — the
+                # frontier-surviving solutions), so the invariant considered == sum(outcomes) holds.
+                accepted=len(extraction.accepted),
                 outcomes=state.tracker.totals(),
                 by_primitive=state.tracker.by_primitive(),
                 solved_at_generation=solved_at_generation,
@@ -355,6 +372,7 @@ class BottomUpSearchEngine(SearchEngine):
                 solution_count=sink.count,
                 solutions_truncated=sink.truncated,
                 solutions=sink.records(),
+                returned_solution_count=len(ranked_programs),
             ),
         )
 

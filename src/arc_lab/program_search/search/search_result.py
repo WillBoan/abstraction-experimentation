@@ -40,24 +40,30 @@ class SearchStats:
     #: ``solved_at_generation``, kept out of ``merge_search_stats``). The source for ``b_eff``.
     generations: tuple[Mapping[str, int | None], ...] = ()
     #: Solution-sink telemetry (``search/tracking.py``): every goal-matching candidate seen at
-    #: absorption, before the pool's dedup collapses them to one. Dormant here — the returned
-    #: ``ranked_programs`` and ``.solved`` are still pool-based (a later commit makes them
-    #: sink-based). ``first_solution_index`` / ``cheapest_solution_index`` stay exact under the cap;
-    #: ``solution_count`` / ``solutions`` degrade (with ``solutions_truncated`` loud) if it binds.
+    #: absorption, before the pool's dedup collapses them to one. The returned ``ranked_programs``
+    #: is drawn from here (the globally-cheapest, evicted or not); ``first_solution_index`` /
+    #: ``cheapest_solution_index`` stay exact under the cap; ``solution_count`` / ``solutions``
+    #: degrade (with ``solutions_truncated`` loud) if it binds.
     first_solution_index: int | None = None
     cheapest_solution_index: int | None = None
     solution_count: int = 0
     solutions_truncated: bool = False
     solutions: tuple[SolutionRecord, ...] = ()
+    #: How many solutions ``SearchEngine.run`` actually returned (``ranked_programs``) — sink-based,
+    #: so it counts a solution the pool evicted from the frontier too. ``.solved`` reads this;
+    #: ``solved and accepted == 0`` is the eviction-loss signal (a solution found then evicted, now
+    #: recovered from the sink). ``accepted`` above stays the pool-partition (frontier-survivor) count.
+    returned_solution_count: int = 0
 
     @property
     def solved(self) -> bool:
-        """True if the strategy returned at least one (train-consistent) program.
+        """True if the run returned at least one (train-consistent) program — sink-based, so a
+        solution the frontier evicted still counts.
 
         Note this is *search*-level success (a program consistent with the training
         pairs was found), not *test*-set correctness — that is the scorer's verdict.
         """
-        return self.accepted > 0
+        return self.returned_solution_count > 0
 
     def summary(self) -> str:
         """The one-line INFO summary, derived from the counters."""

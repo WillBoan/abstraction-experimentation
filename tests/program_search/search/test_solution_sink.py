@@ -11,7 +11,7 @@ from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.search.search_result import SearchResult
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.primitives.geometry import D4_LIBRARY
-from arc_lab.program_search.substrate.program import Input
+from arc_lab.program_search.substrate.program import Apply, Input
 
 _GRID = Grid.from_list([[1, 2], [3, 4]])
 _TRANSPOSED = Grid.from_list([[1, 3], [2, 4]])
@@ -52,7 +52,25 @@ def test_generations_funnel_has_one_row_per_round() -> None:
     assert stats.solution_count >= 1  # transpose(input) is found at round 1
 
 
-def test_sink_dormant_leaves_return_pool_based_when_unsolved() -> None:
+def test_eviction_loss_is_recovered_by_the_sink() -> None:
+    # max_pool=1 forces the cost-2 solution flip_h(input) to be evicted by the cheaper cost-1
+    # Input() leaf. Pool-based extraction would report the task unsolved; the sink recovers the
+    # solution, and stats.accepted==0 (pool) alongside stats.solved (sink) is the eviction-loss gap.
+    flipped = Grid.from_list([[2, 1], [4, 3]])
+    task = Task(task_id="ev", train=(Example(input=_GRID, output=flipped),), test=())
+    result = _ENGINE.run(
+        train_examples=task.train,
+        library=D4_LIBRARY,
+        constraints=(),
+        cost=ProgramSize(),
+        budget=Budget(max_depth=2, max_arity=1, max_pool=1),
+    )
+    assert result.stats.solved  # sink-based: the evicted solution is recovered
+    assert result.stats.accepted == 0  # pool partition: it was evicted, so no frontier survivor
+    assert result.ranked_programs == (Apply("flip_h", (Input(),)),)
+
+
+def test_unsolved_task_has_empty_sink_and_is_not_solved() -> None:
     # An unreachable target at this budget: no solution, so the sink is empty and .solved is False.
     unreachable = Grid.from_list([[9, 9], [9, 9]])
     stats = _run(_EMPTY, unreachable, max_depth=1).stats

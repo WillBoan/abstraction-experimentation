@@ -262,9 +262,9 @@ class SearchTracker:
     #: own round loop — ``begin_generation``'s docstring). A list, not a dict keyed by round
     #: number, since rounds run ``0..max_depth-1`` contiguously.
     _generations: list[GenerationTracker] = field(default_factory=list)
-    #: Every goal-matching candidate the top-level search absorbed (``record_solution``). Dormant
-    #: telemetry — the engine's returned result and ``.solved`` are decided elsewhere (pool-based
-    #: today; sink-based in a later commit).
+    #: Every goal-matching candidate the top-level search absorbed (``record_solution``). The engine
+    #: draws its returned result from here (the globally-cheapest, evicted or not); the outcome
+    #: partition stays pool-based, so the two can legitimately disagree on an eviction-loss task.
     solutions: SolutionSink = field(init=False)
 
     def __post_init__(self) -> None:
