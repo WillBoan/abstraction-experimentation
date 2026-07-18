@@ -331,28 +331,26 @@ class BottomUpSearchEngine(SearchEngine):
             state.tracker.record(
                 entry.candidate_index, entry.program, entry.primitives, Outcome.GOAL_UNMATCHED
             )
-        # Sink-based return: the globally-cheapest goal-matching program the run found — even one
-        # the pool later evicted from the frontier (the completeness fix). The outcome partition
-        # above stays pool-based (invariant intact; an evicted solution stays EVICTED), so the
-        # `solved > accepted` gap is a measured eviction-loss signal. Constraints (an extra filter,
-        # usually empty) still apply — the cheapest sink record that passes them. Cheapest only
-        # (<=1) this commit, to preserve `attempts_per_test` parity; a later commit returns the full
-        # ranking. Sink records are ordered (cost, candidate_index) — the SAME key the pool's
-        # dedup retains by, so on a non-eviction task this reproduces the pool's program exactly.
+        # Sink-based return: every goal-matching program the run found (even ones the pool evicted
+        # from the frontier — the completeness fix), cheapest-first by (cost, candidate_index) — the
+        # SAME key the pool's dedup retains by, so ranked_programs[0] reproduces the pooled program
+        # exactly on a non-eviction task. The full ranking is returned so ``predict`` can use its
+        # ``attempts_per_test`` guesses (the official ARC 2-attempt rule): two train-consistent
+        # programs agree on train by construction but can differ on a test grid. Constraints (an
+        # extra filter, usually empty) still apply. The outcome partition above stays pool-based
+        # (invariant intact; an evicted solution stays EVICTED), so the ``solved > accepted`` gap is
+        # a measured eviction-loss signal; WAKE still uses only ranked_programs[0], the cheapest.
         sink = state.tracker.solutions
-        returned = next(
-            (
-                record
-                for record in sink.records()
-                if all(
-                    constraint.holds(record.program, train_examples, library)
-                    for constraint in constraints
-                )
-            ),
-            None,
-        )
-        ranked_programs = (returned.program,) if returned is not None else ()
-        solved_at_generation = returned.generation if returned is not None else None
+        passing = [
+            record
+            for record in sink.records()
+            if all(
+                constraint.holds(record.program, train_examples, library)
+                for constraint in constraints
+            )
+        ]
+        ranked_programs = tuple(record.program for record in passing)
+        solved_at_generation = passing[0].generation if passing else None
 
         cheapest = sink.cheapest()
         return SearchResult(

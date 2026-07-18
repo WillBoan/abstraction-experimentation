@@ -70,6 +70,24 @@ def test_eviction_loss_is_recovered_by_the_sink() -> None:
     assert result.ranked_programs == (Apply("flip_h", (Input(),)),)
 
 
+def test_multiple_distinct_solutions_are_all_returned_cheapest_first() -> None:
+    # A fully-symmetric grid is fixed by Input() AND every D4 op, so the sink records many distinct
+    # solution PROGRAMS (the pool dedups them to one slot). All are returned cheapest-first, so
+    # predict has real attempts_per_test candidates (the wakeup).
+    symmetric = Grid.from_list([[5, 5], [5, 5]])
+    task = Task(task_id="sym", train=(Example(input=symmetric, output=symmetric),), test=())
+    result = _ENGINE.run(
+        train_examples=task.train,
+        library=D4_LIBRARY,
+        constraints=(),
+        cost=ProgramSize(),
+        budget=Budget(max_depth=2, max_arity=1, max_pool=100),
+    )
+    assert len(result.ranked_programs) >= 2  # Input() plus the cost-2 D4 applications
+    assert result.ranked_programs[0] == Input()  # cheapest first
+    assert result.stats.returned_solution_count == len(result.ranked_programs)
+
+
 def test_unsolved_task_has_empty_sink_and_is_not_solved() -> None:
     # An unreachable target at this budget: no solution, so the sink is empty and .solved is False.
     unreachable = Grid.from_list([[9, 9], [9, 9]])
