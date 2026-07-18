@@ -80,6 +80,8 @@ Batch design:
     - **cost-paid-full** — total considered count at budget exhaustion. Can exceed cost-to-first / cost-to-cheapest, if _early stop_ is not enabled.
   - **Solve generation** — the 0-indexed composition round at which the first accepted program appeared.
     - (_observable; depends on the specific search engine and params_)
+  - **Max generation (`max_generation`)** = `budget.max_depth - 1` — the highest generation a run can reach (generations `0..max_depth-1` run; generation 0 = the round-0 leaves). Since generation index = compositional depth (on non-HO floors), this is THE ladder-facing budget quantity: sandwich/window claims are stated as `d <= max_generation`, and the `+1` conversion to raw `max_depth` lives only in the lint.
+    - (_derived from params — `solve generation <= max_generation` always_)
   - **Compositional depth** = The depth of a program's template expressed over a particular library of primitives.
     - (_static_)
 
@@ -357,9 +359,9 @@ Machinery that needs to be implemented in order to run the experiments:
    - Checks:
      - Overall `LadderSpec` is well-formed.
      - All templates are well-typed over `L_{i-1}`.
-     - Each Rung's compositional depth ≤ the reference budget.
-     - Raw compositional depth > the reference budget.
-     - Double-jump (_inlined_) depth > the reference budget, per consecutive pair.
+     - Each Rung's compositional depth <= the reference `max_generation` (§2).
+     - Raw compositional depth > the reference `max_generation`.
+     - Double-jump (_inlined_) depth > the reference `max_generation`, per consecutive pair.
      - Each Rung has >= 2 demonstrating tasks.
      - Each Task has >= 2 train examples.
      - Background-within/target-across: for each argument position of each rung template, classify it as derived or free, and apply the corresponding rule — derived ⇒ varies within-task; free ⇒ fixed within-task, varied across demonstrating tasks.
