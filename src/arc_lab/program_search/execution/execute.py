@@ -66,7 +66,9 @@ DEFAULT_RUNS_ROOT: Final = Path(__file__).resolve().parents[4] / "runs"
 #: The whole search/execution logger subtree — the same one ``cli/main.py``'s
 #: ``_configure_logging`` toggles for console output via ``-v``/``-vv``.
 _PROGRESS_LOGGER_NAME: Final = "arc_lab.program_search"
-_LOG_FILE_FORMAT: Final = "%(asctime)s %(levelname)s task=%(task_id)s gen=%(generation)s %(message)s"
+_LOG_FILE_FORMAT: Final = (
+    "%(asctime)s %(levelname)s task=%(task_id)s gen=%(generation)s %(message)s"
+)
 
 
 class _DefaultLogFieldsFilter(logging.Filter):

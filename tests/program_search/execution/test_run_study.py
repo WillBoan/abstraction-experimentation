@@ -7,11 +7,11 @@ import pytest
 from arc_lab.core.dataset import Corpus
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Example, Task
+from arc_lab.program_search.analysis.behavioral import matches_target
 from arc_lab.program_search.execution.model import Config, LearnSpec, StudySpec, TargetAbstraction
 from arc_lab.program_search.execution.run_study import (
     GridCell,
     StudyResult,
-    _matches_target,
     create_study_report,
     run_study,
 )
@@ -170,10 +170,10 @@ def test_behavioral_match_is_semantic_not_syntactic() -> None:
         "double_flip", Apply("flip_h", (Apply("flip_h", (Param(0, GRID),)),)), _LIBRARY
     )
     identity_target = make_abstraction("id_target", Apply("identity", (Param(0, GRID),)), _LIBRARY)
-    assert _matches_target(double_flip, identity_target, _PROBES)
+    assert matches_target(double_flip, identity_target, _PROBES)
 
 
 def test_behavioral_mismatch_is_detected() -> None:
     single_rot = make_abstraction("single_rot", Apply("rot90", (Param(0, GRID),)), _LIBRARY)
     rot180_target = make_abstraction("rot180_target", _ROT180_TEMPLATE, _LIBRARY)
-    assert not _matches_target(single_rot, rot180_target, _PROBES)
+    assert not matches_target(single_rot, rot180_target, _PROBES)

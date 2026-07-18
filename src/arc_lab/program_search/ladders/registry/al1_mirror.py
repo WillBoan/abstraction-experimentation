@@ -34,9 +34,15 @@ _ROT180 = Apply("flip_h", (Apply("flip_v", (Param(0, GRID),)),))
 _MIRROR_RECOLOR = Apply(
     "map_color", (Apply("rot180", (Param(0, GRID),)), Param(1, COLOR), Param(2, COLOR))
 )
-#: The top-1-2 reference solution over L2 (uses mirror_recolor as a fragment).
-_TOP_1_2 = Apply(
-    "flip_v", (Apply("mirror_recolor", (Input(), Const(1, COLOR), Const(2, COLOR))),)
+#: The top reference solution over L2: map_color(mirror_recolor(g,1,2),3,4) -- a second independent
+#: recolor, so it does not collapse via the D4 group law (a single-flip wrapper would).
+_TOP = Apply(
+    "map_color",
+    (
+        Apply("mirror_recolor", (Input(), Const(1, COLOR), Const(2, COLOR))),
+        Const(3, COLOR),
+        Const(4, COLOR),
+    ),
 )
 
 
@@ -94,7 +100,7 @@ def build() -> LadderSpec:
                 demonstrations=_full_demos(train, "mirror_recolor"),
             ),
         ),
-        top=TopRung(task_ids=_top_task_ids(train), reference_solutions=(_TOP_1_2,)),
+        top=TopRung(task_ids=_top_task_ids(train), reference_solutions=(_TOP,)),
         train_corpus=train,
         heldout_corpus=heldout,
         budgets=(budget,),

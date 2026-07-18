@@ -32,7 +32,9 @@ class DemonstrationKind(enum.Enum):
     exactly the proposer the rung requires (the §2 mapping)."""
 
     FULL_SOLUTION = "full_solution"  # solution == template instantiated -> AntiunifyPairs viable
-    FRAGMENT_IDENTICAL = "fragment_identical"  # subprogram, identical instantiation -> FrequentSubtree
+    FRAGMENT_IDENTICAL = (
+        "fragment_identical"  # subprogram, identical instantiation -> FrequentSubtree
+    )
     FRAGMENT_VARYING = "fragment_varying"  # subprogram, varying params -> StitchProposer
 
 
@@ -168,7 +170,11 @@ class LadderSpec:
                 if (tid := d.task_id) in by_id and len(by_id[tid].task.train) < 2
             }
         )
-        warn("min-2-train-examples", not few_examples, f"tasks with < 2 train examples: {few_examples}")
+        warn(
+            "min-2-train-examples",
+            not few_examples,
+            f"tasks with < 2 train examples: {few_examples}",
+        )
 
         # 2. Type well-formedness (attempt make_abstraction over L_{i-1}; reuse its validation).
         for i, rung in enumerate(rungs):
@@ -182,10 +188,16 @@ class LadderSpec:
         rung_shapes: list[RungShape] = []
         for i, rung in enumerate(rungs):
             d_i = compositional_depth(rung.template)
-            err(f"jump-affordable[{rung.name}]", d_i + 1 <= ref_depth, f"d={d_i}, need +1 <= {ref_depth}")
+            err(
+                f"jump-affordable[{rung.name}]",
+                d_i + 1 <= ref_depth,
+                f"d={d_i}, need +1 <= {ref_depth}",
+            )
             double_jump: int | None = None
             if i + 1 < k:  # inlined next rung over L_{i-1} (skip this rung)
-                inlined = unfold_program(rungs[i + 1].template, full_lib, expand=frozenset({rung.name}))
+                inlined = unfold_program(
+                    rungs[i + 1].template, full_lib, expand=frozenset({rung.name})
+                )
                 double_jump = compositional_depth(inlined)
                 err(
                     f"double-jump-intractable[{rung.name}]",
@@ -213,7 +225,11 @@ class LadderSpec:
             err("top-affordable-with-ladder", d_top + 1 <= ref_depth, f"top d={d_top} over L_{k}")
             d_raw = compositional_depth(unfold_program(sol, full_lib))
             raw_profile.append(d_raw)
-            err("raw-intractable", d_raw + 1 > ref_depth, f"d_raw={d_raw}, must exceed {ref_depth - 1}")
+            err(
+                "raw-intractable",
+                d_raw + 1 > ref_depth,
+                f"d_raw={d_raw}, must exceed {ref_depth - 1}",
+            )
             skip_top = compositional_depth(
                 unfold_program(sol, full_lib, expand=frozenset({rungs[-1].name}))
             )
@@ -224,12 +240,20 @@ class LadderSpec:
             )
 
         # 6. Proposer compatibility.
-        proposer = getattr(getattr(self.reference_config.learn, "learn_engine", None), "proposer", None)
-        provided = _PROPOSER_CAPABILITIES.get(type(proposer).__name__) if proposer is not None else None
+        proposer = getattr(
+            getattr(self.reference_config.learn, "learn_engine", None), "proposer", None
+        )
+        provided = (
+            _PROPOSER_CAPABILITIES.get(type(proposer).__name__) if proposer is not None else None
+        )
         for rung in rungs:
             kinds = {d.kind for d in rung.demonstrations}
             if provided is None:
-                warn(f"proposer-compat[{rung.name}]", True, "proposer capability not statically known")
+                warn(
+                    f"proposer-compat[{rung.name}]",
+                    True,
+                    "proposer capability not statically known",
+                )
             else:
                 err(
                     f"proposer-compat[{rung.name}]",
@@ -244,7 +268,11 @@ class LadderSpec:
             "every rung has fan-in 1 (a pure telescope)",
         )
         if any(s.involves_lambda for s in rung_shapes):
-            warn("no-lambda-in-templates", False, "a rung template contains a Lam; depth checks advisory")
+            warn(
+                "no-lambda-in-templates",
+                False,
+                "a rung template contains a Lam; depth checks advisory",
+            )
 
         # 11. Validity window.
         lower = max([*(s.jump_depth for s in rung_shapes), *top_depths]) + 1
@@ -282,8 +310,12 @@ class LadderSpec:
                 f"  {s.level:>5}  {s.name:<16}  {s.jump_depth:>3}  {dj:>11}  "
                 f"{s.fan_in:>6}  {s.demonstration_count}"
             )
-        lines.append(f"  top    {'(goal tasks)':<16}  {'-':>3}  {'-':>11}  {'-':>6}  {len(self.top.task_ids)}")
-        bad = [f"{f.check}: {f.detail}" for f in shape.findings if not f.ok and f.severity == "error"]
+        lines.append(
+            f"  top    {'(goal tasks)':<16}  {'-':>3}  {'-':>11}  {'-':>6}  {len(self.top.task_ids)}"
+        )
+        bad = [
+            f"{f.check}: {f.detail}" for f in shape.findings if not f.ok and f.severity == "error"
+        ]
         if bad:
             lines.append("  ERRORS: " + "; ".join(bad))
         return "\n".join(lines)

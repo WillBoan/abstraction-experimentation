@@ -21,9 +21,7 @@ def test_nesting_counts_constructor_nodes_only() -> None:
 
 def test_depth_is_the_max_over_argument_paths() -> None:
     # map_color(rot180(input), c, c) -> 1 + max(depth(rot180(input))=1, 0, 0) = 2.
-    program = Apply(
-        "map_color", (Apply("rot180", (Input(),)), Const(1, COLOR), Const(2, COLOR))
-    )
+    program = Apply("map_color", (Apply("rot180", (Input(),)), Const(1, COLOR), Const(2, COLOR)))
     assert compositional_depth(program) == 2
 
 

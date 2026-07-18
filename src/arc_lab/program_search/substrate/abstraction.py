@@ -152,9 +152,7 @@ def unfold_program(
     def go(node: Program) -> Program:
         if isinstance(node, Apply):
             unfolded_args = tuple(go(arg) for arg in node.args)
-            template = (
-                library.get(node.primitive).template if node.primitive in library else None
-            )
+            template = library.get(node.primitive).template if node.primitive in library else None
             if template is not None and (expand is None or node.primitive in expand):
                 return go(substitute_params(template, unfolded_args))
             return Apply(primitive=node.primitive, args=unfolded_args)

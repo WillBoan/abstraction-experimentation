@@ -29,11 +29,12 @@ import pytest
 
 from arc_lab.core.dataset import Corpus, load_dataset
 from arc_lab.core.grid import Grid
+from arc_lab.program_search.analysis.behavioral import matches_target
 from arc_lab.program_search.execution.model import RunRecord, TargetAbstraction
 from arc_lab.program_search.execution.presets import PRESETS
 from arc_lab.program_search.execution.run_search import run_search
 from arc_lab.program_search.execution.run_search_learn import run_search_learn
-from arc_lab.program_search.execution.run_study import _invented, _matches_target
+from arc_lab.program_search.execution.run_study import _invented
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.substrate.abstraction import make_abstraction
 from arc_lab.program_search.substrate.library import Library, Primitive
@@ -66,7 +67,7 @@ def _behavioral_check(
     rows: list[dict[str, object]] = []
     for target in targets:
         target_primitive = make_abstraction(target.name, target.template, l1)
-        matched_by = [p.name for p in invented if _matches_target(p, target_primitive, probes)]
+        matched_by = [p.name for p in invented if matches_target(p, target_primitive, probes)]
         rows.append({"target": target.name, "matched": bool(matched_by), "matched_by": matched_by})
     return rows
 

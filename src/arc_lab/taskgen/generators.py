@@ -314,12 +314,17 @@ def _mirror_recolor_solution(a: int, b: int) -> Callable[[Grid], Grid]:
     return solution
 
 
-def _al1_top_solution(a: int, b: int) -> Callable[[Grid], Grid]:
-    """top(g, a, b) = flip_v(mirror_recolor(g, a, b)) -- the goal, using mirror_recolor as a fragment."""
-    inner = _mirror_recolor_solution(a, b)
+def _al1_top_solution(a: int, b: int, c: int, d: int) -> Callable[[Grid], Grid]:
+    """top(g) = map_color(mirror_recolor(g, a, b), c, d) -- mirror_recolor then a SECOND, independent
+    recolor. Uses mirror_recolor as a fragment and, unlike a D4 wrapper (which would collapse via the
+    group law, e.g. flip_v(rot180)=flip_h), does not algebraically shorten -- two distinct recolors
+    plus a rotation need all four floor applications, so the top is genuinely intractable raw."""
 
     def solution(grid: Grid) -> Grid:
-        return Grid(inner(grid).array[::-1, :])  # flip_v (rows reversed)
+        arr = grid.array[::-1, ::-1].copy()  # rot180
+        arr[arr == a] = b  # mirror_recolor's recolor
+        arr[arr == c] = d  # the outer map_color's recolor (distinct colors: no merge)
+        return Grid(arr)
 
     return solution
 
@@ -393,25 +398,26 @@ def al1_mirror_tasks() -> tuple[GeneratedTask, ...]:
             test_inputs=grids[2:],
         )
     )
-    # top: flip_v(mirror_recolor(g,a,b)) -- the goal, reachable only once both rungs are minted.
-    grids = _al1_grids(1)
+    # top: map_color(mirror_recolor(g,1,2),3,4) -- reachable only once both rungs are minted; the
+    # second independent recolor prevents the D4 group-law collapse a single-flip wrapper would have.
+    grids = _al1_grids(1)  # contains colors 1 and 3
     tasks.append(
         make_task(
-            "top-1-2",
+            "top-00",
             label="top",
             split="train",
-            solution=_al1_top_solution(1, 2),
+            solution=_al1_top_solution(1, 2, 3, 4),
             train_inputs=grids[:2],
             test_inputs=grids[2:],
         )
     )
-    grids = _al1_grids(3)
+    grids = _al1_grids(5)  # contains colors 5 and 7 (unseen)
     tasks.append(
         make_task(
-            "top-3-4",
+            "top-heldout",
             label="top",
             split="heldout",
-            solution=_al1_top_solution(3, 4),
+            solution=_al1_top_solution(5, 6, 7, 8),
             train_inputs=grids[:2],
             test_inputs=grids[2:],
         )
@@ -426,7 +432,8 @@ def generate_al1_mirror(out_root: Path) -> Path:
         out_root=out_root,
         note=(
             "Abstraction Ladder #1: L0{flip_h,flip_v,map_color} -> rot180 -> "
-            "mirror_recolor(g,a,b)=map_color(rot180(g),a,b) -> top=flip_v(mirror_recolor(g,a,b))."
+            "mirror_recolor(g,a,b)=map_color(rot180(g),a,b) -> "
+            "top=map_color(mirror_recolor(g,1,2),3,4)."
         ),
     )
 

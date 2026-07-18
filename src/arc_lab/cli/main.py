@@ -20,6 +20,7 @@ from . import (
     configs,
     datasets,
     estimate,
+    ladder,
     learn,
     library_graph,
     run_study,
@@ -74,6 +75,7 @@ app.command(name="search")(search.search)
 app.command(name="estimate")(estimate.estimate)
 app.command(name="learn")(learn.learn)
 app.command(name="run-study")(run_study.run_study_command)
+app.command(name="run-ladder")(ladder.run_ladder_command)
 app.command(name="analyze-run")(analyze_run.analyze_run_command)
 app.command(name="taskgen")(taskgen.taskgen)
 app.command(name="runs")(runs.list_runs)
