@@ -133,6 +133,10 @@ class _RunState:
     #: The training outputs, index-aligned with ``train_with_output(train_examples)`` — the values
     #: half of the top-level ``EnclosingTarget`` (§7); ``()`` if there are none.
     train_target: tuple[Value, ...] = ()
+    #: The goal-test comparison signature (same values as ``train_target``, typed as a
+    #: ``Signature``): a top-level candidate whose ``(type, sig) == (goal_type, target)`` is a
+    #: solution, recorded into the tracker's solution sink at absorption. ``()`` if no targets.
+    target: Signature = ()
     universe: tuple[Type, ...] = ()  # the bounded-polymorphism monotype universe (§6.2)
     tracker: SearchTracker = field(default_factory=SearchTracker)
     counter: itertools.count[int] = field(default_factory=itertools.count)
@@ -305,6 +309,7 @@ class BottomUpSearchEngine(SearchEngine):
             cost=cost,
             goal_type=resolved_goal_type,
             train_target=train_target,
+            target=target,
             universe=universe,
             tracker=tracker if tracker is not None else SearchTracker(),
         )
@@ -331,6 +336,10 @@ class BottomUpSearchEngine(SearchEngine):
         # (resolved_goal_type, target) — extraction.accepted has at most one entry (§5.7/§5.8).
         solved_at_generation = extraction.accepted[0].generation if extraction.accepted else None
 
+        # Solution-sink telemetry (dormant): recorded but NOT used for the return here — the
+        # ranked_programs / accepted / solved_at_generation above stay pool-based this commit.
+        sink = state.tracker.solutions
+        cheapest = sink.cheapest()
         return SearchResult(
             ranked_programs=solutions,
             stats=SearchStats(
@@ -340,6 +349,12 @@ class BottomUpSearchEngine(SearchEngine):
                 outcomes=state.tracker.totals(),
                 by_primitive=state.tracker.by_primitive(),
                 solved_at_generation=solved_at_generation,
+                generations=tuple(state.tracker.generations()),
+                first_solution_index=sink.first_index,
+                cheapest_solution_index=cheapest.candidate_index if cheapest else None,
+                solution_count=sink.count,
+                solutions_truncated=sink.truncated,
+                solutions=sink.records(),
             ),
         )
 
@@ -922,6 +937,16 @@ class BottomUpSearchEngine(SearchEngine):
             )
         else:
             cost = state.cost.of(program, state.train_examples, state.library)
+            # Solution sink: a top-level candidate whose (type, signature) matches the goal is a
+            # solution — recorded here, at absorption, before add_dedup collapses every solution
+            # into the pool's single (goal_type, target) slot. Top-level only (a sub-search carries
+            # its own body target, not THE goal); dormant telemetry, never touches the pool.
+            if (
+                track_generation is not None
+                and vtype == state.goal_type
+                and signature == state.target
+            ):
+                state.tracker.record_solution(index, generation, program, cost)
             outcome = pool.add_dedup(vtype, signature, program, cost, primitives, index, generation)
             if not outcome.inserted:
                 state.tracker.record(

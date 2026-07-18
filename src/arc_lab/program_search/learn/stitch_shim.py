@@ -30,6 +30,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias
 
 from arc_lab.program_search.learn.antiunify import AbstractionProposer, _close_template, _is_useful
+from arc_lab.program_search.learn.telemetry import SleepCounters
 from arc_lab.program_search.substrate.library import Library, Primitive
 from arc_lab.program_search.substrate.program import (
     AppFn,
@@ -495,7 +496,15 @@ class StitchProposer(AbstractionProposer):
     max_arity: int = 3
     threads: int = 1
 
-    def propose(self, programs: list[Program], library: Library) -> list[Program]:
+    def propose(
+        self,
+        programs: list[Program],
+        library: Library,
+        *,
+        counters: SleepCounters | None = None,
+    ) -> list[Program]:
+        # counters: Stitch's cost isn't pair-based, so it leaves antiunify_pair_count untouched;
+        # the proposals it returns are still tallied by the selector (proposal_count).
         return stitch_candidates(
             programs,
             library,

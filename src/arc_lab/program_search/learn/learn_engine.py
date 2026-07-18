@@ -37,6 +37,10 @@ class LearnOutcome:
     #: The wake solutions re-expressed in the grown library — telemetry for the trace.
     rewritten: tuple[SolvedTask, ...]
     description_length: float
+    #: Sleep-cost telemetry (``learn/telemetry.py``): total proposals seen and antiunify pairs
+    #: attempted across this sleep's selection steps. Never part of run identity.
+    proposal_count: int = 0
+    antiunify_pair_count: int = 0
 
     @property
     def converged(self) -> bool:

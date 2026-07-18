@@ -20,6 +20,7 @@ from dataclasses import dataclass, replace
 
 from arc_lab.program_search.analysis.compression import CompressionMetric, SolvedTask
 from arc_lab.program_search.learn.antiunify import AbstractionProposer, rewrite_with
+from arc_lab.program_search.learn.telemetry import SleepCounters
 from arc_lab.program_search.substrate.abstraction import make_abstraction
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.program import Program
@@ -39,8 +40,13 @@ class AbstractionSelector(ABC):
         library: Library,
         proposer: AbstractionProposer,
         metric: CompressionMetric,
+        *,
+        counters: SleepCounters | None = None,
     ) -> Program | None:
-        """The template to adopt now, or ``None`` when no candidate is worth minting."""
+        """The template to adopt now, or ``None`` when no candidate is worth minting.
+
+        ``counters`` (if given) accumulates sleep-cost telemetry — proposals seen and (via
+        ``proposer.propose``) antiunify-pair attempts; it never changes the choice."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,15 +63,16 @@ class GreedyMDL(AbstractionSelector):
         library: Library,
         proposer: AbstractionProposer,
         metric: CompressionMetric,
+        *,
+        counters: SleepCounters | None = None,
     ) -> Program | None:
         # Dedup against the library: never re-mint a template we already have as a primitive
         # (the cross-generation duplication observed in E3, e.g. abs4 identical to abs1).
         existing = {p.template for p in library.primitives if p.template is not None}
-        candidates = [
-            template
-            for template in proposer.propose([st.program for st in corpus], library)
-            if template not in existing
-        ]
+        proposed = proposer.propose([st.program for st in corpus], library, counters=counters)
+        if counters is not None:
+            counters.proposal_count += len(proposed)
+        candidates = [template for template in proposed if template not in existing]
         best_template: Program | None = None
         best_dl = metric.describe(corpus, library).total
         for i, template in enumerate(candidates):
