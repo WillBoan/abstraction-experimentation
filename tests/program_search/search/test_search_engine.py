@@ -46,8 +46,8 @@ _ENGINE = BottomUpSearchEngine(
 )
 
 
-def _budget(max_depth: int, max_arity: int = 1) -> Budget:
-    return Budget(max_depth=max_depth, max_arity=max_arity, max_pool=100)
+def _budget(depth_limit: int, max_arity: int = 1) -> Budget:
+    return Budget(depth_limit=depth_limit, max_arity=max_arity, max_pool=100)
 
 
 def test_solves_identity_with_the_input_leaf() -> None:
@@ -57,7 +57,7 @@ def test_solves_identity_with_the_input_leaf() -> None:
         library=_EMPTY,
         constraints=(),
         cost=ProgramSize(),
-        budget=_budget(max_depth=1),
+        budget=_budget(depth_limit=0),
     )
     assert result.stats.solved
     assert result.ranked_programs == (Input(),)
@@ -70,7 +70,7 @@ def test_solves_a_single_primitive_composition() -> None:
         library=_GEO,
         constraints=(),
         cost=ProgramSize(),
-        budget=_budget(max_depth=2),
+        budget=_budget(depth_limit=1),
     )
     assert result.stats.solved
     assert Apply(primitive="transpose", args=(Input(),)) in result.ranked_programs
@@ -83,7 +83,7 @@ def test_unsolvable_within_the_vocabulary_returns_nothing() -> None:
         library=_EMPTY,
         constraints=(),
         cost=ProgramSize(),
-        budget=_budget(max_depth=2),
+        budget=_budget(depth_limit=1),
     )
     assert not result.stats.solved
     assert result.ranked_programs == ()
@@ -112,7 +112,7 @@ def test_solves_with_a_variadic_primitive() -> None:
         library=Library(name="concat", primitives=(_HCONCAT,)),
         constraints=(),
         cost=ProgramSize(),
-        budget=_budget(max_depth=2, max_arity=2),
+        budget=_budget(depth_limit=1, max_arity=2),
     )
     assert result.stats.solved
     assert Apply(primitive="hconcat", args=(Input(), Input())) in result.ranked_programs
@@ -133,7 +133,7 @@ def test_solves_under_every_polymorphism_policy() -> None:
             library=_GEO,
             constraints=(),
             cost=ProgramSize(),
-            budget=_budget(max_depth=2),
+            budget=_budget(depth_limit=1),
         )
         assert Apply(primitive="transpose", args=(Input(),)) in result.ranked_programs
 
@@ -174,7 +174,7 @@ def test_point_free_higher_order_fill_via_a_primref() -> None:
         library=Library(name="ho", primitives=(_TWICE, _ROT90)),
         constraints=(),
         cost=ProgramSize(),
-        budget=_budget(max_depth=2),
+        budget=_budget(depth_limit=1),
     )
     assert result.stats.solved
     assert Apply(primitive="twice", args=(PrimRef(name="rot90"), Input())) in result.ranked_programs
@@ -194,7 +194,7 @@ def test_beam_engine_also_solves() -> None:
         library=_GEO,
         constraints=(),
         cost=ProgramSize(),
-        budget=_budget(max_depth=2),
+        budget=_budget(depth_limit=1),
     )
     assert Apply(primitive="transpose", args=(Input(),)) in result.ranked_programs
 
@@ -219,7 +219,7 @@ def test_progress_logging_emits_all_four_generation_log_sites(
             library=_GEO,
             constraints=(),
             cost=ProgramSize(),
-            budget=_budget(max_depth=2),
+            budget=_budget(depth_limit=1),
             tracker=tracker,
         )
     messages = [record.getMessage() for record in caplog.records]
@@ -241,7 +241,7 @@ def test_progress_logging_is_silent_below_info_level(caplog: pytest.LogCaptureFi
             library=_GEO,
             constraints=(),
             cost=ProgramSize(),
-            budget=_budget(max_depth=2),
+            budget=_budget(depth_limit=1),
         )
     assert caplog.records == []
 
@@ -266,11 +266,11 @@ def test_progress_logging_never_fires_for_a_lambda_synthesis_sub_search(
             library=Library(name="ho", primitives=(_TWICE, _ROT90)),
             constraints=(),
             cost=ProgramSize(),
-            budget=_budget(max_depth=2),
+            budget=_budget(depth_limit=1),
         )
     assert result.stats.solved
     # Every log record's generation numbering must be consistent with the *top-level* search's
-    # own max_depth, never a sub-search's smaller descended one.
+    # own depth_limit, never a sub-search's smaller descended one.
     for record in caplog.records:
         gen = record.generation  # type: ignore[attr-defined]
         assert gen == "-" or gen.endswith("/2")

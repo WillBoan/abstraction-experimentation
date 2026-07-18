@@ -50,7 +50,7 @@ def _run_spec(library: Library, budget: Budget, task: Task) -> RunSpec:
 
 def test_leaf_only_round_matches_the_engine_exactly() -> None:
     task = _task()
-    budget = Budget(max_depth=1, max_arity=1, max_pool=100)
+    budget = Budget(depth_limit=0, max_arity=1, max_pool=100)
     estimate = estimate_cost(_run_spec(_EMPTY, budget, task))
     result = _ENGINE.run(
         train_examples=task.train, library=_EMPTY, constraints=(), cost=ProgramSize(), budget=budget
@@ -60,7 +60,7 @@ def test_leaf_only_round_matches_the_engine_exactly() -> None:
 
 def test_single_unary_primitive_matches_the_engine_exactly() -> None:
     task = _task()
-    budget = Budget(max_depth=2, max_arity=1, max_pool=100)
+    budget = Budget(depth_limit=1, max_arity=1, max_pool=100)
     estimate = estimate_cost(_run_spec(_GEO, budget, task))
     result = _ENGINE.run(
         train_examples=task.train, library=_GEO, constraints=(), cost=ProgramSize(), budget=budget
@@ -82,7 +82,7 @@ def test_ceiling_is_never_below_actual_considered_with_a_mixed_type_library() ->
     double = Primitive(name="double", param_types=(INT,), return_type=INT, impl=_double)
     library = Library(name="mixed", primitives=(_TRANSPOSE, double))
     task = _task()
-    budget = Budget(max_depth=3, max_arity=1, max_pool=100)
+    budget = Budget(depth_limit=2, max_arity=1, max_pool=100)
     estimate = estimate_cost(_run_spec(library, budget, task))
     result = _ENGINE.run(
         train_examples=task.train,
@@ -96,7 +96,7 @@ def test_ceiling_is_never_below_actual_considered_with_a_mixed_type_library() ->
 
 def test_pool_is_capped_at_max_pool_across_rounds() -> None:
     task = _task()
-    budget = Budget(max_depth=4, max_arity=1, max_pool=3)
+    budget = Budget(depth_limit=3, max_arity=1, max_pool=3)
     estimate = estimate_cost(_run_spec(_GEO, budget, task))
     for round_ in estimate.tasks[0].rounds:
         assert round_.incoming_pool <= 3
@@ -111,7 +111,7 @@ def test_beam_engine_caps_by_beam_width_not_max_pool() -> None:
         beam_width=2,
     )
     task = _task()
-    budget = Budget(max_depth=4, max_arity=1, max_pool=100)
+    budget = Budget(depth_limit=3, max_arity=1, max_pool=100)
     config = Config(library=_GEO, search_engine=beam, budget=budget)
     estimate = estimate_cost(RunSpec(config=config, corpus=Corpus.of("c", (task,))))
     for round_ in estimate.tasks[0].rounds:
@@ -125,14 +125,14 @@ def test_flags_lambda_synthesis_as_a_lower_bound_only() -> None:
         polymorphism_instantiation="monomorphize",
         unpinned_type_var_mode="reject",
     )
-    budget = Budget(max_depth=2, max_arity=1, max_pool=100)
+    budget = Budget(depth_limit=1, max_arity=1, max_pool=100)
     config = Config(library=_EMPTY, search_engine=engine, budget=budget)
     estimate = estimate_cost(RunSpec(config=config, corpus=Corpus.of("c", (_task(),))))
     assert any("LOWER bound" in flag for flag in estimate.flags)
 
 
 def test_flags_a_learn_run_as_bounding_iteration_zero_only() -> None:
-    budget = Budget(max_depth=1, max_arity=1, max_pool=100)
+    budget = Budget(depth_limit=0, max_arity=1, max_pool=100)
     learn = LearnSpec(learn_engine=GreedyMDLLearnEngine(proposer=AntiunifyPairs()), iterations=1)
     config = Config(library=_EMPTY, search_engine=_ENGINE, budget=budget, learn=learn)
     estimate = estimate_cost(RunSpec(config=config, corpus=Corpus.of("c", (_task(),))))
@@ -140,6 +140,6 @@ def test_flags_a_learn_run_as_bounding_iteration_zero_only() -> None:
 
 
 def test_no_flags_for_a_plain_search_preset_shaped_config() -> None:
-    budget = Budget(max_depth=2, max_arity=1, max_pool=100)
+    budget = Budget(depth_limit=1, max_arity=1, max_pool=100)
     estimate = estimate_cost(_run_spec(_GEO, budget, _task()))
     assert estimate.flags == ()

@@ -80,7 +80,7 @@ def test_universe_of_a_monomorphic_library_is_its_return_types() -> None:
             Primitive(name="b", param_types=(GRID,), return_type=INT, impl=lambda g: 0),
         ),
     )
-    assert set(monotype_universe(library, max_depth=3)) == {GRID, INT}
+    assert set(monotype_universe(library, max_nesting=3)) == {GRID, INT}
 
 
 def test_universe_closes_under_present_constructors() -> None:
@@ -92,6 +92,6 @@ def test_universe_closes_under_present_constructors() -> None:
             ),
         ),
     )
-    universe = set(monotype_universe(library, max_depth=2))
+    universe = set(monotype_universe(library, max_nesting=2))
     assert list_type(GRID) in universe  # the seed return type
     assert list_type(list_type(GRID)) in universe  # one level of constructor closure

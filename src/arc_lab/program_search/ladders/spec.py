@@ -136,7 +136,7 @@ class LadderSpec:
         findings: list[LintFinding] = []
         rungs = self.rungs
         k = len(rungs)
-        ref_depth = self.reference_config.budget.max_depth
+        ref_limit = self.reference_config.budget.depth_limit
         full_lib = self.oracle_library(k)
         by_id = {entry.task.task_id: entry for entry in self.train_corpus.entries}
 
@@ -190,19 +190,34 @@ class LadderSpec:
             d_i = compositional_depth(rung.template)
             err(
                 f"jump-affordable[{rung.name}]",
-                d_i + 1 <= ref_depth,
-                f"d={d_i}, need +1 <= {ref_depth}",
+                d_i <= ref_limit,
+                f"d={d_i}, need <= depth_limit {ref_limit}",
+            )
+            # Demonstration relationship (1): a rung is a PROPER composition over L_{i-1}. A
+            # depth-1 template is a bare primitive already in that library, so it belongs to a
+            # lower rung and buys no depth (the double-jump check would flag it only indirectly).
+            err(
+                f"proper-composition[{rung.name}]",
+                d_i >= 2,
+                f"jump depth {d_i}: a rung must compose over L_{i}, not restate a bare primitive",
             )
             double_jump: int | None = None
             if i + 1 < k:  # inlined next rung over L_{i-1} (skip this rung)
+                # Structural necessity: the rung above must actually CALL this one. Without a
+                # call site, expanding it is a no-op and the ladder telescopes vacuously here.
+                err(
+                    f"rung-referenced[{rung.name}]",
+                    _calls(rungs[i + 1].template, rung.name) >= 1,
+                    f"{rungs[i + 1].name} never calls {rung.name}: the rung below is unused",
+                )
                 inlined = unfold_program(
                     rungs[i + 1].template, full_lib, expand=frozenset({rung.name})
                 )
                 double_jump = compositional_depth(inlined)
                 err(
                     f"double-jump-intractable[{rung.name}]",
-                    double_jump + 1 > ref_depth,
-                    f"inlined depth {double_jump}, must exceed {ref_depth - 1}",
+                    double_jump > ref_limit,
+                    f"inlined depth {double_jump}, must exceed depth_limit {ref_limit}",
                 )
             rung_shapes.append(
                 RungShape(
@@ -222,21 +237,32 @@ class LadderSpec:
         for sol in self.top.reference_solutions:
             d_top = compositional_depth(sol)
             top_depths.append(d_top)
-            err("top-affordable-with-ladder", d_top + 1 <= ref_depth, f"top d={d_top} over L_{k}")
+            err(
+                "top-affordable-with-ladder",
+                d_top <= ref_limit,
+                f"top d={d_top} over L_{k}, need <= depth_limit {ref_limit}",
+            )
+            # The Top Rung's whole definition: its solutions USE the top bridging rung as a
+            # fragment. A top that never calls r_k isn't standing on the ladder at all.
+            err(
+                "top-uses-top-rung",
+                _calls(sol, rungs[-1].name) >= 1,
+                f"a top reference solution never calls {rungs[-1].name}",
+            )
             d_raw = compositional_depth(unfold_program(sol, full_lib))
             raw_profile.append(d_raw)
             err(
                 "raw-intractable",
-                d_raw + 1 > ref_depth,
-                f"d_raw={d_raw}, must exceed {ref_depth - 1}",
+                d_raw > ref_limit,
+                f"d_raw={d_raw}, must exceed depth_limit {ref_limit}",
             )
             skip_top = compositional_depth(
                 unfold_program(sol, full_lib, expand=frozenset({rungs[-1].name}))
             )
             err(
                 "top-double-jump-intractable",
-                skip_top + 1 > ref_depth,
-                f"top over L_{k - 1} depth {skip_top}, must exceed {ref_depth - 1}",
+                skip_top > ref_limit,
+                f"top over L_{k - 1} depth {skip_top}, must exceed depth_limit {ref_limit}",
             )
 
         # 6. Proposer compatibility.
@@ -274,13 +300,15 @@ class LadderSpec:
                 "a rung template contains a Lam; depth checks advisory",
             )
 
-        # 11. Validity window.
-        lower = max([*(s.jump_depth for s in rung_shapes), *top_depths]) + 1
+        # 11. Validity window — inclusive, in depth_limit units (a depth-d program is reachable
+        # iff d <= depth_limit): lower = the deepest required jump/top depth; upper = one less
+        # than the shallowest forbidden depth (inlined double-jumps, raw top).
+        lower = max([*(s.jump_depth for s in rung_shapes), *top_depths])
         intractables = [
             *(s.double_jump_depth for s in rung_shapes if s.double_jump_depth is not None),
             *raw_profile,
         ]
-        upper = min(intractables) if intractables else ref_depth
+        upper = min(intractables) - 1 if intractables else ref_limit
         return LadderShape(
             height=k + 1,
             raw_depth_profile=tuple(raw_profile),
@@ -299,7 +327,7 @@ class LadderSpec:
         lines = [
             f'Ladder "{self.train_corpus.name}"  (height {shape.height})',
             f"  Floor: {{{floor_names}}}",
-            f"  reference max_depth={self.reference_config.budget.max_depth}  "
+            f"  reference depth_limit={self.reference_config.budget.depth_limit}  "
             f"d_raw={list(shape.raw_depth_profile)}  window=[{lo},{hi}]  "
             f"{'OK' if shape.ok else 'LINT FAILED'}",
             "  level  rung              d_i  double-jump  fan-in  demos",
@@ -355,6 +383,11 @@ def _fan_in(template: Program, rung_names: set[str]) -> int:
     return sum(
         1 for node in template.walk() if isinstance(node, Apply) and node.primitive in rung_names
     )
+
+
+def _calls(program: Program, name: str) -> int:
+    """How many times ``program`` calls the named abstraction — 0 means structurally unused."""
+    return sum(1 for node in program.walk() if isinstance(node, Apply) and node.primitive == name)
 
 
 def _corpus_provenance(corpus: Corpus) -> dict[str, object]:

@@ -21,7 +21,7 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
 - **slug** — anchor competence (header line)
 - Height · Shape (chain / telescope / fan-in / DAG) · Floor
 - Rungs (one bullet per rung: name = template, `d_i`, free params) · Top Rung (goal layer)
-- Sandwich sketch (arithmetic at a candidate reference `max_generation`)
+- Sandwich sketch (arithmetic at a candidate reference `depth_limit`)
 - Machinery demands (constants · fill/HO · poly · variadics · free params · proposer · other)
 - v1-eligible · Tests/drains · Family potential · Corpus notes (only if non-obvious) · Blockers
 
@@ -35,10 +35,13 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
     - r1 = `mirror_pair(g) = concat_h(g, flip_h(g))` (d=2, param-free)
     - r2 = `quad_symmetrize(g) = concat_v(r1(g), flip_v(r1(g)))` (d=3, param-free)
   - Top Rung: symmetrize-then-X tasks (X = recolor via added `map_color`, or concat-with-original — floor addition TBD)
-  - Sandwich sketch: closes at reference `max_generation=3` (`max_depth=4`) — jumps d=2,3 <= 3; inlined double-jump depth 4 > 3
+  - Sandwich sketch: closes at reference `depth_limit=3` — jumps d=2,3 <= 3; inlined double-jump depth 4 > 3
+  - Certified ([2026-07-17 derivability probe](../../experiments/2026-07-17-derivability-dag/)): jumps 2/3 confirmed; `quad2 = r2(r2(g))` d=2 over L2 while still underivable (censored, > tree-size 6) over L1 — double-jump holds with room
+  - ⚠ **Skip route found**: minimal r2 witness is `r1(concat_v(g, flip_v(g)))` — fan-in **1**, strictly cheaper than the intended fan-in-2 template; cheapest-wins retention will keep THIS form, so the fan-in-2 test claim does not survive minimality (structural sibling of the E11 literal trap). Either accept the telescope-form mint, or find a target whose *minimal* form is genuinely fan-in > 1
+  - Top Rung option (certified): `quad2 = quad(quad(g))` — self-composition goal layer, d=2 over L2
   - Machinery demands: no constants · no HO (`fill=none`) · param-free rungs (no variation plans) · proposer: `AntiunifyPairs`
   - v1-eligible: **YES** — current #1 pick
-  - Tests: first non-telescope climb (fan-in 2); real size-compounding in the inlined form
+  - Tests: first non-telescope climb (fan-in 2) — **but see skip-route caveat**; real size-compounding in the inlined form
   - Family potential: +frame/recolor rung → height 4; deeper r1 motif → jump-depth variant
 
 - **mask-crop** — "normalize content position/extent" (learned intermediate type)
@@ -46,9 +49,11 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
   - Shape: telescope (likely — natural r2 shapes wrap r1)
   - Floor: `MASK_MIN` (`nonbg_mask`, `crop_to_mask`), possibly + `map_color`/a perceiver
   - Rungs:
-    - r1 = `crop_to_content(g) = crop_to_mask(g, nonbg_mask(g))` (d=2, param-free, var-sharing — `g` used twice)
+    - r1 = `crop_to_content(g) = crop_to_mask(g, nonbg_mask(g))` (d=2, param-free, var-sharing — `g` used twice; certified)
     - r2 = compose on the normalized grid (eg crop-then-recolor — design open)
+    - r2 option (certified): `crop_flip(g) = flip_h(crop_to_content(g))` (d=2 over L1, raw d=3; needs `flip_h`/`transpose` added to the floor)
   - Top Rung: TBD
+  - Route note (probe): the minimal `crop_flip` witness *commutes* — `crop_to_content(flip_h(g))` — task design must not assume operand order
   - Machinery demands: no constants (± `finite-enumerate` if recolor joins) · no HO · a learned **Mask**-typed intermediate · proposer: `AntiunifyPairs`
   - v1-eligible: yes-ish (r2 + top undesigned)
   - Tests: construct-AND-consume a learned `Mask` type — the deepest gap-climbing phenomenon
@@ -59,8 +64,9 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
   - Shape: chain (fan-in 1)
   - Floor: `{map_color, most_common_color, least_common_color}`
   - Rungs:
-    - r1 = `recolor_bg(g,c) = map_color(g, most_common_color(g), c)` (d=2, one free param — the proven E11 abstraction)
+    - r1 = `recolor_bg(g,c) = map_color(g, most_common_color(g), c)` (d=2, one free param — the proven E11 abstraction; certified)
     - r2 = a two-perceiver composite (eg "recolor bg to 0, then recolor the dominant remaining color" — design open)
+    - r2 option (certified): `recolor_bg_flipped(g,c) = recolor_bg(rot180(g), c)` (d=2 over L2) — but it pulls in `rot180` as an independent sibling rung → becomes the diamond shape (see cross-domain normalize)
   - Top Rung: TBD
   - Machinery demands: `finite-enumerate` constants · no HO · free params → variation plans (background-within / target-across) · proposer: `AntiunifyPairs`
   - v1-eligible: yes — deliberately after quad-symmetrize (free params exercise the variation-plan machinery under climbing)
@@ -75,6 +81,8 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
     - r2 = `grid_3x3(g) = concat_v(r1(g), concat_v(r1(g), r1(g)))` (d=3, param-free)
   - Top Rung: mosaic-then-X
   - Sandwich sketch: like quad-symmetrize but with heavier inlined compounding (r1 appears 3x); numbers to verify
+  - Certified (probe): r1 d=2; minimal r2 witness is `r1(concat_v(g, concat_v(g, g)))` d=3 — **fan-in 1**, wrapping a fresh col-of-3 motif (the intended r1-used-3x form is tree-size 5, shadowed); raw r2 censored > 6; `grid9x9 = r2(r2(g))` d=2 over L2 (a certified self-composition top)
+  - ⚠ Same skip-route caveat as quad-symmetrize: the "fan-in 3-by-multiplicity" claim does not survive minimality
   - Machinery demands: no constants · no HO · param-free · proposer: `AntiunifyPairs` · verify concat arity/type details
   - v1-eligible: likely
   - Tests: heavy re-embedding compounding; the bundles doc flags `tile_repeat` ~ nested `concat` as a clean gen/full invention target
@@ -137,7 +145,19 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
   - v1-eligible: not #1 — the Family-A instrument for height-scaling + vocabulary-tax compounding once the machinery works
   - Tests: does the climb stall as the library fattens — with shape held constant
 
+- **recolor-over-mask** — "re-derive swap_colors over mask machinery" (registry-mined)
+  - Height: 2
+  - Shape: chain
+  - Floor: `mask_basic_gen` (`mask_by_color`, `nonbg_mask`, mask algebra minus `mask_difference`, `crop_to_mask`, `paint_through_mask`; withholds `swap_colors`, `map_color`, `crop_to_content`, `bbox_mask`)
+  - Rungs: r1 = `map_color` (d=2 over this floor) · Top: `swap_colors(g,a,b) = paint_through_mask(map_color(g,a,b), mask_by_color(g,b), a)` (4 → 3 via r1, certified)
+  - Machinery demands: `finite-enumerate` colors · 2 free params per rung → variation plans
+  - v1-eligible: no (free-param pressure; the finding is the interest, not the climb)
+  - Tests: the ONLY non-D4 skeleton the shipped registry yields; also a live floor-design caveat — `map_color` ↔ `swap_colors` are MUTUALLY derivable once mask machinery is present (refines the bundles doc's Constraint 5, which is floor-relative)
+
 - **(negative note) D4-only ladders cap out** — the group has 8 elements, all reachable at depth <= 4 from the generators, so double-jump intractability is nearly unachievable: validity windows empty or one budget wide. D4 material = calibration ladders (height 2), not taller ladders.
+  - Quantified (probe): `rot180` is the unique deepest member (d=4 over `{flip_h, transpose}`), collapsing to 2 via any of FOUR interchangeable rungs (`rot90`/`rot270`/`flip_v`/`anti_transpose`) — a free rung-choice metaparameter for the calibration arm.
+
+- **(negative note, quantified) registry mining caps at height 2** — exhaustive derivability pass (leave-one-out + 12 bundles-doc floors, [probe artifacts](../../experiments/2026-07-17-derivability-dag/)): the shipped mono registry yields exactly two ladder skeletons (the D4 one above; recolor-over-mask). Cross-domain floors derive nothing — layout/cell/arith members are mutually independent at these depths. Height >= 3 requires composite (unshipped) targets, always.
 
 ### Based on previous experiments
 
@@ -151,6 +171,7 @@ Note: under the goal-layer Top-Rung framing, NO previous experiment is a complet
   - Height: ~3 · Shape: pure telescope (fan-in 1 throughout) — the shape-control counterpart to quad-symmetrize
   - Floor: `{flip_h, flip_v, map_color}` · Rungs: r1 = `rot180`, r2 = `recolor_flipped` · Top Rung: NEW layer
   - v1-eligible: yes (calibration / shape-control arm)
+  - Static profile machine-validated: the probe reproduces E12's measured jumps exactly (r1 d=2; r2 3 → 2) — the probe's ground-truth anchor
 - E2: ...
 - [Other previous experiments to be added here, if they have a relevant ladder...]
 
@@ -169,18 +190,23 @@ Note: under the goal-layer Top-Rung framing, NO previous experiment is a complet
   - Immediate use: **mine rung statistics** — which sub-programs recur across the canonical solutions → empirically-grounded rung candidates and ladder shapes; plus the grid-level subset of solutions translates cheaply today (→ real-ARC anchor corpora + reference solutions).
   - Fuller use is gated by the **Object pathway** (arc-lab has no Object type yet) — a modest, near-term build if we want it, with Hodel's object primitives as its natural blueprint. Not a distant thing.
 - Ladders come up with in the "Finding abstraction ladders" Claude chat; or using approaches developed in that chat.
+- **The derivability probe** ([experiments/2026-07-17-derivability-dag/](../../experiments/2026-07-17-derivability-dag/)) — a reusable certifier for ANY candidate on this page: computes minimal `d_i`, double-jump censoring, and skip routes by enumeration over the real impls (holdout-verified).
+  - Both hand-computed fan-in templates on this page had cheaper skip routes — **compute `d_i` by enumeration, never by hand**; fold this into the Ladder Linter.
+  - Accounting caveat: the probe counts tree applications (no subterm sharing); the sandwich sketches here use nesting depth (`depth_limit` units) — translate before comparing.
+  - Registry mining itself is exhausted (see the quantified negative note above); the probe's remaining value is certifying composite candidates.
 
 ---
 
 ## Selection rubric (grading candidates; #1 first)
 
 - non-HO floor (`fill=none`) → exact depth accounting
-- 2 bridging rungs, `d_i` in {2,3}; sandwich closes at a small `max_generation`; non-empty (ideally wide) validity window
+- 2 bridging rungs, `d_i` in {2,3}; sandwich closes at a small `depth_limit`; non-empty (ideally wide) validity window
 - 0-1 free params per rung → trivial variation plans; AntiunifyPairs-proven path
 - fan-in > 1 somewhere (avoid pure telescope)
 - primitives already shipped; taskgen precedent exists
 - nameable anchor competence
 - family potential (obvious height / jump-depth variants)
+- statically certified: `d_i` probe-computed, double-jump censored-intractable, no un-understood skip route (2026-07-17 probe)
 
 Current ranking: **quad-symmetrize (#1)** · mask-crop (#2) · perceiver-chain (#3) · retrofits as calibration ladders · counting-histogram + object-precursor + Hodel-mined as the ambitious track.
 
@@ -201,3 +227,7 @@ Format: **name** — type/template sketch — floor it presumes — why interest
 - **swap_cells** — `(GRID,INT,INT,INT,INT)->GRID` — `CELL_FLOOR` — the registry's withheld re-derivation target; high-arity variation-plan stress test.
 - **mirror_index** — `(INT,INT)->INT` = `sub(sub(n,k),1)` — coordinate/HO floors — the E8/E9 reusable idiom; blocked on HO for v1.
 - **count-per-line / mask_count consumers** — non-Grid→Grid — blocked on the `MASK->INT` gap (`OBJECT_PRECURSOR`) and/or RQ3 fragment visibility; the quantity-rung family.
+- **nonbg_mask-from-perceiver** — `GRID->MASK` = `mask_complement(mask_by_color(g, most_common_color(g)))` (d=3, certified) — perceive + mask-gen — derives a Mask *source* from a perceiver; mask-genesis rung, ready-made gen/full contrast on `nonbg_mask`.
+- **swap_colors-via-mask** — `(GRID,COLOR,COLOR)->GRID` = `paint_through_mask(map_color(g,a,b), mask_by_color(g,b), a)` (d=3, certified) — mask + recolor — the registry-mined duplicate-pair rung (see recolor-over-mask).
+- **mask De Morgan closures** — `mask_union`/`mask_intersect`/`mask_difference` interderivable via `mask_complement` (d<=3, certified) — mask-algebra gen floors — algebraic mini-rungs for a mask-genesis ladder.
+- **quad2 / grid9x9 self-composition tops** — `GRID->GRID` = `r2(r2(g))` (d=2 over L2, certified) — the cheapest possible goal layer for any param-free tower; doubles inlined depth per application (the geometric depth-profile family).

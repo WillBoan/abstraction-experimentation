@@ -27,8 +27,8 @@ class RungShape:
 
     level: int
     name: str
-    #: ``compositional_depth`` of the rung template over ``L_{i-1}`` (a depth-d jump needs
-    #: ``max_depth >= d + 1``).
+    #: ``compositional_depth`` of the rung template over ``L_{i-1}`` (affordable iff
+    #: ``jump_depth <= Budget.depth_limit``).
     jump_depth: int
     #: Inlined depth of the *next* rung over ``L_{i-1}`` (this rung's calls expanded one level);
     #: ``None`` for the last bridging rung (its "next" is the abstraction-less Top).
@@ -50,9 +50,9 @@ class LadderShape:
     #: floor (the top solutions can differ, so this is a profile, not a scalar).
     raw_depth_profile: tuple[int, ...]
     rungs: tuple[RungShape, ...]
-    #: ``(lower, upper)`` in ``max_depth`` coordinates: the range where every jump is affordable
-    #: and no inlined double-jump (nor the raw top) is reachable. Empty as ``(lo, hi)`` with
-    #: ``lo > hi`` when no budget satisfies both (a degenerate ladder).
+    #: ``(lower, upper)`` — inclusive, in ``depth_limit`` units: the ``depth_limit`` values at
+    #: which every jump is affordable and no inlined double-jump (nor the raw top) is reachable.
+    #: Empty as ``(lo, hi)`` with ``lo > hi`` when no budget satisfies both (a degenerate ladder).
     validity_window: tuple[int, int]
     findings: tuple[LintFinding, ...]
 

@@ -17,11 +17,11 @@ from arc_lab.program_search.search.search_engine import (
 
 def test_precedence_later_layers_win() -> None:
     base = PRESETS["synth"]  # named preset (defaults already inside)
-    file_layer = apply_overrides(base, {"budget.max_depth": 4, "attempts_per_test": 1})
-    cli_layer = apply_overrides(file_layer, {"budget.max_depth": 5})
-    assert base.budget.max_depth == 3  # presets stay frozen
-    assert file_layer.budget.max_depth == 4
-    assert cli_layer.budget.max_depth == 5  # CLI --set beats the config file
+    file_layer = apply_overrides(base, {"budget.depth_limit": 3, "attempts_per_test": 1})
+    cli_layer = apply_overrides(file_layer, {"budget.depth_limit": 4})
+    assert base.budget.depth_limit == 2  # presets stay frozen
+    assert file_layer.budget.depth_limit == 3
+    assert cli_layer.budget.depth_limit == 4  # CLI --set beats the config file
     assert cli_layer.attempts_per_test == 1  # untouched file-layer overrides survive
 
 
@@ -50,17 +50,17 @@ def test_learn_paths_work_on_a_learn_config_and_fail_on_search() -> None:
 
 
 def test_unknown_field_and_type_mismatch_fail_loudly() -> None:
-    with pytest.raises(ValueError, match=r"unknown field 'depht'.*max_depth"):
+    with pytest.raises(ValueError, match=r"unknown field 'depht'.*depth_limit"):
         apply_overrides(PRESETS["d4"], {"budget.depht": 4})
     with pytest.raises(ValueError, match="type mismatch"):
-        apply_overrides(PRESETS["d4"], {"budget.max_depth": "deep"})
+        apply_overrides(PRESETS["d4"], {"budget.depth_limit": "deep"})
     with pytest.raises(ValueError, match="unknown library"):
         apply_overrides(PRESETS["d4"], {"library": "nope"})
 
 
 def test_parse_set_values() -> None:
-    parsed = parse_set_values(["budget.max_depth=4", "library=d4", "flag=true"])
-    assert parsed == {"budget.max_depth": 4, "library": "d4", "flag": True}
+    parsed = parse_set_values(["budget.depth_limit=3", "library=d4", "flag=true"])
+    assert parsed == {"budget.depth_limit": 3, "library": "d4", "flag": True}
     with pytest.raises(ValueError, match="malformed --set"):
         parse_set_values(["no-equals-sign"])
 
@@ -73,5 +73,5 @@ def test_overridden_config_gets_its_own_run_identity() -> None:
     grid = Grid.from_list([[1, 2], [3, 4]])
     corpus = Corpus.of("c", [Task(task_id="t", train=(Example(input=grid, output=grid),), test=())])
     base = RunSpec(config=PRESETS["d4"], corpus=corpus)
-    tweaked = RunSpec(config=apply_overrides(PRESETS["d4"], {"budget.max_depth": 3}), corpus=corpus)
+    tweaked = RunSpec(config=apply_overrides(PRESETS["d4"], {"budget.depth_limit": 2}), corpus=corpus)
     assert base.run_id != tweaked.run_id

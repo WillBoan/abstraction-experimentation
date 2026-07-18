@@ -177,7 +177,7 @@ def layered_abstraction_tasks() -> tuple[GeneratedTask, ...]:
     """layered abstraction testbed: L1 `rot180 = flip_h(flip_v(g))`; L2
     `recolor_flipped(g,a,b) = map_color(rot180(g),a,b)` built ON the learned L1.
 
-    Every task's own WAKE budget (`max_depth=3`, two applications) reaches rot180
+    Every task's own WAKE budget (`depth_limit=2`, two applications) reaches rot180
     tasks directly but not recolor_flipped ones (three applications); only once abs0
     (rot180) is minted does recolor_flipped collapse to two applications and become
     reachable at that SAME budget -- so the second generation's WAKE genuinely needs
@@ -343,7 +343,7 @@ def _al1_grids(color: int) -> list[Grid]:
 def al1_mirror_tasks() -> tuple[GeneratedTask, ...]:
     """Abstraction Ladder #1: L0 {flip_h, flip_v, map_color} -> rot180 -> mirror_recolor -> top.
 
-    At the reference budget (max_depth=3) rot180 is reachable raw (2 applications) but
+    At the reference budget (depth_limit=2) rot180 is reachable raw (2 applications) but
     mirror_recolor (3) and the top (4) are not -- they collapse only once the rung below is
     minted, so the wake-sleep loop must climb. Every task carries 2 train examples + 1 test;
     (a,b) are fixed within a mirror_recolor/top task and vary across them so AntiunifyPairs mints

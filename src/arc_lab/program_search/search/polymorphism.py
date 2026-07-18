@@ -6,7 +6,7 @@ empty-list constructor ``() -> list[a]``). This policy governs that residue:
 
 - ``monomorphize`` (the default): reject the candidate — the pool stays concrete-only.
 - ``bounded``: ground each free var over the task-reachable monotype universe (the library's var-free
-  return types, closed under the type constructors present, to ``max_depth`` nestings), enumerating
+  return types, closed under the type constructors present, to ``max_nesting`` nestings), enumerating
   each grounding.
 - ``unrestricted``: keep a polymorphic entry, its type key **canonicalized** (free vars renamed in
   first-occurrence order) so alpha-equivalent polytypes share one key. Such entries are re-instantiated
@@ -80,16 +80,16 @@ def canonicalize(t: Type) -> Type:
     return rename(t)
 
 
-def monotype_universe(library: Library, max_depth: int) -> tuple[Type, ...]:
+def monotype_universe(library: Library, max_nesting: int) -> tuple[Type, ...]:
     """The monotypes ``bounded`` grounds over: the library's var-free return types, closed under the
-    type constructors present in the library, to ``max_depth`` nestings."""
+    type constructors present in the library, to ``max_nesting`` nestings."""
     universe: set[Type] = {
         primitive.return_type
         for primitive in library.primitives
         if not free_type_vars(primitive.return_type)
     }
     constructors = _present_constructors(library)
-    for _ in range(max_depth):
+    for _ in range(max_nesting):
         grown = set(universe)
         for name, arity in constructors:
             if arity == 0:

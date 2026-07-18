@@ -80,8 +80,8 @@ Batch design:
     - **cost-paid-full** — total considered count at budget exhaustion. Can exceed cost-to-first / cost-to-cheapest, if _early stop_ is not enabled.
   - **Solve generation** — the 0-indexed composition round at which the first accepted program appeared.
     - (_observable; depends on the specific search engine and params_)
-  - **Max generation (`max_generation`)** = `budget.max_depth - 1` — the highest generation a run can reach (generations `0..max_depth-1` run; generation 0 = the round-0 leaves). Since generation index = compositional depth (on non-HO floors), this is THE ladder-facing budget quantity: sandwich/window claims are stated as `d <= max_generation`, and the `+1` conversion to raw `max_depth` lives only in the lint.
-    - (_derived from params — `solve generation <= max_generation` always_)
+  - **Depth limit (`Budget.depth_limit`)** = the budget's inclusive cap on compositional depth (leaf = 0): a program of depth `d` is reachable iff `d <= depth_limit` — equivalently, the engine runs generations `0..depth_limit` (generation 0 = the round-0 leaves). ONE unit everywhere: program depth, solve generation, and the budget cap all speak it; the engine's internal round count (`depth_limit + 1`) is the only place a `+1` exists.
+    - (_a param — `solve generation <= depth_limit` always_)
   - **Compositional depth** = The depth of a program's template expressed over a particular library of primitives.
     - (_static_)
 
@@ -121,7 +121,7 @@ Batch design:
   - **Effective branching factor (`b_eff`)** = the fitted per-generation growth of composed candidates over a run's pre-saturation rounds. A summary statistic per (task, library, budget) cell — not a constant of nature.
   - **Enablement** = tasks solvable under `L_i` but not `L_{i-1}`, at a fixed budget.
   - **Budget compression** = `d_raw` vs `max(d_i)` — the reduction in _required search depth_ to reach the Top Rung.
-  - **Validity window** = the range of `max_depth` over which the Ladder property holds — lower edge: every jump affordable; upper edge: no (inlined) double jump reachable. Depth-only, hence necessary but not sufficient (the certificate completes it at the reference config). Its _width_ is a per-Ladder robustness property.
+  - **Validity window** = the inclusive range of `depth_limit` over which the Ladder property holds — lower edge: every jump affordable; upper edge: no (inlined) double jump reachable. Depth-only, hence necessary but not sufficient (the certificate completes it at the reference config). Its _width_ is a per-Ladder robustness property.
 
 ### 2.1 Cost model (candidate — to be measured, not assumed)
 
@@ -156,8 +156,8 @@ Notes:
 
 - A Ladder run-cell = `LadderSpec` x `Config` — mirroring `RunSpec = Config x Corpus`: category 1 is the `Config` factor, category 2 the `LadderSpec` factor.
 - The categories recur at three **scopes**: cell (one run), Ladder, batch (family structure/membership = design choices at batch scope; batch metrics = observables at batch scope).
-- **Budget's dual role.** Budget is a param (category 1) — but the Ladder's validity claims are claims _about_ budgets. The Ladder doesn't own a budget; it owns two claims recorded in its spec: the pinned **reference config** (the anchor at which lint + certificate assert the tractability sandwich) and the **validity window** (a shape property in `max_depth` coordinates). Sweeping budget never changes the Ladder — it changes which claim-region the cell sits in, and thus its arm: inside the window ⇒ honest cell; below ⇒ stall regime; above ⇒ rung-necessity probe.
-  - Budget's components play different roles: `max_depth` = the horizon (the window's axis); `max_pool` = the regime selector (§2.1); `max_arity` = a branching modifier. The static window is depth-only — necessary, not sufficient; the empirical certificate at the reference config covers the rest.
+- **Budget's dual role.** Budget is a param (category 1) — but the Ladder's validity claims are claims _about_ budgets. The Ladder doesn't own a budget; it owns two claims recorded in its spec: the pinned **reference config** (the anchor at which lint + certificate assert the tractability sandwich) and the **validity window** (a shape property in `depth_limit` units). Sweeping budget never changes the Ladder — it changes which claim-region the cell sits in, and thus its arm: inside the window ⇒ honest cell; below ⇒ stall regime; above ⇒ rung-necessity probe.
+  - Budget's components play different roles: `depth_limit` = the horizon (the window's axis); `max_pool` = the regime selector (§2.1); `max_arity` = a branching modifier. The static window is depth-only — necessary, not sufficient; the empirical certificate at the reference config covers the rest.
 - Deliberate absences: **replicates/seeds** (no RNG anywhere — every cell is one exact point; no statistics machinery needed beyond aggregation) and **invariants** (the fixed background: determinism, the goal test, the blindness seams — rung annotations recorded but solver-invisible — which must never migrate into category 1).
 - Terminology: "metaparameter" is retired — it blurred categories 2 and 3.
 
@@ -165,7 +165,7 @@ Notes:
 
 Used by: one **reference config** chosen per Ladder (pinned in the `LadderSpec` — §3.1); swept directly, per cell; recorded per cell.
 
-- budget.max_depth
+- budget.depth_limit
 - budget.max_arity
 - budget.max_pool
 - beam_width (if `BeamBottomUpSearchEngine`)
@@ -342,7 +342,7 @@ Actually measuring the total raw search cost will be often very intractable.
 However, we may be able to estimate it.
 
 - **Based on compositional depth**: The compositional depth of the Top Rung solution program(s), expressed in terms of the Floor's primitives, gives an _upper bound_ on the _solve generation_.
-  - (Caveats: assumes reachability — pool eviction can push a program to unsolved even below `max_depth`; and the generation-to-depth correspondence breaks on floors with lambda synthesis, whose bodies are built in descended sub-searches.)
+  - (Caveats: assumes reachability — pool eviction can push a program to unsolved even within `depth_limit`; and the generation-to-depth correspondence breaks on floors with lambda synthesis, whose bodies are built in descended sub-searches.)
   - However, to estimate the _search cost_ (ie the considered count), we would need to estimate the average _branching factor_ across the generations, which we may be able to estimate via:
     - **Calibration ladders**: include short ladders where the raw cost is measurable, giving exact ratios that anchor everything else.
     - **Extrapolated baselines**: fit per-round growth from the rounds the raw run does complete, extrapolate to the known total depth of the raw solution.
@@ -359,9 +359,9 @@ Machinery that needs to be implemented in order to run the experiments:
    - Checks:
      - Overall `LadderSpec` is well-formed.
      - All templates are well-typed over `L_{i-1}`.
-     - Each Rung's compositional depth <= the reference `max_generation` (§2).
-     - Raw compositional depth > the reference `max_generation`.
-     - Double-jump (_inlined_) depth > the reference `max_generation`, per consecutive pair.
+     - Each Rung's compositional depth <= the reference `depth_limit` (§2).
+     - Raw compositional depth > the reference `depth_limit`.
+     - Double-jump (_inlined_) depth > the reference `depth_limit`, per consecutive pair.
      - Each Rung has >= 2 demonstrating tasks.
      - Each Task has >= 2 train examples.
      - Background-within/target-across: for each argument position of each rung template, classify it as derived or free, and apply the corresponding rule — derived ⇒ varies within-task; free ⇒ fixed within-task, varied across demonstrating tasks.

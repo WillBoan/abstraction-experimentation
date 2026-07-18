@@ -4,9 +4,8 @@ The one depth measure in the codebase (the old ``Program.depth()``, leaf = 1 and
 removed to avoid two off-by-one conventions). This one matches the bottom-up engine's own
 *generation* accounting: a leaf is generation 0, ``flip_h(input)`` is generation 1,
 ``flip_h(flip_v(input))`` is generation 2 (``SearchStats.solved_at_generation``). A program of
-compositional depth ``d`` is first built at generation ``d`` and therefore needs
-``budget.max_depth >= d + 1`` (rounds include the round-0 leaves — see the E1 note in
-``execution/studies.py``).
+compositional depth ``d`` is first built at generation ``d`` and is therefore reachable iff
+``d <= Budget.depth_limit`` (the inclusive cap; the engine runs generations ``0..depth_limit``).
 
 ``lam_as_leaf=True`` (the default) treats a ``Lam`` as a leaf: a synthesized lambda's body is
 built in a *descended sub-search* (``budget.descend()``), so its internal depth is paid there,
@@ -26,7 +25,7 @@ from arc_lab.program_search.substrate.program import Lam, Program
 def compositional_depth(program: Program, *, lam_as_leaf: bool = True) -> int:
     """The compositional (generation-count) depth of ``program`` — leaves are 0, each
     constructor node (``Apply``/``If``/``AppFn``/``Lam``) adds 1. See the module docstring for
-    the ``lam_as_leaf`` convention and the ``max_depth >= d + 1`` budget relationship."""
+    the ``lam_as_leaf`` convention and the ``d <= Budget.depth_limit`` budget relationship."""
     if lam_as_leaf and isinstance(program, Lam):
         return 0
     children = program.children()

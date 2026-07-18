@@ -3,7 +3,7 @@
 L0 {flip_h, flip_v, map_color} -> r1 rot180 -> r2 mirror_recolor -> top flip_v(mirror_recolor).
 The rungs reuse E12's proven-learnable abstractions, so what is under test is the ladder machinery
 (oracle chain, certificate, climb trace, amortization), not whether the abstractions mint. Verified
-sandwich at max_depth=3: jumps d=2 affordable, d_raw=4 intractable, double-jumps=3 intractable.
+sandwich at depth_limit=2: jumps d=2 affordable, d_raw=4 intractable, double-jumps=3 intractable.
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ def build() -> LadderSpec:
         name="al1-L0",
         primitives=(D4_LIBRARY.get("flip_h"), D4_LIBRARY.get("flip_v"), MAP_COLOR),
     )
-    budget = Budget(max_depth=3, max_arity=2, max_pool=300)
+    budget = Budget(depth_limit=2, max_arity=2, max_pool=300)
     reference_config = Config(
         library=floor,
         search_engine=BottomUpSearchEngine(

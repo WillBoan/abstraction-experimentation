@@ -260,7 +260,7 @@ class SearchTracker:
     )
     #: One entry per round of the run's top-level search (never a lambda-synthesis sub-search's
     #: own round loop — ``begin_generation``'s docstring). A list, not a dict keyed by round
-    #: number, since rounds run ``0..max_depth-1`` contiguously.
+    #: number, since rounds run ``0..depth_limit`` contiguously.
     _generations: list[GenerationTracker] = field(default_factory=list)
     #: Every goal-matching candidate the top-level search absorbed (``record_solution``). The engine
     #: draws its returned result from here (the globally-cheapest, evicted or not); the outcome

@@ -6,7 +6,7 @@ no solver classes. Continuity with the old locks (`tests/test_integration.py`, w
 the old tree until its deletion pass):
 
 - `d4` reproduces the old `dsl` seven EXACTLY (same task-ids).
-- `synth` reproduces the old `dsl-synth` eleven EXACTLY. The lock runs at ``max_depth=2``
+- `synth` reproduces the old `dsl-synth` eleven EXACTLY. The lock runs at ``depth_limit=1``
   (single application + constants): the old lock's empirical finding — deeper composition
   yields the identical set on this vocabulary — replicates on the new engine (verified at
   depth 3, 2026-07-11), and depth 2 keeps the lock fast.
@@ -144,7 +144,7 @@ def test_d4_solves_exactly_the_known_seven(tmp_path: Path) -> None:
 
 def test_synth_solves_exactly_the_known_eleven(tmp_path: Path) -> None:
     # Locked at depth 2 (see module docstring); the preset itself runs depth 3.
-    config = PRESETS["synth"].with_(budget=Budget(max_depth=2, max_arity=2, max_pool=500))
+    config = PRESETS["synth"].with_(budget=Budget(depth_limit=1, max_arity=2, max_pool=500))
     record = run_search(config, _arc1_train(), runs_root=tmp_path)
     solved = _solved_ids(record)
     assert solved == SYNTH_SOLVED

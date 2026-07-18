@@ -119,7 +119,7 @@ def _run(library: Library) -> SearchResult:
         library=library,
         constraints=(),
         cost=ProgramSize(),
-        budget=Budget(max_depth=3, max_arity=1, max_pool=200),
+        budget=Budget(depth_limit=2, max_arity=1, max_pool=200),
     )
 
 

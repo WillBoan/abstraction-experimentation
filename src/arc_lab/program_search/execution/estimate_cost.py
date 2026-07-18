@@ -17,7 +17,7 @@ becomes a *loose* over-approximation from round 2 on: the engine's new-layer res
 (``search_engine.py``'s ``_uses_new_layer``) composes only combinations that use at least one
 argument from the previous round, whereas this counts the full cartesian product. It therefore stays
 a valid ceiling (``considered`` only shrinks under the restriction), just no longer exact at
-``max_depth >= 3``; modelling the new-vs-old split to tighten it is a deliberate, unbuilt refinement.
+``depth_limit >= 2``; modelling the new-vs-old split to tighten it is a deliberate, unbuilt refinement.
 
 **What's a heuristic, not a ceiling:** short-circuit ``If`` branching and the function-hole
 fill/``AppFn`` path (§5.3-5.4 of ARCHITECTURE.md) are dormant in every current preset
@@ -113,11 +113,11 @@ def _estimate_task(task: Task, config: Config) -> TaskCostEstimate:
     cap = engine.beam_width if isinstance(engine, BeamBottomUpSearchEngine) else budget.max_pool
 
     rounds: list[RoundEstimate] = []
-    if budget.max_depth >= 1:
+    if budget.depth_limit >= 0:
         leaf_count = _leaf_count(task, engine, library)
         rounds.append(RoundEstimate(round_index=0, incoming_pool=0, considered=leaf_count))
         pool = min(leaf_count, cap)
-        for depth in range(1, budget.max_depth):
+        for depth in range(1, budget.depth_limit + 1):
             considered = _compose_term(pool, library, budget.max_arity)
             if _BRANCHING_ENTRY in library:
                 considered += _branch_term(pool)

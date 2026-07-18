@@ -24,19 +24,19 @@ _ENGINE = BottomUpSearchEngine(
 )
 
 
-def _run(library: Library, output: Grid, max_depth: int) -> SearchResult:
+def _run(library: Library, output: Grid, depth_limit: int) -> SearchResult:
     task = Task(task_id="t", train=(Example(input=_GRID, output=output),), test=())
     return _ENGINE.run(
         train_examples=task.train,
         library=library,
         constraints=(),
         cost=ProgramSize(),
-        budget=Budget(max_depth=max_depth, max_arity=1, max_pool=100),
+        budget=Budget(depth_limit=depth_limit, max_arity=1, max_pool=100),
     )
 
 
 def test_solution_sink_records_the_identity_solution() -> None:
-    stats = _run(_EMPTY, _GRID, max_depth=1).stats
+    stats = _run(_EMPTY, _GRID, depth_limit=0).stats
     assert stats.solved  # pool-based, unchanged this commit
     assert stats.solution_count == 1  # only Input() reproduces the identity output
     assert stats.first_solution_index is not None
@@ -46,7 +46,7 @@ def test_solution_sink_records_the_identity_solution() -> None:
 
 
 def test_generations_funnel_has_one_row_per_round() -> None:
-    stats = _run(D4_LIBRARY, _TRANSPOSED, max_depth=3).stats
+    stats = _run(D4_LIBRARY, _TRANSPOSED, depth_limit=2).stats
     assert len(stats.generations) == 3  # rounds 0, 1, 2 (search always runs the full budget)
     assert all("composed" in row and "pool_size_start" in row for row in stats.generations)
     assert stats.solution_count >= 1  # transpose(input) is found at round 1
@@ -63,7 +63,7 @@ def test_eviction_loss_is_recovered_by_the_sink() -> None:
         library=D4_LIBRARY,
         constraints=(),
         cost=ProgramSize(),
-        budget=Budget(max_depth=2, max_arity=1, max_pool=1),
+        budget=Budget(depth_limit=1, max_arity=1, max_pool=1),
     )
     assert result.stats.solved  # sink-based: the evicted solution is recovered
     assert result.stats.accepted == 0  # pool partition: it was evicted, so no frontier survivor
@@ -81,7 +81,7 @@ def test_multiple_distinct_solutions_are_all_returned_cheapest_first() -> None:
         library=D4_LIBRARY,
         constraints=(),
         cost=ProgramSize(),
-        budget=Budget(max_depth=2, max_arity=1, max_pool=100),
+        budget=Budget(depth_limit=1, max_arity=1, max_pool=100),
     )
     assert len(result.ranked_programs) >= 2  # Input() plus the cost-2 D4 applications
     assert result.ranked_programs[0] == Input()  # cheapest first
@@ -91,7 +91,7 @@ def test_multiple_distinct_solutions_are_all_returned_cheapest_first() -> None:
 def test_unsolved_task_has_empty_sink_and_is_not_solved() -> None:
     # An unreachable target at this budget: no solution, so the sink is empty and .solved is False.
     unreachable = Grid.from_list([[9, 9], [9, 9]])
-    stats = _run(_EMPTY, unreachable, max_depth=1).stats
+    stats = _run(_EMPTY, unreachable, depth_limit=0).stats
     assert not stats.solved
     assert stats.solution_count == 0
     assert stats.first_solution_index is None

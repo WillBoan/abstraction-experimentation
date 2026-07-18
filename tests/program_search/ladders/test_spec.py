@@ -4,14 +4,22 @@ from __future__ import annotations
 
 import dataclasses
 
+from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
 from arc_lab.program_search.ladders.registry import make_ladder
+from arc_lab.program_search.ladders.shape import LadderShape
+from arc_lab.program_search.substrate.program import Apply, Input, Param
+from arc_lab.program_search.substrate.types import COLOR, GRID
+
+
+def _failed(shape: LadderShape, check: str) -> bool:
+    return any(finding.check == check and not finding.ok for finding in shape.findings)
 
 
 def test_ladder1_lints_ok_with_the_verified_sandwich() -> None:
     shape = make_ladder("al1-mirror").lint()
     assert shape.ok
     assert shape.height == 3
-    assert shape.validity_window == (3, 3)
+    assert shape.validity_window == (2, 2)
     assert shape.raw_depth_profile == (4,)
     by_name = {rung.name: rung for rung in shape.rungs}
     assert by_name["rot180"].jump_depth == 2
@@ -41,10 +49,53 @@ def test_render_marks_ok_and_lists_the_rungs() -> None:
     assert "al1-mirror" in text and "OK" in text and "rot180" in text and "mirror_recolor" in text
 
 
+def test_lint_catches_a_bare_primitive_rung() -> None:
+    # A depth-1 rung restates a primitive already in L_{i-1}: it belongs to a lower rung and
+    # buys no depth (demonstration relationship (1) -- a rung is a PROPER composition).
+    spec = make_ladder("al1-mirror")
+    bare = dataclasses.replace(
+        spec.rungs[0],
+        target_abstraction=TargetAbstraction(
+            name="rot180", template=Apply("flip_h", (Param(0, GRID),))
+        ),
+    )
+    shape = dataclasses.replace(spec, rungs=(bare, spec.rungs[1])).lint()
+    assert not shape.ok
+    assert _failed(shape, "proper-composition[rot180]")
+
+
+def test_lint_catches_a_rung_the_one_above_never_calls() -> None:
+    # Structural degeneracy: rung 2 is a fine depth-2 composition but never calls rot180, so the
+    # rung below is unused and the ladder telescopes vacuously at that link.
+    spec = make_ladder("al1-mirror")
+    unused_below = dataclasses.replace(
+        spec.rungs[1],
+        target_abstraction=TargetAbstraction(
+            name="mirror_recolor",
+            template=Apply(
+                "flip_h",
+                (Apply("map_color", (Param(0, GRID), Param(1, COLOR), Param(2, COLOR))),),
+            ),
+        ),
+    )
+    shape = dataclasses.replace(spec, rungs=(spec.rungs[0], unused_below)).lint()
+    assert not shape.ok
+    assert _failed(shape, "rung-referenced[rot180]")
+
+
+def test_lint_catches_a_top_that_never_uses_the_top_rung() -> None:
+    # A top that never calls r_k isn't standing on the ladder at all.
+    spec = make_ladder("al1-mirror")
+    detached_top = dataclasses.replace(spec.top, reference_solutions=(Apply("flip_h", (Input(),)),))
+    shape = dataclasses.replace(spec, top=detached_top).lint()
+    assert not shape.ok
+    assert _failed(shape, "top-uses-top-rung")
+
+
 def test_lint_catches_a_budget_that_makes_the_raw_top_reachable() -> None:
     # A budget deep enough to reach the raw top (d_raw=4) breaks the raw-intractable claim.
     spec = make_ladder("al1-mirror")
-    deep = dataclasses.replace(spec.reference_config.budget, max_depth=6)
+    deep = dataclasses.replace(spec.reference_config.budget, depth_limit=5)
     bad = dataclasses.replace(spec, reference_config=spec.reference_config.with_(budget=deep))
     shape = bad.lint()
     assert not shape.ok

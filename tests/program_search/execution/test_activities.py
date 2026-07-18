@@ -53,7 +53,7 @@ def _learn_config(iterations: int = 3) -> Config:
             polymorphism_instantiation="monomorphize",
             unpinned_type_var_mode="reject",
         ),
-        budget=Budget(max_depth=3, max_arity=2, max_pool=200),
+        budget=Budget(depth_limit=2, max_arity=2, max_pool=200),
         learn=LearnSpec(
             learn_engine=GreedyMDLLearnEngine(proposer=AntiunifyPairs()),
             iterations=iterations,

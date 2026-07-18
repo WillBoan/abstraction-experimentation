@@ -233,7 +233,7 @@ def test_eager_grounding_does_real_synthesis_work_reject_skips() -> None:
     grid = Grid.from_list([[7]])
     task = Task(task_id="produce", train=(Example(input=grid, output=grid),), test=())
     library = Library(name="produce", primitives=(PRODUCE, IDENTITY_GRID))
-    budget = Budget(max_depth=4, max_arity=1, max_pool=200)
+    budget = Budget(depth_limit=3, max_arity=1, max_pool=200)
 
     rejected = _engine(unpinned_type_var_mode="reject").run(
         train_examples=task.train,
@@ -314,7 +314,7 @@ def test_enclosing_target_propagates_one_level_down() -> None:
         library=library,
         constraints=(),
         cost=ProgramSize(),
-        budget=Budget(max_depth=4, max_arity=1, max_pool=200),
+        budget=Budget(depth_limit=3, max_arity=1, max_pool=200),
     )
     assert received  # inner's sampler was invoked at least once
     assert any(t is None for t in received)  # the top-level attempt: COLOR doesn't unify with GRID
@@ -379,7 +379,7 @@ def test_filter_style_toy_solves_via_a_synthesized_predicate() -> None:
         library=library,
         constraints=(),
         cost=ProgramSize(),
-        budget=Budget(max_depth=5, max_arity=1, max_pool=500),
+        budget=Budget(depth_limit=4, max_arity=1, max_pool=500),
     )
     assert result.stats.solved
 
@@ -401,7 +401,7 @@ def test_fold_solves_via_a_synthesized_combiner() -> None:
         library=library,
         constraints=(),
         cost=ProgramSize(),
-        budget=Budget(max_depth=4, max_arity=1, max_pool=100),
+        budget=Budget(depth_limit=3, max_arity=1, max_pool=100),
     )
     assert result.stats.solved
 
@@ -430,7 +430,7 @@ def test_sort_by_solves_via_a_grounded_key() -> None:
         library=library,
         constraints=(),
         cost=ProgramSize(),
-        budget=Budget(max_depth=6, max_arity=1, max_pool=200),
+        budget=Budget(depth_limit=5, max_arity=1, max_pool=200),
     )
     assert result.stats.solved
 
@@ -464,7 +464,7 @@ def _next_color(c: int) -> int:
 
 
 #: A plain COLOR -> COLOR primitive, not eq/if — a conditional recolor body (`if(eq($0,3),7,$0)`) was
-#: tried here first and, even at max_depth=6, didn't solve inside a tractable search (empirically
+#: tried here first and, even at depth_limit=5, didn't solve inside a tractable search (empirically
 #: confirmed: ~10M candidates considered, no solution — see EXPERIMENTS.md). That's a real cost-vs-
 #: depth finding about eager_grounding_over_universe, not a mechanism bug (the target program was
 #: hand-verified to evaluate correctly); it's tracked there rather than chased further in this test.
@@ -485,7 +485,7 @@ def test_map_solves_recolor_end_to_end() -> None:
         library=library,
         constraints=(),
         cost=ProgramSize(),
-        budget=Budget(max_depth=4, max_arity=1, max_pool=200),
+        budget=Budget(depth_limit=3, max_arity=1, max_pool=200),
     )
     assert result.stats.solved
     solution = result.ranked_programs[0]

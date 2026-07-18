@@ -36,8 +36,8 @@ _ROT180_TEMPLATE = Apply("rot90", (Apply("rot90", (Param(0, GRID),)),))
 
 # Depth 3 solves rot180 by composition; depth 2 only via a single (learned/target) primitive —
 # so the grid exhibits ENABLEMENT: L1 fails at depth 2 where L2/L3 succeed.
-_DEEP = Budget(max_depth=3, max_arity=2, max_pool=200)
-_SHALLOW = Budget(max_depth=2, max_arity=2, max_pool=200)
+_DEEP = Budget(depth_limit=2, max_arity=2, max_pool=200)
+_SHALLOW = Budget(depth_limit=1, max_arity=2, max_pool=200)
 
 
 def _rot180_task(task_id: str, cells: list[list[int]]) -> Task:
@@ -123,7 +123,7 @@ def test_create_study_report(study: StudyResult) -> None:
     effort = report["effort"]
     assert isinstance(effort, list) and len(effort) == 4  # 2 budgets x 2 corpora
     deep_train = next(
-        row for row in effort if row["corpus"] == "train" and row["budget"]["max_depth"] == 3
+        row for row in effort if row["corpus"] == "train" and row["budget"]["depth_limit"] == 2
     )
     considered = deep_train["considered"]
     assert isinstance(considered, dict) and all(
@@ -133,7 +133,7 @@ def test_create_study_report(study: StudyResult) -> None:
     transfer = report["transfer"]
     assert isinstance(transfer, list) and len(transfer) == 6  # 3 libraries x 2 budgets
     l2_shallow = next(
-        row for row in transfer if row["library"] == "L2" and row["budget"]["max_depth"] == 2
+        row for row in transfer if row["library"] == "L2" and row["budget"]["depth_limit"] == 1
     )
     assert l2_shallow["train_rate"] == 1.0
     assert l2_shallow["eval_rate"] == 1.0

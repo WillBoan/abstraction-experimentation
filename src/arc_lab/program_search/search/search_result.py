@@ -29,8 +29,8 @@ class SearchStats:
     by_primitive: Mapping[str, Mapping[str, int]] = field(default_factory=dict)
     #: The composition round (``PoolEntry.generation``, ``search/search_engine.py``) the accepted
     #: solution was first built at — ``None`` if unsolved. Round 0 is the leaf round (matching
-    #: ``Budget.max_depth``'s own accounting, ``execution/presets.py``). A per-task diagnostic for
-    #: budget calibration (e.g. solutions clustering near ``max_depth`` suggests raising it might
+    #: ``Budget.depth_limit``'s own accounting, ``execution/presets.py``). A per-task diagnostic for
+    #: budget calibration (e.g. solutions clustering near ``depth_limit`` suggests raising it might
     #: solve more; clustering well below it suggests the budget has room to shrink) — never part of
     #: the outcome partition, and not meaningful to sum across tasks (``merge_search_stats`` in
     #: ``execution/execute.py`` deliberately leaves it out of the corpus-wide aggregate).

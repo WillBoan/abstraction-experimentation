@@ -6,9 +6,9 @@ search strategies (``single_apply`` / ``composite`` / ``enumerate``); here one g
 bottom-up engine covers them all and presets differ only in *library*, *budget*, and
 *policies* — which is the point of the overhaul.
 
-Depth accounting: the new ``Budget.max_depth`` counts enumeration rounds INCLUDING the
-round-0 leaves, so the old ``single_apply`` (one application) is ``max_depth=2`` and the
-old ``enumerate(max_depth=2)`` (two nested applications) is ``max_depth=3``.
+Depth accounting: ``Budget.depth_limit`` is the inclusive compositional-depth cap
+(leaf = 0), so the old ``single_apply`` (one application) is ``depth_limit=1`` and the
+old ``enumerate(max_depth=2)`` (two nested applications) is ``depth_limit=2``.
 """
 
 from __future__ import annotations
@@ -86,7 +86,7 @@ PRESETS: dict[str, Config] = {
     "d4": Config(
         library=D4_LIBRARY,
         search_engine=_bottom_up(),
-        budget=Budget(max_depth=2, max_arity=1, max_pool=100),
+        budget=Budget(depth_limit=1, max_arity=1, max_pool=100),
     ),
     # Symmetry reconstruction (the old `dsl-sym`): D4 copies glued by overlay / tile.
     # Variadic arity 4 admits up to 2x2 tilings; wider mosaics are a budget choice, not a wall.
@@ -102,13 +102,13 @@ PRESETS: dict[str, Config] = {
             polymorphism_instantiation="monomorphize",
             unpinned_type_var_mode="reject",
         ),
-        budget=Budget(max_depth=3, max_arity=4, max_pool=500),
+        budget=Budget(depth_limit=2, max_arity=4, max_pool=500),
     ),
     # Atomic composition (the old `dsl-synth`): two nested applications over D4 + color + scale.
     "synth": Config(
         library=ATOMIC_LIBRARY,
         search_engine=_bottom_up_with_constants(),
-        budget=Budget(max_depth=3, max_arity=2, max_pool=500),
+        budget=Budget(depth_limit=2, max_arity=2, max_pool=500),
     ),
     # Beam-truncated variant of `synth` (the old `dsl-beam`). Constants HARVEST and the
     # beam must exceed the leaf-constant count: with `finite-enumerate` a 30-wide grid mints
@@ -124,7 +124,7 @@ PRESETS: dict[str, Config] = {
             unpinned_type_var_mode="reject",
             beam_width=32,
         ),
-        budget=Budget(max_depth=3, max_arity=2, max_pool=500),
+        budget=Budget(depth_limit=2, max_arity=2, max_pool=500),
     ),
     # Geometry floor via the bundle sheet's GEOM (D4 minus `identity`) — the trivial grain rung
     # for `fundamental-floor grain contrast` (EXPERIMENT_QUEUE.md): rot180 is a direct
@@ -137,7 +137,7 @@ PRESETS: dict[str, Config] = {
             polymorphism_instantiation="monomorphize",
             unpinned_type_var_mode="reject",
         ),
-        budget=Budget(max_depth=2, max_arity=1, max_pool=100),
+        budget=Budget(depth_limit=1, max_arity=1, max_pool=100),
     ),
     # UNIVERSAL_FLOOR: build_grid + full coordinate arithmetic/comparison — the "grain contrast"
     # middle rung. Same budget as `minimal-complete-floor` deliberately, so the two are directly
@@ -150,7 +150,7 @@ PRESETS: dict[str, Config] = {
             polymorphism_instantiation="monomorphize",
             unpinned_type_var_mode="reject",
         ),
-        budget=Budget(max_depth=6, max_arity=2, max_pool=1000),
+        budget=Budget(depth_limit=5, max_arity=2, max_pool=1000),
     ),
     # MINIMAL_COMPLETE_FLOOR: build_grid + read + if + eq only (no arithmetic, no width/height)
     # -- the "zero added prior" completeness witness. Same budget as `universal-floor`
@@ -164,7 +164,7 @@ PRESETS: dict[str, Config] = {
             polymorphism_instantiation="monomorphize",
             unpinned_type_var_mode="reject",
         ),
-        budget=Budget(max_depth=6, max_arity=2, max_pool=1000),
+        budget=Budget(depth_limit=5, max_arity=2, max_pool=1000),
     ),
 }
 

@@ -29,7 +29,9 @@ def test_ladder1_climbs_recovers_both_rungs_and_is_admitted(tmp_path: Path) -> N
     climb = report["climb_trace"]
     assert isinstance(climb, list)
     # The wake-sleep loop mints exactly the two bridging rungs, one per iteration.
-    minted = [name for entry in climb if isinstance(entry, dict) for name in entry.get("minted", [])]
+    minted = [
+        name for entry in climb if isinstance(entry, dict) for name in entry.get("minted", [])
+    ]
     assert minted == ["abs0", "abs1"]
     # Both are behavioral matches for the intended rungs.
     recovery = report["rung_recovery"]

@@ -50,8 +50,8 @@ def _engine(constant_sources: tuple[ConstantSource, ...] = ()) -> BottomUpSearch
     )
 
 
-def _budget(max_depth: int) -> Budget:
-    return Budget(max_depth=max_depth, max_arity=1, max_pool=500)
+def _budget(depth_limit: int) -> Budget:
+    return Budget(depth_limit=depth_limit, max_arity=1, max_pool=500)
 
 
 # -- the body_sampler substrate field (§11.4) ------------------------------------------------
@@ -158,7 +158,7 @@ def _run_paint(sampler: BodySampler) -> SearchResult:
         library=_paint_primitive(sampler),
         constraints=(),
         cost=ProgramSize(),
-        budget=_budget(max_depth=3),
+        budget=_budget(depth_limit=2),
     )
 
 
@@ -204,7 +204,7 @@ def test_lambda_synthesis_logs_a_summary_when_non_trivial(
             library=_paint_primitive(_propagated_sampler),
             constraints=(),
             cost=ProgramSize(),
-            budget=_budget(max_depth=3),
+            budget=_budget(depth_limit=2),
             tracker=tracker,
         )
     lambda_records = [r for r in caplog.records if r.getMessage().startswith("Lambda synthesis")]
@@ -241,7 +241,7 @@ def test_build_grid_solves_size_general_transpose() -> None:
         library=BUILD_LIBRARY,
         constraints=(),
         cost=ProgramSize(),
-        budget=_budget(max_depth=3),
+        budget=_budget(depth_limit=2),
     )
     assert result.stats.solved
     # build_grid(width(input), height(input), lam(lam(read(input, $0, $1)))) — §3: $1=row, $0=col.
@@ -271,7 +271,7 @@ def test_enumerate_is_memoized_within_a_run() -> None:
     grid = Grid.from_list([[1, 2], [3, 4]])
     task = Task(task_id="m", train=(Example(input=grid, output=grid),), test=())
     engine = _engine()
-    budget = _budget(max_depth=2)
+    budget = _budget(depth_limit=1)
     state = _RunState(train_examples=task.train, library=BUILD_LIBRARY, cost=ProgramSize())
     contexts = (Context(grid),)
 
@@ -294,7 +294,7 @@ def test_enclosing_target_is_part_of_the_memo_key() -> None:
     grid = Grid.from_list([[1, 2], [3, 4]])
     task = Task(task_id="m", train=(Example(input=grid, output=grid),), test=())
     engine = _engine()
-    budget = _budget(max_depth=2)
+    budget = _budget(depth_limit=1)
     state = _RunState(train_examples=task.train, library=BUILD_LIBRARY, cost=ProgramSize())
     contexts = (Context(grid),)
 
