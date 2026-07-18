@@ -113,6 +113,7 @@ class LadderShape:
 ```
 
 - Rung tags ride on the testbed manifest as `label = <rung name>` + `split`; `DemonstrationKind` and `reference_solutions` live in the LadderSpec builder code (the testbed round-trip carries only `{task_id, label, split}`).
+- **DAG hedge (post-completion note, 2026-07-18):** the lint's necessity/double-jump checks are conceptually per-*dependency-edge* (edges derivable from templates via the fan-in walk); a chain is the special case where edges = adjacent pairs. When sibling-level rungs arrive (cross-domain ladders, eg `cross-domain normalize` in LADDER-IDEAS.md), `Rung` stays a one-abstraction unit and `Rung.level` relaxes to allow duplicates (the `levels-contiguous` lint check loosens to distinct-values-contiguous; oracle libraries group by level). No stored-data migration exists (`to_dict` is provenance-only), so that retrofit is code + tests only.
 - `LadderSpec.render()` (and `__str__`): summary block (floor, height, `d_raw` profile, window, reference config) + per-rung table (level, name, `d_i`, double-jump depth, fan-in, demonstrations by kind). Doubles as the artifact in `docs/abstraction_ladders/ladders/<name>/`.
 
 ---
