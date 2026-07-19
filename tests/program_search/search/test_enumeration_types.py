@@ -51,18 +51,18 @@ def test_context_carries_scope_binding() -> None:
 
 
 def test_budget_fields() -> None:
-    budget = Budget(max_depth=3, max_arity=4, max_pool=100)
-    assert (budget.max_depth, budget.max_arity, budget.max_pool) == (3, 4, 100)
+    budget = Budget(depth_limit=2, max_arity=4, max_pool=100)
+    assert (budget.depth_limit, budget.max_arity, budget.max_pool) == (2, 4, 100)
 
 
 def test_descend_decrements_depth_only_and_is_immutable() -> None:
-    budget = Budget(max_depth=3, max_arity=4, max_pool=100)
+    budget = Budget(depth_limit=2, max_arity=4, max_pool=100)
     inner = budget.descend()
-    assert inner == Budget(max_depth=2, max_arity=4, max_pool=100)
-    assert budget.max_depth == 3  # descend does not mutate
+    assert inner == Budget(depth_limit=1, max_arity=4, max_pool=100)
+    assert budget.depth_limit == 2  # descend does not mutate
 
 
 def test_exhausted() -> None:
-    assert not Budget(max_depth=1, max_arity=4, max_pool=100).exhausted
-    assert Budget(max_depth=0, max_arity=4, max_pool=100).exhausted
-    assert Budget(max_depth=1, max_arity=4, max_pool=100).descend().exhausted
+    assert not Budget(depth_limit=0, max_arity=4, max_pool=100).exhausted
+    assert Budget(depth_limit=-1, max_arity=4, max_pool=100).exhausted
+    assert Budget(depth_limit=0, max_arity=4, max_pool=100).descend().exhausted

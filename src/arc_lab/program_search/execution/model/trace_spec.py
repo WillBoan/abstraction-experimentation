@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from arc_lab.program_search.search.tracking import SampleSpec
+from arc_lab.program_search.search.tracking import DEFAULT_SOLUTION_CAP, SampleSpec
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -38,6 +38,11 @@ class TraceSpec:
     #: silent. No time-based cap exists on purpose: a wall-clock cap would make the artifact
     #: depend on which machine produced it, breaking the "recorded run is deterministic" invariant.
     capture_all_max: int = 1000
+    #: Keep-cheapest-K cap for the always-on solution sink (``search/tracking.py``): how many
+    #: goal-matching programs to retain per task. Solutions are rare, so this rarely binds; when it
+    #: does, ``solutions_truncated`` is set loudly and only the count/all-solutions views degrade
+    #: (cheapest/first stay exact). Outside run identity like the rest of ``TraceSpec``.
+    solution_sink_cap: int = DEFAULT_SOLUTION_CAP
     #: Reserved — candidate provenance (which search mechanism produced it: composition,
     #: lambda-synthesis, branch injection, ...) is a distinct, not-yet-built tracked dimension;
     #: every current preset (`execution/presets.py`) leaves those mechanisms dormant anyway.

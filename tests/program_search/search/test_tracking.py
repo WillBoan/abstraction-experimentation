@@ -159,7 +159,7 @@ _ENGINE = BottomUpSearchEngine(
     unpinned_type_var_mode="reject",
 )
 
-_BUDGET = Budget(max_depth=2, max_arity=1, max_pool=2)
+_BUDGET = Budget(depth_limit=1, max_arity=1, max_pool=2)
 
 
 class _RejectAll(Constraint):
@@ -223,7 +223,7 @@ _GEO_LIBRARY = Library(name="geo", primitives=(_TRANSPOSE, _FLIP_H))
 
 
 def test_new_layer_restriction_considers_each_program_once() -> None:
-    """At ``max_depth=3`` a naive enumerator that composes over the whole pool each round would
+    """At ``depth_limit=2`` a naive enumerator that composes over the whole pool each round would
     regenerate every depth-1 program at depth 2 (and dedup it away), so the same syntactic program
     surfaces as several distinct considered candidates. The new-layer restriction composes only with
     the previous round's additions, so each distinct program is considered exactly once — a full
@@ -243,7 +243,7 @@ def test_new_layer_restriction_considers_each_program_once() -> None:
         library=_GEO_LIBRARY,
         constraints=(),
         cost=ProgramSize(),
-        budget=Budget(max_depth=3, max_arity=1, max_pool=100),
+        budget=Budget(depth_limit=2, max_arity=1, max_pool=100),
         tracker=tracker,
     )
     assert seen, "the search must consider candidates"

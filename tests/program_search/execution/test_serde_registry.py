@@ -48,7 +48,7 @@ _EXEMPLARS: dict[str, object] = {
         unpinned_type_var_mode="reject",
         beam_width=32,
     ),
-    "Budget": Budget(max_depth=3, max_arity=2, max_pool=64),
+    "Budget": Budget(depth_limit=2, max_arity=2, max_pool=64),
     "ProgramSize": ProgramSize(),
     "LearnSpec": LearnSpec(
         learn_engine=GreedyMDLLearnEngine(proposer=AntiunifyPairs()),

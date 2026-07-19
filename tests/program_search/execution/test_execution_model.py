@@ -75,7 +75,7 @@ REGISTRY: dict[str, type] = {
 }
 
 _LIBRARY = D4_LIBRARY
-_BUDGET = Budget(max_depth=2, max_arity=2, max_pool=100)
+_BUDGET = Budget(depth_limit=1, max_arity=2, max_pool=100)
 
 
 def _config(**overrides: object) -> Config:
@@ -157,7 +157,7 @@ def test_machinery_changes_move_run_id() -> None:
     assert (
         base.run_id
         != RunSpec(
-            config=_config(budget=Budget(max_depth=9, max_arity=2, max_pool=100)), corpus=corpus
+            config=_config(budget=Budget(depth_limit=8, max_arity=2, max_pool=100)), corpus=corpus
         ).run_id
     )
 

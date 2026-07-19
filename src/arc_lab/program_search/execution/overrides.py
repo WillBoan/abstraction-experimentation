@@ -4,9 +4,9 @@
 is already a fully-built ``Config`` (defaults filled), so precedence reduces to applying
 override layers in order — each layer a mapping of dotted paths to values:
 
-    apply_overrides(preset, {"budget.max_depth": 4, "attempts_per_test": 1})
+    apply_overrides(preset, {"budget.depth_limit": 3, "attempts_per_test": 1})
 
-Paths navigate frozen-dataclass fields (``budget.max_depth``, ``search_engine.beam_width``);
+Paths navigate frozen-dataclass fields (``budget.depth_limit``, ``search_engine.beam_width``);
 every application is a ``dataclasses.replace``, so the result is a new frozen ``Config``
 with its own content-hashed ``run_id`` — overridden runs can never collide with the preset's
 cache. Two conveniences: ``library`` accepts a *name* resolved via the preset library

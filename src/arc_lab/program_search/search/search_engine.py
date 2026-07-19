@@ -133,6 +133,10 @@ class _RunState:
     #: The training outputs, index-aligned with ``train_with_output(train_examples)`` — the values
     #: half of the top-level ``EnclosingTarget`` (§7); ``()`` if there are none.
     train_target: tuple[Value, ...] = ()
+    #: The goal-test comparison signature (same values as ``train_target``, typed as a
+    #: ``Signature``): a top-level candidate whose ``(type, sig) == (goal_type, target)`` is a
+    #: solution, recorded into the tracker's solution sink at absorption. ``()`` if no targets.
+    target: Signature = ()
     universe: tuple[Type, ...] = ()  # the bounded-polymorphism monotype universe (§6.2)
     tracker: SearchTracker = field(default_factory=SearchTracker)
     counter: itertools.count[int] = field(default_factory=itertools.count)
@@ -153,17 +157,17 @@ _LAMBDA_SYNTHESIS_LOG_MIN_SECONDS = 0.5
 _LAMBDA_SYNTHESIS_LOG_MIN_CONSIDERED = 500
 
 
-def _log_extra(state: _RunState, generation: int, max_depth: int) -> dict[str, object]:
+def _log_extra(state: _RunState, generation: int, total_generations: int) -> dict[str, object]:
     """The ``task=``/``gen=`` fields for ``run.log``. ``generation`` is 1-indexed here for
     display only — internally (``depth``, ``PoolEntry.generation``, ``results.json``'s
     ``solved_at_generation``) generations stay 0-indexed; this is a presentation-only +1, not a
     data-model change, and means a round's number in ``run.log`` is one more than its
     ``solved_at_generation`` in ``results.json``."""
-    return {"task_id": state.tracker.task_id, "generation": f"{generation + 1}/{max_depth}"}
+    return {"task_id": state.tracker.task_id, "generation": f"{generation + 1}/{total_generations}"}
 
 
 def _log_absorb_progress(
-    state: _RunState, generation: int, max_depth: int, total_this_generation: int
+    state: _RunState, generation: int, total_generations: int, total_this_generation: int
 ) -> None:
     """Log once per 10%-decile of ``total_this_generation`` that ``composed`` (this round's
     running absorbed count, ``GenerationTracker``) crosses — skipped entirely below
@@ -185,7 +189,7 @@ def _log_absorb_progress(
         gen_tracker.pruned,
         gen_tracker.deduped,
         gen_tracker.entered_pool,
-        extra=_log_extra(state, generation, max_depth),
+        extra=_log_extra(state, generation, total_generations),
     )
 
 
@@ -294,7 +298,7 @@ class BottomUpSearchEngine(SearchEngine):
         train_target: tuple[Value, ...] = tuple(output for _, output in train)
 
         universe = (
-            monotype_universe(library, budget.max_depth)
+            monotype_universe(library, budget.depth_limit + 1)
             if self.polymorphism_instantiation == "bounded"
             or self.unpinned_type_var_mode == "eager_grounding_over_universe"
             else ()
@@ -305,6 +309,7 @@ class BottomUpSearchEngine(SearchEngine):
             cost=cost,
             goal_type=resolved_goal_type,
             train_target=train_target,
+            target=target,
             universe=universe,
             tracker=tracker if tracker is not None else SearchTracker(),
         )
@@ -326,20 +331,46 @@ class BottomUpSearchEngine(SearchEngine):
             state.tracker.record(
                 entry.candidate_index, entry.program, entry.primitives, Outcome.GOAL_UNMATCHED
             )
-        solutions = tuple(entry.program for entry in extraction.accepted)
-        # Pool.add_dedup keys on (type, signature), so at most one entry can ever match
-        # (resolved_goal_type, target) — extraction.accepted has at most one entry (§5.7/§5.8).
-        solved_at_generation = extraction.accepted[0].generation if extraction.accepted else None
+        # Sink-based return: every goal-matching program the run found (even ones the pool evicted
+        # from the frontier — the completeness fix), cheapest-first by (cost, candidate_index) — the
+        # SAME key the pool's dedup retains by, so ranked_programs[0] reproduces the pooled program
+        # exactly on a non-eviction task. The full ranking is returned so ``predict`` can use its
+        # ``attempts_per_test`` guesses (the official ARC 2-attempt rule): two train-consistent
+        # programs agree on train by construction but can differ on a test grid. Constraints (an
+        # extra filter, usually empty) still apply. The outcome partition above stays pool-based
+        # (invariant intact; an evicted solution stays EVICTED), so the ``solved > accepted`` gap is
+        # a measured eviction-loss signal; WAKE still uses only ranked_programs[0], the cheapest.
+        sink = state.tracker.solutions
+        passing = [
+            record
+            for record in sink.records()
+            if all(
+                constraint.holds(record.program, train_examples, library)
+                for constraint in constraints
+            )
+        ]
+        ranked_programs = tuple(record.program for record in passing)
+        solved_at_generation = passing[0].generation if passing else None
 
+        cheapest = sink.cheapest()
         return SearchResult(
-            ranked_programs=solutions,
+            ranked_programs=ranked_programs,
             stats=SearchStats(
                 engine=type(self).__name__,
                 considered=state.tracker.considered,
-                accepted=len(solutions),
+                # `accepted` stays the pool-partition count (mirrors the ACCEPTED outcome — the
+                # frontier-surviving solutions), so the invariant considered == sum(outcomes) holds.
+                accepted=len(extraction.accepted),
                 outcomes=state.tracker.totals(),
                 by_primitive=state.tracker.by_primitive(),
                 solved_at_generation=solved_at_generation,
+                generations=tuple(state.tracker.generations()),
+                first_solution_index=sink.first_index,
+                cheapest_solution_index=cheapest.candidate_index if cheapest else None,
+                solution_count=sink.count,
+                solutions_truncated=sink.truncated,
+                solutions=sink.records(),
+                returned_solution_count=len(ranked_programs),
             ),
         )
 
@@ -371,7 +402,7 @@ class BottomUpSearchEngine(SearchEngine):
             *seed_leaves(scope, contexts, self.constant_sources, state.library),
             *self._function_leaves(state),
         ]
-        for depth in range(budget.max_depth):
+        for depth in range(budget.depth_limit + 1):
             # Round-level tracking/logging is only for the run's one top-level search — a
             # lambda-synthesis sub-search recurses into this same loop with its own (smaller,
             # budget-descended) depth numbering starting again at 0, which would otherwise
@@ -384,7 +415,7 @@ class BottomUpSearchEngine(SearchEngine):
                 logger.info(
                     "Generation starting: pool_size_start=%d",
                     pool.size(),
-                    extra=_log_extra(state, track_generation, budget.max_depth),
+                    extra=_log_extra(state, track_generation, budget.depth_limit + 1),
                 )
             branch_candidates: list[tuple[Program, Type, Signature | None]] = []
             if depth > 0:
@@ -430,7 +461,7 @@ class BottomUpSearchEngine(SearchEngine):
                 depth,
                 child_signatures,
                 track_generation=track_generation,
-                max_depth=budget.max_depth,
+                total_generations=budget.depth_limit + 1,
                 total_this_generation=total_this_generation,
             )
             for program, vtype, signature in branch_candidates:
@@ -443,7 +474,7 @@ class BottomUpSearchEngine(SearchEngine):
                     state,
                     depth,
                     track_generation=track_generation,
-                    max_depth=budget.max_depth,
+                    total_generations=budget.depth_limit + 1,
                     total_this_generation=total_this_generation,
                 )
             if top_level:
@@ -466,7 +497,7 @@ class BottomUpSearchEngine(SearchEngine):
                     gen_tracker.entered_pool,
                     gen_tracker.displaced,
                     gen_tracker.evicted,
-                    extra=_log_extra(state, track_generation, budget.max_depth),
+                    extra=_log_extra(state, track_generation, budget.depth_limit + 1),
                 )
         state.memo[key] = pool
         if not top_level:
@@ -548,7 +579,7 @@ class BottomUpSearchEngine(SearchEngine):
                     total_primitives,
                     primitive.name,
                     yielded,
-                    extra=_log_extra(state, track_generation, budget.max_depth),
+                    extra=_log_extra(state, track_generation, budget.depth_limit + 1),
                 )
         if self.function_hole_fill_mode != "none":  # apply pooled function values (§8)
             for program, result_type in appfn_applications(candidates, state.counter):
@@ -753,7 +784,7 @@ class BottomUpSearchEngine(SearchEngine):
                     hole,
                     elapsed,
                     considered_delta,
-                    extra=_log_extra(state, track_generation, budget.max_depth),
+                    extra=_log_extra(state, track_generation, budget.depth_limit + 1),
                 )
         for entry in body_pool.items_of_type(body_type):
             if body_target is not None and entry.sig != body_target:
@@ -821,7 +852,7 @@ class BottomUpSearchEngine(SearchEngine):
         child_signatures: Mapping[int, Signature],
         *,
         track_generation: int | None,
-        max_depth: int,
+        total_generations: int,
         total_this_generation: int,
     ) -> None:
         """Evaluate, prune (§5.6), and dedup each candidate. Value candidates go in first, then
@@ -833,7 +864,7 @@ class BottomUpSearchEngine(SearchEngine):
         function candidate's signature is argument-sampled, a different computation (``compute_
         function_signature``), untouched by the fast path.
 
-        ``track_generation``/``max_depth``/``total_this_generation`` are purely for progress
+        ``track_generation``/``total_generations``/``total_this_generation`` are purely for progress
         tracking/logging (``_absorb_one``) — ``track_generation`` is ``None`` for a lambda-synthesis
         sub-search's own absorption (see ``_enumerate``), independent of ``generation`` above.
         """
@@ -852,7 +883,7 @@ class BottomUpSearchEngine(SearchEngine):
                     state,
                     generation,
                     track_generation=track_generation,
-                    max_depth=max_depth,
+                    total_generations=total_generations,
                     total_this_generation=total_this_generation,
                 )
         if functions:
@@ -871,7 +902,7 @@ class BottomUpSearchEngine(SearchEngine):
                     state,
                     generation,
                     track_generation=track_generation,
-                    max_depth=max_depth,
+                    total_generations=total_generations,
                     total_this_generation=total_this_generation,
                 )
 
@@ -886,7 +917,7 @@ class BottomUpSearchEngine(SearchEngine):
         generation: int,
         *,
         track_generation: int | None,
-        max_depth: int,
+        total_generations: int,
         total_this_generation: int,
     ) -> None:
         """Prune (fully-undefined or a *concrete* output-type mismatch) and dedup one candidate.
@@ -906,7 +937,7 @@ class BottomUpSearchEngine(SearchEngine):
         in which case this candidate still counts toward the whole-run ``considered``/``_totals``/
         ``_by_primitive`` (unaffected), it just isn't attributed to any ``GenerationTracker`` round
         or logged — ``SearchTracker.record``/``mark_entered_pool`` already no-op on ``None``.
-        ``max_depth``/``total_this_generation`` feed the periodic absorption-progress log
+        ``total_generations``/``total_this_generation`` feed the periodic absorption-progress log
         (``_log_absorb_progress``), gated on ``track_generation is not None``.
         """
         index = state.tracker.considered
@@ -922,6 +953,16 @@ class BottomUpSearchEngine(SearchEngine):
             )
         else:
             cost = state.cost.of(program, state.train_examples, state.library)
+            # Solution sink: a top-level candidate whose (type, signature) matches the goal is a
+            # solution — recorded here, at absorption, before add_dedup collapses every solution
+            # into the pool's single (goal_type, target) slot. Top-level only (a sub-search carries
+            # its own body target, not THE goal); dormant telemetry, never touches the pool.
+            if (
+                track_generation is not None
+                and vtype == state.goal_type
+                and signature == state.target
+            ):
+                state.tracker.record_solution(index, generation, program, cost)
             outcome = pool.add_dedup(vtype, signature, program, cost, primitives, index, generation)
             if not outcome.inserted:
                 state.tracker.record(
@@ -939,7 +980,7 @@ class BottomUpSearchEngine(SearchEngine):
                         generation=track_generation,
                     )
         if track_generation is not None and logger.isEnabledFor(logging.INFO):
-            _log_absorb_progress(state, track_generation, max_depth, total_this_generation)
+            _log_absorb_progress(state, track_generation, total_generations, total_this_generation)
 
     def _argument_samples(
         self,

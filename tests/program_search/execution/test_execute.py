@@ -40,7 +40,7 @@ def _corpus(*tasks: Task) -> Corpus:
     return Corpus.of("exec-test", list(tasks))
 
 
-_BUDGET = Budget(max_depth=2, max_arity=2, max_pool=200)
+_BUDGET = Budget(depth_limit=1, max_arity=2, max_pool=200)
 
 
 def _real_engine() -> BottomUpSearchEngine:

@@ -325,14 +325,14 @@ def _engine(**overrides: object) -> BottomUpSearchEngine:
     return BottomUpSearchEngine(**defaults)  # type: ignore[arg-type]
 
 
-def _solve(task: Task, library: Library, max_depth: int) -> object:
+def _solve(task: Task, library: Library, depth_limit: int) -> object:
     engine = _engine()
     result = engine.run(
         train_examples=task.train,
         library=library,
         constraints=(),
         cost=ProgramSize(),
-        budget=Budget(max_depth=max_depth, max_arity=2, max_pool=200),
+        budget=Budget(depth_limit=depth_limit, max_arity=2, max_pool=200),
     )
     assert result.stats.solved, result.stats
     return result.ranked_programs[0]
@@ -355,7 +355,7 @@ def test_recolor_background_solves_via_a_perceiver() -> None:
     from arc_lab.program_search.substrate.primitives.color import MAP_COLOR
 
     library = Library(name="rbg", primitives=(MAP_COLOR, MOST_COMMON_COLOR))
-    solution = _solve(task, library, max_depth=3)
+    solution = _solve(task, library, depth_limit=2)
     unseen = Grid.from_list([[2, 2, 0]])
     assert solution.evaluate_grid(unseen, library) == recolor_bg(unseen)  # type: ignore[attr-defined]
 
@@ -370,7 +370,7 @@ def test_crop_to_content_solves_a_crop_task() -> None:
         test=(),
     )
     library = Library(name="crop", primitives=(CROP_TO_CONTENT,))
-    _solve(task, library, max_depth=2)
+    _solve(task, library, depth_limit=1)
 
 
 def test_pair_composition_pools_and_projects() -> None:
@@ -387,6 +387,6 @@ def test_pair_composition_pools_and_projects() -> None:
         test=(),
     )
     library = Library(name="row", primitives=(SHAPE, SND, BLANK))
-    solution = _solve(task, library, max_depth=4)
+    solution = _solve(task, library, depth_limit=3)
     unseen = Grid.from_list([[9, 9, 9, 9]])
     assert solution.evaluate_grid(unseen, library) == one_by_width(unseen)  # type: ignore[attr-defined]

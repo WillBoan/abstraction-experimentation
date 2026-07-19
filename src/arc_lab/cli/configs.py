@@ -15,5 +15,5 @@ def list_configs() -> None:
         typer.echo(
             f"{name:8s} library={config.library.name:16s} "
             f"engine={type(config.search_engine).__name__:28s} "
-            f"budget=(depth={budget.max_depth}, arity={budget.max_arity}, pool={budget.max_pool})"
+            f"budget=(depth_limit={budget.depth_limit}, arity={budget.max_arity}, pool={budget.max_pool})"
         )

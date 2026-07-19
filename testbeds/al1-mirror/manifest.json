@@ -1,0 +1,47 @@
+{
+  "name": "al1-mirror",
+  "note": "Abstraction Ladder #1: L0{flip_h,flip_v,map_color} -> rot180 -> mirror_recolor(g,a,b)=map_color(rot180(g),a,b) -> top=map_color(mirror_recolor(g,1,2),3,4).",
+  "content_hash": "e29f18715ef1cbbc",
+  "tasks": [
+    {
+      "task_id": "rot180-00",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-01",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-heldout",
+      "label": "rot180",
+      "split": "heldout"
+    },
+    {
+      "task_id": "mirror-recolor-1-2",
+      "label": "mirror_recolor",
+      "split": "train"
+    },
+    {
+      "task_id": "mirror-recolor-3-4",
+      "label": "mirror_recolor",
+      "split": "train"
+    },
+    {
+      "task_id": "mirror-recolor-2-3",
+      "label": "mirror_recolor",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

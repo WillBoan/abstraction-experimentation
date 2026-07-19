@@ -20,17 +20,14 @@ silent cap). Targets are observables only: nothing on the execution path reads t
 
 from __future__ import annotations
 
-import itertools
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
 
-from arc_lab.core.grid import Grid
+from arc_lab.program_search.analysis.behavioral import MAX_PROBE_COMBOS, matches_target
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.substrate.abstraction import make_abstraction
-from arc_lab.program_search.substrate.library import Library, Primitive, Value
-from arc_lab.program_search.substrate.types import BOOL, COLOR, GRID, INT, Type
+from arc_lab.program_search.substrate.library import Library, Primitive
 
 from .execute import execute
 from .model.run_record import RunRecord, considered_total
@@ -39,9 +36,6 @@ from .model.serde import to_data
 from .model.study_spec import StudySpec
 from .run_search_learn import LearnActivityResult, run_search_learn
 
-if TYPE_CHECKING:
-    from collections.abc import Iterator
-
 logger = logging.getLogger(__name__)
 
 #: The library roles of the study grid, in report order.
@@ -49,14 +43,6 @@ LIBRARY_ROLES: tuple[str, ...] = ("L1", "L2", "L3")
 
 #: The corpus roles of the study grid (keys are roles, not corpus names — names are provenance).
 CORPUS_ROLES: tuple[str, ...] = ("train", "eval")
-
-#: Cap on probe-argument combinations per behavioral comparison. Deterministic (a prefix of
-#: the probe product) and reported (`probe_cap`), so a capped check is visible, never silent.
-MAX_PROBE_COMBOS = 512
-
-_COLOR_PROBES: tuple[Value, ...] = tuple(range(10))  # the full COLOR domain
-_INT_PROBES: tuple[Value, ...] = (0, 1, 2, 3, 4)
-_BOOL_PROBES: tuple[Value, ...] = (False, True)
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,7 +108,7 @@ def create_study_report(result: StudyResult) -> dict[str, object]:
         matched_by = [
             primitive.name
             for primitive in invented
-            if _matches_target(primitive, target_primitive, probes)
+            if matches_target(primitive, target_primitive, probes)
         ]
         behavioral.append(
             {"target": target.name, "matched": bool(matched_by), "matched_by": matched_by}
@@ -222,74 +208,3 @@ def _transfer_metrics(result: StudyResult) -> list[dict[str, object]]:
                 )
             rows.append(row)
     return rows
-
-
-# -- behavioral equivalence (the checker behind the behavioral check) -------------
-
-
-def _matches_target(candidate: Primitive, target: Primitive, probe_grids: tuple[Grid, ...]) -> bool:
-    """True iff ``candidate`` behaves as ``target`` — syntactic identity, else probing.
-
-    Identical templates match immediately. Otherwise both are applied to probe-argument
-    tuples (see module docstring) under every argument permutation that lines the types
-    up — a factoring that merely reorders its parameters is still the target. Variadic
-    primitives (no fixed arity to probe) match by template identity only. A parameter
-    type with no probe source (arrow / parametric container) likewise falls back to
-    template identity — extend the probe sources when such targets become expressible.
-    """
-    if candidate.template is not None and candidate.template == target.template:
-        return True
-    if candidate.return_type != target.return_type:
-        return False
-    if candidate.is_variadic or target.is_variadic:
-        return False  # template-identity fallback already tried
-    if len(candidate.param_types) != len(target.param_types):
-        return False
-    per_param: list[tuple[Value, ...]] = []
-    for param_type in target.param_types:
-        values = _probe_values(param_type, probe_grids)
-        if values is None or not values:
-            return False  # some parameter is not probeable
-        per_param.append(values)
-    probe_tuples = list(itertools.islice(itertools.product(*per_param), MAX_PROBE_COMBOS))
-    for permutation in _type_matched_permutations(candidate.param_types, target.param_types):
-        if all(_agree(candidate, target, permutation, args) for args in probe_tuples):
-            return True
-    return False
-
-
-def _probe_values(param_type: Type, probe_grids: tuple[Grid, ...]) -> tuple[Value, ...] | None:
-    if param_type == GRID:
-        return probe_grids
-    if param_type == COLOR:
-        return _COLOR_PROBES
-    if param_type == INT:
-        return _INT_PROBES
-    if param_type == BOOL:
-        return _BOOL_PROBES
-    return None
-
-
-def _type_matched_permutations(
-    candidate_params: tuple[Type, ...], target_params: tuple[Type, ...]
-) -> Iterator[tuple[int, ...]]:
-    """Permutations ``p`` with ``candidate_params[i] == target_params[p[i]]``, identity first."""
-    for permutation in itertools.permutations(range(len(target_params))):
-        if all(candidate_params[i] == target_params[j] for i, j in enumerate(permutation)):
-            yield permutation
-
-
-def _agree(
-    candidate: Primitive,
-    target: Primitive,
-    permutation: tuple[int, ...],
-    args: tuple[Value, ...],
-) -> bool:
-    """Both impls succeed and produce equal values on ``args`` (candidate's reordered)."""
-    try:
-        expected = target.impl(*args)
-        actual = candidate.impl(*(args[j] for j in permutation))
-    except Exception:  # a probe outside either impl's domain is a disagreement
-        return False
-    result: bool = expected == actual
-    return result

@@ -15,7 +15,7 @@ A program is not a Python closure but an inspectable tree of nine node kinds:
 Operations are provided by **virtual dispatch**: each node kind implements
 :meth:`~Program.evaluate`, :meth:`~Program.result_type`, :meth:`~Program.to_dict`,
 :meth:`~Program.children`, and ``__str__``. Structural helpers (:meth:`~Program.size`,
-:meth:`~Program.depth`, :meth:`~Program.walk`, :meth:`~Program.evaluate_grid`) are
+:meth:`~Program.walk`, :meth:`~Program.evaluate_grid`) are
 derived once on the base from those. Adding a node kind therefore *must* implement
 the operations (the abstract methods enforce exhaustiveness) — and must extend the
 s-expression codec in the same change (``tests/program_search/learn/test_codec_completeness.py``).
@@ -107,10 +107,6 @@ class Program(ABC):
     def size(self) -> int:
         """Total number of nodes in the tree."""
         return 1 + sum(child.size() for child in self.children())
-
-    def depth(self) -> int:
-        """Length of the longest root-to-leaf path (a leaf has depth 1)."""
-        return 1 + max((child.depth() for child in self.children()), default=0)
 
     def walk(self) -> Iterator[Program]:
         """Yield every node in the tree, this node first, then its descendants."""

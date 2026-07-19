@@ -66,7 +66,9 @@ DEFAULT_RUNS_ROOT: Final = Path(__file__).resolve().parents[4] / "runs"
 #: The whole search/execution logger subtree — the same one ``cli/main.py``'s
 #: ``_configure_logging`` toggles for console output via ``-v``/``-vv``.
 _PROGRESS_LOGGER_NAME: Final = "arc_lab.program_search"
-_LOG_FILE_FORMAT: Final = "%(asctime)s %(levelname)s task=%(task_id)s gen=%(generation)s %(message)s"
+_LOG_FILE_FORMAT: Final = (
+    "%(asctime)s %(levelname)s task=%(task_id)s gen=%(generation)s %(message)s"
+)
 
 
 class _DefaultLogFieldsFilter(logging.Filter):
@@ -263,7 +265,15 @@ def _make_tracker(
         if trace.capture_all and capture_path is not None
         else None
     )
-    return SearchTracker(samples=trace.samples, capture=sink, task_id=task_id), sink
+    return (
+        SearchTracker(
+            samples=trace.samples,
+            capture=sink,
+            task_id=task_id,
+            solution_cap=trace.solution_sink_cap,
+        ),
+        sink,
+    )
 
 
 def _search_with_tracker(
@@ -402,6 +412,22 @@ def _search_stats(stats: SearchStats) -> dict[str, object]:
         "total": {"considered": stats.considered, **stats.outcomes},
         "by_primitive": {key: dict(counts) for key, counts in stats.by_primitive.items()},
         "solved_at_generation": stats.solved_at_generation,
+        "generations": [dict(generation) for generation in stats.generations],
+        "solutions": {
+            "first_index": stats.first_solution_index,
+            "cheapest_index": stats.cheapest_solution_index,
+            "count": stats.solution_count,
+            "truncated": stats.solutions_truncated,
+            "records": [
+                {
+                    "candidate_index": record.candidate_index,
+                    "generation": record.generation,
+                    "cost": record.cost,
+                    "program": record.program.to_dict(),
+                }
+                for record in stats.solutions
+            ],
+        },
     }
 
 
@@ -625,6 +651,8 @@ def _run_learn(run_spec: RunSpec, record: RunRecord, trace: TraceSpec) -> dict[s
                 "added": [primitive.name for primitive in outcome.added],
                 "description_length": outcome.description_length,
                 "converged": outcome.converged,
+                "proposal_count": outcome.proposal_count,
+                "antiunify_pair_count": outcome.antiunify_pair_count,
                 "library": library.to_dict(),  # the checkpoint resume reads
             }
             trace_handle.write(json.dumps(sleep_row) + "\n")

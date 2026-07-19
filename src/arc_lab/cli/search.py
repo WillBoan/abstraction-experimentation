@@ -16,7 +16,7 @@ def search(
     config: str = typer.Argument(..., help="Config preset name or a JSON config file."),
     corpus: str = typer.Option(..., help="Corpus: dataset, testbed, or testbed:split."),
     set_: list[str] = typer.Option(
-        [], "--set", help="Override a Config field by dotted path, e.g. budget.max_depth=4."
+        [], "--set", help="Override a Config field by dotted path, e.g. budget.depth_limit=3."
     ),
     sample: list[str] = typer.Option(
         [],

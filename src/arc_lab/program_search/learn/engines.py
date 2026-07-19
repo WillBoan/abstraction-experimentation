@@ -21,6 +21,7 @@ from arc_lab.program_search.analysis.compression import CompressionMetric, Solve
 from arc_lab.program_search.learn.antiunify import AbstractionProposer, rewrite_with
 from arc_lab.program_search.learn.learn_engine import LearnEngine, LearnOutcome
 from arc_lab.program_search.learn.selection import AbstractionSelector, GreedyMDL
+from arc_lab.program_search.learn.telemetry import SleepCounters
 from arc_lab.program_search.substrate.abstraction import make_abstraction
 from arc_lab.program_search.substrate.library import Library, Primitive
 from arc_lab.program_search.substrate.program import Program
@@ -54,9 +55,12 @@ class GreedyMDLLearnEngine(LearnEngine):
     def run(self, library: Library, solutions: tuple[SolvedTask, ...]) -> LearnOutcome:
         corpus = list(solutions)
         added: list[Primitive] = []
+        counters = SleepCounters()
         index = _next_index(library, self.name_prefix)
         while True:
-            best = self.selector.select(corpus, library, self.proposer, self.metric)
+            best = self.selector.select(
+                corpus, library, self.proposer, self.metric, counters=counters
+            )
             if best is None:
                 break
             name = f"{self.name_prefix}{index}"
@@ -70,6 +74,8 @@ class GreedyMDLLearnEngine(LearnEngine):
             added=tuple(added),
             rewritten=tuple(corpus),
             description_length=self.metric.describe(corpus, library).total,
+            proposal_count=counters.proposal_count,
+            antiunify_pair_count=counters.antiunify_pair_count,
         )
 
 
@@ -140,11 +146,16 @@ class RefactoringLearnEngine(LearnEngine):
         ).run(library, solutions)
         library, corpus = phase1.library, list(phase1.rewritten)
         added = list(phase1.added)
+        # Accumulate onto phase 1's counts so the outcome carries the whole sleep's sleep-cost.
+        counters = SleepCounters(
+            proposal_count=phase1.proposal_count,
+            antiunify_pair_count=phase1.antiunify_pair_count,
+        )
         index = _next_index(library, self.name_prefix)
 
         # Phase 2 — library refactoring: mine shared factors across the minted definitions.
         while True:
-            best = self._refactor_select(corpus, library)
+            best = self._refactor_select(corpus, library, counters=counters)
             if best is None:
                 break
             name = f"{self.name_prefix}{index}"
@@ -160,9 +171,13 @@ class RefactoringLearnEngine(LearnEngine):
             added=tuple(added),
             rewritten=tuple(corpus),
             description_length=self.metric.describe(corpus, library).total,
+            proposal_count=counters.proposal_count,
+            antiunify_pair_count=counters.antiunify_pair_count,
         )
 
-    def _refactor_select(self, corpus: list[SolvedTask], library: Library) -> Program | None:
+    def _refactor_select(
+        self, corpus: list[SolvedTask], library: Library, *, counters: SleepCounters | None = None
+    ) -> Program | None:
         """The factor mined from the definitions that most lowers DL when folded into them."""
         definitions = [p.template for p in library.primitives if p.template is not None]
         if len(definitions) < 2:  # nothing to refactor a shared factor across
@@ -170,7 +185,10 @@ class RefactoringLearnEngine(LearnEngine):
         existing = {p.template for p in library.primitives if p.template is not None}
         best: Program | None = None
         best_dl = self.metric.describe(corpus, library).total
-        for i, template in enumerate(self.refactor_proposer.propose(definitions, library)):
+        proposed = self.refactor_proposer.propose(definitions, library, counters=counters)
+        if counters is not None:
+            counters.proposal_count += len(proposed)
+        for i, template in enumerate(proposed):
             if template in existing:
                 continue
             probe = f"__ref{i}"

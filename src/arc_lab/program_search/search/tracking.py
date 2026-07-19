@@ -184,6 +184,59 @@ class GenerationTracker:
     evicted: int = 0
 
 
+#: Default cap on solutions retained per run (keep-cheapest-K); solutions are rare, so this rarely
+#: binds. Loud ``truncated`` when it does — only the count/all-solutions views degrade, never the
+#: cheapest or first (those are O(1) running quantities, kept exact regardless of the cap).
+DEFAULT_SOLUTION_CAP = 32
+
+
+@dataclass(frozen=True, slots=True)
+class SolutionRecord:
+    """One goal-matching candidate observed at absorption, before the pool's ``(type, signature)``
+    dedup collapses every solution into a single slot: its provenance and the program itself."""
+
+    candidate_index: int
+    generation: int
+    cost: float
+    program: Program
+
+
+@dataclass(slots=True)
+class SolutionSink:
+    """Every candidate whose ``(type, signature) == (goal_type, target)``, captured at absorption
+    (the engine tests this and calls :meth:`record`). The pool retains at most ONE solution entry
+    ever (they all compete for the same slot), so the sink is the only place that sees the first-
+    found and all-solutions before dedup — the atom behind cost-to-first / cost-to-cheapest and
+    RQ3's top-K retention. Keeps the cheapest ``cap`` by ``(cost, candidate_index)`` — the SAME
+    key the pool's strictly-cheaper-wins dedup uses (cheapest, then first-arrived), so the sink's
+    cheapest reproduces the pool's retained identity exactly."""
+
+    cap: int = DEFAULT_SOLUTION_CAP
+    count: int = 0
+    #: Min ``candidate_index`` over ALL goal-matches (kept exact even when the cap truncates).
+    first_index: int | None = None
+    truncated: bool = False
+    _cheapest: list[SolutionRecord] = field(default_factory=list)
+
+    def record(self, candidate_index: int, generation: int, program: Program, cost: float) -> None:
+        self.count += 1
+        if self.first_index is None or candidate_index < self.first_index:
+            self.first_index = candidate_index
+        self._cheapest.append(SolutionRecord(candidate_index, generation, cost, program))
+        self._cheapest.sort(key=lambda record: (record.cost, record.candidate_index))
+        if len(self._cheapest) > self.cap:
+            del self._cheapest[self.cap :]  # noqa: E203, RUF100
+            self.truncated = True
+
+    def cheapest(self) -> SolutionRecord | None:
+        """The globally-cheapest solution (min ``(cost, candidate_index)``), or ``None``."""
+        return self._cheapest[0] if self._cheapest else None
+
+    def records(self) -> tuple[SolutionRecord, ...]:
+        """The retained cheapest-``cap`` solutions, cheapest first."""
+        return tuple(self._cheapest)
+
+
 @dataclass(slots=True)
 class SearchTracker:
     """Accumulates the outcome partition + per-primitive breakdown for one ``SearchEngine.run``
@@ -198,6 +251,8 @@ class SearchTracker:
     samples: tuple[SampleSpec, ...] = ()
     #: Set by ``execute()`` when full capture is requested; ``None`` means never called.
     capture: CaptureSink | None = None
+    #: Keep-cheapest-K cap for the solution sink (from the run's ``TraceSpec``).
+    solution_cap: int = DEFAULT_SOLUTION_CAP
     _totals: dict[Outcome, int] = field(default_factory=dict)
     _by_primitive: dict[str, dict[Outcome, int]] = field(default_factory=dict)
     _reservoirs: dict[SampleSpec, dict[tuple[str, str], list[_Sample]]] = field(
@@ -205,8 +260,22 @@ class SearchTracker:
     )
     #: One entry per round of the run's top-level search (never a lambda-synthesis sub-search's
     #: own round loop — ``begin_generation``'s docstring). A list, not a dict keyed by round
-    #: number, since rounds run ``0..max_depth-1`` contiguously.
+    #: number, since rounds run ``0..depth_limit`` contiguously.
     _generations: list[GenerationTracker] = field(default_factory=list)
+    #: Every goal-matching candidate the top-level search absorbed (``record_solution``). The engine
+    #: draws its returned result from here (the globally-cheapest, evicted or not); the outcome
+    #: partition stays pool-based, so the two can legitimately disagree on an eviction-loss task.
+    solutions: SolutionSink = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.solutions = SolutionSink(cap=self.solution_cap)
+
+    def record_solution(
+        self, candidate_index: int, generation: int, program: Program, cost: float
+    ) -> None:
+        """Record a candidate whose ``(type, signature)`` matched the run's goal (the engine tests
+        this and calls here) — orthogonal to the outcome partition, so not a ``record()`` call."""
+        self.solutions.record(candidate_index, generation, program, cost)
 
     def record(
         self,
@@ -262,6 +331,26 @@ class SearchTracker:
 
     def generation_at(self, generation: int) -> GenerationTracker:
         return self._generations[generation]
+
+    def generations(self) -> list[dict[str, int | None]]:
+        """The per-round funnel as serializable rows in round order — the sole source for ``b_eff``
+        fitting and the vocabulary-tax view. Top-level search only (a lambda-synthesis sub-search
+        never calls ``begin_generation``), so this is empty for those."""
+        return [
+            {
+                "pool_size_start": gen.pool_size_start,
+                "pool_size_before_truncation": gen.pool_size_before_truncation,
+                "pool_size_end": gen.pool_size_end,
+                "composed": gen.composed,
+                "errored": gen.errored,
+                "pruned": gen.pruned,
+                "deduped": gen.deduped,
+                "entered_pool": gen.entered_pool,
+                "displaced": gen.displaced,
+                "evicted": gen.evicted,
+            }
+            for gen in self._generations
+        ]
 
     def totals(self) -> dict[str, int]:
         """Outcome totals by name, funnel order, all outcomes present (zeros filled) — the stable

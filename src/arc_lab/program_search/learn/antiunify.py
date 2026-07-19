@@ -30,6 +30,7 @@ from collections import Counter
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 
+from arc_lab.program_search.learn.telemetry import SleepCounters
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.program import (
     AppFn,
@@ -56,8 +57,17 @@ class AbstractionProposer(ABC):
     """
 
     @abstractmethod
-    def propose(self, programs: list[Program], library: Library) -> list[Program]:
-        """Candidate templates (closed, Param-holed), best-effort deduplicated."""
+    def propose(
+        self,
+        programs: list[Program],
+        library: Library,
+        *,
+        counters: SleepCounters | None = None,
+    ) -> list[Program]:
+        """Candidate templates (closed, Param-holed), best-effort deduplicated.
+
+        ``counters`` (if given) accumulates sleep-cost telemetry — antiunify-pair attempts — as a
+        side effect; it never changes *what* is proposed."""
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -80,7 +90,13 @@ class AntiunifyPairs(AbstractionProposer):
 
     bound_var_safe: bool = False
 
-    def propose(self, programs: list[Program], library: Library) -> list[Program]:
+    def propose(
+        self,
+        programs: list[Program],
+        library: Library,
+        *,
+        counters: SleepCounters | None = None,
+    ) -> list[Program]:
         candidates: dict[Program, None] = {}  # ordered set (dedup by structure)
         counts = Counter(programs)
         # A program that recurs verbatim is itself an abstraction once its input is lifted.
@@ -89,6 +105,8 @@ class AntiunifyPairs(AbstractionProposer):
                 self._offer(_close_template(program), candidates)
         # Distinct programs generalise via pairwise antiunification (with variable-sharing).
         for a, b in itertools.combinations(counts, 2):
+            if counters is not None:
+                counters.antiunify_pair_count += 1
             try:
                 generalised = _antiunify(a, b, library, {}, itertools.count(), self.bound_var_safe)
             except _BoundVarEscapeError:
@@ -135,7 +153,13 @@ class FrequentSubtree(AbstractionProposer):
 
     min_frequency: int = 2
 
-    def propose(self, programs: list[Program], library: Library) -> list[Program]:
+    def propose(
+        self,
+        programs: list[Program],
+        library: Library,
+        *,
+        counters: SleepCounters | None = None,
+    ) -> list[Program]:
         # Lam-free proper subtrees (each program's own root excluded) that carry real structure.
         # ``If``-rooted subtrees are minable like ``Apply``-rooted ones (branching idioms recur too).
         subtrees: list[Program] = [
@@ -152,6 +176,8 @@ class FrequentSubtree(AbstractionProposer):
                 self._offer(_close_template(subtree), templates, subtrees, library)
         # Distinct subtrees generalise via antiunification — differing leaves (Vars too) become holes.
         for a, b in itertools.combinations(counts, 2):
+            if counters is not None:
+                counters.antiunify_pair_count += 1
             generalised = _antiunify(a, b, library, {}, itertools.count())
             self._offer(_close_template(generalised), templates, subtrees, library)
         return list(templates)

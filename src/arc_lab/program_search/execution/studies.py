@@ -55,16 +55,16 @@ def e1_rot90() -> StudySpec:
     """E1 smoke: starting {flip_h, transpose}, target rot90 (withheld); testbed ``e1-rot90``.
 
     Depth mapping from the old environment: the old ``Enumerate(max_depth=2)`` wake is
-    ``max_depth=3`` here (rounds include the round-0 leaves) and the old depth-1
-    enablement search is ``max_depth=2``.
+    ``depth_limit=2`` here (the inclusive compositional-depth cap) and the old depth-1
+    enablement search is ``depth_limit=1``.
     """
     generators = Library(
         name="generators",
         primitives=(D4_LIBRARY.get("flip_h"), D4_LIBRARY.get("transpose")),
     )
     train_corpus, eval_corpus = split_by_meta(load_testbed("e1-rot90"))
-    deep = Budget(max_depth=3, max_arity=1, max_pool=200)
-    shallow = Budget(max_depth=2, max_arity=1, max_pool=200)
+    deep = Budget(depth_limit=2, max_arity=1, max_pool=200)
+    shallow = Budget(depth_limit=1, max_arity=1, max_pool=200)
     return StudySpec(
         base_config=Config(
             library=generators,
@@ -107,8 +107,8 @@ def perceive_transform() -> StudySpec:
     """
     generators = Library(name="perceivers", primitives=(MAP_COLOR, MOST_COMMON_COLOR))
     train_corpus, eval_corpus = split_by_meta(load_testbed("perceive-transform"))
-    deep = Budget(max_depth=3, max_arity=2, max_pool=300)
-    shallow = Budget(max_depth=2, max_arity=2, max_pool=300)
+    deep = Budget(depth_limit=2, max_arity=2, max_pool=300)
+    shallow = Budget(depth_limit=1, max_arity=2, max_pool=300)
     return StudySpec(
         base_config=Config(
             library=generators,
@@ -152,7 +152,7 @@ def layered_abstraction() -> StudySpec:
     abstractions-on-abstractions.
 
     Testbed ``layered-abstraction`` mixes both task types at ONE fixed budget
-    (``max_depth=3``, two applications): raw composition reaches rot180 (two
+    (``depth_limit=2``, two applications): raw composition reaches rot180 (two
     applications) but not recolor_flipped (three), so WAKE only solves the rot180
     tasks in iteration 0 and sleep mints ``abs0``. With ``abs0`` in the library,
     recolor_flipped collapses to two applications and WAKE genuinely re-solves it
@@ -165,8 +165,8 @@ def layered_abstraction() -> StudySpec:
         primitives=(D4_LIBRARY.get("flip_h"), D4_LIBRARY.get("flip_v"), MAP_COLOR),
     )
     train_corpus, eval_corpus = split_by_meta(load_testbed("layered-abstraction"))
-    learn_budget = Budget(max_depth=3, max_arity=2, max_pool=300)
-    deep = Budget(max_depth=4, max_arity=2, max_pool=300)
+    learn_budget = Budget(depth_limit=2, max_arity=2, max_pool=300)
+    deep = Budget(depth_limit=3, max_arity=2, max_pool=300)
     return StudySpec(
         base_config=Config(
             library=generators,
