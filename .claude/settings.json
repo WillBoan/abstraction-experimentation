@@ -16,6 +16,10 @@
       "Bash(ARC_LAB_LOG=DEBUG uv run pytest:*)",
       "Bash(gh run watch:*)"
     ],
-    "deny": ["Read(./_notes/**)"]
+    "deny": [
+      "Read(./_notes/**)",
+      "./docs/archive/ABSTRACTION-LADDERS-2026-07-16 (1).md",
+      "./docs/archive/ABSTRACTION-LADDERS-2026-07-16 (2).md"
+    ]
   }
 }
