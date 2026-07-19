@@ -37,7 +37,7 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
   - Top Rung: symmetrize-then-X tasks (X = recolor via added `map_color`, or concat-with-original — floor addition TBD)
   - Sandwich sketch: closes at reference `depth_limit=3` — jumps d=2,3 <= 3; inlined double-jump depth 4 > 3
   - Certified ([2026-07-17 derivability probe](../../experiments/2026-07-17-derivability-dag/)): jumps 2/3 confirmed; `quad2 = r2(r2(g))` d=2 over L2 while still underivable (censored, > tree-size 6) over L1 — double-jump holds with room
-  - ⚠ **Skip route found**: minimal r2 witness is `r1(concat_v(g, flip_v(g)))` — fan-in **1**, strictly cheaper than the intended fan-in-2 template; cheapest-wins retention will keep THIS form, so the fan-in-2 test claim does not survive minimality (structural sibling of the E11 literal trap). Either accept the telescope-form mint, or find a target whose *minimal* form is genuinely fan-in > 1
+  - ⚠ **Skip route found**: minimal r2 witness is `r1(concat_v(g, flip_v(g)))` — fan-in **1**, strictly cheaper than the intended fan-in-2 template; cheapest-wins retention will keep THIS form, so the fan-in-2 test claim does not survive minimality (structural sibling of the E11 literal trap). Either accept the telescope-form mint, or find a target whose _minimal_ form is genuinely fan-in > 1
   - Top Rung option (certified): `quad2 = quad(quad(g))` — self-composition goal layer, d=2 over L2
   - Machinery demands: no constants · no HO (`fill=none`) · param-free rungs (no variation plans) · proposer: `AntiunifyPairs`
   - v1-eligible: **YES** — current #1 pick
@@ -53,7 +53,7 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
     - r2 = compose on the normalized grid (eg crop-then-recolor — design open)
     - r2 option (certified): `crop_flip(g) = flip_h(crop_to_content(g))` (d=2 over L1, raw d=3; needs `flip_h`/`transpose` added to the floor)
   - Top Rung: TBD
-  - Route note (probe): the minimal `crop_flip` witness *commutes* — `crop_to_content(flip_h(g))` — task design must not assume operand order
+  - Route note (probe): the minimal `crop_flip` witness _commutes_ — `crop_to_content(flip_h(g))` — task design must not assume operand order
   - Machinery demands: no constants (± `finite-enumerate` if recolor joins) · no HO · a learned **Mask**-typed intermediate · proposer: `AntiunifyPairs`
   - v1-eligible: yes-ish (r2 + top undesigned)
   - Tests: construct-AND-consume a learned `Mask` type — the deepest gap-climbing phenomenon
@@ -145,6 +145,44 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
   - v1-eligible: not #1 — the Family-A instrument for height-scaling + vocabulary-tax compounding once the machinery works
   - Tests: does the climb stall as the library fattens — with shape held constant
 
+- **self-composition telescope** — "each rung = the previous rung squared" (geometric depth profile)
+  - Height: 3-4
+  - Shape: telescope; `r_{i+1} = r_i(r_i(g))` — constant jump d=2 while inlined depth DOUBLES per rung
+  - Floor: any param-free `GRID->GRID` motif tower (grid-doubling instances certified: `quad2` over quad-symmetrize, `grid9x9` over layout-mosaic)
+  - Sandwich sketch: the maximally efficient ladder geometry — sharpest instrument for characterizing `cost_L(d)` shape (RQ1 secondary)
+  - Machinery demands: none beyond the host tower's
+  - v1-eligible: yes, as an overlay on quad-symmetrize / layout-mosaic (their certified tops ARE its first rung)
+  - Tests: geometric vs linear depth-profile family — an axis the linear-profile candidates can't reach
+  - Blocked variant: `translate`/`scale`-by-`2^k` towers need constant leaves (probe scope note); grid-doubling saturates the ARC 30-cap after ~2 squarings on 3x3 inputs
+
+- **domain-genesis: recolor from the universal floor** — "abstraction converts completeness into affordability"
+  - Height: ~2-3
+  - Shape: chain
+  - Floor: `MINIMAL_COMPLETE_FLOOR` + `most_common_color`
+  - Rungs: r1 = `map_color` re-derived as a `build_grid` lambda (`if eq(read(g,r,c), a) then b else read(g,r,c)`) · Top: `recolor_bg` over the learned r1 (the E11 composition riding a learned, not gifted, `map_color`)
+  - Machinery demands: `fill=lambda-synthesis` + `finite-enumerate` — the E13 cost cliff (~17-24x/round) applies
+  - v1-eligible: NO (cost); 3x3 grids only, raw baseline censored
+  - Tests: turns E13's expressible-but-unfindable seam into a ladder — connects the fundamental-floor grain contrast to the ladder program
+
+- **perceiver-genesis: re-derive `most_common_color` itself** — perception as rungs
+  - Height: ~3
+  - Shape: chain crossing `Grid -> [Color] -> Color`
+  - Floor: `CELLS_IO` + `fold` + `eq`/`if` + `map_color` (+ arithmetic for the argmax)
+  - Rungs: r1 = `count_color` via fold-over-cells · r2 = `most_common_color` via argmax-over-palette · Top: `recolor_bg` riding two LEARNED perceivers
+  - Distinct from counting-histogram: rungs are PERCEIVERS (non-Grid→Grid, mid-pipeline), and the target is a shipped primitive — a perceiver gen/full contrast
+  - Machinery demands: HO fill · fold body vocabulary (bundles-doc Constraint 4 thin-body warning) · RQ3 fragment visibility for non-Grid→Grid rungs
+  - v1-eligible: NO
+  - Tests: can sleep mint a perceiver at all (no experiment has yet)
+
+- **scheme-ladder: a function-typed rung** — `symmetrize_by`
+  - Height: ~2-3
+  - Shape: chain; the RUNG is a scheme, not a ground template
+  - Floor: `D4_GEN` + `overlay`
+  - Rungs: r1 (HO) = `symmetrize_by(g, f) ~ overlay(c, g, f(g))` — demonstrating tasks vary the D4 element `f` ACROSS tasks · Top: `full_symmetrize` = `symmetrize_by` chained over two axes
+  - Machinery demands: the proposer must hole a FUNCTION — `StitchProposer` (the 2026-07-08 HO stack produces exactly this mint type); out of `AntiunifyPairs`' reach · variadic `overlay` caveats
+  - v1-eligible: NO — a deliberate probe of the design doc's v1 scope boundary (mintable library abstractions vs substrate HO)
+  - Tests: does the ladder framework extend past first-order antiunify
+
 - **recolor-over-mask** — "re-derive swap_colors over mask machinery" (registry-mined)
   - Height: 2
   - Shape: chain
@@ -154,10 +192,23 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
   - v1-eligible: no (free-param pressure; the finding is the interest, not the climb)
   - Tests: the ONLY non-D4 skeleton the shipped registry yields; also a live floor-design caveat — `map_color` ↔ `swap_colors` are MUTUALLY derivable once mask machinery is present (refines the bundles doc's Constraint 5, which is floor-relative)
 
+- **control ladders** — decoy / skippable / greedy-trap (measurement instruments)
+  - Shape: each = a proven ladder + ONE deliberate violation of a linter rule
+  - `decoy`: add a learnable-but-unused rung — does the loop pay only vocabulary tax, or derail?
+  - `skippable`: a consecutive pair with deliberately TRACTABLE double-jump — measures what rung-necessity enforcement buys (settles design doc §7 empirically, not by fiat)
+  - `greedy-trap`: the MDL-best mint at step i is wrong for step i+1 — governance stress test
+  - Machinery demands: none new; the probe certifies each statically for free
+  - v1-eligible: not #1, but EARLY — they gate the interpretation of every other ladder's results
+  - Tests: negative controls for the whole batch
+
+---
+
 - **(negative note) D4-only ladders cap out** — the group has 8 elements, all reachable at depth <= 4 from the generators, so double-jump intractability is nearly unachievable: validity windows empty or one budget wide. D4 material = calibration ladders (height 2), not taller ladders.
   - Quantified (probe): `rot180` is the unique deepest member (d=4 over `{flip_h, transpose}`), collapsing to 2 via any of FOUR interchangeable rungs (`rot90`/`rot270`/`flip_v`/`anti_transpose`) — a free rung-choice metaparameter for the calibration arm.
 
 - **(negative note, quantified) registry mining caps at height 2** — exhaustive derivability pass (leave-one-out + 12 bundles-doc floors, [probe artifacts](../../experiments/2026-07-17-derivability-dag/)): the shipped mono registry yields exactly two ladder skeletons (the D4 one above; recolor-over-mask). Cross-domain floors derive nothing — layout/cell/arith members are mutually independent at these depths. Height >= 3 requires composite (unshipped) targets, always.
+
+---
 
 ### Based on previous experiments
 
@@ -186,6 +237,10 @@ Note: under the goal-layer Top-Rung framing, NO previous experiment is a complet
 
 - Based on previous experiments (E1, E2, ...).
 - Based on real ARC tasks.
+  - Specific procedure — **backward decomposition**: hand-write arc-lab-DSL solutions for a motif cluster of unsolved arc1 tasks, bisect the ASTs at the most-reused subterms (method (2) seeded by evidence), antiunify across the cluster → rungs AND demonstrating tasks fall out together. Needs no external DSL and no Object pathway for the grid-level subset.
+- **Reservoir mining of failed runs** — the §5.1 sampling reservoirs already record candidates from big-budget FAILED searches; frequent deep subterms on near-miss tasks = empirically-almost-useful rung candidates. Uses existing recorded atoms; no new machinery.
+- **Canonical towers from other fields** — translate an ordering that is independently known to be natural: hyperoperations (succ → add → mul → pow), image-morphology (dilate-once → open/close → connected components — the Object pathway's natural rung ordering), predicate → dispatch → interpreter, developmental (subitize → count → compare), simple dynamics (fall-one-step → fall-until-blocked). The translation into grid-land is the design work; the rung ORDER comes free.
+- **Inverted desiderata** — generate control ladders by violating exactly one Ladder-Linter rule at a time; the linter checklist doubles as a control-ladder generator (see control ladders above).
 - Based on Hodel's 160-ish-sized DSL for ARC + Hodel's canonical ARC task solutions.
   - Immediate use: **mine rung statistics** — which sub-programs recur across the canonical solutions → empirically-grounded rung candidates and ladder shapes; plus the grid-level subset of solutions translates cheaply today (→ real-ARC anchor corpora + reference solutions).
   - Fuller use is gated by the **Object pathway** (arc-lab has no Object type yet) — a modest, near-term build if we want it, with Hodel's object primitives as its natural blueprint. Not a distant thing.
@@ -227,7 +282,9 @@ Format: **name** — type/template sketch — floor it presumes — why interest
 - **swap_cells** — `(GRID,INT,INT,INT,INT)->GRID` — `CELL_FLOOR` — the registry's withheld re-derivation target; high-arity variation-plan stress test.
 - **mirror_index** — `(INT,INT)->INT` = `sub(sub(n,k),1)` — coordinate/HO floors — the E8/E9 reusable idiom; blocked on HO for v1.
 - **count-per-line / mask_count consumers** — non-Grid→Grid — blocked on the `MASK->INT` gap (`OBJECT_PRECURSOR`) and/or RQ3 fragment visibility; the quantity-rung family.
-- **nonbg_mask-from-perceiver** — `GRID->MASK` = `mask_complement(mask_by_color(g, most_common_color(g)))` (d=3, certified) — perceive + mask-gen — derives a Mask *source* from a perceiver; mask-genesis rung, ready-made gen/full contrast on `nonbg_mask`.
+- **nonbg_mask-from-perceiver** — `GRID->MASK` = `mask_complement(mask_by_color(g, most_common_color(g)))` (d=3, certified) — perceive + mask-gen — derives a Mask _source_ from a perceiver; mask-genesis rung, ready-made gen/full contrast on `nonbg_mask`.
 - **swap_colors-via-mask** — `(GRID,COLOR,COLOR)->GRID` = `paint_through_mask(map_color(g,a,b), mask_by_color(g,b), a)` (d=3, certified) — mask + recolor — the registry-mined duplicate-pair rung (see recolor-over-mask).
 - **mask De Morgan closures** — `mask_union`/`mask_intersect`/`mask_difference` interderivable via `mask_complement` (d<=3, certified) — mask-algebra gen floors — algebraic mini-rungs for a mask-genesis ladder.
 - **quad2 / grid9x9 self-composition tops** — `GRID->GRID` = `r2(r2(g))` (d=2 over L2, certified) — the cheapest possible goal layer for any param-free tower; doubles inlined depth per application (the geometric depth-profile family).
+- **symmetrize_by** — `(GRID, GRID->GRID)->GRID` ~ `overlay(c, g, f(g))` — `D4_GEN` + `overlay` — the function-typed scheme rung (see scheme-ladder); StitchProposer territory.
+- **dilate_once** — `MASK->MASK` (or `GRID->GRID`) neighborhood expansion — no shipped neighbor primitive; expressible only as an expensive `build_grid` lambda — first rung of the morphology tower toward `segment`; names a concrete primitive gap like `mask_count` does.
