@@ -170,6 +170,8 @@ Used by: one **reference config** chosen per Ladder (pinned in the `LadderSpec` 
 - budget.depth_limit
 - budget.max_arity
 - budget.max_pool
+- budget.considered_limit + budget.considered_limit_mode (the compute guard, now separable from `depth_limit`'s semantic role — §6.9)
+- budget.solution_limit + budget.solution_limit_mode (early stop; its two modes measure §2's two cost-to-first variants)
 - beam_width (if `BeamBottomUpSearchEngine`)
 - constant_sources
 - function_hole_fill_mode
@@ -378,13 +380,16 @@ Machinery that needs to be implemented in order to run the experiments:
 7. Sleep-cost counters
 8. `taskgen` generators for ladder #1.
 
+9. **Budget stop limits — BUILT (2026-07-20).** Shipped as `Budget.considered_limit` / `Budget.solution_limit` (the names `max_considered` / `stop_after_solutions` used earlier in this doc), each with a `*_mode` of `immediate` or `generation-end`. They are params (§3.2), not deferred machinery. Three consequences for this design:
+   - **`depth_limit` is no longer doing double duty.** It can be set purely from the ladder's semantics (the validity window, §3.1) while `considered_limit` carries the compute guard. The construction loop becomes: run the ladder at the semantically-correct depth, and read *"did any search censor?"* as "this ladder is less tractable" — a uniform predicate replacing the guesswork in §5.1's "should be tractable, with headroom".
+   - **A censored cell is INCONCLUSIVE, never a pass.** The certificate's checks (§6.5) are read off *unsolved* sets, and a censored search is unsolved too — so `no_skip_paths` is tri-state and `None` fails admission exactly as `False` does. Without this, censoring would silently certify a ladder whose skip path the search merely never reached.
+   - **Overshoot is now removable.** §2's laddered-cost breakdown lists overshoot ("no early stop: every task pays cost-paid-full") as one of the four loop-overhead terms; `solution_limit` addresses it directly, and its two modes measure §2's two cost-to-first variants respectively — making their divergence a direct measurement rather than the post-hoc read the resolved decision of 2026-07-17 anticipated.
+
 **Deferred (later phases):**
 
 - Needed for RQ3:
   - top-K solution retention
   - fragment selectors and/or partial-credit scoring
-- `max_considered` budget cap (would make censored baselines and cost-matched controls much cleaner)
-- early-stop (`stop_after_solutions`)
 
 ## 7. Open decisions
 
