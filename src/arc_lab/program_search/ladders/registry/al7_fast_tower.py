@@ -9,6 +9,17 @@ Each rung doubles one dimension by stacking the rung below against itself, alter
 2x3 seed the widths/heights run 2x6 -> 4x6 -> 4x12 -> 8x12 -> 8x24 -> 16x24, inside the ARC 30 cap.
 Grid growth is what keeps the tower non-collapsing (a size-preserving tower on a finite grid must
 eventually cycle) -- and it is also what caps height at roughly 6.
+
+**KNOWN BROKEN -- the concept telescopes, structurally (2026-07-20).** The certificate found skip
+paths at rungs 3, 4, 5: ``stack2(stack2 g) == tall4 g``, ``stack2(wide4 g) == wide8 g``, etc. The
+cause is not the choice of transform -- ANY self-similar doubling satisfies ``r_{2k} == r2^k``, so
+every even rung is a depth-2 composition of the rung two below. Verified transform-independent: a
+plain-``concat``-only tower (asymmetric seed, no flips) collapses identically (``r4 == r2(r2 g))``).
+The Floor ``{concat_h, concat_v, flip_h, flip_v}`` can only express doublings and mirrorings, and
+those all telescope, so no seeding or reordering fixes it -- a genuinely non-collapsing tall+cheap
+tower needs distinct, non-composing rung operations (hence a richer Floor), which is a redesign, not
+a tweak. ``al9-decoy`` and ``al11-greedy-trap`` build on this spine and inherit the defect. Left in
+the registry pending that redesign; do not expect ``admitted``.
 """
 
 from __future__ import annotations

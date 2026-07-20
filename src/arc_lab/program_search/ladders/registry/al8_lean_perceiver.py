@@ -9,6 +9,16 @@ round 0 holds a single leaf instead of eleven.
 
 If it runs in seconds where al5 takes an hour, that quantifies where the cost actually lives, and
 gives the batch a fast perceiver ladder to iterate on.
+
+**Not an admittable ladder -- a cost-comparison ARM to al5 (2026-07-20).** The empirical certificate
+rejects it, correctly: deriving the colours cheaply is exactly what removes the search-cost gap that
+makes al5 a ladder. With perceived (not enumerated) colours, the whole competence is one depth-2
+Floor program -- the certificate found L_0 solving the top directly via
+``map_color(flip_v(input), least_common_color(input), most_common_color(input))``. So there is
+nothing to climb and no amortization to measure; the value here is the head-to-head *cost* against
+al5 at matched competence, read from the iteration-0 wake (``considered``, ``b_eff``, the per-primitive
+partition), NOT from admission. Kept in the registry as that arm, like the ``al9``--``al12`` controls;
+do not expect ``admitted``.
 """
 
 from __future__ import annotations
