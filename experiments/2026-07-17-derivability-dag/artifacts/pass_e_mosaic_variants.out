@@ -1,0 +1,35 @@
+
+=== chain (doc's current design) ===
+  floor {concat_h, concat_v}; stages: L1=+row3 -> L2=+grid3x3
+  goal          L0         L1         L2       
+  row3          2          1          1        
+  col3          2          2          2        
+  grid3x3       >6         3          1        
+  grid9x9       >6         >6         2        
+  minimal witnesses:
+    row3 @ L0: concat_h(p0, concat_h(p0, p0))
+    row3 @ L2: row3(p0)
+    col3 @ L0: concat_v(p0, concat_v(p0, p0))
+    grid3x3 @ L1: row3(concat_v(p0, concat_v(p0, p0)))
+    grid3x3 @ L2: grid3x3(p0)
+    grid9x9 @ L2: grid3x3(grid3x3(p0))
+    grid9x9 @ L2: grid3x3(grid3x3(p0))
+  [0s]
+
+=== siblings (+col3 at level 1) ===
+  floor {concat_h, concat_v}; stages: L1=+row3 -> L2=+col3 -> L3=+grid3x3
+  goal          L0         L1         L2         L3       
+  row3          2          1          1          1        
+  col3          2          2          1          1        
+  grid3x3       >6         3          2          1        
+  grid9x9       >6         >6         4          2        
+  minimal witnesses:
+    row3 @ L0: concat_h(p0, concat_h(p0, p0))
+    row3 @ L3: row3(p0)
+    col3 @ L0: concat_v(p0, concat_v(p0, p0))
+    col3 @ L3: col3(p0)
+    grid3x3 @ L1: row3(concat_v(p0, concat_v(p0, p0)))
+    grid3x3 @ L3: grid3x3(p0)
+    grid9x9 @ L2: col3(col3(row3(row3(p0))))
+    grid9x9 @ L3: grid3x3(grid3x3(p0))
+  [0s]
