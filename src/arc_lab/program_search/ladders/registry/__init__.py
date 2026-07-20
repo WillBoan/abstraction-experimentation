@@ -27,6 +27,10 @@ from arc_lab.program_search.ladders.registry import (
     al14_cell_row_grid,
     al15_shift_frame,
     al16_layout_nest,
+    al17_shift_frame_tall,
+    al18_fanin_rotate,
+    al19_fanin_recolor,
+    al20_recolor_telescope,
 )
 from arc_lab.program_search.ladders.spec import LadderSpec
 
@@ -48,6 +52,10 @@ LADDERS: dict[str, Callable[[], LadderSpec]] = {
     "al14-cell-row-grid": al14_cell_row_grid.build,
     "al15-shift-frame": al15_shift_frame.build,
     "al16-layout-nest": al16_layout_nest.build,
+    "al17-shift-frame-tall": al17_shift_frame_tall.build,
+    "al18-fanin-rotate": al18_fanin_rotate.build,
+    "al19-fanin-recolor": al19_fanin_recolor.build,
+    "al20-recolor-telescope": al20_recolor_telescope.build,
 }
 
 

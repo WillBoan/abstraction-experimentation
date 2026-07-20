@@ -1,0 +1,47 @@
+{
+  "name": "al20-recolor-telescope",
+  "note": "al20-recolor-telescope: geometry+recolour telescope (al19's fan-in-1 twin); clean.",
+  "content_hash": "72baa05d46e5fdc7",
+  "tasks": [
+    {
+      "task_id": "pair-00",
+      "label": "pair",
+      "split": "train"
+    },
+    {
+      "task_id": "pair-01",
+      "label": "pair",
+      "split": "train"
+    },
+    {
+      "task_id": "pair-heldout-00",
+      "label": "pair",
+      "split": "heldout"
+    },
+    {
+      "task_id": "recol-00",
+      "label": "recol",
+      "split": "train"
+    },
+    {
+      "task_id": "recol-01",
+      "label": "recol",
+      "split": "train"
+    },
+    {
+      "task_id": "recol-heldout-00",
+      "label": "recol",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

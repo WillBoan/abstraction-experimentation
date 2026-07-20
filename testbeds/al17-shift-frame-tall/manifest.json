@@ -1,0 +1,62 @@
+{
+  "name": "al17-shift-frame-tall",
+  "note": "al17-shift-frame-tall: al15's chain at height 4; certified non-collapsing.",
+  "content_hash": "14eaa8456b4622fe",
+  "tasks": [
+    {
+      "task_id": "shift1-00",
+      "label": "shift1",
+      "split": "train"
+    },
+    {
+      "task_id": "shift1-01",
+      "label": "shift1",
+      "split": "train"
+    },
+    {
+      "task_id": "shift1-heldout-00",
+      "label": "shift1",
+      "split": "heldout"
+    },
+    {
+      "task_id": "frame1-00",
+      "label": "frame1",
+      "split": "train"
+    },
+    {
+      "task_id": "frame1-01",
+      "label": "frame1",
+      "split": "train"
+    },
+    {
+      "task_id": "frame1-heldout-00",
+      "label": "frame1",
+      "split": "heldout"
+    },
+    {
+      "task_id": "shift2-00",
+      "label": "shift2",
+      "split": "train"
+    },
+    {
+      "task_id": "shift2-01",
+      "label": "shift2",
+      "split": "train"
+    },
+    {
+      "task_id": "shift2-heldout-00",
+      "label": "shift2",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

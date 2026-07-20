@@ -30,6 +30,10 @@ from arc_lab.program_search.ladders.registry import (
     al14_cell_row_grid,
     al15_shift_frame,
     al16_layout_nest,
+    al17_shift_frame_tall,
+    al18_fanin_rotate,
+    al19_fanin_recolor,
+    al20_recolor_telescope,
 )
 
 from . import GeneratedTask, make_task, write_testbed
@@ -484,6 +488,12 @@ generate_al13_symmetry_repair = _ladder_testbed_writer("al13-symmetry-repair", a
 generate_al14_cell_row_grid = _ladder_testbed_writer("al14-cell-row-grid", al14_cell_row_grid)
 generate_al15_shift_frame = _ladder_testbed_writer("al15-shift-frame", al15_shift_frame)
 generate_al16_layout_nest = _ladder_testbed_writer("al16-layout-nest", al16_layout_nest)
+generate_al17_shift_frame_tall = _ladder_testbed_writer("al17-shift-frame-tall", al17_shift_frame_tall)
+generate_al18_fanin_rotate = _ladder_testbed_writer("al18-fanin-rotate", al18_fanin_rotate)
+generate_al19_fanin_recolor = _ladder_testbed_writer("al19-fanin-recolor", al19_fanin_recolor)
+generate_al20_recolor_telescope = _ladder_testbed_writer(
+    "al20-recolor-telescope", al20_recolor_telescope
+)
 
 
 #: Generator registry for the CLI (`arc-lab taskgen <name>`).
@@ -508,6 +518,10 @@ GENERATORS: dict[str, Callable[[Path], Path]] = {
     "al14-cell-row-grid": generate_al14_cell_row_grid,
     "al15-shift-frame": generate_al15_shift_frame,
     "al16-layout-nest": generate_al16_layout_nest,
+    "al17-shift-frame-tall": generate_al17_shift_frame_tall,
+    "al18-fanin-rotate": generate_al18_fanin_rotate,
+    "al19-fanin-recolor": generate_al19_fanin_recolor,
+    "al20-recolor-telescope": generate_al20_recolor_telescope,
 }
 
 
