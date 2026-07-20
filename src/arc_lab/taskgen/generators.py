@@ -28,6 +28,8 @@ from arc_lab.program_search.ladders.registry import (
     al12_unlearnable,
     al13_symmetry_repair,
     al14_cell_row_grid,
+    al15_shift_frame,
+    al16_layout_nest,
 )
 
 from . import GeneratedTask, make_task, write_testbed
@@ -480,6 +482,8 @@ generate_al11_greedy_trap = _ladder_testbed_writer("al11-greedy-trap", al11_gree
 generate_al12_unlearnable = _ladder_testbed_writer("al12-unlearnable", al12_unlearnable)
 generate_al13_symmetry_repair = _ladder_testbed_writer("al13-symmetry-repair", al13_symmetry_repair)
 generate_al14_cell_row_grid = _ladder_testbed_writer("al14-cell-row-grid", al14_cell_row_grid)
+generate_al15_shift_frame = _ladder_testbed_writer("al15-shift-frame", al15_shift_frame)
+generate_al16_layout_nest = _ladder_testbed_writer("al16-layout-nest", al16_layout_nest)
 
 
 #: Generator registry for the CLI (`arc-lab taskgen <name>`).
@@ -502,6 +506,8 @@ GENERATORS: dict[str, Callable[[Path], Path]] = {
     "al12-unlearnable": generate_al12_unlearnable,
     "al13-symmetry-repair": generate_al13_symmetry_repair,
     "al14-cell-row-grid": generate_al14_cell_row_grid,
+    "al15-shift-frame": generate_al15_shift_frame,
+    "al16-layout-nest": generate_al16_layout_nest,
 }
 
 

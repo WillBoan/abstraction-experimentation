@@ -1,0 +1,47 @@
+{
+  "name": "al15-shift-frame",
+  "note": "al15-shift-frame: heterogeneous shift-stack/frame chain; certified non-collapsing.",
+  "content_hash": "063a30be82b37243",
+  "tasks": [
+    {
+      "task_id": "shift_stack-00",
+      "label": "shift_stack",
+      "split": "train"
+    },
+    {
+      "task_id": "shift_stack-01",
+      "label": "shift_stack",
+      "split": "train"
+    },
+    {
+      "task_id": "shift_stack-heldout-00",
+      "label": "shift_stack",
+      "split": "heldout"
+    },
+    {
+      "task_id": "framed-00",
+      "label": "framed",
+      "split": "train"
+    },
+    {
+      "task_id": "framed-01",
+      "label": "framed",
+      "split": "train"
+    },
+    {
+      "task_id": "framed-heldout-00",
+      "label": "framed",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

@@ -25,6 +25,8 @@ from arc_lab.program_search.ladders.registry import (
     al12_unlearnable,
     al13_symmetry_repair,
     al14_cell_row_grid,
+    al15_shift_frame,
+    al16_layout_nest,
 )
 from arc_lab.program_search.ladders.spec import LadderSpec
 
@@ -44,6 +46,8 @@ LADDERS: dict[str, Callable[[], LadderSpec]] = {
     "al12-unlearnable": al12_unlearnable.build,
     "al13-symmetry-repair": al13_symmetry_repair.build,
     "al14-cell-row-grid": al14_cell_row_grid.build,
+    "al15-shift-frame": al15_shift_frame.build,
+    "al16-layout-nest": al16_layout_nest.build,
 }
 
 
