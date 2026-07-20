@@ -1,0 +1,32 @@
+{
+  "name": "al10-skippable",
+  "note": "al10-skippable (control): al2's corpus; the budget makes the rung unnecessary.",
+  "content_hash": "c7672a302890b3c3",
+  "tasks": [
+    {
+      "task_id": "rot90-00",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-01",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-heldout-00",
+      "label": "rot90",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

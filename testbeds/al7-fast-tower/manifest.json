@@ -1,0 +1,92 @@
+{
+  "name": "al7-fast-tower",
+  "note": "al7-fast-tower: layout floor, height 6, every jump depth 2, no constant sources.",
+  "content_hash": "25e418a90a898d49",
+  "tasks": [
+    {
+      "task_id": "mirror-00",
+      "label": "mirror",
+      "split": "train"
+    },
+    {
+      "task_id": "mirror-01",
+      "label": "mirror",
+      "split": "train"
+    },
+    {
+      "task_id": "mirror-heldout-00",
+      "label": "mirror",
+      "split": "heldout"
+    },
+    {
+      "task_id": "stack2-00",
+      "label": "stack2",
+      "split": "train"
+    },
+    {
+      "task_id": "stack2-01",
+      "label": "stack2",
+      "split": "train"
+    },
+    {
+      "task_id": "stack2-heldout-00",
+      "label": "stack2",
+      "split": "heldout"
+    },
+    {
+      "task_id": "wide4-00",
+      "label": "wide4",
+      "split": "train"
+    },
+    {
+      "task_id": "wide4-01",
+      "label": "wide4",
+      "split": "train"
+    },
+    {
+      "task_id": "wide4-heldout-00",
+      "label": "wide4",
+      "split": "heldout"
+    },
+    {
+      "task_id": "tall4-00",
+      "label": "tall4",
+      "split": "train"
+    },
+    {
+      "task_id": "tall4-01",
+      "label": "tall4",
+      "split": "train"
+    },
+    {
+      "task_id": "tall4-heldout-00",
+      "label": "tall4",
+      "split": "heldout"
+    },
+    {
+      "task_id": "wide8-00",
+      "label": "wide8",
+      "split": "train"
+    },
+    {
+      "task_id": "wide8-01",
+      "label": "wide8",
+      "split": "train"
+    },
+    {
+      "task_id": "wide8-heldout-00",
+      "label": "wide8",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

@@ -27,11 +27,11 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
 
 ### Candidates
 
-- **quad-symmetrize** — ADOPTED 2026-07-19 → [ladders/quad-symmetrize/worksheet.md](ladders/quad-symmetrize/worksheet.md) (full content migrated; blocking open problem carried over: the r2 skip route — minimal witness is fan-in 1)
+- **quad-symmetrize** — ADOPTED 2026-07-19 → [ladders/al3-quad-symmetrize/worksheet.md](ladders/al3-quad-symmetrize/worksheet.md) (full content migrated; blocking open problem carried over: the r2 skip route — minimal witness is fan-in 1)
 
-- **mask-crop** — ADOPTED 2026-07-19 → [ladders/mask-crop/worksheet.md](ladders/mask-crop/worksheet.md) (full content migrated; r2 + top still undesigned)
+- **mask-crop** — ADOPTED 2026-07-19 → [ladders/al4-mask-crop/worksheet.md](ladders/al4-mask-crop/worksheet.md) (full content migrated; r2 + top still undesigned)
 
-- **perceiver-chain** — ADOPTED 2026-07-19 → [ladders/perceiver-chain/worksheet.md](ladders/perceiver-chain/worksheet.md) (full content migrated; r2 + top still undesigned)
+- **perceiver-chain** — ADOPTED 2026-07-19 → [ladders/al5-perceiver-chain/worksheet.md](ladders/al5-perceiver-chain/worksheet.md) (full content migrated; r2 + top still undesigned)
 
 - **layout-mosaic** — "assemble an n x n mosaic" (toward `tile_repeat`)
   - Height: ~3-4
@@ -175,7 +175,7 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
 
 Note: under the goal-layer Top-Rung framing, NO previous experiment is a complete ladder — each needs a top layer added (tasks that use the top bridging rung as a fragment).
 
-- **e1-rot90-retrofit** — ADOPTED 2026-07-19 as **rot90-calibration** → [ladders/rot90-calibration/worksheet.md](ladders/rot90-calibration/worksheet.md) (the calibration arm; rot180-as-`rot90∘rot90` self-composition top)
+- **e1-rot90-retrofit** — ADOPTED 2026-07-19 as **rot90-calibration** → [ladders/al2-rot90-calibration/worksheet.md](ladders/al2-rot90-calibration/worksheet.md) (the calibration arm; rot180-as-`rot90∘rot90` self-composition top)
 - **e12-layered-retrofit** — **REALIZED as `al1-mirror`** (built, ADMITTED + run 2026-07-18) → [ladders/al1-mirror/worksheet.md](ladders/al1-mirror/worksheet.md). AL1 = this floor/rung pair (`mirror_recolor` = `recolor_flipped`) + the second-recolor top; it is the batch's pure-telescope shape-control arm. Historical note kept: the probe reproduces E12's measured jumps exactly (r1 d=2; r2 3 → 2) — the probe's ground-truth anchor
 - E2: ...
 - [Other previous experiments to be added here, if they have a relevant ladder...]

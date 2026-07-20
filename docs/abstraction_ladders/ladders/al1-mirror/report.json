@@ -78,6 +78,9 @@
         "cost_with_rung": 13824,
         "cost_without_rung": 13486,
         "layer_above": "mirror_recolor",
+        "own_tasks_speedup": 1.008849557522124,
+        "own_tasks_to_first_with": 226,
+        "own_tasks_to_first_without": 228,
         "ratio": 0.9755497685185185,
         "rung": "rot180"
       },
@@ -86,6 +89,9 @@
         "cost_with_rung": 26401,
         "cost_without_rung": 6912,
         "layer_above": "top",
+        "own_tasks_speedup": 3.423357664233577,
+        "own_tasks_to_first_with": 274,
+        "own_tasks_to_first_without": 938,
         "ratio": 0.2618082648384531,
         "rung": "mirror_recolor"
       }
@@ -107,6 +113,10 @@
   },
   "cost": {
     "amortization_ratio_considered": null,
+    "amortization_ratio_estimated": {
+      "high": 529.6762860494126,
+      "low": 77.55569622609893
+    },
     "budget_compression_depth": {
       "max_jump_depth": 2,
       "raw_depth": 4
@@ -125,6 +135,28 @@
     "off_chain_top_solved": true,
     "raw_censored": true,
     "raw_considered": 6743,
+    "raw_estimate": {
+      "available": true,
+      "caveats": [
+        "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
+        "growth decays as dedup rises, so the high fit is an upper bracket, not a prediction",
+        "order-of-magnitude, not a measurement -- validate on a calibration ladder"
+      ],
+      "d_raw": 4,
+      "estimate_high": 28449443,
+      "estimate_low": 4165594,
+      "growth_ratio_geometric": 24.55,
+      "growth_ratio_last": 65.0,
+      "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
+      "observed_composed": [
+        11,
+        102,
+        6630
+      ],
+      "observed_considered": 6743,
+      "observed_through_depth": 2,
+      "rounds_extrapolated": 2
+    },
     "raw_solved": false,
     "top_jump_cost": 26401,
     "top_jump_cost_to_first": 7206

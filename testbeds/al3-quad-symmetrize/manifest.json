@@ -1,0 +1,62 @@
+{
+  "name": "al3-quad-symmetrize",
+  "note": "al3-quad-symmetrize: L0 {concat_h, concat_v, flip_h, flip_v} -> quad -> band -> tower -> top. Param-free, no constant sources; the binary-primitive cost arm.",
+  "content_hash": "1f113e5c42e32b82",
+  "tasks": [
+    {
+      "task_id": "quad-00",
+      "label": "quad",
+      "split": "train"
+    },
+    {
+      "task_id": "quad-01",
+      "label": "quad",
+      "split": "train"
+    },
+    {
+      "task_id": "quad-heldout-00",
+      "label": "quad",
+      "split": "heldout"
+    },
+    {
+      "task_id": "band-00",
+      "label": "band",
+      "split": "train"
+    },
+    {
+      "task_id": "band-01",
+      "label": "band",
+      "split": "train"
+    },
+    {
+      "task_id": "band-heldout-00",
+      "label": "band",
+      "split": "heldout"
+    },
+    {
+      "task_id": "tower-00",
+      "label": "tower",
+      "split": "train"
+    },
+    {
+      "task_id": "tower-01",
+      "label": "tower",
+      "split": "train"
+    },
+    {
+      "task_id": "tower-heldout-00",
+      "label": "tower",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

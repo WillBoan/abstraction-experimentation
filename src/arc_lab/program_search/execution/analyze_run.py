@@ -46,7 +46,9 @@ def analyze_run(run_id: str, *, runs_root: Path | None = None) -> dict[str, obje
                 # The trace stores programs as codec dicts (``to_dict``); decode to their readable
                 # source form, matching ``execute._readable_programs`` (never ``str()`` a raw dict).
                 programs[task_id] = [
-                    str(Program.from_dict(program)) if isinstance(program, Mapping) else str(program)
+                    str(Program.from_dict(program))
+                    if isinstance(program, Mapping)
+                    else str(program)
                     for program in found
                 ]
             total = _stats_total(row.get("search_stats"))

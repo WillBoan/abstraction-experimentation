@@ -1,0 +1,62 @@
+{
+  "name": "al5-perceiver-chain",
+  "note": "al5-perceiver-chain: L0 {map_color, most_common_color, least_common_color, flip_h, flip_v} -> swap_extremes -> swap_mirror -> swap_stack -> top. The constant-heavy arm; free params 0 -> 1 -> 2 up the ladder.",
+  "content_hash": "24c2d60eafeda27b",
+  "tasks": [
+    {
+      "task_id": "swap_extremes-00",
+      "label": "swap_extremes",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_extremes-01",
+      "label": "swap_extremes",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_extremes-heldout-00",
+      "label": "swap_extremes",
+      "split": "heldout"
+    },
+    {
+      "task_id": "swap_mirror-00",
+      "label": "swap_mirror",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_mirror-01",
+      "label": "swap_mirror",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_mirror-heldout-00",
+      "label": "swap_mirror",
+      "split": "heldout"
+    },
+    {
+      "task_id": "swap_stack-00",
+      "label": "swap_stack",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_stack-01",
+      "label": "swap_stack",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_stack-heldout-00",
+      "label": "swap_stack",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

@@ -1,0 +1,361 @@
+{
+  "certificate": {
+    "admitted": true,
+    "demonstration_health": {
+      "1": 1.0
+    },
+    "no_skip_paths": {
+      "1": true
+    },
+    "tractable_jumps": {
+      "1": true
+    }
+  },
+  "climb_trace": [
+    {
+      "antiunify_pair_count": 0,
+      "converged": false,
+      "iteration": 0,
+      "minted": [
+        "abs0"
+      ],
+      "proposal_count": 2,
+      "wake_considered": 21,
+      "wake_solved": [
+        "rot90-00",
+        "rot90-01"
+      ]
+    },
+    {
+      "antiunify_pair_count": 1,
+      "converged": true,
+      "iteration": 1,
+      "minted": [],
+      "proposal_count": 1,
+      "wake_considered": 39,
+      "wake_solved": [
+        "rot90-00",
+        "rot90-01",
+        "top-00"
+      ]
+    }
+  ],
+  "comparisons": {
+    "enablement": {
+      "1": [
+        "top-00"
+      ]
+    },
+    "loop_overhead_factor": 2.2222222222222223,
+    "marginal_rung_value": [
+      {
+        "censored": true,
+        "cost_with_rung": 13,
+        "cost_without_rung": 7,
+        "layer_above": "top",
+        "own_tasks_speedup": 1.3333333333333333,
+        "own_tasks_to_first_with": 6,
+        "own_tasks_to_first_without": 8,
+        "ratio": 0.5384615384615384,
+        "rung": "rot90"
+      }
+    ],
+    "vocabulary_tax": [
+      {
+        "at_full_library": 26,
+        "at_own_level": 14,
+        "factor": 1.8571428571428572,
+        "rung": "rot90"
+      }
+    ]
+  },
+  "cost": {
+    "amortization_ratio_considered": null,
+    "amortization_ratio_estimated": {
+      "high": 1.1481481481481481,
+      "low": 1.1481481481481481
+    },
+    "budget_compression_depth": {
+      "max_jump_depth": 2,
+      "raw_depth": 4
+    },
+    "jump_costs": {
+      "rot90": 14
+    },
+    "jump_costs_to_first": {
+      "rot90": 8
+    },
+    "laddered_end_to_end_considered": 60,
+    "laddered_marginal_considered": 27,
+    "laddered_marginal_to_first": 20,
+    "off_chain_top_solved": true,
+    "raw_censored": true,
+    "raw_considered": 7,
+    "raw_estimate": {
+      "available": true,
+      "caveats": [
+        "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
+        "growth decays as dedup rises, so the high fit is an upper bracket, not a prediction",
+        "order-of-magnitude, not a measurement -- validate on a calibration ladder"
+      ],
+      "d_raw": 4,
+      "estimate_high": 31,
+      "estimate_low": 31,
+      "growth_ratio_geometric": 2.0,
+      "growth_ratio_last": 2.0,
+      "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
+      "observed_composed": [
+        1,
+        2,
+        4
+      ],
+      "observed_considered": 7,
+      "observed_through_depth": 2,
+      "rounds_extrapolated": 2
+    },
+    "raw_solved": false,
+    "top_jump_cost": 13,
+    "top_jump_cost_to_first": 12
+  },
+  "cost_matrix": [
+    {
+      "columns": {
+        "0": {
+          "b_eff": 2.0,
+          "cheapest_solution_index": 4,
+          "considered": 7,
+          "first_solution_index": 4,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 3.0,
+          "cheapest_solution_index": 3,
+          "considered": 13,
+          "first_solution_index": 3,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "rot90",
+      "task_id": "rot90-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 2.0,
+          "cheapest_solution_index": 4,
+          "considered": 7,
+          "first_solution_index": 4,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 3.0,
+          "cheapest_solution_index": 3,
+          "considered": 13,
+          "first_solution_index": 3,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "rot90",
+      "task_id": "rot90-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 2.0,
+          "cheapest_solution_index": null,
+          "considered": 7,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 3.0,
+          "cheapest_solution_index": 12,
+          "considered": 13,
+          "first_solution_index": 12,
+          "solve_generation": 2,
+          "solved": true
+        }
+      },
+      "rung": "top",
+      "task_id": "top-00"
+    }
+  ],
+  "ladder": {
+    "budgets": [
+      {
+        "depth_limit": 2,
+        "kind": "Budget",
+        "max_arity": 2,
+        "max_pool": 400
+      },
+      {
+        "depth_limit": 4,
+        "kind": "Budget",
+        "max_arity": 2,
+        "max_pool": 4000
+      }
+    ],
+    "heldout_corpus": {
+      "content_hash": "5305010ffeb299bc",
+      "name": "al2-rot90-calibration:heldout",
+      "task_count": 2
+    },
+    "reference_config": {
+      "attempts_per_test": 2,
+      "budget": {
+        "depth_limit": 2,
+        "kind": "Budget",
+        "max_arity": 2,
+        "max_pool": 400
+      },
+      "constraints": [],
+      "cost": {
+        "kind": "ProgramSize"
+      },
+      "learn": {
+        "early_stop": true,
+        "iterations": 4,
+        "kind": "LearnSpec",
+        "learn_engine": {
+          "kind": "GreedyMDLLearnEngine",
+          "metric": {
+            "bits_per_primitive": 1.0,
+            "cost": {
+              "kind": "ProgramSize"
+            },
+            "kind": "CompressionMetric"
+          },
+          "name_prefix": "abs",
+          "proposer": {
+            "bound_var_safe": false,
+            "kind": "AntiunifyPairs"
+          },
+          "selector": {
+            "kind": "GreedyMDL"
+          }
+        },
+        "reset_programs_each_wake": true,
+        "score_each_wake": false
+      },
+      "library": {
+        "name": "al2-L0",
+        "primitives": [
+          {
+            "name": "flip_h",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "transpose",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          }
+        ],
+        "version": 1
+      },
+      "search_engine": {
+        "constant_sources": [],
+        "function_hole_fill_mode": "none",
+        "function_sample_size": 4,
+        "inverse_semantics_propagation": false,
+        "kind": "BottomUpSearchEngine",
+        "polymorphism_instantiation": "monomorphize",
+        "unpinned_type_var_mode": "reject"
+      }
+    },
+    "rungs": [
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "task_id": "rot90-00"
+          },
+          {
+            "kind": "full_solution",
+            "task_id": "rot90-01"
+          }
+        ],
+        "level": 1,
+        "name": "rot90",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "transpose"
+            }
+          ],
+          "op": "apply",
+          "primitive": "flip_h"
+        }
+      }
+    ],
+    "top": {
+      "reference_solutions": [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "rot90"
+            }
+          ],
+          "op": "apply",
+          "primitive": "rot90"
+        }
+      ],
+      "task_ids": [
+        "top-00"
+      ]
+    },
+    "train_corpus": {
+      "content_hash": "2fe712f987194e40",
+      "name": "al2-rot90-calibration:train",
+      "task_count": 3
+    }
+  },
+  "probe_cap": 512,
+  "rung_recovery": [
+    {
+      "level": 1,
+      "matched_by": [
+        "abs0"
+      ],
+      "recovered": true,
+      "rung": "rot90"
+    }
+  ],
+  "shape": {
+    "height": 2,
+    "lint_ok": true,
+    "max_jump_depth": 2,
+    "raw_depth_profile": [
+      4
+    ],
+    "validity_window": [
+      2,
+      3
+    ]
+  }
+}

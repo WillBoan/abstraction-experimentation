@@ -14,6 +14,21 @@ from pathlib import Path
 import numpy as np
 
 from arc_lab.core.grid import Grid
+from arc_lab.program_search.ladders.registry import (
+    al2_rot90,
+    al3_quad,
+    al4_mask_crop,
+    al5_perceiver,
+    al6_mirror_tall,
+    al7_fast_tower,
+    al8_lean_perceiver,
+    al9_decoy,
+    al10_skippable,
+    al11_greedy_trap,
+    al12_unlearnable,
+    al13_symmetry_repair,
+    al14_cell_row_grid,
+)
 
 from . import GeneratedTask, make_task, write_testbed
 
@@ -438,6 +453,35 @@ def generate_al1_mirror(out_root: Path) -> Path:
     )
 
 
+# -- al2..al6: template-driven Abstraction Ladder testbeds ---------------------------
+# Each ladder's corpus is generated from its own rung templates (see taskgen/ladders.py), so the
+# demonstrating tasks cannot drift from the spine they demonstrate. The templates live with the
+# LadderSpec in program_search/ladders/registry/, keeping ONE source of truth per ladder.
+
+
+def _ladder_testbed_writer(name: str, module: object) -> Callable[[Path], Path]:
+    def generate(out_root: Path) -> Path:
+        testbed = module.testbed()  # type: ignore[attr-defined]
+        return write_testbed(name, testbed.tasks(), out_root=out_root, note=testbed.note)
+
+    return generate
+
+
+generate_al2_rot90 = _ladder_testbed_writer("al2-rot90-calibration", al2_rot90)
+generate_al3_quad = _ladder_testbed_writer("al3-quad-symmetrize", al3_quad)
+generate_al4_mask_crop = _ladder_testbed_writer("al4-mask-crop", al4_mask_crop)
+generate_al5_perceiver = _ladder_testbed_writer("al5-perceiver-chain", al5_perceiver)
+generate_al6_mirror_tall = _ladder_testbed_writer("al6-mirror-tall", al6_mirror_tall)
+generate_al7_fast_tower = _ladder_testbed_writer("al7-fast-tower", al7_fast_tower)
+generate_al8_lean_perceiver = _ladder_testbed_writer("al8-lean-perceiver", al8_lean_perceiver)
+generate_al9_decoy = _ladder_testbed_writer("al9-decoy", al9_decoy)
+generate_al10_skippable = _ladder_testbed_writer("al10-skippable", al10_skippable)
+generate_al11_greedy_trap = _ladder_testbed_writer("al11-greedy-trap", al11_greedy_trap)
+generate_al12_unlearnable = _ladder_testbed_writer("al12-unlearnable", al12_unlearnable)
+generate_al13_symmetry_repair = _ladder_testbed_writer("al13-symmetry-repair", al13_symmetry_repair)
+generate_al14_cell_row_grid = _ladder_testbed_writer("al14-cell-row-grid", al14_cell_row_grid)
+
+
 #: Generator registry for the CLI (`arc-lab taskgen <name>`).
 GENERATORS: dict[str, Callable[[Path], Path]] = {
     "e1-rot90": generate_e1_rot90,
@@ -445,6 +489,19 @@ GENERATORS: dict[str, Callable[[Path], Path]] = {
     "layered-abstraction": generate_layered_abstraction,
     "grain-contrast": generate_grain_contrast,
     "al1-mirror": generate_al1_mirror,
+    "al2-rot90-calibration": generate_al2_rot90,
+    "al3-quad-symmetrize": generate_al3_quad,
+    "al4-mask-crop": generate_al4_mask_crop,
+    "al5-perceiver-chain": generate_al5_perceiver,
+    "al6-mirror-tall": generate_al6_mirror_tall,
+    "al7-fast-tower": generate_al7_fast_tower,
+    "al8-lean-perceiver": generate_al8_lean_perceiver,
+    "al9-decoy": generate_al9_decoy,
+    "al10-skippable": generate_al10_skippable,
+    "al11-greedy-trap": generate_al11_greedy_trap,
+    "al12-unlearnable": generate_al12_unlearnable,
+    "al13-symmetry-repair": generate_al13_symmetry_repair,
+    "al14-cell-row-grid": generate_al14_cell_row_grid,
 }
 
 

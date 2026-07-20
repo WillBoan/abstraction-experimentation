@@ -1,0 +1,797 @@
+{
+  "certificate": {
+    "admitted": false,
+    "demonstration_health": {
+      "1": 1.0,
+      "2": 0.5,
+      "3": 1.0
+    },
+    "no_skip_paths": {
+      "1": false,
+      "2": false,
+      "3": false
+    },
+    "tractable_jumps": {
+      "1": true,
+      "2": true,
+      "3": true
+    }
+  },
+  "climb_trace": [
+    {
+      "antiunify_pair_count": 45,
+      "converged": false,
+      "iteration": 0,
+      "minted": [
+        "abs0",
+        "abs1"
+      ],
+      "proposal_count": 14,
+      "wake_considered": 3441518,
+      "wake_solved": [
+        "swap_extremes-00",
+        "swap_extremes-01",
+        "swap_mirror-00",
+        "swap_mirror-01",
+        "swap_stack-00",
+        "top-00"
+      ]
+    },
+    {
+      "antiunify_pair_count": 15,
+      "converged": true,
+      "iteration": 1,
+      "minted": [],
+      "proposal_count": 2,
+      "wake_considered": 3834451,
+      "wake_solved": [
+        "swap_extremes-00",
+        "swap_extremes-01",
+        "swap_mirror-00",
+        "swap_mirror-01",
+        "swap_stack-00",
+        "top-00"
+      ]
+    }
+  ],
+  "comparisons": {
+    "enablement": {
+      "1": [],
+      "2": [
+        "swap_stack-01"
+      ],
+      "3": []
+    },
+    "loop_overhead_factor": 1.1720847087721151,
+    "marginal_rung_value": [
+      {
+        "censored": false,
+        "cost_with_rung": 1034074,
+        "cost_without_rung": 1023907,
+        "layer_above": "swap_mirror",
+        "own_tasks_speedup": 1.191304347826087,
+        "own_tasks_to_first_with": 230,
+        "own_tasks_to_first_without": 274,
+        "ratio": 0.9901680150550154,
+        "rung": "swap_extremes"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 1753832,
+        "cost_without_rung": 1032256,
+        "layer_above": "swap_stack",
+        "own_tasks_speedup": 31.10330578512397,
+        "own_tasks_to_first_with": 242,
+        "own_tasks_to_first_without": 7527,
+        "ratio": 0.5885717674212809,
+        "rung": "swap_mirror"
+      },
+      {
+        "censored": false,
+        "cost_with_rung": 2356683,
+        "cost_without_rung": 966136,
+        "layer_above": "top",
+        "own_tasks_speedup": 39.095652173913045,
+        "own_tasks_to_first_with": 345,
+        "own_tasks_to_first_without": 13488,
+        "ratio": 0.4099558574487956,
+        "rung": "swap_stack"
+      }
+    ],
+    "vocabulary_tax": [
+      {
+        "at_full_library": 7318034,
+        "at_own_level": 1063127,
+        "factor": 6.883499337332228,
+        "rung": "swap_extremes"
+      },
+      {
+        "at_full_library": 5289436,
+        "at_own_level": 1034074,
+        "factor": 5.115142630024543,
+        "rung": "swap_mirror"
+      },
+      {
+        "at_full_library": 5445664,
+        "at_own_level": 1753832,
+        "factor": 3.105008917615826,
+        "rung": "swap_stack"
+      }
+    ]
+  },
+  "cost": {
+    "amortization_ratio_considered": 0.05294491565013606,
+    "amortization_ratio_estimated": null,
+    "budget_compression_depth": {
+      "max_jump_depth": 3,
+      "raw_depth": 8
+    },
+    "jump_costs": {
+      "swap_extremes": 1063127,
+      "swap_mirror": 1034074,
+      "swap_stack": 1753832
+    },
+    "jump_costs_to_first": {
+      "swap_extremes": 274,
+      "swap_mirror": 7527,
+      "swap_stack": 13488
+    },
+    "laddered_end_to_end_considered": 7275969,
+    "laddered_marginal_considered": 6207716,
+    "laddered_marginal_to_first": 30944,
+    "off_chain_top_solved": true,
+    "raw_censored": false,
+    "raw_considered": 328667,
+    "raw_estimate": {
+      "available": false,
+      "reason": "raw solved outright -- measured, not estimated"
+    },
+    "raw_solved": true,
+    "top_jump_cost": 2356683,
+    "top_jump_cost_to_first": 9655
+  },
+  "cost_matrix": [
+    {
+      "columns": {
+        "0": {
+          "b_eff": 33.13,
+          "cheapest_solution_index": 117,
+          "considered": 404961,
+          "first_solution_index": 117,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 33.47,
+          "cheapest_solution_index": 115,
+          "considered": 417467,
+          "first_solution_index": 115,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 47.26,
+          "cheapest_solution_index": 115,
+          "considered": 1168321,
+          "first_solution_index": 115,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 42.27,
+          "cheapest_solution_index": 115,
+          "considered": 4067151,
+          "first_solution_index": 115,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "swap_extremes",
+      "task_id": "swap_extremes-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 22.7,
+          "cheapest_solution_index": 157,
+          "considered": 658166,
+          "first_solution_index": 157,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 23.07,
+          "cheapest_solution_index": 115,
+          "considered": 659645,
+          "first_solution_index": 115,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 26.86,
+          "cheapest_solution_index": 115,
+          "considered": 690704,
+          "first_solution_index": 115,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 45.99,
+          "cheapest_solution_index": 115,
+          "considered": 3250883,
+          "first_solution_index": 115,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "swap_extremes",
+      "task_id": "swap_extremes-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 32.01,
+          "cheapest_solution_index": 150,
+          "considered": 365741,
+          "first_solution_index": 150,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 32.26,
+          "cheapest_solution_index": 151,
+          "considered": 374429,
+          "first_solution_index": 151,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 24.74,
+          "cheapest_solution_index": 119,
+          "considered": 1042129,
+          "first_solution_index": 119,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 37.25,
+          "cheapest_solution_index": 119,
+          "considered": 2038553,
+          "first_solution_index": 119,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "swap_mirror",
+      "task_id": "swap_mirror-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 22.7,
+          "cheapest_solution_index": 29343,
+          "considered": 658166,
+          "first_solution_index": 29343,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 23.07,
+          "cheapest_solution_index": 7376,
+          "considered": 659645,
+          "first_solution_index": 7376,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 26.86,
+          "cheapest_solution_index": 123,
+          "considered": 690704,
+          "first_solution_index": 123,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 45.99,
+          "cheapest_solution_index": 123,
+          "considered": 3250883,
+          "first_solution_index": 123,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "swap_mirror",
+      "task_id": "swap_mirror-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 32.07,
+          "cheapest_solution_index": 341810,
+          "considered": 367651,
+          "first_solution_index": 243419,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 32.21,
+          "cheapest_solution_index": 345849,
+          "considered": 372611,
+          "first_solution_index": 251459,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 45.79,
+          "cheapest_solution_index": 6105,
+          "considered": 1063128,
+          "first_solution_index": 6105,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 36.94,
+          "cheapest_solution_index": 149,
+          "considered": 2194781,
+          "first_solution_index": 149,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "swap_stack",
+      "task_id": "swap_stack-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 22.7,
+          "cheapest_solution_index": null,
+          "considered": 658166,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 23.07,
+          "cheapest_solution_index": null,
+          "considered": 659645,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 26.86,
+          "cheapest_solution_index": 7383,
+          "considered": 690704,
+          "first_solution_index": 7383,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 45.99,
+          "cheapest_solution_index": 196,
+          "considered": 3250883,
+          "first_solution_index": 196,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "swap_stack",
+      "task_id": "swap_stack-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 30.88,
+          "cheapest_solution_index": 29185,
+          "considered": 328667,
+          "first_solution_index": 29073,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 31.17,
+          "cheapest_solution_index": 6369,
+          "considered": 338223,
+          "first_solution_index": 6369,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 24.74,
+          "cheapest_solution_index": 925561,
+          "considered": 966136,
+          "first_solution_index": 14794,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 42.27,
+          "cheapest_solution_index": 9655,
+          "considered": 2356683,
+          "first_solution_index": 9655,
+          "solve_generation": 2,
+          "solved": true
+        }
+      },
+      "rung": "top",
+      "task_id": "top-00"
+    }
+  ],
+  "ladder": {
+    "budgets": [
+      {
+        "depth_limit": 3,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 1500
+      }
+    ],
+    "heldout_corpus": {
+      "content_hash": "39442ce67fd11b02",
+      "name": "al5-perceiver-chain:heldout",
+      "task_count": 4
+    },
+    "reference_config": {
+      "attempts_per_test": 2,
+      "budget": {
+        "depth_limit": 3,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 1500
+      },
+      "constraints": [],
+      "cost": {
+        "kind": "ProgramSize"
+      },
+      "learn": {
+        "early_stop": true,
+        "iterations": 6,
+        "kind": "LearnSpec",
+        "learn_engine": {
+          "kind": "GreedyMDLLearnEngine",
+          "metric": {
+            "bits_per_primitive": 1.0,
+            "cost": {
+              "kind": "ProgramSize"
+            },
+            "kind": "CompressionMetric"
+          },
+          "name_prefix": "abs",
+          "proposer": {
+            "bound_var_safe": false,
+            "kind": "AntiunifyPairs"
+          },
+          "selector": {
+            "kind": "GreedyMDL"
+          }
+        },
+        "reset_programs_each_wake": true,
+        "score_each_wake": false
+      },
+      "library": {
+        "name": "al5-L0",
+        "primitives": [
+          {
+            "name": "map_color",
+            "param_types": [
+              "grid",
+              "color",
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "most_common_color",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "color",
+            "variadic_param": null
+          },
+          {
+            "name": "least_common_color",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "color",
+            "variadic_param": null
+          },
+          {
+            "name": "flip_h",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "flip_v",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          }
+        ],
+        "version": 1
+      },
+      "search_engine": {
+        "constant_sources": [
+          "finite-enumerate"
+        ],
+        "function_hole_fill_mode": "none",
+        "function_sample_size": 4,
+        "inverse_semantics_propagation": false,
+        "kind": "BottomUpSearchEngine",
+        "polymorphism_instantiation": "monomorphize",
+        "unpinned_type_var_mode": "reject"
+      }
+    },
+    "rungs": [
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "task_id": "swap_extremes-00"
+          },
+          {
+            "kind": "full_solution",
+            "task_id": "swap_extremes-01"
+          }
+        ],
+        "level": 1,
+        "name": "swap_extremes",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                },
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "most_common_color"
+                },
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "least_common_color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "map_color"
+            },
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "least_common_color"
+            },
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "most_common_color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "map_color"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "task_id": "swap_mirror-00"
+          },
+          {
+            "kind": "full_solution",
+            "task_id": "swap_mirror-01"
+          }
+        ],
+        "level": 2,
+        "name": "swap_mirror",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "swap_extremes"
+                }
+              ],
+              "op": "apply",
+              "primitive": "flip_h"
+            },
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "most_common_color"
+            },
+            {
+              "index": 1,
+              "op": "param",
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "map_color"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "task_id": "swap_stack-00"
+          },
+          {
+            "kind": "full_solution",
+            "task_id": "swap_stack-01"
+          }
+        ],
+        "level": 3,
+        "name": "swap_stack",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    },
+                    {
+                      "index": 1,
+                      "op": "param",
+                      "value_type": "color"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "swap_mirror"
+                }
+              ],
+              "op": "apply",
+              "primitive": "flip_v"
+            },
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "flip_h"
+                }
+              ],
+              "op": "apply",
+              "primitive": "most_common_color"
+            },
+            {
+              "index": 2,
+              "op": "param",
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "map_color"
+        }
+      }
+    ],
+    "top": {
+      "reference_solutions": [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 2,
+                  "value_type": "color"
+                },
+                {
+                  "op": "const",
+                  "value": 6,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "swap_stack"
+            }
+          ],
+          "op": "apply",
+          "primitive": "flip_h"
+        }
+      ],
+      "task_ids": [
+        "top-00"
+      ]
+    },
+    "train_corpus": {
+      "content_hash": "b75f64df08cab460",
+      "name": "al5-perceiver-chain:train",
+      "task_count": 7
+    }
+  },
+  "probe_cap": 512,
+  "rung_recovery": [
+    {
+      "level": 1,
+      "matched_by": [],
+      "recovered": false,
+      "rung": "swap_extremes"
+    },
+    {
+      "level": 2,
+      "matched_by": [],
+      "recovered": false,
+      "rung": "swap_mirror"
+    },
+    {
+      "level": 3,
+      "matched_by": [],
+      "recovered": false,
+      "rung": "swap_stack"
+    }
+  ],
+  "shape": {
+    "height": 4,
+    "lint_ok": true,
+    "max_jump_depth": 3,
+    "raw_depth_profile": [
+      8
+    ],
+    "validity_window": [
+      3,
+      3
+    ]
+  }
+}

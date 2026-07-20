@@ -70,10 +70,21 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
         else None
     )
 
-    # Raw: the top under L_0 (the Floor). Censored -- the top is unreachable at the reference budget
-    # (d_raw exceeds it), so this is cost-paid-full, a LOWER BOUND on the true raw cost.
+    # Raw: the top under L_0 (the Floor). Unsolved by construction (d_raw exceeds the pinned
+    # depth_limit), so the measured number is a full-budget FAILURE -- not a raw cost. The usable
+    # figure is the extrapolated estimate below: running raw is intractable for any ladder worth
+    # building, so it is estimated, never measured (design doc 5.3).
     raw_considered = sum(considered[0].get(tid, 0) for tid in top_ids)
     raw_solved = bool(top_ids) and all(tid in solved[0] for tid in top_ids)
+    raw_estimate = (
+        _estimate_raw_cost(
+            _task_generations(result.oracle_chain[0], top_ids[0]),
+            max(shape.raw_depth_profile, default=0),
+            spec.reference_config.budget.depth_limit,
+        )
+        if top_ids and not raw_solved
+        else {"available": False, "reason": "raw solved outright -- measured, not estimated"}
+    )
     off_solved = bool(top_ids) and all(
         tid in _search_solved_ids(result.off_chain) for tid in top_ids
     )
@@ -132,6 +143,12 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
         below = sum(considered[i - 1].get(tid, 0) for tid in above_ids)
         at = sum(considered[i].get(tid, 0) for tid in above_ids)
         censored = not all(tid in solved[i - 1] for tid in above_ids)
+        # The rung's OWN tasks, in cost-to-first: what the rung bought the search that has to find
+        # it. Both sides are solved by construction (the jump is tractable at L_{i-1}), so unlike
+        # the layer-above ratio this one is uncensored -- the honest speedup measure.
+        own_ids = [demo.task_id for demo in rung.demonstrations]
+        own_without = _sum_to_first(first_index[i - 1], own_ids)
+        own_with = _sum_to_first(first_index[i], own_ids)
         rung_value.append(
             {
                 "rung": rung.name,
@@ -140,6 +157,13 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
                 "cost_with_rung": at,
                 "ratio": (below / at) if at else None,
                 "censored": censored,
+                "own_tasks_to_first_without": own_without,
+                "own_tasks_to_first_with": own_with,
+                "own_tasks_speedup": (
+                    (own_without / own_with)
+                    if isinstance(own_without, int) and isinstance(own_with, int) and own_with
+                    else None
+                ),
             }
         )
 
@@ -202,6 +226,15 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
             "raw_considered": raw_considered,
             "raw_solved": raw_solved,
             "raw_censored": not raw_solved,
+            "raw_estimate": raw_estimate,
+            "amortization_ratio_estimated": (
+                {
+                    "low": _as_int(raw_estimate["estimate_low"]) / laddered_marginal,
+                    "high": _as_int(raw_estimate["estimate_high"]) / laddered_marginal,
+                }
+                if raw_estimate.get("available") and laddered_marginal
+                else None
+            ),
             "off_chain_top_solved": off_solved,
             # A meaningful ratio needs a raw baseline that actually SOLVES; when raw is censored
             # (unsolved at the reference budget) raw_considered is only a lower bound, so the ratio
@@ -369,10 +402,15 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
         f"  - top jump: {_count(cost.get('top_jump_cost'))}",
         f"- Laddered end-to-end: {_count(cost.get('laddered_end_to_end_considered'))} "
         "(every wake re-searches every task)",
-        f"- Raw (Floor on the top tasks): {_count(cost.get('raw_considered'))}"
-        + (" -- CENSORED: unsolved at the reference budget, a lower bound" if censored else ""),
-        "- Amortization considered-ratio: "
-        + (f"{ratio:.2f}" if isinstance(ratio, float) else "n/a (raw censored)"),
+        f"- Raw (Floor on the top tasks), measured: {_count(cost.get('raw_considered'))}"
+        + (
+            " -- a full-budget FAILURE, not a raw cost (the top is unreachable raw by design); "
+            "see the estimate below"
+            if censored
+            else ""
+        ),
+        "- Amortization considered-ratio (measured): "
+        + (f"{ratio:.2f}" if isinstance(ratio, float) else "n/a -- raw is estimated, see below"),
         f"- Depth compression: d_raw {compression.get('raw_depth')} -> "
         f"max jump depth {compression.get('max_jump_depth')}",
         f"- Off-chain (Floor + top rung only) solves the top: "
@@ -411,14 +449,7 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
         "",
         "### Raw vs laddered (RQ1)",
         "",
-        f"- Raw {_count(cost.get('raw_considered'))}"
-        + (" (CENSORED -- unsolved, a lower bound)" if censored else "")
-        + f" vs laddered marginal {_count(cost.get('laddered_marginal_considered'))}: "
-        + (
-            f"amortization ratio {ratio:.2f}x"
-            if isinstance(ratio, float)
-            else "ratio not computable -- see 'Why the ratio is missing' below"
-        ),
+        *_raw_estimate_lines(cost),
         f"- Depth compression (always honest, no censoring): d_raw "
         f"{compression.get('raw_depth')} -> max jump depth {compression.get('max_jump_depth')} -- "
         "the ladder converts one deep search into shallow ones",
@@ -436,31 +467,45 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
     ]
 
     value_rows = [
-        ["rung", "layer above", "cost without rung", "cost with rung", "ratio", "censored"]
+        [
+            "rung",
+            "own tasks, cost-to-first without",
+            "with",
+            "**speedup**",
+            "layer above (paid-full)",
+            "censored",
+        ]
     ]
     for row in comparisons.get("marginal_rung_value") or []:
+        speedup = row.get("own_tasks_speedup")
         value_ratio = row.get("ratio")
         value_rows.append(
             [
                 f"`{row.get('rung')}`",
-                str(row.get("layer_above")),
-                _count(row.get("cost_without_rung")),
-                _count(row.get("cost_with_rung")),
-                f"{value_ratio:.2f}x" if isinstance(value_ratio, float) else "-",
+                _count(row.get("own_tasks_to_first_without")),
+                _count(row.get("own_tasks_to_first_with")),
+                f"**{speedup:.2f}x**" if isinstance(speedup, float) else "-",
+                (
+                    f"{value_ratio:.2f}x vs `{row.get('layer_above')}`"
+                    if isinstance(value_ratio, float)
+                    else "-"
+                ),
                 _yes_no(row.get("censored")),
             ]
         )
     lines += [
         "",
-        "### Marginal rung value (what each rung bought the layer above it)",
+        "### Marginal rung value",
         "",
         *table(value_rows),
         "",
-        "- Censored rows: the layer above is unsolved without the rung (by design -- that IS the "
-        "double-jump claim). 'cost without rung' is then a full-budget FAILURE, so the ratio is "
-        "not a speedup: a value near or below 1.0x on a censored row means the rung bought "
-        "**reachability**, not cost -- read the Enablement section, not this ratio. The ratio "
-        "only becomes a speedup measure when the row is uncensored.",
+        "- **The speedup column is the honest measure**: the rung's own demonstrating tasks, in "
+        "cost-to-first, with vs without the rung gifted. Both sides are solved by construction, "
+        "so it is uncensored.",
+        "- The layer-above column is cost-paid-full on a CENSORED comparison (the layer above is "
+        "unsolved without the rung -- that IS the double-jump claim), so it is not a speedup: a "
+        "value near or below 1.0x there means the rung bought **reachability**, not cost. Read "
+        "Enablement for that, never this number.",
     ]
 
     tax_rows = [["rung's tasks", "at own level", "at full library L_k", "factor"]]
@@ -496,20 +541,19 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
 
     lines += [
         "",
+        "### Rung necessity: learning path vs search path",
+        "",
+        f"- Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: "
+        f"**{_yes_no(cost.get('off_chain_top_solved'))}**.",
+        "- When this is `yes`, the intermediate rungs are NOT needed to express or find the top "
+        "solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks "
+        "are unsolved at the lower library, so sleep never sees the material to mint it). The "
+        "rungs are stepping stones for the **learning path**, not dependencies of the **search "
+        "path**. That is the ladder thesis, measured rather than assumed.",
+        "",
         "## Not computed here",
         "",
     ]
-    if censored:
-        lines += [
-            "- **Why the ratio is missing (raw is censored).** The pinned budget deliberately puts "
-            "the raw top out of reach (`d_raw` > `depth_limit`) -- that is the ladder's whole "
-            "claim. So the Floor column on the top tasks records what a FAILED full-budget search "
-            "cost, not what solving would cost: a lower bound, not the raw cost. Dividing by it "
-            "would understate the ladder's value, so the ratio is reported as n/a. To get a real "
-            "number, re-run the top tasks at a budget deep enough to solve them raw (an "
-            "above-window calibration cell) -- the depth compression above is the honest headline "
-            "until then.",
-        ]
     lines += [
         "- **Break-even horizon** (how many future top-level tasks justify the ladder): needs the "
         "heldout transfer run's per-task costs read against the learning overhead -- the runs "
@@ -520,6 +564,39 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
         "batch and does not exist yet.",
     ]
     return "\n".join(lines)
+
+
+def _raw_estimate_lines(cost: Mapping[str, Any]) -> list[str]:
+    """The RQ1 headline: raw is ESTIMATED by extrapolation, never measured (design doc 5.3)."""
+    estimate: Mapping[str, Any] = cost.get("raw_estimate") or {}
+    marginal = cost.get("laddered_marginal_considered")
+    if not estimate.get("available"):
+        return [
+            f"- Raw cost estimate: unavailable -- {estimate.get('reason', 'no fit possible')}",
+        ]
+    ratios: Mapping[str, Any] = cost.get("amortization_ratio_estimated") or {}
+    low, high = estimate.get("estimate_low"), estimate.get("estimate_high")
+    lines = [
+        f"- **Raw cost (estimated): {_count(low)} - {_count(high)} considered.** Raw is never "
+        "measured -- for any ladder worth building it is intractable by construction. It is "
+        "extrapolated from the rounds the Floor search DID complete: observed composed counts "
+        f"{estimate.get('observed_composed')} through depth "
+        f"{estimate.get('observed_through_depth')}, projected "
+        f"{estimate.get('rounds_extrapolated')} more rounds to `d_raw`={estimate.get('d_raw')} "
+        f"at growth ratios {estimate.get('growth_ratio_geometric')}x (low fit) to "
+        f"{estimate.get('growth_ratio_last')}x (high fit).",
+        "- **Amortization ratio (estimated): "
+        + (
+            f"{ratios['low']:.0f}x - {ratios['high']:.0f}x"
+            if isinstance(ratios.get("low"), float) and isinstance(ratios.get("high"), float)
+            else "n/a"
+        )
+        + f"** against laddered marginal {_count(marginal)}. Even the low bracket is the RQ1 "
+        "answer for this ladder; the spread is method uncertainty, not measurement noise.",
+    ]
+    for caveat in estimate.get("caveats") or []:
+        lines.append(f"  - caveat: {caveat}")
+    return lines
 
 
 def _yes_no(value: object) -> str:
@@ -599,6 +676,77 @@ def _per_task_cells(record: RunRecord) -> dict[str, dict[str, object]]:
             "b_eff": _fit_b_eff(generations if isinstance(generations, list) else []),
         }
     return out
+
+
+def _task_generations(record: RunRecord, task_id: str) -> list[Any]:
+    """One task's per-round funnel from a recorded SEARCH run."""
+    for row in record.trace_rows():
+        if row.get("task_id") != task_id:
+            continue
+        stats = row.get("search_stats")
+        if isinstance(stats, dict) and isinstance(stats.get("generations"), list):
+            return list(stats["generations"])
+    return []
+
+
+def _estimate_raw_cost(generations: list[Any], d_raw: int, depth_limit: int) -> dict[str, object]:
+    """**Extrapolated raw baseline** (design doc 5.3) -- the honest alternative to actually running
+    the raw search, which is intractable by construction for any ladder worth building.
+
+    The raw search is stopped at ``depth_limit`` but its solution lives at ``d_raw``. We have the
+    per-round ``composed`` counts it *did* complete, so we fit their growth and project the missing
+    ``d_raw - depth_limit`` rounds. Two fits bracket the answer, because the growth ratio is not
+    constant:
+
+    - **low** uses the geometric-mean ratio across observed rounds. Round 0 -> 1 is atypically
+      cheap (the round-0 pool holds one grid), which drags the mean down, so this under-projects.
+    - **high** uses the last observed ratio, which is the most representative of a full pool --
+      but growth *decays* as the dedup rate climbs toward function-space saturation, so this
+      over-projects.
+
+    The truth sits between. Both assume a pool large enough not to bind: the estimate is of the
+    raw search's true cost, NOT of what a ``max_pool``-capped run would spend (such a run is
+    cheaper and simply fails to find the solution -- see the caveats).
+    """
+    composed = [
+        generation["composed"]
+        for generation in generations
+        if isinstance(generation, dict) and isinstance(generation.get("composed"), int)
+    ]
+    rounds_missing = d_raw - depth_limit
+    if len(composed) < 2 or rounds_missing <= 0:
+        return {"available": False, "reason": "needs >= 2 observed rounds and d_raw > depth_limit"}
+
+    observed_total = sum(composed)
+    ratio_geometric: float = (composed[-1] / composed[0]) ** (1.0 / (len(composed) - 1))
+    ratio_last: float = composed[-1] / composed[-2]
+
+    def project(ratio: float) -> int:
+        total, last = observed_total, composed[-1]
+        for _ in range(rounds_missing):
+            last *= ratio
+            total += last
+        return int(total)
+
+    low, high = project(ratio_geometric), project(ratio_last)
+    return {
+        "available": True,
+        "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
+        "d_raw": d_raw,
+        "observed_through_depth": depth_limit,
+        "rounds_extrapolated": rounds_missing,
+        "observed_composed": composed,
+        "observed_considered": observed_total,
+        "growth_ratio_geometric": round(ratio_geometric, 2),
+        "growth_ratio_last": round(ratio_last, 2),
+        "estimate_low": min(low, high),
+        "estimate_high": max(low, high),
+        "caveats": [
+            "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
+            "growth decays as dedup rises, so the high fit is an upper bracket, not a prediction",
+            "order-of-magnitude, not a measurement -- validate on a calibration ladder",
+        ],
+    }
 
 
 def _fit_b_eff(generations: list[Any]) -> float | None:

@@ -1,0 +1,62 @@
+{
+  "name": "al4-mask-crop",
+  "note": "al4-mask-crop: mask algebra floor (nonbg_mask/crop_to_content/bbox_mask withheld) -> nonbg_mask -> flatten_content -> stamp -> top. The learned-Mask-intermediate arm; r1 is a FRAGMENT rung (GRID->MASK), demonstrated via a crop_to_content wrapper.",
+  "content_hash": "d608604f6771e8e2",
+  "tasks": [
+    {
+      "task_id": "nonbg_mask-00",
+      "label": "nonbg_mask",
+      "split": "train"
+    },
+    {
+      "task_id": "nonbg_mask-01",
+      "label": "nonbg_mask",
+      "split": "train"
+    },
+    {
+      "task_id": "nonbg_mask-heldout-00",
+      "label": "nonbg_mask",
+      "split": "heldout"
+    },
+    {
+      "task_id": "flatten_content-00",
+      "label": "flatten_content",
+      "split": "train"
+    },
+    {
+      "task_id": "flatten_content-01",
+      "label": "flatten_content",
+      "split": "train"
+    },
+    {
+      "task_id": "flatten_content-heldout-00",
+      "label": "flatten_content",
+      "split": "heldout"
+    },
+    {
+      "task_id": "stamp-00",
+      "label": "stamp",
+      "split": "train"
+    },
+    {
+      "task_id": "stamp-01",
+      "label": "stamp",
+      "split": "train"
+    },
+    {
+      "task_id": "stamp-heldout-00",
+      "label": "stamp",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

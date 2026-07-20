@@ -1,6 +1,6 @@
-# Ladder: quad-symmetrize
+# Ladder: al3-quad-symmetrize
 
-- **Status:** sketch
+- **Status:** linted
 - **Artifacts:** spec: — · results: —
 
 ---
@@ -9,66 +9,66 @@
 
 ### Identity
 
-- Anchor competence: build the 4-fold symmetric completion
+- Anchor competence: build a nested symmetric tower (quad → band → tower)
 - Construction method: (2) forward extension
 
 ### Reference config
 
 - Floor (`L_0`): `{concat_h, concat_v, flip_h, flip_v}`
 - Budget:
-  - `depth_limit`: 3 (candidate)
+  - `depth_limit`: **4** (pinned — the window is [4,4])
   - `max_arity`: 2
-  - `max_pool`: TBD
+  - `max_pool`: TBD — start generous; this floor is binary-heavy and pool-bound behaviour is part of what it measures
 - Engine options:
-  - constant sources: none
+  - constant sources: **none** (fully param-free ladder)
   - function-hole fill: none
   - polymorphism: monomorphize
 - Learn:
-  - proposer: `AntiunifyPairs` (all demos full-solution)
+  - proposer: `AntiunifyPairs` (all demos full_solution)
   - governance: `GreedyMDL`
-  - iterations: 5
+  - iterations: 6+ (height 4 needs >= 4 climbing wakes plus termination headroom)
 
 ### Rung spine
 
-| i   | Rung            | Template (over `L_{i-1}`)                             | `d_i` | Inlined double-jump depth | Fan-in       | Demo kinds    |
-| --- | --------------- | ----------------------------------------------------- | ----- | ------------------------- | ------------ | ------------- |
-| 1   | mirror_pair     | `concat_h(g, flip_h(g))`                              | 2     | 4 (est.)                  | 0            | full_solution |
-| 2   | quad_symmetrize | `concat_v(r1(g), flip_v(r1(g)))` — see open problem 1 | 3     | -                         | 2 (intended) | full_solution |
+Depths below are **machine-computed** (`compositional_depth` / `unfold_program`, 2026-07-19), not hand-derived.
+
+| i   | Rung  | Template (over `L_{i-1}`)                                       | `d_i` | Inlined double-jump | Free params | Demo kinds    |
+| --- | ----- | --------------------------------------------------------------- | ----- | ------------------- | ----------- | ------------- |
+| 1   | quad  | `concat_v(concat_h(g, flip_h g), flip_v(concat_h(g, flip_h g)))` | 4     | 6 (skip quad)       | 0           | full_solution |
+| 2   | band  | `concat_h(quad(g), flip_h(quad(g)))`                             | 3     | 5 (skip band)       | 0           | full_solution |
+| 3   | tower | `concat_v(band(g), flip_v(band(g)))`                             | 3     | —                   | 0           | full_solution |
 
 ### Top Rung (goal layer — no abstraction is minted here)
 
-- Anchor task(s), in words: apply the full 4-fold symmetrization, then one more independent step
-- Reference solution (probe-certified option): `quad2 = r2(r2(g))` — self-composition, d=2 over `L_2`
-- `d_raw` per top task: compute by `unfold_program` once specced (probe: raw quad already censored > tree-size 6)
+- Reference solution: `concat_v(tower(g), flip_v(tower(g)))`
+- `d_top` = 3 over `L_3` · `d_raw` = **10** · top-skip (over `L_2`) = 5
 
 ### Sandwich check
 
-- Every `d_i` <= pinned `depth_limit`: jumps 2, 3 <= 3 — OK, no headroom on r2
-- Every inlined double-jump > pinned `depth_limit`: 4 > 3 — OK (probe-certified)
-- Every top `d_raw` > pinned `depth_limit`: expected OK (probe: censored); recompute in `depth_limit` units
-- Validity window (est.): [3, 3] — minimum width, like AL1's
+- Every `d_i` <= pinned `depth_limit`: 4, 3, 3 <= 4 — OK (no headroom on r1)
+- `d_top` <= `depth_limit`: 3 <= 4 — OK
+- Every inlined double-jump > `depth_limit`: 6, 5 > 4 — OK
+- Top-skip > `depth_limit`: 5 > 4 — OK
+- `d_raw` > `depth_limit`: 10 > 4 — OK
+- **Validity window: [4, 4]** (width 1)
+
+### Grid-size budget (this floor doubles dimensions — the binding practical constraint)
+
+From a 3x3 seed: quad 6x6 → band 12x6 → tower 12x12 → top 12x24. Under the ARC 30 cap, but only just. Seeds must be **<= 3x3**; a 4x4 seed overflows at the top.
 
 ### Per-rung detail
 
-#### r_1: mirror_pair
+All three rungs are param-free, so there are no variation plans; demo variety comes from distinct seed grids.
 
-- Params: none (param-free; var-sharing — `g` used twice)
-- Demonstrating tasks (>= 2, full_solution): mirror-completion tasks on h-asymmetric inputs; within-task shape/content variation kills literal shortcuts
-- MDL break-even: template size 3, 2+ demos — comfortably positive
-- Collision risks: h-symmetric inputs or repeated columns make `concat_h(g,g)` / bare `flip_h` coincide — demos must be h-asymmetric with distinct columns
-- `involves_lambda`? no
-
-#### r_2: quad_symmetrize
-
-- Params: none
-- Demonstrating tasks (>= 2, full_solution): 4-fold-completion tasks; asymmetry discipline on both axes
-- MDL break-even: positive if the minted form is size 3-4 with 2+ demos
-- Collision risks: **the skip route — see open problem 1**
-- `involves_lambda`? no
+- **r1 `quad`** — demos (>= 2): asymmetric 2x2/3x3 seeds, >= 2 train examples each, distinct content per example.
+  - Collision risk: symmetric or repeated-column seeds let `concat_h(g,g)`-style shallower programs coincide. Seeds must be asymmetric on **both** axes.
+- **r2 `band`** — demos (>= 2): distinct seeds again; output is 4x wide, 2x tall.
+- **r3 `tower`** — demos (>= 2): distinct seeds; output 4x wide, 4x tall.
+- `involves_lambda`? no (all rungs).
 
 ### Heldout split
 
-- A few per level: 1 mirror_pair, 1 quad, 1 top (AL1's 1-per-level pattern or slightly wider)
+- 1 task per level (quad / band / tower / top), seeds disjoint from train.
 
 ---
 
@@ -76,30 +76,30 @@
 
 ### Why this ladder / role in the batch
 
-- The #1 pick for the next real ladder: first attempt to leave the pure-telescope regime (fan-in > 1 at r2), with real size-compounding in the inlined form.
-- Family potential: +frame/recolor rung → height 4; deeper r1 motif → jump-depth variant; its certified top (`quad2`) doubles as the first rung of the self-composition-telescope family.
+- **The binary-heavy cost arm.** `concat_h`/`concat_v` are binary, so composition count grows quadratically in pool size — this is the ladder that tells us what binary primitives cost under a depth-4 budget. Nothing else in the batch probes that.
+- Fully **param-free with no constant sources** — the clean contrast against `al5`/`al6`, where free COLOR params plus `finite-enumerate` are the cost driver. Same question (what does a climb cost?), opposite end of the cost axis.
+- Height 4, jumps [4,3,3] — the deepest single jump in the batch.
 
 ### Open problems
 
-1. **The r2 skip route (blocking).** Probe-certified: the *minimal* r2 witness is `mirror_pair(concat_v(g, flip_v(g)))` — fan-in **1**, tree-size 3 vs the intended 4. Cheapest-wins retention keeps that form, so the fan-in-2 claim does not survive minimality (structural sibling of the E11 literal trap). Resolutions to pick before promoting to `linted`:
-   1. accept the telescope-form mint (but then this ladder loses its distinguishing role vs AL1);
-   2. find a target whose minimal form is genuinely fan-in > 1 (break the commutation — e.g. the two r1 uses act on different deriveds);
-   3. redesign the floor so the commuted form costs more.
-2. Verify `quad2` top inputs against the ARC 30-cap (grid-doubling saturates fast).
-3. The probe's numbers are tree-application counts, not nesting depth — recompute everything via `compositional_depth` before pinning the reference budget.
+1. **Which form of `quad` gets minted.** `quad` has (at least) two depth-4 forms over the floor — the h-then-v nesting written above and the v-then-h commuted form `concat_h(X, flip_h X)` with `X = concat_v(g, flip_v g)`. Both are depth 4, so neither is a shortcut, but cheapest-wins retention picks one and `band`/`tower` must still route through whichever it is. `demonstration_health` in the certificate is the read — if it drops below 1.0, this is why.
+2. Pool pressure is untested on a binary floor at depth 4. If `max_pool` binds, the run measures the reachability regime rather than the cost regime (design doc §2.1) — a legitimate result, but it needs labelling rather than silently reading it as a cost number.
+3. Window width 1 — a `depth_limit` sweep has exactly one honest cell; every other budget cell is an arm relabel.
 
 ### Dead ends / failed bisections
 
-- (pre-adoption, probe 2026-07-17) The intended size-4 quad template is shadowed by the size-3 commuted form — designer-computed jump depths were wrong; only enumeration caught it. See EXPERIMENTS.md 2026-07-17.
+- **(2026-07-19, superseded design)** The original spine was `mirror_pair` (d=2) → `quad` (d=3) with `quad` calling `mirror_pair` twice, chosen to get template-level fan-in > 1. The probe found the minimal `quad` witness is the fan-in-1 commuted form, so the fan-in claim could not survive minimality. Resolved by **dropping fan-in as a selection criterion** and folding `mirror_pair` into `quad` as a single depth-4 rung — which removes the shortcut question entirely, since `mirror_pair` is no longer a rung.
+- **(2026-07-19)** First attempt at the goal layer used `flip_h(tower(g))`: `d_top`=2 and top-skip=4, which does **not** exceed `depth_limit`=4 → **empty validity window**. Fixed by deepening the top to `concat_v(tower, flip_v tower)` (top-skip 5). General lesson for deep-jump ladders: the top must nest `r_k` at least two levels down, or the top-skip check fails no matter how deep the jumps are.
 
 ### Notes
 
-- Certified material from the derivability probe ([experiments/2026-07-17-derivability-dag/](../../../../experiments/2026-07-17-derivability-dag/)): jumps 2/3 confirmed; `quad2` d=2 over L2 while censored (> tree-size 6) over L1 — the double-jump holds with room.
+- Depth figures verified 2026-07-19 by running `compositional_depth`/`unfold_program` against the real registry; templates also pass `make_abstraction` type-checking at every level.
+- Minimality is **not** verified — no enumeration was run. The certificate (`no_skip_paths`, `demonstration_health`) is the gate, per the AL1 precedent where lint passed and the certificate caught the real problem.
 
 ### Handoffs (fill in as they come to exist)
 
-- `LadderSpec` (`ladders/registry/<name>.py`): —
-- Generator / committed testbed: —
-- Generated artifacts (`spec.md` / `results.md` / `report.json`): —
+- `LadderSpec` (`ladders/registry/al3_quad.py`): **built** — registry key `al3-quad-symmetrize`
+- Generator / committed testbed: **built** — `taskgen al3-quad-symmetrize` -> `testbeds/al3-quad-symmetrize/` (template-driven, regenerates byte-identically)
+- Generated artifacts (`spec.md` / `results.md` / `report.json`): — (written on first run)
 - EXPERIMENT_QUEUE.md row: —
-- Runs / EXPERIMENTS.md entries: —
+- Runs / EXPERIMENTS.md entries: — (lint passes; certificate pending first run)

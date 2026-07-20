@@ -73,5 +73,7 @@ def test_overridden_config_gets_its_own_run_identity() -> None:
     grid = Grid.from_list([[1, 2], [3, 4]])
     corpus = Corpus.of("c", [Task(task_id="t", train=(Example(input=grid, output=grid),), test=())])
     base = RunSpec(config=PRESETS["d4"], corpus=corpus)
-    tweaked = RunSpec(config=apply_overrides(PRESETS["d4"], {"budget.depth_limit": 2}), corpus=corpus)
+    tweaked = RunSpec(
+        config=apply_overrides(PRESETS["d4"], {"budget.depth_limit": 2}), corpus=corpus
+    )
     assert base.run_id != tweaked.run_id

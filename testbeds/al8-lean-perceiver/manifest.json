@@ -1,0 +1,62 @@
+{
+  "name": "al8-lean-perceiver",
+  "note": "al8-lean-perceiver: al5's competence, param-free, constant_sources=().",
+  "content_hash": "fa961f962197788c",
+  "tasks": [
+    {
+      "task_id": "swap_ext-00",
+      "label": "swap_ext",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_ext-01",
+      "label": "swap_ext",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_ext-heldout-00",
+      "label": "swap_ext",
+      "split": "heldout"
+    },
+    {
+      "task_id": "swap_mir-00",
+      "label": "swap_mir",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_mir-01",
+      "label": "swap_mir",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_mir-heldout-00",
+      "label": "swap_mir",
+      "split": "heldout"
+    },
+    {
+      "task_id": "swap_stk-00",
+      "label": "swap_stk",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_stk-01",
+      "label": "swap_stk",
+      "split": "train"
+    },
+    {
+      "task_id": "swap_stk-heldout-00",
+      "label": "swap_stk",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-# Ladder: rot90-calibration
+# Ladder: al2-rot90-calibration
 
-- **Status:** sketch
+- **Status:** linted
 - **Artifacts:** spec: — · results: —
 
 ---
@@ -65,8 +65,10 @@
 
 ### Why this ladder / role in the batch
 
-- **The calibration arm** (design doc §3.7 / §5.3): the one place raw cost is *actually measurable*, giving the exact considered-count ratio that anchors every censored estimate in the batch. AL1's amortization ratio is `None` precisely for want of this.
+- **Validation of the raw-cost estimator** — the batch's most load-bearing job. Since 2026-07-19 raw cost is *estimated by extrapolation* on every ladder (design doc §5.3), never measured: for a real ladder, running raw is intractable by construction. That estimator is now used everywhere and validated nowhere. This ladder is the one place where **both** numbers exist — 2 primitives, no constants, `d_raw`=4 → raw is genuinely cheap to measure — so it can answer: does the extrapolation match ground truth, and if not, by what factor does it need recalibrating?
+- This is the **only** place we deliberately run raw. Everywhere else a deep raw cell is the wrong instrument.
 - Also the `b_eff`-fitting substrate: per-generation funnels at several `depth_limit`s on a tiny floor, nearly free.
+- ⚠ On the `depth_limit=4` cell, **raise `max_pool` enough that it does not bind** — otherwise it measures pool starvation, not depth cost, and may spuriously fail to solve. (AL1's floor already truncates 1,883 → 300 at its last round.)
 
 ### Open problems
 

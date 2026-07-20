@@ -1,0 +1,14 @@
+floor             depth    considered      pool    ratio     secs
+d4_gen_min            2             7        -1        -     0.0s
+d4_gen_min            3            11        -1     1.6x     0.0s
+d4_gen_min            4            15        -1     1.4x     0.0s
+d4_gen_min            5            17        -1     1.1x     0.0s
+d4_gen_min            6            17        -1     1.0x     0.0s
+concat2               2            19        -1        -     0.0s
+concat2               3           129        -1     6.8x     0.0s
+concat2               4           801        -1     6.2x     0.0s
+concat2               5         3,363        -1     4.2x     0.1s
+concat2               6         8,713        -1     2.6x     0.2s
+quad_floor            2            61        -1        -     0.0s
+quad_floor            3         2,521        -1    41.3x     0.0s
+quad_floor            4       973,013        -1   386.0x    14.4s

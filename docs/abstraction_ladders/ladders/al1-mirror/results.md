@@ -68,8 +68,8 @@
   - jump `mirror_recolor`: 13,824
   - top jump: 26,401
 - Laddered end-to-end: 200,280 (every wake re-searches every task)
-- Raw (Floor on the top tasks): 6,743 -- CENSORED: unsolved at the reference budget, a lower bound
-- Amortization considered-ratio: n/a (raw censored)
+- Raw (Floor on the top tasks), measured: 6,743 -- a full-budget FAILURE, not a raw cost (the top is unreachable raw by design); see the estimate below
+- Amortization considered-ratio (measured): n/a -- raw is estimated, see below
 - Depth compression: d_raw 4 -> max jump depth 2
 - Off-chain (Floor + top rung only) solves the top: yes
 
@@ -86,7 +86,11 @@
 
 ### Raw vs laddered (RQ1)
 
-- Raw 6,743 (CENSORED -- unsolved, a lower bound) vs laddered marginal 53,711: ratio not computable -- see 'Why the ratio is missing' below
+- **Raw cost (estimated): 4,165,594 - 28,449,443 considered.** Raw is never measured -- for any ladder worth building it is intractable by construction. It is extrapolated from the rounds the Floor search DID complete: observed composed counts [11, 102, 6630] through depth 2, projected 2 more rounds to `d_raw`=4 at growth ratios 24.55x (low fit) to 65.0x (high fit).
+- **Amortization ratio (estimated): 78x - 530x** against laddered marginal 53,711. Even the low bracket is the RQ1 answer for this ladder; the spread is method uncertainty, not measurement noise.
+  - caveat: assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails
+  - caveat: growth decays as dedup rises, so the high fit is an upper bracket, not a prediction
+  - caveat: order-of-magnitude, not a measurement -- validate on a calibration ladder
 - Depth compression (always honest, no censoring): d_raw 4 -> max jump depth 2 -- the ladder converts one deep search into shallow ones
 
 ### Marginal vs end-to-end laddered cost
@@ -95,14 +99,15 @@
 - End-to-end (every wake re-searches every task, incl. full-budget failures): 200,280
 - **Loop-overhead factor**: 3.73x -- what today's loop mechanics cost above the ideal (re-search + overshoot + termination + learned-vs-oracle gap)
 
-### Marginal rung value (what each rung bought the layer above it)
+### Marginal rung value
 
-| rung             | layer above    | cost without rung | cost with rung | ratio | censored |
-| ---------------- | -------------- | ----------------- | -------------- | ----- | -------- |
-| `rot180`         | mirror_recolor | 13,486            | 13,824         | 0.98x | yes      |
-| `mirror_recolor` | top            | 6,912             | 26,401         | 0.26x | yes      |
+| rung             | own tasks, cost-to-first without | with | **speedup** | layer above (paid-full)   | censored |
+| ---------------- | -------------------------------- | ---- | ----------- | ------------------------- | -------- |
+| `rot180`         | 228                              | 226  | **1.01x**   | 0.98x vs `mirror_recolor` | yes      |
+| `mirror_recolor` | 938                              | 274  | **3.42x**   | 0.26x vs `top`            | yes      |
 
-- Censored rows: the layer above is unsolved without the rung (by design -- that IS the double-jump claim). 'cost without rung' is then a full-budget FAILURE, so the ratio is not a speedup: a value near or below 1.0x on a censored row means the rung bought **reachability**, not cost -- read the Enablement section, not this ratio. The ratio only becomes a speedup measure when the row is uncensored.
+- **The speedup column is the honest measure**: the rung's own demonstrating tasks, in cost-to-first, with vs without the rung gifted. Both sides are solved by construction, so it is uncensored.
+- The layer-above column is cost-paid-full on a CENSORED comparison (the layer above is unsolved without the rung -- that IS the double-jump claim), so it is not a speedup: a value near or below 1.0x there means the rung bought **reachability**, not cost. Read Enablement for that, never this number.
 
 ### Vocabulary tax (same tasks, bigger library)
 
@@ -118,8 +123,12 @@
 - `L_1` (vs `L_0`): `mirror-recolor-1-2`, `mirror-recolor-3-4`
 - `L_2` (vs `L_1`): `top-00`
 
+### Rung necessity: learning path vs search path
+
+- Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **yes**.
+- When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
 ## Not computed here
 
-- **Why the ratio is missing (raw is censored).** The pinned budget deliberately puts the raw top out of reach (`d_raw` > `depth_limit`) -- that is the ladder's whole claim. So the Floor column on the top tasks records what a FAILED full-budget search cost, not what solving would cost: a lower bound, not the raw cost. Dividing by it would understate the ladder's value, so the ratio is reported as n/a. To get a real number, re-run the top tasks at a budget deep enough to solve them raw (an above-window calibration cell) -- the depth compression above is the honest headline until then.
 - **Break-even horizon** (how many future top-level tasks justify the ladder): needs the heldout transfer run's per-task costs read against the learning overhead -- the runs exist, the view does not yet.
 - **Sleep-cost conversion**: the sleep counters (proposal / antiunify-pair counts) are recorded per iteration in report.json, but converting them into considered-count equivalents needs the batch-level calibration weight `w`, which is declared once per batch and does not exist yet.

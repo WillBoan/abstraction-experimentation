@@ -1,6 +1,6 @@
-# Ladder: mask-crop
+# Ladder: al4-mask-crop
 
-- **Status:** sketch
+- **Status:** linted
 - **Artifacts:** spec: — · results: —
 
 ---
@@ -9,50 +9,65 @@
 
 ### Identity
 
-- Anchor competence: normalize content position/extent (via a learned `Mask`-typed intermediate)
+- Anchor competence: normalize a scene — derive the content mask, crop to it, flatten it, stamp it
 - Construction method: (2) forward extension
 
 ### Reference config
 
-- Floor (`L_0`): `MASK_MIN` (`nonbg_mask`, `crop_to_mask`) + additions TBD by the r2 choice (`flip_h`/`transpose` for crop_flip; `map_color` + finite-enumerate if recolor joins)
-- Budget: TBD with r2/top
+- Floor (`L_0`): `{mask_by_color, most_common_color, least_common_color, mask_complement, mask_union, mask_intersect, crop_to_mask, paint_through_mask, flip_h}`
+  - **Withholds** the shipped `nonbg_mask`, `crop_to_content`, `bbox_mask` — they are the re-derivation targets, giving a ready-made gen/full contrast.
+- Budget:
+  - `depth_limit`: **4** (pinned — the window is [4,4])
+  - `max_arity`: 3 (`paint_through_mask` is ternary)
+  - `max_pool`: TBD
 - Engine options:
-  - constant sources: none (± `finite-enumerate` if recolor joins)
+  - constant sources: `finite-enumerate` (r2/r3 take free COLOR params)
   - function-hole fill: none
+  - polymorphism: monomorphize
 - Learn:
-  - proposer: `AntiunifyPairs`
+  - proposer: **`FrequentSubtree`** (r1 is demonstrated as a fragment — see open problem 1)
   - governance: `GreedyMDL`
-  - iterations: 5
+  - iterations: 6+
 
 ### Rung spine
 
-| i   | Rung            | Template (over `L_{i-1}`)        | `d_i`         | Inlined double-jump depth | Fan-in | Demo kinds    |
-| --- | --------------- | -------------------------------- | ------------- | ------------------------- | ------ | ------------- |
-| 1   | crop_to_content | `crop_to_mask(g, nonbg_mask(g))` | 2 (certified) | TBD                       | 0      | full_solution |
-| 2   | TBD             | compose on the normalized grid   | TBD           | -                         | TBD    | full_solution |
+Depths **machine-computed** (`compositional_depth` / `unfold_program`, 2026-07-19).
 
-- r2 certified option: `crop_flip(g) = flip_h(crop_to_content(g))` — d=2 over `L_1`, raw d=3; needs `flip_h`/`transpose` on the floor
+| i   | Rung             | Template (over `L_{i-1}`)                                                                      | `d_i` | Inlined double-jump | Free params | Demo kinds    |
+| --- | ---------------- | ---------------------------------------------------------------------------------------------- | ----- | ------------------- | ----------- | ------------- |
+| 1   | nonbg_mask       | `mask_complement(mask_by_color(g, most_common_color g))` — demoed via a `crop_to_content` wrapper | 3     | 8 (skip nonbg_mask) | 0           | **fragment_identical** |
+| 2   | flatten_content  | `paint_through_mask(crop_to_mask(g, nonbg_mask g), nonbg_mask(crop_to_mask(g, nonbg_mask g)), c)` | 4   | 6 (skip flatten)    | 1 (COLOR)   | full_solution |
+| 3   | stamp            | `paint_through_mask(flip_h(flatten_content(g,c1)), mask_by_color(flatten_content(g,c1), c1), c2)` | 3 | — | 2 (COLOR)   | full_solution |
 
 ### Top Rung (goal layer — no abstraction is minted here)
 
-- TBD — the main design gap. Candidate: crop-then-X with X independent of the mask domain
+- Reference solution: `flip_h(flip_v(stamp(g, 3, 5)))`
+- `d_top` = 3 over `L_3` · `d_raw` = **12** (the deepest raw in the batch) · top-skip (over `L_2`) = 5
 
 ### Sandwich check
 
-- TBD (blocked on r2/top). Note `crop_flip`'s raw d=3 is shallow — may not clear a useful window.
+- Every `d_i` <= pinned `depth_limit`: 3, 4, 3 <= 4 — OK
+- `d_top` <= `depth_limit`: 3 <= 4 — OK
+- Every inlined double-jump > `depth_limit`: 8, 6 > 4 — OK (wide margins)
+- Top-skip > `depth_limit`: 5 > 4 — OK
+- `d_raw` > `depth_limit`: 12 > 4 — OK
+- **Validity window: [4, 4]** (width 1)
 
 ### Per-rung detail
 
-#### r_1: crop_to_content
-
-- Params: none (param-free; var-sharing — `g` used twice)
-- Demonstrating tasks (>= 2, full_solution): content-off-center inputs with varying background margins; within-task margin variation kills fixed-crop shortcuts
-- Collision risks: content touching the border makes crop a no-op — demos keep nonzero margins that VARY
-- `involves_lambda`? no
+- **r1 `nonbg_mask`** — param-free. Demos (>= 2): grids with a clear majority background and off-centre content; >= 2 train examples each with **varying background colour** so the literal `mask_by_color(g, k)` shortcut cannot coincide (the E11 trap, in mask form).
+  - Demonstrated via the grid-to-grid wrapper `crop_to_mask(g, nonbg_mask g)`, since the target itself is `GRID -> MASK` and can never be a whole solution (open problem 1, resolved).
+- **r2 `flatten_content`** — 1 free COLOR param `c` (the flatten target).
+  - `c`: free → fixed within task, varied across demonstrating tasks.
+  - Demos (>= 2): content off-centre with **varying margins** across examples (a fixed crop must not coincide); content must not touch the border, or the crop is a no-op.
+- **r3 `stamp`** — 2 free COLOR params `c1` (flatten target), `c2` (stamp colour).
+  - Both free → fixed within task, varied across demos.
+  - Demos (>= 2): the stamp mask selects by `c1`, which the flatten step guarantees is present.
+- `involves_lambda`? no (all rungs).
 
 ### Heldout split
 
-- TBD with the corpus (a few per level)
+- 1 task per level, disjoint colour/margin choices from train.
 
 ---
 
@@ -60,27 +75,35 @@
 
 ### Why this ladder / role in the batch
 
-- The deepest gap-climbing phenomenon on the docket: sleep must mint an abstraction that **constructs AND consumes a learned `Mask`-typed intermediate** — a type the Floor's Grid-to-Grid surface doesn't advertise.
-- `crop_to_content` is already gifted in `MASK_BASIC`, so the gen/full contrast is ready-made.
-- Running it drains the EXPERIMENT_QUEUE.md "learned intermediate type" row.
+- **The learned-intermediate-type arm.** `nonbg_mask` constructs a `Mask`, and `flatten_content` both constructs and consumes one — the deepest gap-climbing phenomenon on the docket, and the thing no experiment has yet shown sleep can do.
+- Deepest `d_raw` in the batch (12) with the widest double-jump margins (8, 6) — structurally the most robust sandwich we have.
+- Running it drains the `learned intermediate type` row in EXPERIMENT_QUEUE.md.
 
 ### Open problems
 
-1. **r2 and the Top Rung are undesigned** — the blocking gap. A height-3 with genuinely intractable raw likely needs a third domain joined, which risks turning this into cross-domain-normalize (blocked on sibling-level `LadderSpec` support).
-2. Whatever floor addition r2 needs (`flip_h` or `map_color`): re-run the derivability probe on the final floor before linting — additions can open shortcuts to lower rungs.
+1. ~~**Can r1 be demonstrated at all?**~~ **RESOLVED 2026-07-19 — option 3.** `nonbg_mask` is `GRID -> MASK`, so no grid-to-grid task can have it as a whole solution. Resolution: r1's demonstrating tasks are generated from a grid-to-grid **wrapper** that contains it (`crop_to_mask(g, nonbg_mask g)`, ie the withheld `crop_to_content`), the rung is marked `FRAGMENT_IDENTICAL`, and the proposer is `FrequentSubtree` instead of `AntiunifyPairs`. The lint's proposer-compatibility check accepts this and the ladder lints clean. Consequence to carry: al4 is the **only ladder in the batch not using the default proposer**, so cross-ladder cost/mint comparisons involving it are confounded by that choice.
+
+
+2. `paint_through_mask` is ternary → `max_arity` 3 raises composition counts relative to the arity-2 ladders; not a defect, but it makes cross-ladder cost comparison need care.
+3. r2's template repeats `crop_to_mask(g, nonbg_mask g)` twice — a large template. Good for MDL break-even, but check the minted form is the shared-subterm version rather than something the proposer factors differently.
 
 ### Dead ends / failed bisections
 
-- (none yet)
+- **(2026-07-19, build)** `stamp` originally stamped through `mask_by_color(flatten_content(g,c1), least_common_color(g))` — a colour read from the ORIGINAL grid applied to the FLATTENED crop, where it need not survive. Generation died with `mask selects no cells`. Fixed to reference `c1` (the flatten colour, present in the result by construction). General rule for mask ladders: never select by a colour derived from a different grid than the one being masked.
+- **(2026-07-19, build)** Generic seeds produced grids whose cropped content was uniform, so the *inner* `nonbg_mask` was empty. Fixed by giving `seed_grids` a `background` frame option (border of one colour, multi-coloured interior), which guarantees a non-empty margin, an unambiguous majority background, and a non-empty mask after cropping. Seeds are now 4x5 framed.
+
+- **(2026-07-19)** First goal layer was `flip_h(stamp(...))`: `d_top`=2, top-skip=4, not exceeding `depth_limit`=4 → **empty validity window**. Fixed by nesting `stamp` one level deeper (`flip_h(flip_v(stamp))`, top-skip 5). Same failure and fix as al3 — see that worksheet's note on deep-jump tops.
+- **(2026-07-19, considered and rejected)** A mask-algebra rung built from `mask_intersect`/`mask_complement` over two perceivers: De Morgan makes the intended form and its dual the same depth, so the rung below buys nothing and the double-jump check fails. Mask algebra is too collapsing to carry a rung on its own — it has to be paired with the irreversible crop/paint operations, as above.
 
 ### Notes
 
-- Probe route note: the minimal `crop_flip` witness *commutes* — `crop_to_content(flip_h(g))` — so task design must not assume operand order, and recovery grading must treat the two forms as behavioral equals.
+- Depths verified 2026-07-19 against the real registry; every template passes `make_abstraction` type-checking at its level.
+- Minimality not verified — the certificate is the gate.
 
 ### Handoffs (fill in as they come to exist)
 
-- `LadderSpec` (`ladders/registry/<name>.py`): —
-- Generator / committed testbed: —
-- Generated artifacts (`spec.md` / `results.md` / `report.json`): —
+- `LadderSpec` (`ladders/registry/al4_mask_crop.py`): **built** — registry key `al4-mask-crop`
+- Generator / committed testbed: **built** — `taskgen al4-mask-crop` -> `testbeds/al4-mask-crop/` (template-driven, regenerates byte-identically)
+- Generated artifacts (`spec.md` / `results.md` / `report.json`): — (written on first run)
 - EXPERIMENT_QUEUE.md row: —
-- Runs / EXPERIMENTS.md entries: —
+- Runs / EXPERIMENTS.md entries: — (lint passes; certificate pending first run)

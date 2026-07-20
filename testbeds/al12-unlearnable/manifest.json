@@ -1,0 +1,27 @@
+{
+  "name": "al12-unlearnable",
+  "note": "al12-unlearnable (control): rot90 has ONE demo, so AntiunifyPairs cannot mint it.",
+  "content_hash": "4444bc5b620a0412",
+  "tasks": [
+    {
+      "task_id": "rot90-00",
+      "label": "rot90",
+      "split": "train"
+    },
+    {
+      "task_id": "rot90-heldout-00",
+      "label": "rot90",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

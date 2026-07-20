@@ -1,0 +1,77 @@
+{
+  "name": "al6-mirror-tall",
+  "note": "al6-mirror-tall: AL1's floor + perceivers, climbed five levels (rot180 -> norm_mirror -> norm_stack -> norm_quad -> top). The height-axis partner of al5 and an upward extension of ladder #1.",
+  "content_hash": "7f695127ef3f852c",
+  "tasks": [
+    {
+      "task_id": "rot180-00",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-01",
+      "label": "rot180",
+      "split": "train"
+    },
+    {
+      "task_id": "rot180-heldout-00",
+      "label": "rot180",
+      "split": "heldout"
+    },
+    {
+      "task_id": "norm_mirror-00",
+      "label": "norm_mirror",
+      "split": "train"
+    },
+    {
+      "task_id": "norm_mirror-01",
+      "label": "norm_mirror",
+      "split": "train"
+    },
+    {
+      "task_id": "norm_mirror-heldout-00",
+      "label": "norm_mirror",
+      "split": "heldout"
+    },
+    {
+      "task_id": "norm_stack-00",
+      "label": "norm_stack",
+      "split": "train"
+    },
+    {
+      "task_id": "norm_stack-01",
+      "label": "norm_stack",
+      "split": "train"
+    },
+    {
+      "task_id": "norm_stack-heldout-00",
+      "label": "norm_stack",
+      "split": "heldout"
+    },
+    {
+      "task_id": "norm_quad-00",
+      "label": "norm_quad",
+      "split": "train"
+    },
+    {
+      "task_id": "norm_quad-01",
+      "label": "norm_quad",
+      "split": "train"
+    },
+    {
+      "task_id": "norm_quad-heldout-00",
+      "label": "norm_quad",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

@@ -22,6 +22,7 @@ from arc_lab.program_search.execution.model.config import Config
 from arc_lab.program_search.execution.model.serde import to_data
 from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
 from arc_lab.program_search.ladders._render import table
+from arc_lab.program_search.ladders.chain import oracle_libraries
 from arc_lab.program_search.ladders.shape import LadderShape, LintFinding, RungShape
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.substrate.abstraction import make_abstraction, unfold_program
@@ -118,13 +119,12 @@ class LadderSpec:
         return self.reference_config.library
 
     def oracle_library(self, level: int) -> Library:
-        """``L_level`` = Floor + the *intended* rungs ``r_1..r_level`` gifted, built by successive
-        ``make_abstraction`` + ``Library.extended`` (each template resolves over the one below)."""
-        library = self.floor()
-        for rung in self.rungs[:level]:
-            primitive = make_abstraction(rung.name, rung.template, library)
-            library = library.extended(name=f"{library.name}+{rung.name}", extra=(primitive,))
-        return library
+        """``L_level`` = Floor + the *intended* rungs ``r_1..r_level`` gifted (each template
+        resolves over the one below). Shares :func:`oracle_libraries` with the task generators, so a
+        ladder is linted against exactly the libraries its tasks were generated against."""
+        return oracle_libraries(self.floor(), [(r.name, r.template) for r in self.rungs[:level]])[
+            -1
+        ]
 
     def rung_tasks(self, level: int) -> tuple[AnnotatedTask, ...]:
         """The train-corpus entries demonstrating rung ``level`` (resolved by demonstration id)."""
