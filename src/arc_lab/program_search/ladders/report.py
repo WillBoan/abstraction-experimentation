@@ -19,7 +19,7 @@ from typing import Any
 from arc_lab.program_search.analysis.behavioral import MAX_PROBE_COMBOS, matches_target
 from arc_lab.program_search.execution.model.run_record import RunRecord
 from arc_lab.program_search.ladders._render import table
-from arc_lab.program_search.ladders.certificate import certify
+from arc_lab.program_search.ladders.certificate import certify, search_censored_ids
 from arc_lab.program_search.ladders.run import LadderResult
 from arc_lab.program_search.substrate.abstraction import make_abstraction
 
@@ -225,7 +225,14 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
             "laddered_end_to_end_considered": end_to_end,
             "raw_considered": raw_considered,
             "raw_solved": raw_solved,
+            # Statistical sense: the number is a lower bound, not a raw cost. True whenever raw is
+            # unsolved, whatever ended the search.
             "raw_censored": not raw_solved,
+            # Distinct and narrower: a `Budget.considered_limit` cut the raw search short, so it is
+            # a lower bound on the FLOOR SEARCH ITSELF, not just on the cost of solving. Kept apart
+            # from `raw_censored` because only this one means "we chose to stop paying".
+            "raw_limit_censored": bool(top_ids)
+            and any(tid in search_censored_ids(result.oracle_chain[0]) for tid in top_ids),
             "raw_estimate": raw_estimate,
             "amortization_ratio_estimated": (
                 {
@@ -283,11 +290,19 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
             [
                 str(level),
                 _yes_no(tractable.get(level)),
-                _yes_no(no_skip.get(level)),
+                _skip_path_verdict(no_skip.get(level)),
                 str(health.get(level)),
             ]
         )
     lines += ["", "## Certificate (per jump)", "", *table(cert_rows)]
+    if any(no_skip.get(level) is None for level in tractable):
+        lines += [
+            "",
+            "> An INCONCLUSIVE skip-path verdict means that jump's probe search was **censored** "
+            "(`Budget.considered_limit`), so it went unsolved without being searched to "
+            "completion -- absence of a skip path was never established. Such a ladder is not "
+            "admitted: re-run the oracle chain with a higher (or no) `considered_limit` to settle it.",
+        ]
 
     climb_rows = [["iter", "wake solved", "considered (all tasks)", "minted", "converged"]]
     for entry in report.get("climb_trace") or []:
@@ -327,7 +342,7 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
             cells = []
             for level in levels:
                 cell = columns.get(level) or {}
-                mark = " *" if cell.get("solved") else ""
+                mark = " *" if cell.get("solved") else " !" if cell.get("censored") else ""
                 cells.append(f"{_count(cell.get('considered'))}{mark}")
             matrix_rows.append([f"`{entry.get('task_id')}`", str(entry.get("rung")), *cells])
         lines += [
@@ -338,6 +353,9 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
             "",
             "- `*` = the search solved that task in that column; a bare number is cost-paid-full "
             "on an unsolved task (a censored lower bound on what solving would cost).",
+            "- `!` = that search was cut short by a `Budget.considered_limit`, so its number is the "
+            "limit itself, not a measurement -- and its `unsolved` says nothing about whether a "
+            "solution exists within the budget.",
             "- `L_i` = Floor + the intended rungs `r_1..r_i` gifted (the oracle chain), all at the "
             "pinned budget.",
             "- These are **cost-paid-full** figures: with no early stop every search enumerates "
@@ -605,6 +623,15 @@ def _yes_no(value: object) -> str:
     return "yes" if value else "no"
 
 
+def _skip_path_verdict(value: object) -> str:
+    """The tri-state ``no_skip_paths`` verdict. ``None`` renders as INCONCLUSIVE, not as a bare
+    dash: it means a search was censored, so we do not know whether a skip path exists -- a
+    materially different claim from "no" that must never be skimmed as a pass."""
+    if value is None:
+        return "INCONCLUSIVE (censored)"
+    return "yes" if value else "no"
+
+
 def _count(value: object) -> str:
     return f"{value:,}" if isinstance(value, int) else "?"
 
@@ -674,6 +701,9 @@ def _per_task_cells(record: RunRecord) -> dict[str, dict[str, object]]:
             "first_solution_index": solutions.get("first_index"),
             "cheapest_solution_index": solutions.get("cheapest_index"),
             "b_eff": _fit_b_eff(generations if isinstance(generations, list) else []),
+            # Cut short by a `considered_limit`: `considered` is the limit, not a measurement, and
+            # `solved=False` here means "never established", not "no solution".
+            "censored": bool(stats.get("censored")),
         }
     return out
 
@@ -707,11 +737,21 @@ def _estimate_raw_cost(generations: list[Any], d_raw: int, depth_limit: int) -> 
     The truth sits between. Both assume a pool large enough not to bind: the estimate is of the
     raw search's true cost, NOT of what a ``max_pool``-capped run would spend (such a run is
     cheaper and simply fails to find the solution -- see the caveats).
+
+    Rounds flagged ``incomplete`` are DROPPED before fitting. Such a round was cut short mid-way by
+    an ``immediate`` stop limit, so its ``composed`` is an arbitrary fraction of the round's real
+    size -- and since it is always the last round, both fits read it as collapse rather than growth.
+    The result is not a loud failure: the bracket stays ordered and the output looks well-formed, it
+    is simply wrong by orders of magnitude (measured in the tests: 1.1e3 where the truth is 1.1e5).
+    A censored run is exactly the input this estimator exists to consume, so the filter is not
+    optional.
     """
     composed = [
         generation["composed"]
         for generation in generations
-        if isinstance(generation, dict) and isinstance(generation.get("composed"), int)
+        if isinstance(generation, dict)
+        and isinstance(generation.get("composed"), int)
+        and not generation.get("incomplete")
     ]
     rounds_missing = d_raw - depth_limit
     if len(composed) < 2 or rounds_missing <= 0:

@@ -212,6 +212,30 @@ def test_raw_estimate_brackets_when_growth_accelerates() -> None:
     assert 28_000_000 < high < 29_000_000  # ~28.4M
 
 
+def test_raw_estimate_drops_a_round_a_stop_limit_cut_short() -> None:
+    """A censored run is exactly the input this estimator exists to consume, so the ``incomplete``
+    filter is load-bearing, not hygiene.
+
+    The truncated round is an arbitrary fraction of its real size and always last, so both fitted
+    ratios read it as collapse rather than growth. The estimate does not fail loudly -- ``min``/
+    ``max`` keep the bracket ordered and it still looks well-formed. It is simply WRONG by two
+    orders of magnitude, which is the more dangerous failure: 1.1e3 where the truth is 1.1e5.
+    """
+    complete = [{"composed": 10}, {"composed": 100}, {"composed": 1000}]
+    censored = [*complete, {"composed": 3, "incomplete": True}]
+
+    filtered = _estimate_raw_cost(censored, d_raw=4, depth_limit=2)
+    assert filtered == _estimate_raw_cost(complete, d_raw=4, depth_limit=2)
+    assert filtered["estimate_low"] == filtered["estimate_high"] == 111_110
+
+    # The number the filter prevents: a plausible-looking estimate ~100x too small, because the
+    # partial round (3 composed, against the previous round's 1000) reads as decay.
+    unfiltered = _estimate_raw_cost([*complete, {"composed": 3}], d_raw=5, depth_limit=3)
+    high = unfiltered["estimate_high"]
+    assert isinstance(high, int)
+    assert high < 2_000  # vs the correct 111_110 -- silently, with no error raised
+
+
 def test_raw_estimate_unavailable_without_enough_signal() -> None:
     # Fewer than two rounds gives no ratio; d_raw within the budget means nothing to project.
     assert _estimate_raw_cost([{"composed": 10}], d_raw=4, depth_limit=2)["available"] is False
