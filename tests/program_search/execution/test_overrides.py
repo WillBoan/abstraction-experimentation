@@ -58,6 +58,23 @@ def test_unknown_field_and_type_mismatch_fail_loudly() -> None:
         apply_overrides(PRESETS["d4"], {"library": "nope"})
 
 
+def test_stop_limits_are_settable_and_validated() -> None:
+    """``_coerce`` cannot type-check a field whose current value is ``None`` (it compares against
+    ``type(current)``), so ``Budget.__post_init__`` is what makes a bad ``--set`` fail loudly here
+    rather than silently installing a string into the run identity."""
+    updated = apply_overrides(PRESETS["d4"], {"budget.considered_limit": 5000})
+    assert updated.budget.considered_limit == 5000
+    updated = apply_overrides(PRESETS["d4"], {"budget.solution_limit_mode": "immediate"})
+    assert updated.budget.solution_limit_mode == "immediate"
+
+    with pytest.raises(ValueError, match="considered_limit"):
+        apply_overrides(PRESETS["d4"], {"budget.considered_limit": "garbage"})
+    with pytest.raises(ValueError, match="considered_limit"):
+        apply_overrides(PRESETS["d4"], {"budget.considered_limit": 0})
+    with pytest.raises(ValueError, match="solution_limit_mode"):
+        apply_overrides(PRESETS["d4"], {"budget.solution_limit_mode": "eventually"})
+
+
 def test_parse_set_values() -> None:
     parsed = parse_set_values(["budget.depth_limit=3", "library=d4", "flag=true"])
     assert parsed == {"budget.depth_limit": 3, "library": "d4", "flag": True}

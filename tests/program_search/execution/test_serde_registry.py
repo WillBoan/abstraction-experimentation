@@ -48,7 +48,17 @@ _EXEMPLARS: dict[str, object] = {
         unpinned_type_var_mode="reject",
         beam_width=32,
     ),
-    "Budget": Budget(depth_limit=2, max_arity=2, max_pool=64),
+    # Every stop-limit field set to a NON-default: a defaulted field round-trips trivially whether
+    # or not serde actually carries it, so only non-defaults exercise the path.
+    "Budget": Budget(
+        depth_limit=2,
+        max_arity=2,
+        max_pool=64,
+        considered_limit=1000,
+        considered_limit_mode="generation-end",
+        solution_limit=3,
+        solution_limit_mode="immediate",
+    ),
     "ProgramSize": ProgramSize(),
     "LearnSpec": LearnSpec(
         learn_engine=GreedyMDLLearnEngine(proposer=AntiunifyPairs()),
@@ -87,3 +97,12 @@ def test_registered_kind_round_trips(kind: str) -> None:
     rebuilt = from_data(to_data(component), default_registry())
     assert rebuilt == component
     assert type(rebuilt) is type(component)
+
+
+def test_a_record_predating_a_new_field_still_deserializes() -> None:
+    """``from_data`` splats only the keys present, so a ``Budget`` stored before the stop limits
+    existed rebuilds on their defaults. This is what keeps already-recorded runs readable across a
+    field addition -- their ``run_id``s move, but the artifacts stay loadable."""
+    stored = {"kind": "Budget", "depth_limit": 2, "max_arity": 2, "max_pool": 64}
+    rebuilt = from_data(stored, default_registry())
+    assert rebuilt == Budget(depth_limit=2, max_arity=2, max_pool=64)

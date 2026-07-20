@@ -38,7 +38,17 @@ class SearchStats:
     #: The per-round funnel (``SearchTracker.generations()``): pool sizes + where every candidate
     #: newly absorbed each round ended up. Top-level rounds only; per-task (like
     #: ``solved_at_generation``, kept out of ``merge_search_stats``). The source for ``b_eff``.
-    generations: tuple[Mapping[str, int | None], ...] = ()
+    generations: tuple[Mapping[str, int | bool | None], ...] = ()
+    #: A ``Budget.considered_limit`` ended this search. The run is CUT SHORT, so ``considered`` is
+    #: exactly the limit rather than a measurement, and — the part that matters for the ladder
+    #: certificate — an unsolved task is a lower bound, never evidence that no solution exists.
+    censored: bool = False
+    #: A ``Budget.solution_limit`` ended this search. Unlike ``censored`` the run SUCCEEDED and
+    #: simply stopped paying, so ``considered`` is a cost-to-first reading rather than cost-paid-full.
+    stopped_early: bool = False
+    #: The round an ``immediate`` ``considered_limit`` cut short (``None`` if it stopped at a
+    #: generation boundary, or never). That round's funnel row is flagged ``incomplete``.
+    censored_at_generation: int | None = None
     #: Solution-sink telemetry (``search/tracking.py``): every goal-matching candidate seen at
     #: absorption, before the pool's dedup collapses them to one. The returned ``ranked_programs``
     #: is drawn from here (the globally-cheapest, evicted or not); ``first_solution_index`` /

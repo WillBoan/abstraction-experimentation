@@ -182,6 +182,11 @@ class GenerationTracker:
     displaced: int = 0
     #: Entries (of any origin generation) evicted by *this* round's frontier truncation.
     evicted: int = 0
+    #: True when an ``immediate`` stop limit (`Budget.considered_limit` / `solution_limit`) cut this
+    #: round short, so its counts describe only the part that ran. Read-side consumers that fit a
+    #: trend across rounds must skip it — notably `ladders/report.py::_estimate_raw_cost`, whose
+    #: growth ratio would otherwise be dragged below 1 by a truncated final round.
+    incomplete: bool = False
 
 
 #: Default cap on solutions retained per run (keep-cheapest-K); solutions are rare, so this rarely
@@ -329,13 +334,20 @@ class SearchTracker:
     def end_generation(self, generation: int, pool_size_end: int) -> None:
         self._generations[generation].pool_size_end = pool_size_end
 
+    def mark_generation_incomplete(self, generation: int) -> None:
+        """An ``immediate`` stop limit cut this round short — its counts cover only the part that ran."""
+        self._generations[generation].incomplete = True
+
     def generation_at(self, generation: int) -> GenerationTracker:
         return self._generations[generation]
 
-    def generations(self) -> list[dict[str, int | None]]:
+    def generations(self) -> list[dict[str, int | bool | None]]:
         """The per-round funnel as serializable rows in round order — the sole source for ``b_eff``
         fitting and the vocabulary-tax view. Top-level search only (a lambda-synthesis sub-search
-        never calls ``begin_generation``), so this is empty for those."""
+        never calls ``begin_generation``), so this is empty for those.
+
+        A row flagged ``incomplete`` was cut short by an ``immediate`` stop limit; anything fitting
+        a trend across rounds must skip it (see ``GenerationTracker.incomplete``)."""
         return [
             {
                 "pool_size_start": gen.pool_size_start,
@@ -348,6 +360,7 @@ class SearchTracker:
                 "entered_pool": gen.entered_pool,
                 "displaced": gen.displaced,
                 "evicted": gen.evicted,
+                "incomplete": gen.incomplete,
             }
             for gen in self._generations
         ]

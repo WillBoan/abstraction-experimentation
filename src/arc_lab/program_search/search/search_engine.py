@@ -17,7 +17,7 @@ import itertools
 import logging
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Literal, TypeAlias
 
@@ -37,7 +37,7 @@ from ..substrate.types import (
     instantiate,
     unify,
 )
-from .budget import Budget
+from .budget import Budget, StopMode
 from .composition import appfn_applications, applications, hole_assignments
 from .constraints import Constraint
 from .context import Context
@@ -144,11 +144,52 @@ class _RunState:
     #: (never on the engine), so the fixed ``train_examples`` a ``body_sampler`` reads cannot leak
     #: across runs. Cached pools are treated as read-only by every caller.
     memo: dict[_MemoKey, Pool] = field(default_factory=dict)
+    #: The run's stop limits, lifted off the TOP-LEVEL budget once in ``run``. Read from here, never
+    #: from the locally-scoped ``budget``: they are run-global, so resolving them per frame would
+    #: hand every descended sub-search a fresh allowance.
+    considered_limit: int | None = None
+    considered_limit_mode: StopMode = "immediate"
+    solution_limit: int | None = None
+    solution_limit_mode: StopMode = "generation-end"
+    #: Set when a limit ended the search early: ``censored`` for ``considered_limit`` (the search
+    #: was cut short, so an unsolved task is a lower bound, not a verdict), ``stopped_early`` for
+    #: ``solution_limit`` (the search succeeded and simply stopped paying).
+    censored: bool = False
+    stopped_early: bool = False
+    #: The round an ``immediate`` abort cut short, if any — the row flagged ``incomplete``.
+    aborted_at_generation: int | None = None
+
+    def considered_limit_reached(self) -> bool:
+        return (
+            self.considered_limit is not None and self.tracker.considered >= self.considered_limit
+        )
+
+    def solution_limit_reached(self) -> bool:
+        return (
+            self.solution_limit is not None and self.tracker.solutions.count >= self.solution_limit
+        )
+
+
+class _SearchAborted(BaseException):
+    """A stop limit in ``immediate`` mode ended the search; unwinds to ``_enumerate``'s round loop.
+
+    Deliberately a ``BaseException``. ``_evaluate_siblings`` and ``_sample_type`` both catch bare
+    ``Exception`` and sit on the unwind path out of a lambda-synthesis sub-search, so an ``Exception``
+    subclass would be swallowed there and enumeration would carry on past the limit with a pool
+    whose outcome partition no longer balances.
+    """
+
+    def __init__(self, reason: Literal["considered-limit", "solution-limit"]) -> None:
+        super().__init__(reason)
+        self.reason = reason
 
 
 #: Skip decile progress logging below this many candidates this round — a single candidate
 #: could otherwise jump several deciles at once on a cheap generation, which reads as noise.
 _ABSORB_LOG_MIN_TOTAL = 50
+#: Absorbed-candidate stride for the progress log of a lazily-composed round, whose total is
+#: unknown up front (``_log_absorb_progress``).
+_ABSORB_LOG_RUNNING_INTERVAL = 10_000
 
 #: Only log a lambda-synthesis sub-search's summary when it's non-trivial by either measure —
 #: most `_synthesize_for_hole` calls resolve instantly via `_enumerate`'s memo cache or a tiny
@@ -167,15 +208,34 @@ def _log_extra(state: _RunState, generation: int, total_generations: int) -> dic
 
 
 def _log_absorb_progress(
-    state: _RunState, generation: int, total_generations: int, total_this_generation: int
+    state: _RunState, generation: int, total_generations: int, total_this_generation: int | None
 ) -> None:
     """Log once per 10%-decile of ``total_this_generation`` that ``composed`` (this round's
     running absorbed count, ``GenerationTracker``) crosses — skipped entirely below
     ``_ABSORB_LOG_MIN_TOTAL`` candidates. Caller (``BottomUpSearchEngine._absorb_one``) already
-    guards on ``logger.isEnabledFor(logging.INFO)``."""
+    guards on ``logger.isEnabledFor(logging.INFO)``.
+
+    ``total_this_generation`` is ``None`` for a composed round, whose candidates are pulled lazily
+    from ``_compose`` (``_enumerate``) so the round's total isn't knowable up front — the same
+    reason composition's own log carries only a running count. Those rounds log every
+    ``_ABSORB_LOG_RUNNING_INTERVAL`` absorbed candidates instead of by decile."""
+    gen_tracker = state.tracker.generation_at(generation)
+    if total_this_generation is None:
+        if gen_tracker.composed % _ABSORB_LOG_RUNNING_INTERVAL:
+            return
+        logger.info(
+            "Absorbed %d (total unknown - composing lazily): errored=%d pruned=%d deduped=%d "
+            "entered_pool=%d",
+            gen_tracker.composed,
+            gen_tracker.errored,
+            gen_tracker.pruned,
+            gen_tracker.deduped,
+            gen_tracker.entered_pool,
+            extra=_log_extra(state, generation, total_generations),
+        )
+        return
     if total_this_generation < _ABSORB_LOG_MIN_TOTAL:
         return
-    gen_tracker = state.tracker.generation_at(generation)
     decile = gen_tracker.composed * 10 // total_this_generation
     previous_decile = (gen_tracker.composed - 1) * 10 // total_this_generation
     if decile == previous_decile:
@@ -312,6 +372,13 @@ class BottomUpSearchEngine(SearchEngine):
             target=target,
             universe=universe,
             tracker=tracker if tracker is not None else SearchTracker(),
+            # Lifted off the TOP-LEVEL budget, once. ``descend()`` carries them down so every frame
+            # agrees, but they are read from ``state`` — resolving them per frame would give each
+            # sub-search its own allowance rather than sharing the run's.
+            considered_limit=budget.considered_limit,
+            considered_limit_mode=budget.considered_limit_mode,
+            solution_limit=budget.solution_limit,
+            solution_limit_mode=budget.solution_limit_mode,
         )
         top_target = EnclosingTarget(train_target, resolved_goal_type) if train_target else None
 
@@ -371,6 +438,9 @@ class BottomUpSearchEngine(SearchEngine):
                 solutions_truncated=sink.truncated,
                 solutions=sink.records(),
                 returned_solution_count=len(ranked_programs),
+                censored=state.censored,
+                stopped_early=state.stopped_early,
+                censored_at_generation=(state.aborted_at_generation if state.censored else None),
             ),
         )
 
@@ -398,39 +468,49 @@ class BottomUpSearchEngine(SearchEngine):
         if cached is not None:
             return cached
         pool = Pool()
-        frontier: list[tuple[Program, Type]] = [
+        # Generation 0's leaves are a concrete list (small, and its length feeds the decile progress
+        # log); every later round is the lazily-pulled ``_compose`` generator — see the absorption
+        # call below on why laziness is behaviour-preserving.
+        frontier: Iterable[tuple[Program, Type]] = [
             *seed_leaves(scope, contexts, self.constant_sources, state.library),
             *self._function_leaves(state),
         ]
-        for depth in range(budget.depth_limit + 1):
-            # Round-level tracking/logging is only for the run's one top-level search — a
-            # lambda-synthesis sub-search recurses into this same loop with its own (smaller,
-            # budget-descended) depth numbering starting again at 0, which would otherwise
-            # collide with (and silently corrupt) the top-level search's own generation
-            # 0, 1, 2, ... entries (``SearchTracker.begin_generation``).
-            track_generation = depth if top_level else None
-            if top_level:
-                state.tracker.begin_generation(pool.size())
-            if track_generation is not None and logger.isEnabledFor(logging.INFO):
-                logger.info(
-                    "Generation starting: pool_size_start=%d",
-                    pool.size(),
-                    extra=_log_extra(state, track_generation, budget.depth_limit + 1),
-                )
-            branch_candidates: list[tuple[Program, Type, Signature | None]] = []
-            if depth > 0:
-                # The new-layer restriction (§5.2): compose only over combinations that use at least
-                # one argument added in the previous round (``generation == depth - 1``), so a
-                # lower-depth program is built once at its own depth, not regenerated-and-deduped
-                # every round. At depth 1 this is a no-op (the whole pool is the leaf layer).
-                new_layer = frozenset(
-                    id(entry.program)
-                    for _, entry in pool.entries()
-                    if entry.generation == depth - 1
-                )
-                branch_candidates = self._branch_candidates(pool, state, new_layer)
-                frontier = list(
-                    self._compose(
+        depth = 0
+        try:
+            for depth in range(budget.depth_limit + 1):
+                # A ``generation-end`` stop limit tripped during the PREVIOUS round: the pool is
+                # complete as of that round, so this is a plain ``break`` — the memo write and
+                # sub-pool finalization below must still run. Top-level only, matching
+                # ``record_solution``: a sub-search carries its own body target, not THE goal.
+                if top_level and self._stop_at_generation_end(state):
+                    break
+                # Round-level tracking/logging is only for the run's one top-level search — a
+                # lambda-synthesis sub-search recurses into this same loop with its own (smaller,
+                # budget-descended) depth numbering starting again at 0, which would otherwise
+                # collide with (and silently corrupt) the top-level search's own generation
+                # 0, 1, 2, ... entries (``SearchTracker.begin_generation``).
+                track_generation = depth if top_level else None
+                if top_level:
+                    state.tracker.begin_generation(pool.size())
+                if track_generation is not None and logger.isEnabledFor(logging.INFO):
+                    logger.info(
+                        "Generation starting: pool_size_start=%d",
+                        pool.size(),
+                        extra=_log_extra(state, track_generation, budget.depth_limit + 1),
+                    )
+                branch_candidates: list[tuple[Program, Type, Signature | None]] = []
+                if depth > 0:
+                    # The new-layer restriction (§5.2): compose only over combinations that use at
+                    # least one argument added in the previous round (``generation == depth - 1``),
+                    # so a lower-depth program is built once at its own depth, not regenerated-and-
+                    # deduped every round. At depth 1 this is a no-op (the pool is the leaf layer).
+                    new_layer = frozenset(
+                        id(entry.program)
+                        for _, entry in pool.entries()
+                        if entry.generation == depth - 1
+                    )
+                    branch_candidates = self._branch_candidates(pool, state, new_layer)
+                    frontier = self._compose(
                         scope,
                         contexts,
                         pool,
@@ -440,72 +520,132 @@ class BottomUpSearchEngine(SearchEngine):
                         new_layer,
                         track_generation=track_generation,
                     )
+                # Every pooled value program's (non-function) signature, by identity — the composed-
+                # signature fast path (``compute_signature``'s ``child_signatures``): a fresh
+                # ``Apply``'s direct children are exactly these pool objects (§5.2), so their
+                # per-context values are already known and never need re-``evaluate``. Function-typed
+                # entries are excluded: their cached signature is an argument-sampled behavioural
+                # fingerprint (``compute_function_signature``), not a raw per-context value, so a
+                # lookup miss there correctly falls back.
+                child_signatures = {
+                    id(entry.program): entry.sig
+                    for vtype, entry in pool.entries()
+                    if not isinstance(vtype, ArrowType)
+                }
+                # Known only for generation 0's concrete leaf list; a composed round is pulled
+                # lazily, so its total isn't knowable until the generator is exhausted
+                # (``_log_absorb_progress`` falls back to a running count). ``child_signatures``
+                # above and ``_branch_candidates`` above both read the pool BEFORE the first pull,
+                # exactly as they did when composition was eager — sound because composition never
+                # mutates the pool, only reads a snapshot of it (``_compose``'s ``candidates``,
+                # taken when its body first runs, i.e. at first pull).
+                total_this_generation = (
+                    len(frontier) + len(branch_candidates) if isinstance(frontier, list) else None
                 )
-            # Every pooled value program's (non-function) signature, by identity — the composed-
-            # signature fast path (``compute_signature``'s ``child_signatures``): a fresh ``Apply``'s
-            # direct children are exactly these pool objects (§5.2), so their per-context values are
-            # already known and never need re-``evaluate``. Function-typed entries are excluded: their
-            # cached signature is an argument-sampled behavioural fingerprint (``compute_function_
-            # signature``), not a raw per-context value, so a lookup miss there correctly falls back.
-            child_signatures = {
-                id(entry.program): entry.sig
-                for vtype, entry in pool.entries()
-                if not isinstance(vtype, ArrowType)
-            }
-            total_this_generation = len(frontier) + len(branch_candidates)
-            self._absorb(
-                frontier,
-                contexts,
-                pool,
-                state,
-                depth,
-                child_signatures,
-                track_generation=track_generation,
-                total_generations=budget.depth_limit + 1,
-                total_this_generation=total_this_generation,
-            )
-            for program, vtype, signature in branch_candidates:
-                self._absorb_one(
-                    program,
-                    vtype,
-                    vtype,
-                    signature,
+                self._absorb(
+                    frontier,
+                    contexts,
                     pool,
                     state,
                     depth,
+                    child_signatures,
                     track_generation=track_generation,
                     total_generations=budget.depth_limit + 1,
                     total_this_generation=total_this_generation,
                 )
-            if top_level:
-                state.tracker.mark_pool_size_before_truncation(depth, pool.size())
-            pool = self._select_frontier(pool, budget, state, track_generation=track_generation)
-            if top_level:
-                state.tracker.end_generation(depth, pool.size())
-            if track_generation is not None and logger.isEnabledFor(logging.INFO):
-                gen_tracker = state.tracker.generation_at(track_generation)
-                logger.info(
-                    "Generation done: pool %d -> %d (before truncation: %d); composed=%d "
-                    "(errored=%d pruned=%d deduped=%d entered_pool=%d); displaced=%d; evicted=%d",
-                    gen_tracker.pool_size_start,
-                    gen_tracker.pool_size_end,
-                    gen_tracker.pool_size_before_truncation,
-                    gen_tracker.composed,
-                    gen_tracker.errored,
-                    gen_tracker.pruned,
-                    gen_tracker.deduped,
-                    gen_tracker.entered_pool,
-                    gen_tracker.displaced,
-                    gen_tracker.evicted,
-                    extra=_log_extra(state, track_generation, budget.depth_limit + 1),
-                )
+                for program, vtype, signature in branch_candidates:
+                    self._absorb_one(
+                        program,
+                        vtype,
+                        vtype,
+                        signature,
+                        pool,
+                        state,
+                        depth,
+                        track_generation=track_generation,
+                        total_generations=budget.depth_limit + 1,
+                        total_this_generation=total_this_generation,
+                    )
+                if top_level:
+                    state.tracker.mark_pool_size_before_truncation(depth, pool.size())
+                pool = self._select_frontier(pool, budget, state, track_generation=track_generation)
+                if top_level:
+                    state.tracker.end_generation(depth, pool.size())
+                if track_generation is not None and logger.isEnabledFor(logging.INFO):
+                    gen_tracker = state.tracker.generation_at(track_generation)
+                    logger.info(
+                        "Generation done: pool %d -> %d (before truncation: %d); composed=%d "
+                        "(errored=%d pruned=%d deduped=%d entered_pool=%d); displaced=%d; evicted=%d",
+                        gen_tracker.pool_size_start,
+                        gen_tracker.pool_size_end,
+                        gen_tracker.pool_size_before_truncation,
+                        gen_tracker.composed,
+                        gen_tracker.errored,
+                        gen_tracker.pruned,
+                        gen_tracker.deduped,
+                        gen_tracker.entered_pool,
+                        gen_tracker.displaced,
+                        gen_tracker.evicted,
+                        extra=_log_extra(state, track_generation, budget.depth_limit + 1),
+                    )
+        except _SearchAborted as aborted:
+            if aborted.reason == "considered-limit":
+                state.censored = True
+            else:
+                state.stopped_early = True
+            if not top_level:
+                # Repair THIS frame's partial pool before re-raising: its entries were counted but
+                # have no terminal outcome yet, and each frame between the abort and the top level
+                # owns its own pool, so the partition is restored one frame at a time on the way up.
+                self._finalize_sub_pool(pool, state)
+                raise
+            self._repair_aborted_generation(pool, state, depth)
+            # Deliberately NOT memoized: this pool is truncated, and a later call with the same key
+            # would silently receive it as though the enumeration had completed.
+            return pool
+        # Placement is a correctness requirement, not a style choice: the memo write sits AFTER the
+        # round loop so an abort inside it cannot cache a partial pool (see the handler above).
         state.memo[key] = pool
         if not top_level:
-            for _, entry in pool.entries():
-                state.tracker.record(
-                    entry.candidate_index, entry.program, entry.primitives, Outcome.GOAL_UNMATCHED
-                )
+            self._finalize_sub_pool(pool, state)
         return pool
+
+    def _stop_at_generation_end(self, state: _RunState) -> bool:
+        """Has a ``generation-end`` stop limit tripped? Checked between rounds, so the generation
+        that tripped it is left complete — no partial funnel row, and for ``solution_limit`` the
+        retained solution is the cheapest of its generation rather than merely the first found."""
+        if state.considered_limit_mode == "generation-end" and state.considered_limit_reached():
+            state.censored = True
+            return True
+        if state.solution_limit_mode == "generation-end" and state.solution_limit_reached():
+            state.stopped_early = True
+            return True
+        return False
+
+    def _finalize_sub_pool(self, pool: Pool, state: _RunState) -> None:
+        """Resolve a sub-search pool's survivors as ``GOAL_UNMATCHED``, once, when it is first built.
+
+        A sub-search's pool never faces the top-level goal test, so its entries would otherwise sit
+        counted-but-unresolved and break the outcome partition. Shared by the normal return path and
+        the abort path so the two cannot drift.
+        """
+        for _, entry in pool.entries():
+            state.tracker.record(
+                entry.candidate_index, entry.program, entry.primitives, Outcome.GOAL_UNMATCHED
+            )
+
+    def _repair_aborted_generation(self, pool: Pool, state: _RunState, depth: int) -> None:
+        """Close the funnel row of the generation an ``immediate`` stop limit cut short.
+
+        Does the normal round tail minus ``_select_frontier``: evicting here would record
+        ``EVICTED`` outcomes for a ``max_pool`` truncation this round never actually reached,
+        misattributing eviction loss. Recording ``pool_size_end == pool_size_before_truncation`` is
+        the honest statement, and ``incomplete`` tells read-side consumers to skip the row.
+        """
+        state.tracker.mark_pool_size_before_truncation(depth, pool.size())
+        state.tracker.mark_generation_incomplete(depth)
+        state.tracker.end_generation(depth, pool.size())
+        state.aborted_at_generation = depth
 
     def _compose(
         self,
@@ -844,7 +984,7 @@ class BottomUpSearchEngine(SearchEngine):
 
     def _absorb(
         self,
-        candidates: list[tuple[Program, Type]],
+        candidates: Iterable[tuple[Program, Type]],
         contexts: tuple[Context, ...],
         pool: Pool,
         state: _RunState,
@@ -853,10 +993,17 @@ class BottomUpSearchEngine(SearchEngine):
         *,
         track_generation: int | None,
         total_generations: int,
-        total_this_generation: int,
+        total_this_generation: int | None,
     ) -> None:
         """Evaluate, prune (§5.6), and dedup each candidate. Value candidates go in first, then
         function candidates — whose signatures sample argument values from the now-populated pool (§8).
+
+        ``candidates`` is consumed ONCE and lazily: for a composed round it is ``_compose``'s
+        generator, so a candidate is built only when it is about to be absorbed. Absorbing into
+        ``pool`` mid-iteration cannot perturb what is still to come — ``_compose`` snapshots the
+        pool into a list when its body first runs. The value/function split below is unchanged by
+        laziness: ``functions`` was already an accumulating buffer, because ``_argument_samples``
+        needs the pool populated.
 
         ``generation`` is the composition round these candidates belong to, stamped on every pooled
         entry for the new-layer restriction (``_enumerate``). ``child_signatures`` is the composed-
@@ -918,7 +1065,7 @@ class BottomUpSearchEngine(SearchEngine):
         *,
         track_generation: int | None,
         total_generations: int,
-        total_this_generation: int,
+        total_this_generation: int | None,
     ) -> None:
         """Prune (fully-undefined or a *concrete* output-type mismatch) and dedup one candidate.
 
@@ -940,6 +1087,11 @@ class BottomUpSearchEngine(SearchEngine):
         ``total_generations``/``total_this_generation`` feed the periodic absorption-progress log
         (``_log_absorb_progress``), gated on ``track_generation is not None``.
         """
+        # BEFORE the increment, so the candidate that trips the limit is never counted: it therefore
+        # never needs a terminal ``Outcome``, and the partition invariant (``considered`` ==
+        # sum of the outcome totals) survives the abort untouched.
+        if state.considered_limit_mode == "immediate" and state.considered_limit_reached():
+            raise _SearchAborted("considered-limit")
         index = state.tracker.considered
         state.tracker.considered += 1
         primitives = primitive_keys(program)
@@ -981,6 +1133,11 @@ class BottomUpSearchEngine(SearchEngine):
                     )
         if track_generation is not None and logger.isEnabledFor(logging.INFO):
             _log_absorb_progress(state, track_generation, total_generations, total_this_generation)
+        # AFTER add_dedup, so a solution that trips the limit is already pooled and ``extract`` can
+        # still find it. Raising between ``record_solution`` and ``add_dedup`` above would leave the
+        # solution out of the pool and report the run unsolved.
+        if state.solution_limit_mode == "immediate" and state.solution_limit_reached():
+            raise _SearchAborted("solution-limit")
 
     def _argument_samples(
         self,

@@ -413,6 +413,12 @@ def _search_stats(stats: SearchStats) -> dict[str, object]:
         "by_primitive": {key: dict(counts) for key, counts in stats.by_primitive.items()},
         "solved_at_generation": stats.solved_at_generation,
         "generations": [dict(generation) for generation in stats.generations],
+        # Whether a `Budget` stop limit ended this search, and if so which. Load-bearing on the read
+        # side: `censored` means the search was CUT SHORT, so "unsolved" is a lower bound rather
+        # than a verdict -- `ladders/report.py` must not read a censored cell as "no skip path".
+        "censored": stats.censored,
+        "stopped_early": stats.stopped_early,
+        "censored_at_generation": stats.censored_at_generation,
         "solutions": {
             "first_index": stats.first_solution_index,
             "cheapest_index": stats.cheapest_solution_index,
@@ -444,7 +450,13 @@ def merge_search_stats(
     considered = 0
     outcome_totals: dict[str, int] = dict.fromkeys(OUTCOME_NAMES, 0)
     by_primitive: dict[str, dict[str, int]] = {}
+    any_censored = False
+    any_stopped_early = False
     for block in search_stats:
+        # Deliberately OR-ed rather than summed: a corpus aggregate must not silently swallow the
+        # fact that some task was cut short, or the aggregate `considered` reads as a measurement.
+        any_censored = any_censored or bool(block.get("censored"))
+        any_stopped_early = any_stopped_early or bool(block.get("stopped_early"))
         total = block.get("total")
         if isinstance(total, dict):
             considered += int(total.get("considered", 0) or 0)
@@ -463,6 +475,8 @@ def merge_search_stats(
                         bucket[outcome] = bucket.get(outcome, 0) + count
     return {
         "total": {"considered": considered, **outcome_totals},
+        "any_censored": any_censored,
+        "any_stopped_early": any_stopped_early,
         "by_primitive": {
             primitive: funnel_outcomes(by_primitive[primitive], include_zeros=False)
             for primitive in sorted(by_primitive)
