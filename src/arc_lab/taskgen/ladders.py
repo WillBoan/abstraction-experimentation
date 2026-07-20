@@ -82,6 +82,82 @@ def seed_grids(
     return tuple(grids)
 
 
+def symmetry_repair_seeds(
+    count: int,
+    *,
+    rows: int,
+    cols: int,
+    variant: int,
+    palette: Sequence[int] = (1, 2, 3, 4, 5),
+) -> tuple[Grid, ...]:
+    """``count`` distinct holed grids for the symmetry-**repair** ladders (al13), where a rung
+    reconstructs missing cells (colour 0) from a mirror rather than transforming the grid.
+
+    ``seed_grids`` produces *dense* grids, so a repair rung applied to one has nothing to repair and
+    the whole ladder collapses (measured: al13's ``sym_both`` was a no-op on stride seeds, so the
+    top was reachable with the H-repair rung alone). These seeds instead carry a deliberate hole
+    pattern that *requires both axes* to fill:
+
+    - the answer is a 4-fold-symmetric grid ``T`` (``T[r][c] == T[r][c'] == T[r'][c]``, the mirrors
+      via ``c'=cols-1-c``/``r'=rows-1-r``);
+    - a corner cell ``(0,0)`` is blanked together with its H-mirror ``(0,c')`` and V-mirror
+      ``(r',0)``, its diagonal ``(r',c')`` kept -- so the H-repair alone cannot fill ``(0,0)`` (its
+      H-mirror is also blank), and only ``overlay`` from the V-mirror of the *already-H-repaired*
+      grid recovers it. One extra blank ``(1,0)`` gives the H-repair rung genuine work of its own.
+
+    The shape is deliberately non-square so ``transpose`` (a floor primitive) changes the shape and
+    cannot feed ``overlay`` as a shortcut -- ``transpose`` is only reachable at the Top, where the
+    goal genuinely transposes the repaired grid.
+    """
+    if rows < 3 or cols < 3:
+        raise ValueError("symmetry-repair seeds need rows and cols >= 3")
+    content = [c for c in palette if c != 0] or list(palette)
+    n = len(content)
+    grids: list[Grid] = []
+    for k in range(count):
+        # A per-grid stride over the fundamental domain (as in ``seed_grids``) so consecutive cells
+        # differ and the set varies across tasks, not just within one.
+        stride = 1 + (variant + k) % max(1, n - 1)
+        start = (variant * 3 + k * 5) % n
+        # 4-fold-symmetric target T: fill the top-left fundamental domain, mirror it out.
+        half_r, half_c = (rows + 1) // 2, (cols + 1) // 2
+        fund = [
+            [content[(start + stride * (r * half_c + c)) % n] for c in range(half_c)]
+            for r in range(half_r)
+        ]
+        target = [
+            [fund[min(r, rows - 1 - r)][min(c, cols - 1 - c)] for c in range(cols)]
+            for r in range(rows)
+        ]
+        holed = [row[:] for row in target]
+        for r, c in ((0, 0), (0, cols - 1), (rows - 1, 0), (1, 0)):
+            holed[r][c] = 0
+        grids.append(Grid.from_list(holed))
+    return tuple(grids)
+
+
+def _seeds(
+    count: int,
+    *,
+    rows: int,
+    cols: int,
+    variant: int,
+    palette: Sequence[int],
+    background: int | None,
+    seed_mode: str,
+) -> tuple[Grid, ...]:
+    """Dispatch to the seed generator named by ``seed_mode`` (shared by rungs and the goal layer)."""
+    if seed_mode == "symmetry-repair":
+        return symmetry_repair_seeds(
+            count, rows=rows, cols=cols, variant=variant, palette=palette
+        )
+    if seed_mode != "stride":
+        raise ValueError(f"unknown seed_mode {seed_mode!r}")
+    return seed_grids(
+        count, rows=rows, cols=cols, variant=variant, palette=palette, background=background
+    )
+
+
 @dataclass(frozen=True, slots=True, kw_only=True)
 class RungTasks:
     """How to generate one rung's demonstrating tasks.
@@ -106,6 +182,9 @@ class RungTasks:
     cols: int = 3
     palette: tuple[int, ...] = (1, 2, 3, 4, 5)
     background: int | None = None
+    #: Seed shape: ``"stride"`` dense grids, or ``"symmetry-repair"`` holed grids that need both-axis
+    #: repair (:func:`symmetry_repair_seeds`) -- mutually exclusive with ``background``.
+    seed_mode: str = "stride"
     train_examples: int = 2
 
 
@@ -119,6 +198,7 @@ class TopTasks:
     cols: int = 3
     palette: tuple[int, ...] = (1, 2, 3, 4, 5)
     background: int | None = None
+    seed_mode: str = "stride"
     train_examples: int = 2
     label: str = "top"
 
@@ -158,13 +238,14 @@ class LadderTestbed:
             for split, arg_sets in (("train", rung.train_args), ("heldout", rung.heldout_args)):
                 for i, args in enumerate(arg_sets):
                     variant += 1
-                    grids = seed_grids(
+                    grids = _seeds(
                         rung.train_examples + 1,
                         rows=rung.rows,
                         cols=rung.cols,
                         variant=variant,
                         palette=rung.palette,
                         background=rung.background,
+                        seed_mode=rung.seed_mode,
                     )
                     suffix = f"{i:02d}" if split == "train" else f"heldout-{i:02d}"
                     out.append(
@@ -181,13 +262,14 @@ class LadderTestbed:
             for split, arg_sets in (("train", rung.train_args), ("heldout", rung.heldout_args)):
                 for i, args in enumerate(arg_sets):
                     variant += 1
-                    grids = seed_grids(
+                    grids = _seeds(
                         rung.train_examples + 1,
                         rows=rung.rows,
                         cols=rung.cols,
                         variant=variant,
                         palette=rung.palette,
                         background=rung.background,
+                        seed_mode=rung.seed_mode,
                     )
                     suffix = f"{i:02d}" if split == "train" else f"heldout-{i:02d}"
                     out.append(
@@ -204,13 +286,14 @@ class LadderTestbed:
         for split, sols in (("train", top.solutions), ("heldout", top.heldout_solutions)):
             for i, sol in enumerate(sols):
                 variant += 1
-                grids = seed_grids(
+                grids = _seeds(
                     top.train_examples + 1,
                     rows=top.rows,
                     cols=top.cols,
                     variant=variant,
                     palette=top.palette,
                     background=top.background,
+                    seed_mode=top.seed_mode,
                 )
                 suffix = f"{i:02d}" if split == "train" else f"heldout-{i:02d}"
                 out.append(

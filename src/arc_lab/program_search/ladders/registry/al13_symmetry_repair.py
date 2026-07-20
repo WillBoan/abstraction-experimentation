@@ -7,6 +7,18 @@ it. That is a genuinely different kind of abstraction from anything else in the 
 rung is a mapping; here a rung reconstructs missing data.
 
 ``overlay`` is variadic, so ``max_arity`` must admit (colour + two grids).
+
+**Partly fixed, but a residual skip is STRUCTURAL (2026-07-20).** The original seeds were dense
+stride grids, so ``sym_both`` was a no-op (H-repair filled everything) and the top was Floor-
+reachable -- now fixed by ``symmetry_repair_seeds`` (holed grids needing both axes), which removed
+that raw collapse (``raw_solved`` true -> false). But the certificate still finds a level-1 skip, and
+it is unavoidable within this Floor: a both-H-and-V-symmetric target is necessarily rot180-symmetric,
+and a balanced depth-3 overlay tree ``overlay(overlay(g, flip_h g), overlay(flip_v g, rot180 g))``
+unions all four D4 mirrors -- which reconstructs the target exactly when ``sym_both`` (depth 4) can,
+one depth cheaper. The Floor ``{overlay, flip_h, flip_v}`` is "repair-complete" a rung below the
+intended one, so ``sym_both`` can never be made necessary here. A clean version needs a
+single-direction repair primitive (not a mirror-union) or a Floor without both flips -- a
+reconception. Left in the registry with the improved seeds; do not expect ``admitted`` yet.
 """
 
 from __future__ import annotations
@@ -55,7 +67,9 @@ REFERENCE_BUDGET = Budget(depth_limit=3, max_arity=3, max_pool=1000)
 
 
 def testbed() -> LadderTestbed:
-    """Seeds carry 0 as the transparent/"missing" colour, so the mirror genuinely supplies cells."""
+    """Seeds are ``symmetry-repair`` holed grids (``taskgen.ladders.symmetry_repair_seeds``): a
+    corner cell needs BOTH mirrors to reconstruct, so ``sym_h`` alone leaves it blank and ``sym_both``
+    is genuinely necessary. Dense stride seeds made ``sym_both`` a no-op and the rung skippable."""
     return LadderTestbed(
         floor=FLOOR,
         rungs=(
@@ -66,7 +80,8 @@ def testbed() -> LadderTestbed:
                 heldout_args=((0,),),
                 rows=3,
                 cols=4,
-                palette=(0, 1, 2, 3),
+                palette=(0, 1, 2, 3, 4, 5),
+                seed_mode="symmetry-repair",
             ),
             RungTasks(
                 name="sym_both",
@@ -75,11 +90,17 @@ def testbed() -> LadderTestbed:
                 heldout_args=((0,),),
                 rows=3,
                 cols=4,
-                palette=(0, 1, 2, 3),
+                palette=(0, 1, 2, 3, 4, 5),
+                seed_mode="symmetry-repair",
             ),
         ),
         top=TopTasks(
-            solutions=(TOP,), heldout_solutions=(TOP,), rows=3, cols=4, palette=(0, 1, 2, 3)
+            solutions=(TOP,),
+            heldout_solutions=(TOP,),
+            rows=3,
+            cols=4,
+            palette=(0, 1, 2, 3, 4, 5),
+            seed_mode="symmetry-repair",
         ),
         note="al13-symmetry-repair: overlay-based symmetry repair; a rung that INFERS missing cells.",
     )
