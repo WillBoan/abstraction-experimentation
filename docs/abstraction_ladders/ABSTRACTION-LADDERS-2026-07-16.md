@@ -59,7 +59,8 @@ Batch design:
       - fragment occurrences with _identical_ instantiations ⇒ needs at least `FrequentSubtree`
       - fragment occurrences with _varying_ parameters ⇒ needs `StitchProposer`
   - **Jump** = the transition from Rung `i-1` to Rung `i`. Static size: **jump depth** (`d_i`, compositional). Measured size: **jump cost** (`c_i`, considered count).
-    - A **double jump** goes from `L_{i-1}` directly to Rung `i+1`, skipping `r_i`. Its depth is computed on the _inlined_ template (rung-`i` call sites expanded) — NOT as `d_i + d_{i+1}`.
+    - A **double jump** goes from `L_{i-1}` directly to Rung `i+1`, skipping `r_i`. Its depth is computed on the _inlined_ template (rung-`i` call sites expanded) — NOT as `d_i + d_{i+1}`. For the last bridging rung `r_k`, the "rung above" is the Top layer: its double jump is a top reference solution inlined over `L_{k-1}` (the shallowest one, if several).
+  - **Fan-in** (of a rung, or of a top reference solution) = the number of calls its template makes to _any_ lower rung's abstraction — not just the rung immediately below — counted with multiplicity; floor primitives don't count. 0 = composes floor material only (typical for `r_1`); 1 throughout the ladder = a pure telescope; > 1 = recombination (the same lower rung twice, or two different ones). Distinct from the rung's **dependency edges** (_which_ lower rungs it references): fan-in is the sum of the edges' multiplicities.
   - **Cumulative Library (`L_i`)** — `L_0 ∪ {r_1..r_i}`.
     - The Cumulative Library at Rung `i` is the set of all primitives available at that Rung, including the Floor and all Bridging Rungs up to `i`.
     - It can be either one of two flavors:
@@ -81,6 +82,7 @@ Batch design:
   - **Solve generation** — the 0-indexed composition round at which the first accepted program appeared.
     - (_observable; depends on the specific search engine and params_)
   - **Depth limit (`Budget.depth_limit`)** = the budget's inclusive cap on compositional depth (leaf = 0): a program of depth `d` is reachable iff `d <= depth_limit` — equivalently, the engine runs generations `0..depth_limit` (generation 0 = the round-0 leaves). ONE unit everywhere: program depth, solve generation, and the budget cap all speak it; the engine's internal round count (`depth_limit + 1`) is the only place a `+1` exists.
+    - The reference config's value is the **pinned `depth_limit`** — the anchor every sandwich claim (lint + certificate) is stated against.
     - (_a param — `solve generation <= depth_limit` always_)
   - **Compositional depth** = The depth of a program's template expressed over a particular library of primitives.
     - (_static_)
@@ -359,9 +361,9 @@ Machinery that needs to be implemented in order to run the experiments:
    - Checks:
      - Overall `LadderSpec` is well-formed.
      - All templates are well-typed over `L_{i-1}`.
-     - Each Rung's compositional depth <= the reference `depth_limit` (§2).
-     - Raw compositional depth > the reference `depth_limit`.
-     - Double-jump (_inlined_) depth > the reference `depth_limit`, per consecutive pair.
+     - Each Rung's compositional depth <= the pinned `depth_limit` (§2).
+     - Raw compositional depth > the pinned `depth_limit`.
+     - Double-jump (_inlined_) depth > the pinned `depth_limit`, per consecutive pair.
      - Each Rung has >= 2 demonstrating tasks.
      - Each Task has >= 2 train examples.
      - Background-within/target-across: for each argument position of each rung template, classify it as derived or free, and apply the corresponding rule — derived ⇒ varies within-task; free ⇒ fixed within-task, varied across demonstrating tasks.
