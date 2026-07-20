@@ -21,56 +21,17 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
 - **slug** — anchor competence (header line)
 - Height · Shape (chain / telescope / fan-in / DAG) · Floor
 - Rungs (one bullet per rung: name = template, `d_i`, free params) · Top Rung (goal layer)
-- Sandwich sketch (arithmetic at a candidate reference `depth_limit`)
+- Sandwich sketch (arithmetic at a candidate pinned `depth_limit`)
 - Machinery demands (constants · fill/HO · poly · variadics · free params · proposer · other)
 - v1-eligible · Tests/drains · Family potential · Corpus notes (only if non-obvious) · Blockers
 
 ### Candidates
 
-- **quad-symmetrize** — "build the 4-fold symmetric completion"
-  - Height: ~3
-  - Shape: chain; **fan-in 2** at r2 (uses r1 twice)
-  - Floor: `{concat_h, concat_v, flip_h, flip_v}`
-  - Rungs:
-    - r1 = `mirror_pair(g) = concat_h(g, flip_h(g))` (d=2, param-free)
-    - r2 = `quad_symmetrize(g) = concat_v(r1(g), flip_v(r1(g)))` (d=3, param-free)
-  - Top Rung: symmetrize-then-X tasks (X = recolor via added `map_color`, or concat-with-original — floor addition TBD)
-  - Sandwich sketch: closes at reference `depth_limit=3` — jumps d=2,3 <= 3; inlined double-jump depth 4 > 3
-  - Certified ([2026-07-17 derivability probe](../../experiments/2026-07-17-derivability-dag/)): jumps 2/3 confirmed; `quad2 = r2(r2(g))` d=2 over L2 while still underivable (censored, > tree-size 6) over L1 — double-jump holds with room
-  - ⚠ **Skip route found**: minimal r2 witness is `r1(concat_v(g, flip_v(g)))` — fan-in **1**, strictly cheaper than the intended fan-in-2 template; cheapest-wins retention will keep THIS form, so the fan-in-2 test claim does not survive minimality (structural sibling of the E11 literal trap). Either accept the telescope-form mint, or find a target whose _minimal_ form is genuinely fan-in > 1
-  - Top Rung option (certified): `quad2 = quad(quad(g))` — self-composition goal layer, d=2 over L2
-  - Machinery demands: no constants · no HO (`fill=none`) · param-free rungs (no variation plans) · proposer: `AntiunifyPairs`
-  - v1-eligible: **YES** — current #1 pick
-  - Tests: first non-telescope climb (fan-in 2) — **but see skip-route caveat**; real size-compounding in the inlined form
-  - Family potential: +frame/recolor rung → height 4; deeper r1 motif → jump-depth variant
+- **quad-symmetrize** — ADOPTED 2026-07-19 → [ladders/quad-symmetrize/worksheet.md](ladders/quad-symmetrize/worksheet.md) (full content migrated; blocking open problem carried over: the r2 skip route — minimal witness is fan-in 1)
 
-- **mask-crop** — "normalize content position/extent" (learned intermediate type)
-  - Height: ~3
-  - Shape: telescope (likely — natural r2 shapes wrap r1)
-  - Floor: `MASK_MIN` (`nonbg_mask`, `crop_to_mask`), possibly + `map_color`/a perceiver
-  - Rungs:
-    - r1 = `crop_to_content(g) = crop_to_mask(g, nonbg_mask(g))` (d=2, param-free, var-sharing — `g` used twice; certified)
-    - r2 = compose on the normalized grid (eg crop-then-recolor — design open)
-    - r2 option (certified): `crop_flip(g) = flip_h(crop_to_content(g))` (d=2 over L1, raw d=3; needs `flip_h`/`transpose` added to the floor)
-  - Top Rung: TBD
-  - Route note (probe): the minimal `crop_flip` witness _commutes_ — `crop_to_content(flip_h(g))` — task design must not assume operand order
-  - Machinery demands: no constants (± `finite-enumerate` if recolor joins) · no HO · a learned **Mask**-typed intermediate · proposer: `AntiunifyPairs`
-  - v1-eligible: yes-ish (r2 + top undesigned)
-  - Tests: construct-AND-consume a learned `Mask` type — the deepest gap-climbing phenomenon
-  - Drains: the EXPERIMENT_QUEUE.md "learned intermediate type" row
+- **mask-crop** — ADOPTED 2026-07-19 → [ladders/mask-crop/worksheet.md](ladders/mask-crop/worksheet.md) (full content migrated; r2 + top still undesigned)
 
-- **perceiver-chain** — "recolor relative to perceived colors"
-  - Height: ~3
-  - Shape: chain (fan-in 1)
-  - Floor: `{map_color, most_common_color, least_common_color}`
-  - Rungs:
-    - r1 = `recolor_bg(g,c) = map_color(g, most_common_color(g), c)` (d=2, one free param — the proven E11 abstraction; certified)
-    - r2 = a two-perceiver composite (eg "recolor bg to 0, then recolor the dominant remaining color" — design open)
-    - r2 option (certified): `recolor_bg_flipped(g,c) = recolor_bg(rot180(g), c)` (d=2 over L2) — but it pulls in `rot180` as an independent sibling rung → becomes the diamond shape (see cross-domain normalize)
-  - Top Rung: TBD
-  - Machinery demands: `finite-enumerate` constants · no HO · free params → variation plans (background-within / target-across) · proposer: `AntiunifyPairs`
-  - v1-eligible: yes — deliberately after quad-symmetrize (free params exercise the variation-plan machinery under climbing)
-  - Tests: free-parameter rungs at height 3; the E11 corpus discipline inside a ladder
+- **perceiver-chain** — ADOPTED 2026-07-19 → [ladders/perceiver-chain/worksheet.md](ladders/perceiver-chain/worksheet.md) (full content migrated; r2 + top still undesigned)
 
 - **layout-mosaic** — "assemble an n x n mosaic" (toward `tile_repeat`)
   - Height: ~3-4
@@ -214,15 +175,8 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
 
 Note: under the goal-layer Top-Rung framing, NO previous experiment is a complete ladder — each needs a top layer added (tasks that use the top bridging rung as a fragment).
 
-- **e1-rot90-retrofit** (calibration)
-  - Height: 2 · Shape: single rung · Floor: `{flip_h, transpose}`
-  - Rungs: r1 = `rot90` (d=2, param-free) · Top Rung: NEW layer using rot90 as fragment
-  - v1-eligible: yes (calibration arm) — testbed/study exist; raw cost actually measurable
-- **e12-layered-retrofit**
-  - Height: ~3 · Shape: pure telescope (fan-in 1 throughout) — the shape-control counterpart to quad-symmetrize
-  - Floor: `{flip_h, flip_v, map_color}` · Rungs: r1 = `rot180`, r2 = `recolor_flipped` · Top Rung: NEW layer
-  - v1-eligible: yes (calibration / shape-control arm)
-  - Static profile machine-validated: the probe reproduces E12's measured jumps exactly (r1 d=2; r2 3 → 2) — the probe's ground-truth anchor
+- **e1-rot90-retrofit** — ADOPTED 2026-07-19 as **rot90-calibration** → [ladders/rot90-calibration/worksheet.md](ladders/rot90-calibration/worksheet.md) (the calibration arm; rot180-as-`rot90∘rot90` self-composition top)
+- **e12-layered-retrofit** — **REALIZED as `al1-mirror`** (built, ADMITTED + run 2026-07-18) → [ladders/al1-mirror/worksheet.md](ladders/al1-mirror/worksheet.md). AL1 = this floor/rung pair (`mirror_recolor` = `recolor_flipped`) + the second-recolor top; it is the batch's pure-telescope shape-control arm. Historical note kept: the probe reproduces E12's measured jumps exactly (r1 d=2; r2 3 → 2) — the probe's ground-truth anchor
 - E2: ...
 - [Other previous experiments to be added here, if they have a relevant ladder...]
 
@@ -263,7 +217,7 @@ Note: under the goal-layer Top-Rung framing, NO previous experiment is a complet
 - family potential (obvious height / jump-depth variants)
 - statically certified: `d_i` probe-computed, double-jump censored-intractable, no un-understood skip route (2026-07-17 probe)
 
-Current ranking: **quad-symmetrize (#1)** · mask-crop (#2) · perceiver-chain (#3) · retrofits as calibration ladders · counting-histogram + object-precursor + Hodel-mined as the ambitious track.
+Current ranking: **quad-symmetrize (#1)** · mask-crop (#2) · perceiver-chain (#3) · rot90-calibration (calibration arm) — all four ADOPTED 2026-07-19 (worksheets under [ladders/](ladders/), indexed in [LADDERS.md](LADDERS.md)) · counting-histogram + object-precursor + Hodel-mined as the ambitious track.
 
 ---
 
