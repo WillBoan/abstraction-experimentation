@@ -212,6 +212,25 @@ def test_raw_estimate_brackets_when_growth_accelerates() -> None:
     assert 28_000_000 < high < 29_000_000  # ~28.4M
 
 
+def test_b_eff_ignores_a_round_a_stop_limit_cut_short() -> None:
+    """The saturation guard cannot catch this one: an aborted round records
+    ``pool_size_end == pool_size_before_truncation`` (it never reached its truncation), so it looks
+    unsaturated. Unfiltered, its partial ``composed`` becomes the fit's endpoint and understates
+    growth -- here 10x would read as 1.4x."""
+    complete = [
+        {"composed": 10, "pool_size_before_truncation": 10, "pool_size_end": 10},
+        {"composed": 100, "pool_size_before_truncation": 100, "pool_size_end": 100},
+    ]
+    aborted = {
+        "composed": 20,
+        "pool_size_before_truncation": 120,
+        "pool_size_end": 120,
+        "incomplete": True,
+    }
+    assert _fit_b_eff(complete) == 10.0
+    assert _fit_b_eff([*complete, aborted]) == 10.0
+
+
 def test_raw_estimate_drops_a_round_a_stop_limit_cut_short() -> None:
     """A censored run is exactly the input this estimator exists to consume, so the ``incomplete``
     filter is load-bearing, not hygiene.

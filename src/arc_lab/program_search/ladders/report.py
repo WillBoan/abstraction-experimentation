@@ -793,11 +793,19 @@ def _fit_b_eff(generations: list[Any]) -> float | None:
     """Effective branching factor: the geometric mean of the per-round growth in ``composed``,
     over PRE-SATURATION rounds only (a round whose input pool was truncated by ``max_pool`` has
     an artificially capped composed count, so it would understate growth). ``None`` when fewer
-    than two such rounds exist -- the fit needs at least one ratio."""
+    than two such rounds exist -- the fit needs at least one ratio.
+
+    A round flagged ``incomplete`` stops the fit for the same reason and needs its own check: an
+    ``immediate`` stop limit cut it short mid-absorption, so its ``composed`` is a fraction of the
+    round's real size. The saturation test above cannot catch it -- ``_repair_aborted_generation``
+    records ``pool_size_end == pool_size_before_truncation`` (honest: that round never reached its
+    truncation), so an aborted round looks unsaturated and would otherwise drag the fit down."""
     composed: list[int] = []
     for index, generation in enumerate(generations):
         if not isinstance(generation, dict):
             continue
+        if generation.get("incomplete"):
+            break
         if index > 0:  # this round's input pool is the previous round's truncated output
             previous = generations[index - 1]
             if not isinstance(previous, dict):
