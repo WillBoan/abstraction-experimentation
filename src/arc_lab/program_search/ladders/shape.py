@@ -30,11 +30,12 @@ class RungShape:
     #: ``compositional_depth`` of the rung template over ``L_{i-1}`` (affordable iff
     #: ``jump_depth <= Budget.depth_limit``).
     jump_depth: int
-    #: Inlined depth of the *next* rung over ``L_{i-1}`` (this rung's calls expanded one level);
-    #: ``None`` for the last bridging rung (its "next" is the abstraction-less Top).
+    #: Inlined depth of the layer above over ``L_{i-1}`` (this rung's calls expanded one level):
+    #: the next rung's template, or -- for the last bridging rung -- the shallowest top reference
+    #: solution. What skipping this rung would cost in depth.
     double_jump_depth: int | None
-    #: Distinct lower rung names the template references, with multiplicity (fan-in > 1 ==
-    #: recombining, fan-in == 1 == a telescope link).
+    #: Calls the template makes to ANY lower rung, with multiplicity (floor primitives don't
+    #: count): 0 = floor-only (typical for r_1), 1 throughout = pure telescope, > 1 = recombining.
     fan_in: int
     demonstration_count: int
     #: ``True`` if the template contains a ``Lam`` -> depth checks are advisory (HO sub-search).

@@ -1,0 +1,6 @@
+# Generated ladder artifacts -- byte-exact output of `arc-lab run-ladder <name> --artifacts`.
+# Format-on-save must not drift them from what the generator writes (regenerating would then
+# show spurious diffs). The generators emit Prettier-style padded tables themselves.
+docs/abstraction_ladders/ladders/*/spec.md
+docs/abstraction_ladders/ladders/*/results.md
+docs/abstraction_ladders/ladders/*/report.json

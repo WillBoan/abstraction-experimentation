@@ -1,0 +1,532 @@
+{
+  "certificate": {
+    "admitted": true,
+    "demonstration_health": {
+      "1": 1.0,
+      "2": 1.0
+    },
+    "no_skip_paths": {
+      "1": true,
+      "2": true
+    },
+    "tractable_jumps": {
+      "1": true,
+      "2": true
+    }
+  },
+  "climb_trace": [
+    {
+      "antiunify_pair_count": 0,
+      "converged": false,
+      "iteration": 0,
+      "minted": [
+        "abs0"
+      ],
+      "proposal_count": 2,
+      "wake_considered": 33715,
+      "wake_solved": [
+        "rot180-00",
+        "rot180-01"
+      ]
+    },
+    {
+      "antiunify_pair_count": 6,
+      "converged": false,
+      "iteration": 1,
+      "minted": [
+        "abs1"
+      ],
+      "proposal_count": 4,
+      "wake_considered": 34560,
+      "wake_solved": [
+        "mirror-recolor-1-2",
+        "mirror-recolor-3-4",
+        "rot180-00",
+        "rot180-01"
+      ]
+    },
+    {
+      "antiunify_pair_count": 6,
+      "converged": true,
+      "iteration": 2,
+      "minted": [],
+      "proposal_count": 2,
+      "wake_considered": 132005,
+      "wake_solved": [
+        "mirror-recolor-1-2",
+        "mirror-recolor-3-4",
+        "rot180-00",
+        "rot180-01",
+        "top-00"
+      ]
+    }
+  ],
+  "comparisons": {
+    "enablement": {
+      "1": [
+        "mirror-recolor-1-2",
+        "mirror-recolor-3-4"
+      ],
+      "2": [
+        "top-00"
+      ]
+    },
+    "loop_overhead_factor": 3.728845115525684,
+    "marginal_rung_value": [
+      {
+        "censored": true,
+        "cost_with_rung": 13824,
+        "cost_without_rung": 13486,
+        "layer_above": "mirror_recolor",
+        "ratio": 0.9755497685185185,
+        "rung": "rot180"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 26401,
+        "cost_without_rung": 6912,
+        "layer_above": "top",
+        "ratio": 0.2618082648384531,
+        "rung": "mirror_recolor"
+      }
+    ],
+    "vocabulary_tax": [
+      {
+        "at_full_library": 52802,
+        "at_own_level": 13486,
+        "factor": 3.915319590686638,
+        "rung": "rot180"
+      },
+      {
+        "at_full_library": 52802,
+        "at_own_level": 13824,
+        "factor": 3.8195891203703702,
+        "rung": "mirror_recolor"
+      }
+    ]
+  },
+  "cost": {
+    "amortization_ratio_considered": null,
+    "budget_compression_depth": {
+      "max_jump_depth": 2,
+      "raw_depth": 4
+    },
+    "jump_costs": {
+      "mirror_recolor": 13824,
+      "rot180": 13486
+    },
+    "jump_costs_to_first": {
+      "mirror_recolor": 938,
+      "rot180": 228
+    },
+    "laddered_end_to_end_considered": 200280,
+    "laddered_marginal_considered": 53711,
+    "laddered_marginal_to_first": 8372,
+    "off_chain_top_solved": true,
+    "raw_censored": true,
+    "raw_considered": 6743,
+    "raw_solved": false,
+    "top_jump_cost": 26401,
+    "top_jump_cost_to_first": 7206
+  },
+  "cost_matrix": [
+    {
+      "columns": {
+        "0": {
+          "b_eff": 24.55,
+          "cheapest_solution_index": null,
+          "considered": 6743,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 24.86,
+          "cheapest_solution_index": 458,
+          "considered": 6912,
+          "first_solution_index": 458,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 48.79,
+          "cheapest_solution_index": 126,
+          "considered": 26401,
+          "first_solution_index": 126,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "mirror_recolor",
+      "task_id": "mirror-recolor-1-2"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 24.55,
+          "cheapest_solution_index": null,
+          "considered": 6743,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 24.86,
+          "cheapest_solution_index": 480,
+          "considered": 6912,
+          "first_solution_index": 480,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 48.79,
+          "cheapest_solution_index": 148,
+          "considered": 26401,
+          "first_solution_index": 148,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "mirror_recolor",
+      "task_id": "mirror-recolor-3-4"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 24.55,
+          "cheapest_solution_index": 114,
+          "considered": 6743,
+          "first_solution_index": 114,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 24.86,
+          "cheapest_solution_index": 113,
+          "considered": 6912,
+          "first_solution_index": 113,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 48.79,
+          "cheapest_solution_index": 113,
+          "considered": 26401,
+          "first_solution_index": 113,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "rot180",
+      "task_id": "rot180-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 24.55,
+          "cheapest_solution_index": 114,
+          "considered": 6743,
+          "first_solution_index": 114,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 24.86,
+          "cheapest_solution_index": 113,
+          "considered": 6912,
+          "first_solution_index": 113,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 48.79,
+          "cheapest_solution_index": 113,
+          "considered": 26401,
+          "first_solution_index": 113,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "rot180",
+      "task_id": "rot180-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 24.55,
+          "cheapest_solution_index": null,
+          "considered": 6743,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 24.86,
+          "cheapest_solution_index": null,
+          "considered": 6912,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 48.79,
+          "cheapest_solution_index": 7206,
+          "considered": 26401,
+          "first_solution_index": 7206,
+          "solve_generation": 2,
+          "solved": true
+        }
+      },
+      "rung": "top",
+      "task_id": "top-00"
+    }
+  ],
+  "ladder": {
+    "budgets": [
+      {
+        "depth_limit": 2,
+        "kind": "Budget",
+        "max_arity": 2,
+        "max_pool": 300
+      }
+    ],
+    "heldout_corpus": {
+      "content_hash": "26bb1f1993eb3a12",
+      "name": "al1-mirror:heldout",
+      "task_count": 3
+    },
+    "reference_config": {
+      "attempts_per_test": 2,
+      "budget": {
+        "depth_limit": 2,
+        "kind": "Budget",
+        "max_arity": 2,
+        "max_pool": 300
+      },
+      "constraints": [],
+      "cost": {
+        "kind": "ProgramSize"
+      },
+      "learn": {
+        "early_stop": true,
+        "iterations": 5,
+        "kind": "LearnSpec",
+        "learn_engine": {
+          "kind": "GreedyMDLLearnEngine",
+          "metric": {
+            "bits_per_primitive": 1.0,
+            "cost": {
+              "kind": "ProgramSize"
+            },
+            "kind": "CompressionMetric"
+          },
+          "name_prefix": "abs",
+          "proposer": {
+            "bound_var_safe": false,
+            "kind": "AntiunifyPairs"
+          },
+          "selector": {
+            "kind": "GreedyMDL"
+          }
+        },
+        "reset_programs_each_wake": true,
+        "score_each_wake": false
+      },
+      "library": {
+        "name": "al1-L0",
+        "primitives": [
+          {
+            "name": "flip_h",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "flip_v",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "map_color",
+            "param_types": [
+              "grid",
+              "color",
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          }
+        ],
+        "version": 1
+      },
+      "search_engine": {
+        "constant_sources": [
+          "finite-enumerate"
+        ],
+        "function_hole_fill_mode": "none",
+        "function_sample_size": 4,
+        "inverse_semantics_propagation": false,
+        "kind": "BottomUpSearchEngine",
+        "polymorphism_instantiation": "monomorphize",
+        "unpinned_type_var_mode": "reject"
+      }
+    },
+    "rungs": [
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "task_id": "rot180-00"
+          },
+          {
+            "kind": "full_solution",
+            "task_id": "rot180-01"
+          }
+        ],
+        "level": 1,
+        "name": "rot180",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "flip_v"
+            }
+          ],
+          "op": "apply",
+          "primitive": "flip_h"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "task_id": "mirror-recolor-1-2"
+          },
+          {
+            "kind": "full_solution",
+            "task_id": "mirror-recolor-3-4"
+          }
+        ],
+        "level": 2,
+        "name": "mirror_recolor",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "rot180"
+            },
+            {
+              "index": 1,
+              "op": "param",
+              "value_type": "color"
+            },
+            {
+              "index": 2,
+              "op": "param",
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "map_color"
+        }
+      }
+    ],
+    "top": {
+      "reference_solutions": [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 1,
+                  "value_type": "color"
+                },
+                {
+                  "op": "const",
+                  "value": 2,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "mirror_recolor"
+            },
+            {
+              "op": "const",
+              "value": 3,
+              "value_type": "color"
+            },
+            {
+              "op": "const",
+              "value": 4,
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "map_color"
+        }
+      ],
+      "task_ids": [
+        "top-00"
+      ]
+    },
+    "train_corpus": {
+      "content_hash": "ad9ef8d0ffda58a9",
+      "name": "al1-mirror:train",
+      "task_count": 5
+    }
+  },
+  "probe_cap": 512,
+  "rung_recovery": [
+    {
+      "level": 1,
+      "matched_by": [
+        "abs0"
+      ],
+      "recovered": true,
+      "rung": "rot180"
+    },
+    {
+      "level": 2,
+      "matched_by": [
+        "abs1"
+      ],
+      "recovered": true,
+      "rung": "mirror_recolor"
+    }
+  ],
+  "shape": {
+    "height": 3,
+    "lint_ok": true,
+    "max_jump_depth": 2,
+    "raw_depth_profile": [
+      4
+    ],
+    "validity_window": [
+      2,
+      2
+    ]
+  }
+}

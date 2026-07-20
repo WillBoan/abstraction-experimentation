@@ -1,8 +1,10 @@
-"""``arc-lab run-ladder``: execute a registered Ladder and print its report.
+"""``arc-lab run-ladder``: execute a registered Ladder and print/write its report.
 
 Thin wrapper (all behavior lives in ``program_search/ladders/``): resolve a name from the
 registry, render + lint the spec, execute the climb + oracle chain + off-chain run, print the
-report JSON. Mirrors ``run-study``.
+report JSON. ``--artifacts <dir>`` writes the committed per-ladder docs artifacts (``spec.md``,
+``results.md``, ``report.json``) into the ladder's ``docs/abstraction_ladders/ladders/<name>/``
+folder. Mirrors ``run-study``.
 """
 
 from __future__ import annotations
@@ -13,13 +15,18 @@ from pathlib import Path
 import typer
 
 from arc_lab.program_search.ladders.registry import make_ladder
-from arc_lab.program_search.ladders.report import create_ladder_report
+from arc_lab.program_search.ladders.report import create_ladder_report, render_report_markdown
 from arc_lab.program_search.ladders.run import run_ladder
 
 
 def run_ladder_command(
     name: str = typer.Argument(..., help="Registered ladder name (ladders/registry)."),
     out: Path | None = typer.Option(None, help="Also write the report JSON to this path."),
+    artifacts: Path | None = typer.Option(
+        None,
+        help="Write the committed docs artifacts (spec.md, results.md, report.json) "
+        "into this directory (the ladder's docs/abstraction_ladders/ladders/<name>/ folder).",
+    ),
 ) -> None:
     try:
         spec = make_ladder(name)
@@ -34,4 +41,13 @@ def run_ladder_command(
     if out is not None:
         out.write_text(payload + "\n", encoding="utf-8")
         typer.echo(f"wrote {out}")
-    typer.echo(payload)
+    if artifacts is not None:
+        artifacts.mkdir(parents=True, exist_ok=True)
+        (artifacts / "spec.md").write_text(spec.render() + "\n", encoding="utf-8")
+        (artifacts / "results.md").write_text(
+            render_report_markdown(report) + "\n", encoding="utf-8"
+        )
+        (artifacts / "report.json").write_text(payload + "\n", encoding="utf-8")
+        typer.echo(f"wrote {artifacts}/{{spec.md, results.md, report.json}}")
+    else:
+        typer.echo(payload)
