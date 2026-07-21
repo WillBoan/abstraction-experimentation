@@ -1,0 +1,112 @@
+== HEADLINE: admission, recovery, off-chain necessity, overshoot, loop overhead ==
+ladder                  adm  rec    offch overshoot  loopOH     amort_low     amort_hi
+al1-mirror              T    2/2    T     6.4        3.73              78          530
+al2-rot90-calibration   T    1/1    T     1.4        2.22               1            1
+al3-quad-symmetrize     F    3/3    T     15.5       3.00          45,937   51,683,294
+al4-mask-crop           F    1/3    T     0.0        2.00      25,318,968913,076,170,629,962
+al5-perceiver-chain     F    0/3    T     11.3       2.00               -            -
+al6-mirror-tall         F    1/4    T     0.0        2.00         908,694  101,024,098
+al7-fast-tower          F    5/5    T     2.1        5.27             947       20,259
+al8-lean-perceiver      F    3/3    T     4.6        7.48               -            -
+al9-decoy               F    5/5    T     2.1        7.79             947       20,259
+al10-skippable          F    1/1    T     2.8        2.18               -            -
+al11-greedy-trap        F    5/5    T     2.1        6.44             947       20,259
+al12-unlearnable        T    0/1    T     1.2        0.70               2            2
+al13-symmetry-repair    F    0/2    T     8.9        2.00               0            2
+al14-cell-row-grid      F    0/3    F     0.0        1.00    75,843,959,962,593,410,134,283,704,879,284,137,028,174,320,834,940,159,207,145,47275,843,959,962,593,410,134,283,704,879,284,137,028,174,320,834,940,159,207,145,472
+al15-shift-frame        T    2/2    F     2.2        3.03             724       44,982
+al16-layout-nest        T    2/2    T     4.9        3.11              11           43
+al17-shift-frame-tall   T    3/3    T     1.8        4.04           7,741    1,936,826
+al18-fanin-rotate       T    2/2    F     2.0        3.10              13           59
+al19-fanin-recolor      T    2/2    F     3.7        3.02             122        1,167
+al20-recolor-telescope  T    2/2    T     2.7        3.02           1,984       40,213
+
+== ESTIMATOR: bracket width vs extrapolation distance ==
+ladder                  d_raw  rounds      spread (hi/lo)
+al1-mirror              4      2                        7
+al12-unlearnable        4      2                        1
+al13-symmetry-repair    5      2                        8
+al16-layout-nest        4      2                        4
+al18-fanin-rotate       4      2                        5
+al19-fanin-recolor      4      2                       10
+al2-rot90-calibration   4      2                        1
+al15-shift-frame        5      3                       62
+al20-recolor-telescope  5      3                       20
+al17-shift-frame-tall   6      4                      250
+al11-greedy-trap        7      5                       21
+al7-fast-tower          7      5                       21
+al9-decoy               7      5                       21
+al3-quad-symmetrize     10     6                    1,125
+al6-mirror-tall         9      6                      111
+al4-mask-crop           12     8               36,062,930
+al14-cell-row-grid      54     51                       1
+
+== LOOP OVERHEAD vs WAKE ITERATIONS ==
+ladder                  height  iters    overhead
+al12-unlearnable        2       1            0.70
+al14-cell-row-grid      4       1            1.00
+al2-rot90-calibration   2       2            2.22
+al4-mask-crop           4       2            2.00
+al5-perceiver-chain     4       2            2.00
+al6-mirror-tall         5       2            2.00
+al8-lean-perceiver      4       2            7.48
+al10-skippable          2       2            2.18
+al13-symmetry-repair    3       2            2.00
+al1-mirror              3       3            3.73
+al3-quad-symmetrize     4       3            3.00
+al15-shift-frame        3       3            3.03
+al16-layout-nest        3       3            3.11
+al18-fanin-rotate       3       3            3.10
+al19-fanin-recolor      3       3            3.02
+al20-recolor-telescope  3       3            3.02
+al11-greedy-trap        6       4            6.44
+al17-shift-frame-tall   4       4            4.04
+al7-fast-tower          6       5            5.27
+al9-decoy               6       5            7.79
+
+== VOCABULARY TAX + OWN-TASK SPEEDUP (r1 first) ==
+al1-mirror               tax=3.92,3.82                    speedup=1.0,3.4
+al2-rot90-calibration    tax=1.86                         speedup=1.3
+al3-quad-symmetrize      tax=1.00,1.00,1.00               speedup=2227.0,4.3,12.3
+al4-mask-crop            tax=1.00,1.00,1.00               speedup=8.5,119.4
+al5-perceiver-chain      tax=1.00,1.00,1.00               speedup=1.2,31.1,39.1
+al6-mirror-tall          tax=1.00,1.00,1.00,1.00          speedup=1.0,2.8,35.2
+al7-fast-tower           tax=4.44,2.98,2.13,1.60,1.25     speedup=1.0,10.2,5.4,14.4,7.6
+al8-lean-perceiver       tax=3.77,1.97,1.35               speedup=1.4,1.8,15.1
+al9-decoy                tax=4.44,2.98,2.13,1.60,1.25     speedup=1.0,10.2,5.4,14.4,7.6
+al10-skippable           tax=1.67                         speedup=1.3
+al11-greedy-trap         tax=4.44,2.98,2.13,1.60,1.25     speedup=1.0,10.2,5.4,14.4,7.6
+al12-unlearnable         tax=1.86                         speedup=1.3
+al13-symmetry-repair     tax=1.00,1.00                    speedup=1.7,121.5
+al14-cell-row-grid       tax=1.00,1.00,1.00               speedup=-
+al15-shift-frame         tax=1.10,1.05                    speedup=1.0,30.4
+al16-layout-nest         tax=1.43,1.19                    speedup=1.2,5.5
+al17-shift-frame-tall    tax=1.15,1.09,1.05               speedup=1.0,30.4,52.1
+al18-fanin-rotate        tax=1.39,1.17                    speedup=1.2,17.0
+al19-fanin-recolor       tax=1.07,1.04                    speedup=1.0,38.1
+al20-recolor-telescope   tax=1.07,1.03                    speedup=1.0,21.6
+
+== CENSORING + b_eff GROWTH ==
+ladder                  cells  censored      %   b_eff L_0 -> L_k
+al1-mirror              15     0            0%   24.6 -> 48.8
+al2-rot90-calibration   6      0            0%   2.0 -> 3.0
+al3-quad-symmetrize     28     28         100%   13.5 -> 20.1
+al4-mask-crop           28     28         100%   12.0 -> 43.7
+al5-perceiver-chain     28     28         100%   20.8 -> 36.9
+al6-mirror-tall         45     45         100%   20.8 -> 110.5
+al7-fast-tower          66     0            0%   7.5 -> 16.2
+al8-lean-perceiver      28     0            0%   3.8 -> 6.2
+al9-decoy               66     0            0%   7.5 -> 16.2
+al10-skippable          6      0            0%   1.4 -> 2.3
+al11-greedy-trap        66     0            0%   7.5 -> 16.2
+al12-unlearnable        4      0            0%   2.0 -> 3.0
+al13-symmetry-repair    15     15         100%   8.6 -> 36.7
+al14-cell-row-grid      28     28         100%   18.8 -> 20.7
+al15-shift-frame        15     0            0%   15.3 -> 16.0
+al16-layout-nest        15     0            0%   7.6 -> 9.2
+al17-shift-frame-tall   28     0            0%   15.3 -> 16.4
+al18-fanin-rotate       15     0            0%   8.4 -> 9.9
+al19-fanin-recolor      15     0            0%   24.7 -> 25.6
+al20-recolor-telescope  15     0            0%   21.5 -> 22.2
+
+TOTAL cells 532, censored 172 (32%)

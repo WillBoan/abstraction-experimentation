@@ -1,0 +1,2 @@
+max_pool=  2000 cap=3,000,000   159.2s  solved=True  considered=3,000,000  rate=18,847/s
+max_pool= 20000 cap=3,000,000   573.5s  solved=True  considered=3,000,000  rate=5,231/s

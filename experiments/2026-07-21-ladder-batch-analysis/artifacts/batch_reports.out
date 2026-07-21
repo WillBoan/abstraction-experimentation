@@ -1,0 +1,22 @@
+al1-mirror                 cl50k-gen         0.0s
+al2-rot90-calibration      cl50k-gen         0.0s
+al3-quad-symmetrize        cl50k-imm         0.0s
+al4-mask-crop              cl50k-imm         0.0s
+al5-perceiver-chain        cl50k-imm         0.0s
+al6-mirror-tall            cl50k-imm         0.0s
+al7-fast-tower             cl50k-imm         0.0s
+al8-lean-perceiver         cl50k-imm         0.0s
+al9-decoy                  cl50k-imm         0.0s
+al10-skippable             cl50k-imm         0.0s
+al11-greedy-trap           cl50k-imm         0.0s
+al12-unlearnable           cl50k-imm         0.0s
+al13-symmetry-repair       cl50k-imm         0.0s
+al14-cell-row-grid         cl50k-imm        10.6s
+al15-shift-frame           as-committed      0.0s
+al16-layout-nest           as-committed      0.0s
+al17-shift-frame-tall      as-committed      0.0s
+al18-fanin-rotate          as-committed      0.0s
+al19-fanin-recolor         as-committed      0.0s
+al20-recolor-telescope     as-committed      0.0s
+
+wrote 20/20 reports

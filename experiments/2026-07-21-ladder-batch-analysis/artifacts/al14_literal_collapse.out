@@ -1,0 +1,28 @@
+== 1. r1 solves at depth 2, though its template is depth 3 ==
+intended r1 : set_cell(set_cell(#0, sub(#1, 1), #2, read(#0, #1, #2)), #1, #2, 0)   (2 free INT params)
+
+move_cell_up-00      -> set_cell(set_cell(input, 1, 0, 0), 0, 0, read(input, 1, 0))
+move_cell_up-01      -> set_cell(set_cell(input, 2, 1, 0), 1, 1, read(input, 0, 2))
+
+Note task -01: it reads (0,2) to write (1,1) -- a coincidence fit that holds only because
+those cells share a colour in both train examples. A task collision, not a solution.
+
+== 2. exact generation funnel at depth_limit=2 (uncensored) ==
+2.0s  composed=143,467  rate=71,331/s
+   {'pool_size_start': 0, 'pool_size_before_truncation': 16, 'pool_size_end': 16, 'composed': 16, 'errored': 0, 'pruned': 0, 'deduped': 0, 'entered_pool': 16, 'displaced': 0, 'evicted': 0, 'incomplete': False}
+   {'pool_size_start': 16, 'pool_size_before_truncation': 141, 'pool_size_end': 141, 'composed': 300, 'errored': 143, 'pruned': 0, 'deduped': 32, 'entered_pool': 125, 'displaced': 0, 'evicted': 0, 'incomplete': False}
+   {'pool_size_start': 141, 'pool_size_before_truncation': 10646, 'pool_size_end': 2000, 'composed': 143151, 'errored': 121987, 'pruned': 0, 'deduped': 10659, 'entered_pool': 10505, 'displaced': 0, 'evicted': 0, 'incomplete': False}
+
+== 3. pool type split at truncation (drives generation-3 cost) ==
+pool at truncation: {'grid': 10615, 'int': 17, 'color': 14}
+|GRID|=10615 |INT|=17 |COLOR|=14
+generation-3 set_cell compositions ~ |GRID| x |INT|^2 x |COLOR|
+   at max_pool=2000  : 7,966,574
+   untruncated pool  : 42,948,290
+      7.0 min/task at 18,847/s
+     25.4 min/task at 5,231/s
+
+== 4. what sleep would mint from those two shortcuts ==
+proposed : set_cell(set_cell(#0, #1, #2, 0), #2, #2, read(#0, #3, #4))
+           5 params vs the intended 3 -- generation-1 cost with it ~ 2000 x 17^4 = 167,042,000
+           (intended 2-INT-param form: 2000 x 17^2 = 578,000)
