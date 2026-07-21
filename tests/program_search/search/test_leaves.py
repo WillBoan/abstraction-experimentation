@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.search.context import Context
-from arc_lab.program_search.search.leaves import seed_leaves
+from arc_lab.program_search.search.leaves import policy_constants, seed_leaves
 from arc_lab.program_search.search.scope import Scope
 from arc_lab.program_search.substrate.library import Library, Primitive
 from arc_lab.program_search.substrate.program import Const, Input, Var
@@ -94,3 +94,27 @@ def test_parameterize_mints_nothing() -> None:
     assert list(seed_leaves(Scope(), _CONTEXTS, ("parameterize",), _NO_PRIMITIVES)) == [
         (Input(), GRID)
     ]
+
+
+def test_policy_constants_is_exactly_seed_leaves_constant_tail() -> None:
+    # The public domain view and the engine's own leaf seeding must never drift: seed_leaves
+    # is Input() + scope vars + policy_constants, so with an empty scope the tail is exact.
+    for sources in (
+        ("finite-enumerate",),
+        ("harvest-from-instance",),
+        ("finite-enumerate", "harvest-from-instance"),
+    ):
+        seeded = list(seed_leaves(Scope(), _CONTEXTS, sources, _ALL_TYPES))
+        assert seeded[0] == (Input(), GRID)
+        assert seeded[1:] == list(policy_constants([_G], sources, _ALL_TYPES))
+
+
+def test_policy_constants_accepts_a_generator_of_grids() -> None:
+    # Multiple sources must each see the grids — a one-shot iterator would starve the second.
+    leaves = list(
+        policy_constants(
+            (g for g in [_G]), ("finite-enumerate", "harvest-from-instance"), _ALL_TYPES
+        )
+    )
+    assert (Const(value=3, value_type=INT), INT) in leaves  # finite-enumerate: max dimension
+    assert (Const(value=6, value_type=COLOR), COLOR) in leaves  # harvest: a color in the grid

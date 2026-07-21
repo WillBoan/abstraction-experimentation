@@ -47,12 +47,25 @@ def seed_leaves(
     for index in range(len(scope)):
         binder = scope.type_of(index)
         yield Var(index=index, value_type=binder), binder
-    grids = _distinct_input_grids(contexts)
+    yield from policy_constants(_distinct_input_grids(contexts), constant_sources, library)
+
+
+def policy_constants(
+    grids: Iterable[Grid],
+    constant_sources: tuple[ConstantSource, ...],
+    library: Library,
+) -> Iterator[tuple[Program, Type]]:
+    """The constants the given sources would mint as round-0 leaves for these input grids.
+
+    The one public view of the configured constant domain — the lint's literal-collapse check
+    asks membership of it, and :func:`seed_leaves` delegates here, so the two can never drift.
+    """
+    materialized = list(grids)
     for source in constant_sources:
         if source == "finite-enumerate":
-            yield from _finite_enumerate(grids, library)
+            yield from _finite_enumerate(materialized, library)
         elif source == "harvest-from-instance":
-            yield from _harvest_from_instance(grids, library)
+            yield from _harvest_from_instance(materialized, library)
         elif source == "parameterize":
             pass  # no-op here; `parameterize` only matters for LEARN, not SEARCH
 
