@@ -87,6 +87,7 @@ A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed s
 - Behavior locks: `tests/program_search/execution/test_locks.py` (old-tree locks: `tests/test_integration.py`, until the deletion pass)
 - Commands: `Makefile`
 - Experiment history & findings: `EXPERIMENTS.md` · Planned experiments: `EXPERIMENT_QUEUE.md`
+- Ladder file format (`.ladder` source syntax/semantics; agreed spec, pre-build): `docs/abstraction_ladders/LADDER-FORMAT.md` · Ladder register: `docs/abstraction_ladders/LADDERS.md`
 - Lever maps (primitives / machinery / expressibility control): `ONTOLOGY.md` / `MACHINERY.md` / `SEARCH-SPACE.md`
 - Research frame (dated snapshot the maps are read against): `docs/RESEARCH-2026-07-08.md` (superseded snapshots live in `docs/archive/`)
 - Machinery build strategy (build vs. adopt vs. defer; dated): `docs/MACHINERY-STRATEGY-2026-07-07.md`
