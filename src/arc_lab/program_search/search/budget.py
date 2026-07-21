@@ -30,10 +30,10 @@ its generation rather than merely the first found.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, get_args
+from typing import Literal, TypeAlias, get_args
 
 #: When a stop limit takes effect: the instant it trips, or at the end of the current generation.
-StopMode = Literal["immediate", "generation-end"]
+StopMode: TypeAlias = Literal["immediate", "generation-end"]
 
 _STOP_MODES: tuple[str, ...] = get_args(StopMode)
 
