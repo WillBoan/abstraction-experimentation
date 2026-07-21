@@ -1,6 +1,6 @@
 {
   "name": "al3-quad-symmetrize",
-  "note": "al3-quad-symmetrize: L0 {concat_h, concat_v, flip_h, flip_v} -> quad -> band -> tower -> top. Param-free, no constant sources; the binary-primitive cost arm.",
+  "note": "Generated from al3-quad-symmetrize.ladder",
   "content_hash": "1f113e5c42e32b82",
   "tasks": [
     {

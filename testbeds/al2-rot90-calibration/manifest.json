@@ -1,6 +1,6 @@
 {
   "name": "al2-rot90-calibration",
-  "note": "al2-rot90-calibration: L0 {flip_h, transpose} -> rot90 -> rot180. The calibration ladder -- raw (d_raw=4) is cheap enough to measure, anchoring the raw-cost estimator.",
+  "note": "Generated from al2-rot90-calibration.ladder",
   "content_hash": "6590ff23cb2dd870",
   "tasks": [
     {

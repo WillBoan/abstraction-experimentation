@@ -1,6 +1,6 @@
 {
   "name": "al9-decoy",
-  "note": "al9-decoy (control): al7 + a learnable-but-unused competence in the corpus.",
+  "note": "Generated from al9-decoy.ladder",
   "content_hash": "fafb30ef62a537af",
   "tasks": [
     {

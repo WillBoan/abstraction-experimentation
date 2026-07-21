@@ -1,6 +1,6 @@
 {
   "name": "al4-mask-crop",
-  "note": "al4-mask-crop: mask algebra floor (nonbg_mask/crop_to_content/bbox_mask withheld) -> nonbg_mask -> flatten_content -> stamp -> top. The learned-Mask-intermediate arm; r1 is a FRAGMENT rung (GRID->MASK), demonstrated via a crop_to_content wrapper.",
+  "note": "Generated from al4-mask-crop.ladder",
   "content_hash": "d608604f6771e8e2",
   "tasks": [
     {

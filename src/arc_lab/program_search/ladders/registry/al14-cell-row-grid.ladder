@@ -1,0 +1,123 @@
+ladder al14-cell-row-grid
+
+# ``al14-cell-row-grid``: the dimensional-lift tower -- cell, then row, then grid.
+#
+# L0 {read, set_cell, sub} -> move_cell_up -> move_row_up -> move_grid_up -> top. Each rung is the one
+# below applied across the next dimension: a row-move IS three cell-moves, a grid-move IS three
+# row-moves. The nesting is not decoration -- it is what "a row is many cells" actually means.
+#
+# **Why this ladder matters.** Every other ladder in the batch nests its rungs shallowly, so raw depth
+# grows by roughly +1 per level and the batch's depth compression tops out around 3.5x with validity
+# windows of width 1. Here each rung nests three copies of the one below *on its deepest path*, so raw
+# depth **multiplies**: 3 -> 9 -> 27 -> 54. That gives **18x depth compression** at a pinned
+# ``depth_limit`` of 3, and a validity window of **width 6** -- the first ladder where budget is a
+# genuinely sweepable axis rather than a single honest cell.
+#
+# Two deliberate limitations. The abstractions are **width-specific** (a 3-wide ``move_row_up`` does
+# not work on 4-wide grids) -- the opposite of the size-general ``build_grid`` abstractions E5-E9
+# chased, and worth contrasting against. And the indices are INT constants, so ``finite-enumerate``
+# over a wide integer domain is the cost risk to watch.
+#
+# The original formulation (design conversation, 2026-07-20) had ``read_row``/``write_row`` returning a
+# ``List``. That is not expressible over a cell-level floor -- building a list needs a constructor, a
+# width, and iteration -- and adding those makes the floor higher-order, at which point
+# ``compositional_depth`` treats ``Lam`` as a leaf and the sandwich cannot be statically verified at
+# all. Nesting fixed-width cell-moves keeps the same dimensional-lift idea and stays first-order.
+
+config {
+    budget.depth_limit: 3
+    budget.max_arity: 4
+    budget.max_pool: 2000
+    search_engine.constant_sources: ['finite-enumerate']
+    learn.iterations: 6
+}
+
+floor al14-L0 {
+    use read:     (Grid, Int, Int) -> Color
+    use set_cell: (Grid, Int, Int, Color) -> Grid
+    use sub:      (Int, Int) -> Int
+}
+
+rung {
+    move_cell_up(g: Grid, n: Int, n2: Int) -> Grid = set_cell(set_cell(g, sub(n, 1), n2, read(g, n, n2)), n, n2, 0)
+
+    task move_cell_up-00 {
+        solution: move_cell_up(input, 1, 0)
+        train [[4, 1, 3], [5, 2, 4], [1, 3, 5], [2, 4, 1]]
+        train [[4, 2, 5], [3, 1, 4], [2, 5, 3], [1, 4, 2]]
+        test  [[4, 3, 2], [1, 5, 4], [3, 2, 1], [5, 4, 3]]
+    }
+    task move_cell_up-01 {
+        solution: move_cell_up(input, 2, 1)
+        train [[2, 5, 3], [1, 4, 2], [5, 3, 1], [4, 2, 5]]
+        train [[2, 1, 5], [4, 3, 2], [1, 5, 4], [3, 2, 1]]
+        test  [[2, 3, 4], [5, 1, 2], [3, 4, 5], [1, 2, 3]]
+    }
+    heldout task move_cell_up-heldout-00 {
+        solution: move_cell_up(input, 3, 2)
+        train [[5, 4, 3], [2, 1, 5], [4, 3, 2], [1, 5, 4]]
+        train [[5, 1, 2], [3, 4, 5], [1, 2, 3], [4, 5, 1]]
+        test  [[5, 2, 4], [1, 3, 5], [2, 4, 1], [3, 5, 2]]
+    }
+}
+
+rung {
+    move_row_up(g: Grid, n: Int) -> Grid = move_cell_up(move_cell_up(move_cell_up(g, n, 0), n, 1), n, 2)
+
+    task move_row_up-00 {
+        solution: move_row_up(input, 2)
+        train [[3, 4, 5], [1, 2, 3], [4, 5, 1], [2, 3, 4]]
+        train [[3, 5, 2], [4, 1, 3], [5, 2, 4], [1, 3, 5]]
+        test  [[3, 1, 4], [2, 5, 3], [1, 4, 2], [5, 3, 1]]
+    }
+    task move_row_up-01 {
+        solution: move_row_up(input, 3)
+        train [[1, 3, 5], [2, 4, 1], [3, 5, 2], [4, 1, 3]]
+        train [[1, 4, 2], [5, 3, 1], [4, 2, 5], [3, 1, 4]]
+        test  [[1, 5, 4], [3, 2, 1], [5, 4, 3], [2, 1, 5]]
+    }
+    heldout task move_row_up-heldout-00 {
+        solution: move_row_up(input, 1)
+        train [[4, 2, 5], [3, 1, 4], [2, 5, 3], [1, 4, 2]]
+        train [[4, 3, 2], [1, 5, 4], [3, 2, 1], [5, 4, 3]]
+        test  [[4, 5, 1], [2, 3, 4], [5, 1, 2], [3, 4, 5]]
+    }
+}
+
+rung {
+    move_grid_up(g: Grid) -> Grid = move_row_up(move_row_up(move_row_up(g, 1), 2), 3)
+
+    task move_grid_up-00 {
+        solution: move_grid_up(input)
+        train [[2, 1, 5], [4, 3, 2], [1, 5, 4], [3, 2, 1]]
+        train [[2, 3, 4], [5, 1, 2], [3, 4, 5], [1, 2, 3]]
+        test  [[2, 4, 1], [3, 5, 2], [4, 1, 3], [5, 2, 4]]
+    }
+    task move_grid_up-01 {
+        solution: move_grid_up(input)
+        train [[5, 1, 2], [3, 4, 5], [1, 2, 3], [4, 5, 1]]
+        train [[5, 2, 4], [1, 3, 5], [2, 4, 1], [3, 5, 2]]
+        test  [[5, 3, 1], [4, 2, 5], [3, 1, 4], [2, 5, 3]]
+    }
+    heldout task move_grid_up-heldout-00 {
+        solution: move_grid_up(input)
+        train [[3, 5, 2], [4, 1, 3], [5, 2, 4], [1, 3, 5]]
+        train [[3, 1, 4], [2, 5, 3], [1, 4, 2], [5, 3, 1]]
+        test  [[3, 2, 1], [5, 4, 3], [2, 1, 5], [4, 3, 2]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: move_grid_up(move_grid_up(input))
+        train [[1, 4, 2], [5, 3, 1], [4, 2, 5], [3, 1, 4]]
+        train [[1, 5, 4], [3, 2, 1], [5, 4, 3], [2, 1, 5]]
+        test  [[1, 2, 3], [4, 5, 1], [2, 3, 4], [5, 1, 2]]
+    }
+    heldout task top-heldout-00 {
+        solution: move_grid_up(move_grid_up(input))
+        train [[4, 3, 2], [1, 5, 4], [3, 2, 1], [5, 4, 3]]
+        train [[4, 5, 1], [2, 3, 4], [5, 1, 2], [3, 4, 5]]
+        test  [[4, 1, 3], [5, 2, 4], [1, 3, 5], [2, 4, 1]]
+    }
+}

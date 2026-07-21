@@ -1,0 +1,109 @@
+ladder al3-quad-symmetrize
+
+# ``al3-quad-symmetrize``: the param-free, binary-primitive cost arm -- height 4, jumps [4,3,3].
+#
+# L0 {concat_h, concat_v, flip_h, flip_v} -> quad -> band -> tower -> top. Nothing here takes a
+# non-grid argument, so there are **no constant sources at all**: the entire search cost is
+# composition over grids. That makes it the clean contrast against al5/al6, where enumerated COLOR
+# constants dominate. What it costs instead is *binary* primitives -- ``concat_h``/``concat_v`` compose
+# pairwise, so candidate counts grow quadratically in pool size rather than linearly.
+#
+# Grids double each level, so seeds must stay small: a 2x3 seed grows 4x6 -> 4x12 -> 8x12 -> 16x12,
+# inside the ARC 30 cap with room; a larger seed would overflow at the top.
+
+config {
+    budget.depth_limit: 4
+    budget.max_pool: 2000
+    learn.iterations: 6
+}
+
+floor al3-L0 {
+    use concat_h: (Grid, Grid) -> Grid
+    use concat_v: (Grid, Grid) -> Grid
+    use flip_h:   (Grid) -> Grid
+    use flip_v:   (Grid) -> Grid
+}
+
+rung {
+    quad(g: Grid) -> Grid = concat_v(concat_h(g, flip_h(g)), flip_v(concat_h(g, flip_h(g))))
+
+    task quad-00 {
+        solution: quad(input)
+        train [[4, 1, 3], [5, 2, 4]]
+        train [[4, 2, 5], [3, 1, 4]]
+        test  [[4, 3, 2], [1, 5, 4]]
+    }
+    task quad-01 {
+        solution: quad(input)
+        train [[2, 5, 3], [1, 4, 2]]
+        train [[2, 1, 5], [4, 3, 2]]
+        test  [[2, 3, 4], [5, 1, 2]]
+    }
+    heldout task quad-heldout-00 {
+        solution: quad(input)
+        train [[5, 4, 3], [2, 1, 5]]
+        train [[5, 1, 2], [3, 4, 5]]
+        test  [[5, 2, 4], [1, 3, 5]]
+    }
+}
+
+rung {
+    band(g: Grid) -> Grid = concat_h(quad(g), flip_h(quad(g)))
+
+    task band-00 {
+        solution: band(input)
+        train [[3, 4, 5], [1, 2, 3]]
+        train [[3, 5, 2], [4, 1, 3]]
+        test  [[3, 1, 4], [2, 5, 3]]
+    }
+    task band-01 {
+        solution: band(input)
+        train [[1, 3, 5], [2, 4, 1]]
+        train [[1, 4, 2], [5, 3, 1]]
+        test  [[1, 5, 4], [3, 2, 1]]
+    }
+    heldout task band-heldout-00 {
+        solution: band(input)
+        train [[4, 2, 5], [3, 1, 4]]
+        train [[4, 3, 2], [1, 5, 4]]
+        test  [[4, 5, 1], [2, 3, 4]]
+    }
+}
+
+rung {
+    tower(g: Grid) -> Grid = concat_v(band(g), flip_v(band(g)))
+
+    task tower-00 {
+        solution: tower(input)
+        train [[2, 1, 5], [4, 3, 2]]
+        train [[2, 3, 4], [5, 1, 2]]
+        test  [[2, 4, 1], [3, 5, 2]]
+    }
+    task tower-01 {
+        solution: tower(input)
+        train [[5, 1, 2], [3, 4, 5]]
+        train [[5, 2, 4], [1, 3, 5]]
+        test  [[5, 3, 1], [4, 2, 5]]
+    }
+    heldout task tower-heldout-00 {
+        solution: tower(input)
+        train [[3, 5, 2], [4, 1, 3]]
+        train [[3, 1, 4], [2, 5, 3]]
+        test  [[3, 2, 1], [5, 4, 3]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: concat_v(tower(input), flip_v(tower(input)))
+        train [[1, 4, 2], [5, 3, 1]]
+        train [[1, 5, 4], [3, 2, 1]]
+        test  [[1, 2, 3], [4, 5, 1]]
+    }
+    heldout task top-heldout-00 {
+        solution: concat_v(tower(input), flip_v(tower(input)))
+        train [[4, 3, 2], [1, 5, 4]]
+        train [[4, 5, 1], [2, 3, 4]]
+        test  [[4, 1, 3], [5, 2, 4]]
+    }
+}

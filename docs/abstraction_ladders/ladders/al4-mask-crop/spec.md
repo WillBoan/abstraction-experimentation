@@ -2,8 +2,10 @@
 
 # LadderSpec: al4-mask-crop
 
+Derived from `al4-mask-crop.ladder` (in `program_search/ladders/registry/`) -- that file is this ladder's source of truth: floor, rung templates, config and tasks. Everything below is COMPUTED from it.
+
 - Height: 4 (3 bridging rungs + top)
-- Floor (`L_0`, library `al4-L0`): `mask_by_color`, `most_common_color`, `least_common_color`, `mask_complement`, `mask_union`, `mask_intersect`, `crop_to_mask`, `paint_through_mask`, `flip_h`
+- Floor library: `al4-L0` (9 primitives)
 - Pinned `depth_limit` (the reference config's cap -- every sandwich claim below is stated against it): 4
 - Validity window: `depth_limit` in [4, 4] (inclusive)
 - Raw depth profile (top solutions unfolded to `L_0`): [12]
@@ -24,42 +26,34 @@
 
 ## Rung spine
 
-| level | rung              | d_i | double-jump | fan-in | demos |
-| ----- | ----------------- | --- | ----------- | ------ | ----- |
-| 1     | `nonbg_mask`      | 3   | 8           | 0      | 2     |
-| 2     | `flatten_content` | 4   | 6           | 3      | 2     |
-| 3     | `stamp`           | 3   | 5           | 2      | 2     |
-| top   | (goal layer)      | 3   | -           | 1      | 1     |
+| level | rung              | d_i | double-jump | fan-in | demos | kind               |
+| ----- | ----------------- | --- | ----------- | ------ | ----- | ------------------ |
+| 1     | `nonbg_mask`      | 3   | 8           | 0      | 2     | fragment_identical |
+| 2     | `flatten_content` | 4   | 6           | 3      | 2     | full_solution      |
+| 3     | `stamp`           | 3   | 5           | 2      | 2     | full_solution      |
+| top   | (goal layer)      | 3   | -           | 1      | 1     | -                  |
 
 - `d_i`: compositional depth of the template over `L_{i-1}` (top row: of the reference solutions over `L_k`)
 - `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
-
-## r_1: `nonbg_mask`
-
-- Template (over `L_0`): `mask_complement(mask_by_color(#0, most_common_color(#0)))`
-- Demonstrations (fragment_identical): `nonbg_mask-00`, `nonbg_mask-01`
-
-## r_2: `flatten_content`
-
-- Template (over `L_1`): `paint_through_mask(crop_to_mask(#0, nonbg_mask(#0)), nonbg_mask(crop_to_mask(#0, nonbg_mask(#0))), #1)`
-- Demonstrations (full_solution): `flatten_content-00`, `flatten_content-01`
-
-## r_3: `stamp`
-
-- Template (over `L_2`): `paint_through_mask(flip_h(flatten_content(#0, #1)), mask_by_color(flatten_content(#0, #1), #1), #2)`
-- Demonstrations (full_solution): `stamp-00`, `stamp-01`
+- `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
 
 ## Top Rung (goal layer -- nothing is minted here)
 
-- `top-00`: `flip_h(flip_h(stamp(input, 3, 5)))` (d=3 over `L_3`; d_raw=12)
+- `top-00`: d=3 over `L_3`
 
-## Reference config
+## Reference config (resolved)
+
+The frozen ladder default with the source file's `config` block applied -- the effective machinery, which neither the default nor the file shows on its own.
 
 - Budget: `Budget`
   - depth_limit: `4`
   - max_arity: `3`
   - max_pool: `2000`
+  - considered_limit: `50000`
+  - considered_limit_mode: `immediate`
+  - solution_limit: `None`
+  - solution_limit_mode: `generation-end`
 - Search engine: `BottomUpSearchEngine`
   - constant_sources: `['finite-enumerate']`
   - function_hole_fill_mode: `none`
@@ -80,16 +74,3 @@
   - early_stop: `True`
   - reset_programs_each_wake: `True`
   - score_each_wake: `False`
-
-## Budget sweep cells
-
-- depth_limit=4, max_arity=3, max_pool=2000 (reference)
-
-## Corpus
-
-| label           | train                                      | heldout                      |
-| --------------- | ------------------------------------------ | ---------------------------- |
-| flatten_content | `flatten_content-00`, `flatten_content-01` | `flatten_content-heldout-00` |
-| nonbg_mask      | `nonbg_mask-00`, `nonbg_mask-01`           | `nonbg_mask-heldout-00`      |
-| stamp           | `stamp-00`, `stamp-01`                     | `stamp-heldout-00`           |
-| top             | `top-00`                                   | `top-heldout-00`             |

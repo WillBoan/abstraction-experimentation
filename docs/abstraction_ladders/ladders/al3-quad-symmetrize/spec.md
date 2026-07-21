@@ -2,8 +2,10 @@
 
 # LadderSpec: al3-quad-symmetrize
 
+Derived from `al3-quad-symmetrize.ladder` (in `program_search/ladders/registry/`) -- that file is this ladder's source of truth: floor, rung templates, config and tasks. Everything below is COMPUTED from it.
+
 - Height: 4 (3 bridging rungs + top)
-- Floor (`L_0`, library `al3-L0`): `concat_h`, `concat_v`, `flip_h`, `flip_v`
+- Floor library: `al3-L0` (4 primitives)
 - Pinned `depth_limit` (the reference config's cap -- every sandwich claim below is stated against it): 4
 - Validity window: `depth_limit` in [4, 4] (inclusive)
 - Raw depth profile (top solutions unfolded to `L_0`): [10]
@@ -24,42 +26,34 @@
 
 ## Rung spine
 
-| level | rung         | d_i | double-jump | fan-in | demos |
-| ----- | ------------ | --- | ----------- | ------ | ----- |
-| 1     | `quad`       | 4   | 6           | 0      | 2     |
-| 2     | `band`       | 3   | 5           | 2      | 2     |
-| 3     | `tower`      | 3   | 5           | 2      | 2     |
-| top   | (goal layer) | 3   | -           | 2      | 1     |
+| level | rung         | d_i | double-jump | fan-in | demos | kind          |
+| ----- | ------------ | --- | ----------- | ------ | ----- | ------------- |
+| 1     | `quad`       | 4   | 6           | 0      | 2     | full_solution |
+| 2     | `band`       | 3   | 5           | 2      | 2     | full_solution |
+| 3     | `tower`      | 3   | 5           | 2      | 2     | full_solution |
+| top   | (goal layer) | 3   | -           | 2      | 1     | -             |
 
 - `d_i`: compositional depth of the template over `L_{i-1}` (top row: of the reference solutions over `L_k`)
 - `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
-
-## r_1: `quad`
-
-- Template (over `L_0`): `concat_v(concat_h(#0, flip_h(#0)), flip_v(concat_h(#0, flip_h(#0))))`
-- Demonstrations (full_solution): `quad-00`, `quad-01`
-
-## r_2: `band`
-
-- Template (over `L_1`): `concat_h(quad(#0), flip_h(quad(#0)))`
-- Demonstrations (full_solution): `band-00`, `band-01`
-
-## r_3: `tower`
-
-- Template (over `L_2`): `concat_v(band(#0), flip_v(band(#0)))`
-- Demonstrations (full_solution): `tower-00`, `tower-01`
+- `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
 
 ## Top Rung (goal layer -- nothing is minted here)
 
-- `top-00`: `concat_v(tower(input), flip_v(tower(input)))` (d=3 over `L_3`; d_raw=10)
+- `top-00`: d=3 over `L_3`
 
-## Reference config
+## Reference config (resolved)
+
+The frozen ladder default with the source file's `config` block applied -- the effective machinery, which neither the default nor the file shows on its own.
 
 - Budget: `Budget`
   - depth_limit: `4`
   - max_arity: `2`
   - max_pool: `2000`
+  - considered_limit: `50000`
+  - considered_limit_mode: `immediate`
+  - solution_limit: `None`
+  - solution_limit_mode: `generation-end`
 - Search engine: `BottomUpSearchEngine`
   - constant_sources: `[]`
   - function_hole_fill_mode: `none`
@@ -80,16 +74,3 @@
   - early_stop: `True`
   - reset_programs_each_wake: `True`
   - score_each_wake: `False`
-
-## Budget sweep cells
-
-- depth_limit=4, max_arity=2, max_pool=2000 (reference)
-
-## Corpus
-
-| label | train                  | heldout            |
-| ----- | ---------------------- | ------------------ |
-| band  | `band-00`, `band-01`   | `band-heldout-00`  |
-| quad  | `quad-00`, `quad-01`   | `quad-heldout-00`  |
-| top   | `top-00`               | `top-heldout-00`   |
-| tower | `tower-00`, `tower-01` | `tower-heldout-00` |

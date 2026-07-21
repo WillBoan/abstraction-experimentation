@@ -1,6 +1,6 @@
 {
   "name": "al11-greedy-trap",
-  "note": "al11-greedy-trap (control): al7 + a distractor that outcompetes r1 on MDL.",
+  "note": "Generated from al11-greedy-trap.ladder",
   "content_hash": "f3ecc8f5db92adc7",
   "tasks": [
     {

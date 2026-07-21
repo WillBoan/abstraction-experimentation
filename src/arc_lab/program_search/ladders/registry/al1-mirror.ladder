@@ -1,0 +1,90 @@
+ladder al1-mirror
+
+# Abstraction Ladder #1: a height-3 synthetic anchor, and the batch's shape-control arm (a pure
+# telescope). The rungs reuse E12's proven-learnable abstractions, so what is under test is the
+# ladder machinery -- oracle chain, certificate, climb trace, amortization -- not whether the
+# abstractions mint.
+#
+# Verified sandwich at depth_limit=2: jumps d=2 affordable, d_raw=4 intractable, double-jumps d=3
+# intractable.  Worksheet: docs/abstraction_ladders/ladders/al1-mirror/worksheet.md
+
+config {
+    budget.depth_limit: 2
+    budget.max_arity: 2
+    budget.max_pool: 300
+    search_engine.constant_sources: ["finite-enumerate"]   # map_color needs COLOR constants
+    learn.iterations: 5
+}
+
+floor al1-L0 {
+    use flip_h:    (Grid) -> Grid
+    use flip_v:    (Grid) -> Grid
+    use map_color: (Grid, Color, Color) -> Grid
+}
+
+rung {
+    rot180(g: Grid) -> Grid = flip_h(flip_v(g))
+
+    task rot180-00 {
+        solution: rot180(input)
+        train [[1, 2, 3], [4, 5, 1]]
+        train [[3, 1, 6], [1, 4, 7]]
+        test  [[8, 7, 1], [2, 1, 3]]
+    }
+    task rot180-01 {
+        solution: rot180(input)
+        train [[2, 3, 4], [5, 6, 2]]
+        train [[4, 2, 7], [2, 5, 8]]
+        test  [[9, 8, 2], [3, 2, 4]]
+    }
+    heldout task rot180-heldout {
+        solution: rot180(input)
+        train [[5, 6, 7], [8, 9, 5]]
+        train [[7, 5, 0], [5, 8, 1]]
+        test  [[2, 1, 5], [6, 5, 7]]
+    }
+}
+
+rung {
+    # (a, b) are fixed within a task and vary across tasks, so AntiunifyPairs mints the general
+    # two-parameter form rather than a specialisation.
+    mirror_recolor(g: Grid, src: Color, dst: Color) -> Grid = map_color(rot180(g), src, dst)
+
+    task mirror-recolor-1-2 {
+        solution: mirror_recolor(input, 1, 2)
+        train [[1, 2, 3], [4, 5, 1]]
+        train [[3, 1, 6], [1, 4, 7]]
+        test  [[8, 7, 1], [2, 1, 3]]
+    }
+    task mirror-recolor-3-4 {
+        solution: mirror_recolor(input, 3, 4)
+        train [[3, 4, 5], [6, 7, 3]]
+        train [[5, 3, 8], [3, 6, 9]]
+        test  [[0, 9, 3], [4, 3, 5]]
+    }
+    heldout task mirror-recolor-2-3 {
+        solution: mirror_recolor(input, 2, 3)
+        train [[2, 3, 4], [5, 6, 2]]
+        train [[4, 2, 7], [2, 5, 8]]
+        test  [[9, 8, 2], [3, 2, 4]]
+    }
+}
+
+top {
+    # mirror_recolor then a SECOND, independent recolor. Unlike a D4 wrapper (which would collapse
+    # via the group law, e.g. flip_v(rot180) = flip_h), this does not algebraically shorten: two
+    # distinct recolors plus a rotation need all four floor applications, so the top is genuinely
+    # intractable raw.
+    task top-00 {
+        solution: map_color(mirror_recolor(input, 1, 2), 3, 4)
+        train [[1, 2, 3], [4, 5, 1]]
+        train [[3, 1, 6], [1, 4, 7]]
+        test  [[8, 7, 1], [2, 1, 3]]
+    }
+    heldout task top-heldout {
+        solution: map_color(mirror_recolor(input, 5, 6), 7, 8)
+        train [[5, 6, 7], [8, 9, 5]]
+        train [[7, 5, 0], [5, 8, 1]]
+        test  [[2, 1, 5], [6, 5, 7]]
+    }
+}

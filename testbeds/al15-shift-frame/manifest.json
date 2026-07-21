@@ -1,6 +1,6 @@
 {
   "name": "al15-shift-frame",
-  "note": "al15-shift-frame: heterogeneous shift-stack/frame chain; certified non-collapsing.",
+  "note": "Generated from al15-shift-frame.ladder",
   "content_hash": "063a30be82b37243",
   "tasks": [
     {

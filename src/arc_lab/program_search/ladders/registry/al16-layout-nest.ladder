@@ -1,0 +1,94 @@
+ladder al16-layout-nest
+
+# ``al16-layout-nest``: nested layouts where each rung arranges the one below on a new axis.
+#
+# The second certified-clean design from the 2026-07-20 rebuild. Where al15 alternates a combine op
+# with a modifier, this one alternates the combine *axis* -- and, crucially, each rung's arrangement
+# is entangled with the rung below (``n2 = concat_v(n1 g, n1 g)`` wraps ``n1``), so it is NOT a free-
+# standing universal doubler. That is precisely why it does NOT telescope: the al3/al7 collapse needed
+# a self-contained doubler ``D`` with ``D(D(g))`` reaching two rungs up; here the "doubler" always re-
+# applies the rung below, so ``r_{i+1}`` is never ``r2(r2(x))`` for a searchable ``x`` (verified at
+# height 3 AND 4 by the in-memory certificate before committing).
+#
+# Floor ``{concat_h, concat_v, translate}`` -> ``pair`` -> ``stack`` -> top.
+#
+# - ``r1 = pair``: ``concat_h(g, translate(g, 1, 0))`` -- a horizontal pair, one copy row-shifted
+#   (asymmetric, so no flip/symmetry shortcut).
+# - ``r2 = stack``: ``concat_v(r1, r1)`` -- stack two ``pair``s vertically (a new axis).
+# - ``top``: ``concat_h(r2, r2)`` -- widen again, back on the horizontal axis.
+#
+# Clean against all four families for the same structural reasons as al15 (asymmetric target; spatial,
+# not colour; rigid concat/translate floor) -- and against telescoping specifically because the layout
+# op wraps the rung below rather than acting on arbitrary grids. Sandwich pinned at ``depth_limit=2``.
+
+config {
+    budget.depth_limit: 2
+    search_engine.constant_sources: ['finite-enumerate']
+}
+
+floor al16-L0 {
+    use concat_h:  (Grid, Grid) -> Grid
+    use concat_v:  (Grid, Grid) -> Grid
+    use translate: (Grid, Int, Int) -> Grid
+}
+
+rung {
+    pair(g: Grid) -> Grid = concat_h(g, translate(g, 1, 0))
+
+    task pair-00 {
+        solution: pair(input)
+        train [[4, 2, 4], [2, 4, 2]]
+        train [[1, 4, 3], [2, 1, 4]]
+        test  [[2, 3, 4], [1, 2, 3]]
+    }
+    task pair-01 {
+        solution: pair(input)
+        train [[3, 2, 1], [4, 3, 2]]
+        train [[4, 1, 2], [3, 4, 1]]
+        test  [[1, 3, 1], [3, 1, 3]]
+    }
+    heldout task pair-heldout-00 {
+        solution: pair(input)
+        train [[2, 3, 4], [1, 2, 3]]
+        train [[3, 1, 3], [1, 3, 1]]
+        test  [[4, 3, 2], [1, 4, 3]]
+    }
+}
+
+rung {
+    stack(g: Grid) -> Grid = concat_v(pair(g), pair(g))
+
+    task stack-00 {
+        solution: stack(input)
+        train [[1, 3, 1], [3, 1, 3]]
+        train [[2, 1, 4], [3, 2, 1]]
+        test  [[3, 4, 1], [2, 3, 4]]
+    }
+    task stack-01 {
+        solution: stack(input)
+        train [[4, 3, 2], [1, 4, 3]]
+        train [[1, 2, 3], [4, 1, 2]]
+        test  [[2, 4, 2], [4, 2, 4]]
+    }
+    heldout task stack-heldout-00 {
+        solution: stack(input)
+        train [[3, 4, 1], [2, 3, 4]]
+        train [[4, 2, 4], [2, 4, 2]]
+        test  [[1, 4, 3], [2, 1, 4]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: concat_h(stack(input), stack(input))
+        train [[2, 4, 2], [4, 2, 4]]
+        train [[3, 2, 1], [4, 3, 2]]
+        test  [[4, 1, 2], [3, 4, 1]]
+    }
+    heldout task top-heldout-00 {
+        solution: concat_h(stack(input), stack(input))
+        train [[1, 4, 3], [2, 1, 4]]
+        train [[2, 3, 4], [1, 2, 3]]
+        test  [[3, 1, 3], [1, 3, 1]]
+    }
+}

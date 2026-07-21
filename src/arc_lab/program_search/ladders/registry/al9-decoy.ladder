@@ -1,0 +1,168 @@
+ladder al9-decoy
+
+# ``al9-decoy`` (control): al7's spine plus a learnable competence that the ladder never uses.
+#
+# The batch's ladders all assume every mintable abstraction is on the spine. Real corpora are not like
+# that. This control adds two **distractor** tasks -- solved by ``concat_v(g, flip_v g)``, perfectly
+# learnable at the Floor and perfectly useless for the climb -- and asks what the loop does with them:
+# pay only the vocabulary tax, or derail (mint the distractor first, displace a real rung, stall)?
+#
+# Only the corpus differs from al7; the spine, floor, budget and depths are identical, so any
+# difference in the climb is attributable to the distractor alone.
+
+config {
+    budget.depth_limit: 2
+    learn.iterations: 8
+}
+
+floor al7-L0 {
+    use concat_h: (Grid, Grid) -> Grid
+    use concat_v: (Grid, Grid) -> Grid
+    use flip_h:   (Grid) -> Grid
+    use flip_v:   (Grid) -> Grid
+}
+
+rung {
+    mirror(g: Grid) -> Grid = concat_h(g, flip_h(g))
+
+    task mirror-00 {
+        solution: mirror(input)
+        train [[4, 1, 3], [5, 2, 4]]
+        train [[4, 2, 5], [3, 1, 4]]
+        test  [[4, 3, 2], [1, 5, 4]]
+    }
+    task mirror-01 {
+        solution: mirror(input)
+        train [[2, 5, 3], [1, 4, 2]]
+        train [[2, 1, 5], [4, 3, 2]]
+        test  [[2, 3, 4], [5, 1, 2]]
+    }
+    heldout task mirror-heldout-00 {
+        solution: mirror(input)
+        train [[5, 4, 3], [2, 1, 5]]
+        train [[5, 1, 2], [3, 4, 5]]
+        test  [[5, 2, 4], [1, 3, 5]]
+    }
+}
+
+rung {
+    stack2(g: Grid) -> Grid = concat_v(mirror(g), mirror(g))
+
+    task stack2-00 {
+        solution: stack2(input)
+        train [[3, 4, 5], [1, 2, 3]]
+        train [[3, 5, 2], [4, 1, 3]]
+        test  [[3, 1, 4], [2, 5, 3]]
+    }
+    task stack2-01 {
+        solution: stack2(input)
+        train [[1, 3, 5], [2, 4, 1]]
+        train [[1, 4, 2], [5, 3, 1]]
+        test  [[1, 5, 4], [3, 2, 1]]
+    }
+    heldout task stack2-heldout-00 {
+        solution: stack2(input)
+        train [[4, 2, 5], [3, 1, 4]]
+        train [[4, 3, 2], [1, 5, 4]]
+        test  [[4, 5, 1], [2, 3, 4]]
+    }
+}
+
+rung {
+    wide4(g: Grid) -> Grid = concat_h(stack2(g), stack2(g))
+
+    task wide4-00 {
+        solution: wide4(input)
+        train [[2, 1, 5], [4, 3, 2]]
+        train [[2, 3, 4], [5, 1, 2]]
+        test  [[2, 4, 1], [3, 5, 2]]
+    }
+    task wide4-01 {
+        solution: wide4(input)
+        train [[5, 1, 2], [3, 4, 5]]
+        train [[5, 2, 4], [1, 3, 5]]
+        test  [[5, 3, 1], [4, 2, 5]]
+    }
+    heldout task wide4-heldout-00 {
+        solution: wide4(input)
+        train [[3, 5, 2], [4, 1, 3]]
+        train [[3, 1, 4], [2, 5, 3]]
+        test  [[3, 2, 1], [5, 4, 3]]
+    }
+}
+
+rung {
+    tall4(g: Grid) -> Grid = concat_v(wide4(g), wide4(g))
+
+    task tall4-00 {
+        solution: tall4(input)
+        train [[1, 4, 2], [5, 3, 1]]
+        train [[1, 5, 4], [3, 2, 1]]
+        test  [[1, 2, 3], [4, 5, 1]]
+    }
+    task tall4-01 {
+        solution: tall4(input)
+        train [[4, 3, 2], [1, 5, 4]]
+        train [[4, 5, 1], [2, 3, 4]]
+        test  [[4, 1, 3], [5, 2, 4]]
+    }
+    heldout task tall4-heldout-00 {
+        solution: tall4(input)
+        train [[2, 3, 4], [5, 1, 2]]
+        train [[2, 4, 1], [3, 5, 2]]
+        test  [[2, 5, 3], [1, 4, 2]]
+    }
+}
+
+rung {
+    wide8(g: Grid) -> Grid = concat_h(tall4(g), tall4(g))
+
+    task wide8-00 {
+        solution: wide8(input)
+        train [[5, 2, 4], [1, 3, 5]]
+        train [[5, 3, 1], [4, 2, 5]]
+        test  [[5, 4, 3], [2, 1, 5]]
+    }
+    task wide8-01 {
+        solution: wide8(input)
+        train [[3, 1, 4], [2, 5, 3]]
+        train [[3, 2, 1], [5, 4, 3]]
+        test  [[3, 4, 5], [1, 2, 3]]
+    }
+    heldout task wide8-heldout-00 {
+        solution: wide8(input)
+        train [[1, 5, 4], [3, 2, 1]]
+        train [[1, 2, 3], [4, 5, 1]]
+        test  [[1, 3, 5], [2, 4, 1]]
+    }
+}
+
+distractor decoy {
+    task decoy-00 {
+        solution: concat_v(input, flip_v(input))
+        train [[4, 5, 1], [2, 3, 4]]
+        train [[4, 1, 3], [5, 2, 4]]
+        test  [[4, 2, 5], [3, 1, 4]]
+    }
+    task decoy-01 {
+        solution: concat_v(input, flip_v(input))
+        train [[2, 4, 1], [3, 5, 2]]
+        train [[2, 5, 3], [1, 4, 2]]
+        test  [[2, 1, 5], [4, 3, 2]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: concat_v(wide8(input), wide8(input))
+        train [[5, 3, 1], [4, 2, 5]]
+        train [[5, 4, 3], [2, 1, 5]]
+        test  [[5, 1, 2], [3, 4, 5]]
+    }
+    heldout task top-heldout-00 {
+        solution: concat_v(wide8(input), wide8(input))
+        train [[3, 2, 1], [5, 4, 3]]
+        train [[3, 4, 5], [1, 2, 3]]
+        test  [[3, 5, 2], [4, 1, 3]]
+    }
+}

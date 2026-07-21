@@ -1,0 +1,98 @@
+ladder al13-symmetry-repair
+
+# ``al13-symmetry-repair``: symmetry stops being a transformation and becomes an *inference rule*.
+#
+# L0 {overlay, flip_h, flip_v, transpose} -> sym_h -> sym_both -> top. ``overlay(c, a, b)`` merges two
+# grids treating ``c`` as transparent, so ``overlay(c, g, flip_h g)`` fills whatever the horizontal
+# mirror can supply -- ie it **repairs** a grid from its own symmetry rather than merely transforming
+# it. That is a genuinely different kind of abstraction from anything else in the batch, where every
+# rung is a mapping; here a rung reconstructs missing data.
+#
+# ``overlay`` is variadic, so ``max_arity`` must admit (colour + two grids).
+#
+# **Partly fixed, but a residual skip is STRUCTURAL (2026-07-20).** The original seeds were dense
+# stride grids, so ``sym_both`` was a no-op (H-repair filled everything) and the top was Floor-
+# reachable -- now fixed by ``symmetry_repair_seeds`` (holed grids needing both axes), which removed
+# that raw collapse (``raw_solved`` true -> false). But the certificate still finds a level-1 skip, and
+# it is unavoidable within this Floor: a both-H-and-V-symmetric target is necessarily rot180-symmetric,
+# and a balanced depth-3 overlay tree ``overlay(overlay(g, flip_h g), overlay(flip_v g, rot180 g))``
+# unions all four D4 mirrors -- which reconstructs the target exactly when ``sym_both`` (depth 4) can,
+# one depth cheaper. The Floor ``{overlay, flip_h, flip_v}`` is "repair-complete" a rung below the
+# intended one, so ``sym_both`` can never be made necessary here. A clean version needs a
+# single-direction repair primitive (not a mirror-union) or a Floor without both flips -- a
+# reconception. Left in the registry with the improved seeds; do not expect ``admitted`` yet.
+
+config {
+    budget.depth_limit: 3
+    budget.max_arity: 3
+    budget.max_pool: 1000
+    search_engine.constant_sources: ['finite-enumerate']
+}
+
+floor al13-L0 {
+    use overlay:   (Color, Grid...) -> Grid
+    use flip_h:    (Grid) -> Grid
+    use flip_v:    (Grid) -> Grid
+    use transpose: (Grid) -> Grid
+}
+
+rung {
+    sym_h(g: Grid, c: Color) -> Grid = overlay(c, g, flip_h(g))
+
+    task sym_h-00 {
+        solution: sym_h(input, 0)
+        train [[0, 1, 1, 0], [0, 5, 5, 3], [0, 1, 1, 4]]
+        train [[0, 2, 2, 0], [0, 3, 3, 5], [0, 2, 2, 4]]
+        test  [[0, 3, 3, 0], [0, 1, 1, 2], [0, 3, 3, 4]]
+    }
+    task sym_h-01 {
+        solution: sym_h(input, 0)
+        train [[0, 5, 5, 0], [0, 1, 1, 3], [0, 5, 5, 2]]
+        train [[0, 1, 1, 0], [0, 4, 4, 5], [0, 1, 1, 2]]
+        test  [[0, 3, 3, 0], [0, 5, 5, 4], [0, 3, 3, 2]]
+    }
+    heldout task sym_h-heldout-00 {
+        solution: sym_h(input, 0)
+        train [[0, 4, 4, 0], [0, 2, 2, 3], [0, 4, 4, 5]]
+        train [[0, 1, 1, 0], [0, 3, 3, 2], [0, 1, 1, 5]]
+        test  [[0, 2, 2, 0], [0, 1, 1, 4], [0, 2, 2, 5]]
+    }
+}
+
+rung {
+    sym_both(g: Grid, c: Color) -> Grid = overlay(c, sym_h(g, c), flip_v(sym_h(g, c)))
+
+    task sym_both-00 {
+        solution: sym_both(input, 0)
+        train [[0, 4, 4, 0], [0, 1, 1, 5], [0, 4, 4, 3]]
+        train [[0, 5, 5, 0], [0, 4, 4, 2], [0, 5, 5, 3]]
+        test  [[0, 1, 1, 0], [0, 2, 2, 4], [0, 1, 1, 3]]
+    }
+    task sym_both-01 {
+        solution: sym_both(input, 0)
+        train [[0, 3, 3, 0], [0, 2, 2, 5], [0, 3, 3, 1]]
+        train [[0, 4, 4, 0], [0, 5, 5, 2], [0, 4, 4, 1]]
+        test  [[0, 5, 5, 0], [0, 3, 3, 4], [0, 5, 5, 1]]
+    }
+    heldout task sym_both-heldout-00 {
+        solution: sym_both(input, 0)
+        train [[0, 2, 2, 0], [0, 3, 3, 5], [0, 2, 2, 4]]
+        train [[0, 3, 3, 0], [0, 1, 1, 2], [0, 3, 3, 4]]
+        test  [[0, 5, 5, 0], [0, 2, 2, 1], [0, 5, 5, 4]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: transpose(sym_both(input, 0))
+        train [[0, 1, 1, 0], [0, 4, 4, 5], [0, 1, 1, 2]]
+        train [[0, 3, 3, 0], [0, 5, 5, 4], [0, 3, 3, 2]]
+        test  [[0, 4, 4, 0], [0, 3, 3, 1], [0, 4, 4, 2]]
+    }
+    heldout task top-heldout-00 {
+        solution: transpose(sym_both(input, 0))
+        train [[0, 1, 1, 0], [0, 3, 3, 2], [0, 1, 1, 5]]
+        train [[0, 2, 2, 0], [0, 1, 1, 4], [0, 2, 2, 5]]
+        test  [[0, 3, 3, 0], [0, 4, 4, 1], [0, 3, 3, 5]]
+    }
+}

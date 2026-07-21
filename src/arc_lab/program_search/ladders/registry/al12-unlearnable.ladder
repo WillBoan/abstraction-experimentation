@@ -1,0 +1,54 @@
+ladder al12-unlearnable
+
+# ``al12-unlearnable`` (control): a rung with ONE demonstrating task -- a climb designed to fail.
+#
+# No experiment has ever produced a failed climb, so every success in the batch is uncalibrated: we do
+# not know what failure looks like in the trace, the certificate, or the rung-recovery table. This
+# control manufactures one. ``AntiunifyPairs`` generalises by antiunifying *pairs* of solutions, so a
+# rung demonstrated by a single task has nothing to pair with and cannot be minted, however cheap it is
+# to solve.
+#
+# **Expected to FAIL its lint** (``min-2-demos``) and to climb no further than r1's own tasks. Its
+# value is the shape of the failure, which is the reference against which every real climb is read.
+
+config {
+    budget.depth_limit: 2
+    learn.iterations: 4
+}
+
+floor al2-L0 {
+    use flip_h:    (Grid) -> Grid
+    use transpose: (Grid) -> Grid
+}
+
+rung {
+    rot90(g: Grid) -> Grid = flip_h(transpose(g))
+
+    task rot90-00 {
+        solution: rot90(input)
+        train [[4, 1, 3], [5, 2, 4]]
+        train [[4, 2, 5], [3, 1, 4]]
+        test  [[4, 3, 2], [1, 5, 4]]
+    }
+    heldout task rot90-heldout-00 {
+        solution: rot90(input)
+        train [[2, 5, 3], [1, 4, 2]]
+        train [[2, 1, 5], [4, 3, 2]]
+        test  [[2, 3, 4], [5, 1, 2]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: rot90(rot90(input))
+        train [[5, 4, 3], [2, 1, 5]]
+        train [[5, 1, 2], [3, 4, 5]]
+        test  [[5, 2, 4], [1, 3, 5]]
+    }
+    heldout task top-heldout-00 {
+        solution: rot90(rot90(input))
+        train [[3, 4, 5], [1, 2, 3]]
+        train [[3, 5, 2], [4, 1, 3]]
+        test  [[3, 1, 4], [2, 5, 3]]
+    }
+}

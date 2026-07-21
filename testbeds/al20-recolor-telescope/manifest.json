@@ -1,6 +1,6 @@
 {
   "name": "al20-recolor-telescope",
-  "note": "al20-recolor-telescope: geometry+recolour telescope (al19's fan-in-1 twin); clean.",
+  "note": "Generated from al20-recolor-telescope.ladder",
   "content_hash": "72baa05d46e5fdc7",
   "tasks": [
     {

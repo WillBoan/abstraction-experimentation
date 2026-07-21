@@ -2,8 +2,10 @@
 
 # LadderSpec: al14-cell-row-grid
 
+Derived from `al14-cell-row-grid.ladder` (in `program_search/ladders/registry/`) -- that file is this ladder's source of truth: floor, rung templates, config and tasks. Everything below is COMPUTED from it.
+
 - Height: 4 (3 bridging rungs + top)
-- Floor (`L_0`, library `al14-L0`): `read`, `set_cell`, `sub`
+- Floor library: `al14-L0` (3 primitives)
 - Pinned `depth_limit` (the reference config's cap -- every sandwich claim below is stated against it): 3
 - Validity window: `depth_limit` in [3, 5] (inclusive)
 - Raw depth profile (top solutions unfolded to `L_0`): [54]
@@ -24,42 +26,34 @@
 
 ## Rung spine
 
-| level | rung           | d_i | double-jump | fan-in | demos |
-| ----- | -------------- | --- | ----------- | ------ | ----- |
-| 1     | `move_cell_up` | 3   | 9           | 0      | 2     |
-| 2     | `move_row_up`  | 3   | 9           | 3      | 2     |
-| 3     | `move_grid_up` | 3   | 6           | 3      | 2     |
-| top   | (goal layer)   | 2   | -           | 2      | 1     |
+| level | rung           | d_i | double-jump | fan-in | demos | kind          |
+| ----- | -------------- | --- | ----------- | ------ | ----- | ------------- |
+| 1     | `move_cell_up` | 3   | 9           | 0      | 2     | full_solution |
+| 2     | `move_row_up`  | 3   | 9           | 3      | 2     | full_solution |
+| 3     | `move_grid_up` | 3   | 6           | 3      | 2     | full_solution |
+| top   | (goal layer)   | 2   | -           | 2      | 1     | -             |
 
 - `d_i`: compositional depth of the template over `L_{i-1}` (top row: of the reference solutions over `L_k`)
 - `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
-
-## r_1: `move_cell_up`
-
-- Template (over `L_0`): `set_cell(set_cell(#0, sub(#1, 1), #2, read(#0, #1, #2)), #1, #2, 0)`
-- Demonstrations (full_solution): `move_cell_up-00`, `move_cell_up-01`
-
-## r_2: `move_row_up`
-
-- Template (over `L_1`): `move_cell_up(move_cell_up(move_cell_up(#0, #1, 0), #1, 1), #1, 2)`
-- Demonstrations (full_solution): `move_row_up-00`, `move_row_up-01`
-
-## r_3: `move_grid_up`
-
-- Template (over `L_2`): `move_row_up(move_row_up(move_row_up(#0, 1), 2), 3)`
-- Demonstrations (full_solution): `move_grid_up-00`, `move_grid_up-01`
+- `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
 
 ## Top Rung (goal layer -- nothing is minted here)
 
-- `top-00`: `move_grid_up(move_grid_up(input))` (d=2 over `L_3`; d_raw=54)
+- `top-00`: d=2 over `L_3`
 
-## Reference config
+## Reference config (resolved)
+
+The frozen ladder default with the source file's `config` block applied -- the effective machinery, which neither the default nor the file shows on its own.
 
 - Budget: `Budget`
   - depth_limit: `3`
   - max_arity: `4`
   - max_pool: `2000`
+  - considered_limit: `50000`
+  - considered_limit_mode: `immediate`
+  - solution_limit: `None`
+  - solution_limit_mode: `generation-end`
 - Search engine: `BottomUpSearchEngine`
   - constant_sources: `['finite-enumerate']`
   - function_hole_fill_mode: `none`
@@ -80,16 +74,3 @@
   - early_stop: `True`
   - reset_programs_each_wake: `True`
   - score_each_wake: `False`
-
-## Budget sweep cells
-
-- depth_limit=3, max_arity=4, max_pool=2000 (reference)
-
-## Corpus
-
-| label        | train                                | heldout                   |
-| ------------ | ------------------------------------ | ------------------------- |
-| move_cell_up | `move_cell_up-00`, `move_cell_up-01` | `move_cell_up-heldout-00` |
-| move_grid_up | `move_grid_up-00`, `move_grid_up-01` | `move_grid_up-heldout-00` |
-| move_row_up  | `move_row_up-00`, `move_row_up-01`   | `move_row_up-heldout-00`  |
-| top          | `top-00`                             | `top-heldout-00`          |

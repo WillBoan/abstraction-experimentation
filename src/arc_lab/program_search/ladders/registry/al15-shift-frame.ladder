@@ -1,0 +1,102 @@
+ladder al15-shift-frame
+
+# ``al15-shift-frame``: a heterogeneous chain that provably dodges every batch collapse family.
+#
+# Designed (and certified in-memory before committing) against the 2026-07-20 findings that killed
+# al3-al8/al13. The recipe: alternate a *combine* op (shift-stack) with a *non-composing modifier*
+# (frame), so no rung is a repeated motif and the chain never telescopes.
+#
+# Floor ``{concat_v, translate, pad}`` -> ``shift_stack`` -> ``framed`` -> top.
+#
+# - ``r1 = shift_stack``: ``concat_v(g, translate(g, 0, 1))`` -- stack ``g`` over a one-column-shifted
+#   copy. The ``translate`` makes it **asymmetric** (no flip fixes it), so no symmetry-union shortcut.
+# - ``r2 = framed``: ``pad(r1, 1, 5)`` -- a one-cell border. ``pad`` is a *different* operation from
+#   the stack, which is what breaks telescoping: ``r2`` is not ``r1`` applied to itself.
+# - ``top``: ``shift_stack`` again, over ``r2``. The ``pad`` between the two shift-stacks means
+#   ``top`` is NOT ``shift_stack(shift_stack(x))`` for any ``x`` -- the motif does not iterate.
+#
+# Why it is clean (each family, by construction, and confirmed by the certificate):
+# - **A / telescoping**: every op appears with a *different* op between its uses; no self-similar
+#   doubler (unlike al3's ``quad``/al7's ``stack2``, where ``r_2k == r2^k``).
+# - **B / recolour-shallow**: builds spatial structure (stack/shift/frame), never a colour permutation
+#   (unlike al5/al6/al8, whose whole competence was ``map_color`` and collapsed to depth 2).
+# - **C / union-completeness**: the target is asymmetric (``translate``), so no variadic-``overlay``
+#   mirror union reconstructs it a depth early (unlike al13).
+# - **D / algebraic coincidence**: a rigid floor -- ``concat``/``translate``/``pad`` compose with few
+#   coincidental equalities (unlike al4's mask algebra).
+#
+# The sandwich at ``depth_limit=2``: every jump is depth 2; raw depth is 5 and every double jump
+# exceeds 2, so the rungs are necessary. A modest, *tractable* ladder in the al1 mould -- deliberately
+# NOT the al14 dimensional-lift shape, which is structurally sound but intractable to even certify.
+
+config {
+    budget.depth_limit: 2
+    search_engine.constant_sources: ['finite-enumerate']
+}
+
+floor al15-L0 {
+    use concat_v:  (Grid, Grid) -> Grid
+    use translate: (Grid, Int, Int) -> Grid
+    use pad:       (Grid, Int, Color) -> Grid
+}
+
+rung {
+    shift_stack(g: Grid) -> Grid = concat_v(g, translate(g, 0, 1))
+
+    task shift_stack-00 {
+        solution: shift_stack(input)
+        train [[4, 2, 4], [2, 4, 2]]
+        train [[1, 4, 3], [2, 1, 4]]
+        test  [[2, 3, 4], [1, 2, 3]]
+    }
+    task shift_stack-01 {
+        solution: shift_stack(input)
+        train [[3, 2, 1], [4, 3, 2]]
+        train [[4, 1, 2], [3, 4, 1]]
+        test  [[1, 3, 1], [3, 1, 3]]
+    }
+    heldout task shift_stack-heldout-00 {
+        solution: shift_stack(input)
+        train [[2, 3, 4], [1, 2, 3]]
+        train [[3, 1, 3], [1, 3, 1]]
+        test  [[4, 3, 2], [1, 4, 3]]
+    }
+}
+
+rung {
+    framed(g: Grid) -> Grid = pad(shift_stack(g), 1, 5)
+
+    task framed-00 {
+        solution: framed(input)
+        train [[1, 3, 1], [3, 1, 3]]
+        train [[2, 1, 4], [3, 2, 1]]
+        test  [[3, 4, 1], [2, 3, 4]]
+    }
+    task framed-01 {
+        solution: framed(input)
+        train [[4, 3, 2], [1, 4, 3]]
+        train [[1, 2, 3], [4, 1, 2]]
+        test  [[2, 4, 2], [4, 2, 4]]
+    }
+    heldout task framed-heldout-00 {
+        solution: framed(input)
+        train [[3, 4, 1], [2, 3, 4]]
+        train [[4, 2, 4], [2, 4, 2]]
+        test  [[1, 4, 3], [2, 1, 4]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: shift_stack(framed(input))
+        train [[2, 4, 2], [4, 2, 4]]
+        train [[3, 2, 1], [4, 3, 2]]
+        test  [[4, 1, 2], [3, 4, 1]]
+    }
+    heldout task top-heldout-00 {
+        solution: shift_stack(framed(input))
+        train [[1, 4, 3], [2, 1, 4]]
+        train [[2, 3, 4], [1, 2, 3]]
+        test  [[3, 1, 3], [1, 3, 1]]
+    }
+}

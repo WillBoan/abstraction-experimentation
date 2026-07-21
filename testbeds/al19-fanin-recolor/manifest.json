@@ -1,6 +1,6 @@
 {
   "name": "al19-fanin-recolor",
-  "note": "al19-fanin-recolor: fan-in-2 over a geometric and a recoloured rung; certified clean.",
+  "note": "Generated from al19-fanin-recolor.ladder",
   "content_hash": "2b54b352c32ac4e9",
   "tasks": [
     {

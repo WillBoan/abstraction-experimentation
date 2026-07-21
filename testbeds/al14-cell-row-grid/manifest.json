@@ -1,6 +1,6 @@
 {
   "name": "al14-cell-row-grid",
-  "note": "al14-cell-row-grid: {read, set_cell, sub} -> move_cell_up -> move_row_up -> move_grid_up -> top. Dimensional lift; raw depth multiplies (3->9->27->54).",
+  "note": "Generated from al14-cell-row-grid.ladder",
   "content_hash": "9774e59a578420eb",
   "tasks": [
     {

@@ -1,0 +1,105 @@
+ladder al17-shift-frame-tall
+
+# ``al17-shift-frame-tall``: al15's recipe at height 4 -- the height axis of the clean set.
+#
+# Same non-collapsing structure as al15 (alternate a combine op with a non-composing modifier), one
+# rung taller: shift-stack -> frame -> shift-stack -> frame. Certified clean at height 4 in-memory
+# before committing (the pad between each pair of shift-stacks is what keeps the motif from
+# telescoping, exactly as at height 3). Sandwich pinned at ``depth_limit=2``; raw depth grows past 2
+# at every double jump, so all three bridging rungs are necessary.
+
+config {
+    budget.depth_limit: 2
+    search_engine.constant_sources: ['finite-enumerate']
+    learn.iterations: 6
+}
+
+floor al17-L0 {
+    use concat_v:  (Grid, Grid) -> Grid
+    use translate: (Grid, Int, Int) -> Grid
+    use pad:       (Grid, Int, Color) -> Grid
+}
+
+rung {
+    shift1(g: Grid) -> Grid = concat_v(g, translate(g, 0, 1))
+
+    task shift1-00 {
+        solution: shift1(input)
+        train [[4, 2, 4], [2, 4, 2]]
+        train [[1, 4, 3], [2, 1, 4]]
+        test  [[2, 3, 4], [1, 2, 3]]
+    }
+    task shift1-01 {
+        solution: shift1(input)
+        train [[3, 2, 1], [4, 3, 2]]
+        train [[4, 1, 2], [3, 4, 1]]
+        test  [[1, 3, 1], [3, 1, 3]]
+    }
+    heldout task shift1-heldout-00 {
+        solution: shift1(input)
+        train [[2, 3, 4], [1, 2, 3]]
+        train [[3, 1, 3], [1, 3, 1]]
+        test  [[4, 3, 2], [1, 4, 3]]
+    }
+}
+
+rung {
+    frame1(g: Grid) -> Grid = pad(shift1(g), 1, 5)
+
+    task frame1-00 {
+        solution: frame1(input)
+        train [[1, 3, 1], [3, 1, 3]]
+        train [[2, 1, 4], [3, 2, 1]]
+        test  [[3, 4, 1], [2, 3, 4]]
+    }
+    task frame1-01 {
+        solution: frame1(input)
+        train [[4, 3, 2], [1, 4, 3]]
+        train [[1, 2, 3], [4, 1, 2]]
+        test  [[2, 4, 2], [4, 2, 4]]
+    }
+    heldout task frame1-heldout-00 {
+        solution: frame1(input)
+        train [[3, 4, 1], [2, 3, 4]]
+        train [[4, 2, 4], [2, 4, 2]]
+        test  [[1, 4, 3], [2, 1, 4]]
+    }
+}
+
+rung {
+    shift2(g: Grid) -> Grid = shift1(frame1(g))
+
+    task shift2-00 {
+        solution: shift2(input)
+        train [[2, 4, 2], [4, 2, 4]]
+        train [[3, 2, 1], [4, 3, 2]]
+        test  [[4, 1, 2], [3, 4, 1]]
+    }
+    task shift2-01 {
+        solution: shift2(input)
+        train [[1, 4, 3], [2, 1, 4]]
+        train [[2, 3, 4], [1, 2, 3]]
+        test  [[3, 1, 3], [1, 3, 1]]
+    }
+    heldout task shift2-heldout-00 {
+        solution: shift2(input)
+        train [[4, 1, 2], [3, 4, 1]]
+        train [[1, 3, 1], [3, 1, 3]]
+        test  [[2, 1, 4], [3, 2, 1]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: pad(shift2(input), 1, 6)
+        train [[3, 1, 3], [1, 3, 1]]
+        train [[4, 3, 2], [1, 4, 3]]
+        test  [[1, 2, 3], [4, 1, 2]]
+    }
+    heldout task top-heldout-00 {
+        solution: pad(shift2(input), 1, 6)
+        train [[2, 1, 4], [3, 2, 1]]
+        train [[3, 4, 1], [2, 3, 4]]
+        test  [[4, 2, 4], [2, 4, 2]]
+    }
+}

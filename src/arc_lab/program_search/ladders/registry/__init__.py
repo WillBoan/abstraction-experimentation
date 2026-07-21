@@ -1,68 +1,50 @@
-"""The Ladder registry: named :class:`LadderSpec` builders for ``arc-lab run-ladder <name>``.
+"""The Ladder registry: the `.ladder` source files, discovered by scanning this directory.
 
-Each ladder (or family of related ladders) is a builder module here; ``LADDERS`` aggregates them.
-Mirrors ``execution/studies.py::STUDIES`` -- a zero-arg factory per name, resolved by
-:func:`make_ladder`. Per-ladder *artifacts* (rendered tables, notes) live under
+Each ladder is one `<name>.ladder` file beside this module -- its single source of truth
+(``docs/abstraction_ladders/LADDER-FORMAT.md``), driving both its :class:`LadderSpec` and its
+generated testbed. Adding a ladder is adding a file: there is nothing to register.
+
+Per-ladder *artifacts* (rendered tables, worksheets, results) live under
 ``docs/abstraction_ladders/ladders/<name>/``, not here.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 
-from arc_lab.program_search.ladders.registry import (
-    al1_mirror,
-    al2_rot90,
-    al3_quad,
-    al4_mask_crop,
-    al5_perceiver,
-    al6_mirror_tall,
-    al7_fast_tower,
-    al8_lean_perceiver,
-    al9_decoy,
-    al10_skippable,
-    al11_greedy_trap,
-    al12_unlearnable,
-    al13_symmetry_repair,
-    al14_cell_row_grid,
-    al15_shift_frame,
-    al16_layout_nest,
-    al17_shift_frame_tall,
-    al18_fanin_rotate,
-    al19_fanin_recolor,
-    al20_recolor_telescope,
-)
+from arc_lab.program_search.ladders.lang.load import LoadedLadder, ladder_spec, resolve
+from arc_lab.program_search.ladders.lang.parse import LADDER_SUFFIX, parse_ladder_file
 from arc_lab.program_search.ladders.spec import LadderSpec
 
-#: LadderSpec builder registry for the CLI (`arc-lab run-ladder <name>`).
-LADDERS: dict[str, Callable[[], LadderSpec]] = {
-    "al1-mirror": al1_mirror.build,
-    "al2-rot90-calibration": al2_rot90.build,
-    "al3-quad-symmetrize": al3_quad.build,
-    "al4-mask-crop": al4_mask_crop.build,
-    "al5-perceiver-chain": al5_perceiver.build,
-    "al6-mirror-tall": al6_mirror_tall.build,
-    "al7-fast-tower": al7_fast_tower.build,
-    "al8-lean-perceiver": al8_lean_perceiver.build,
-    "al9-decoy": al9_decoy.build,
-    "al10-skippable": al10_skippable.build,
-    "al11-greedy-trap": al11_greedy_trap.build,
-    "al12-unlearnable": al12_unlearnable.build,
-    "al13-symmetry-repair": al13_symmetry_repair.build,
-    "al14-cell-row-grid": al14_cell_row_grid.build,
-    "al15-shift-frame": al15_shift_frame.build,
-    "al16-layout-nest": al16_layout_nest.build,
-    "al17-shift-frame-tall": al17_shift_frame_tall.build,
-    "al18-fanin-rotate": al18_fanin_rotate.build,
-    "al19-fanin-recolor": al19_fanin_recolor.build,
-    "al20-recolor-telescope": al20_recolor_telescope.build,
-}
+#: Where the `.ladder` sources live -- this package's own directory.
+LADDER_ROOT = Path(__file__).resolve().parent
+
+
+def ladder_paths() -> dict[str, Path]:
+    """Every `.ladder` source, by ladder name (its filename stem -- spec STR-1)."""
+    return {path.stem: path for path in sorted(LADDER_ROOT.glob(f"*{LADDER_SUFFIX}"))}
+
+
+def load_ladder(name: str) -> LoadedLadder:
+    """Parse and resolve one ladder's source file (raises :class:`KeyError` for an unknown name)."""
+    paths = ladder_paths()
+    try:
+        path = paths[name]
+    except KeyError:
+        known = ", ".join(sorted(paths))
+        raise KeyError(f"unknown ladder {name!r}; known: {known}") from None
+    return resolve(parse_ladder_file(path))
 
 
 def make_ladder(name: str) -> LadderSpec:
     """Resolve a ladder name to a freshly built :class:`LadderSpec`."""
-    try:
-        return LADDERS[name]()
-    except KeyError:
-        known = ", ".join(sorted(LADDERS))
-        raise KeyError(f"unknown ladder {name!r}; known: {known}") from None
+    return ladder_spec(load_ladder(name))
+
+
+def _builder(name: str) -> Callable[[], LadderSpec]:
+    return lambda: make_ladder(name)
+
+
+#: LadderSpec builder registry for the CLI (`arc-lab run-ladder <name>`).
+LADDERS: dict[str, Callable[[], LadderSpec]] = {name: _builder(name) for name in ladder_paths()}

@@ -14,27 +14,6 @@ from pathlib import Path
 import numpy as np
 
 from arc_lab.core.grid import Grid
-from arc_lab.program_search.ladders.registry import (
-    al2_rot90,
-    al3_quad,
-    al4_mask_crop,
-    al5_perceiver,
-    al6_mirror_tall,
-    al7_fast_tower,
-    al8_lean_perceiver,
-    al9_decoy,
-    al10_skippable,
-    al11_greedy_trap,
-    al12_unlearnable,
-    al13_symmetry_repair,
-    al14_cell_row_grid,
-    al15_shift_frame,
-    al16_layout_nest,
-    al17_shift_frame_tall,
-    al18_fanin_rotate,
-    al19_fanin_recolor,
-    al20_recolor_telescope,
-)
 
 from . import GeneratedTask, make_task, write_testbed
 
@@ -321,179 +300,33 @@ def generate_grain_contrast(out_root: Path) -> Path:
     )
 
 
-# -- al1-mirror: the first Abstraction Ladder testbed --------------------------------
+# -- Abstraction Ladder testbeds: generated from the `.ladder` sources -------------
+# A ladder's `.ladder` file is its single source of truth (docs/abstraction_ladders/
+# LADDER-FORMAT.md): the same file drives its LadderSpec and, here, its committed testbed. Task
+# outputs come from EVALUATING each task's declared solution, so a demonstrating task cannot drift
+# from the spine it demonstrates.
 
 
-def _mirror_recolor_solution(a: int, b: int) -> Callable[[Grid], Grid]:
-    """mirror_recolor(g, a, b) = map_color(rot180(g), a, b) -- rung 2, built on rot180."""
-
-    def solution(grid: Grid) -> Grid:
-        arr = grid.array[::-1, ::-1].copy()
-        arr[arr == a] = b
-        return Grid(arr)
-
-    return solution
-
-
-def _al1_top_solution(a: int, b: int, c: int, d: int) -> Callable[[Grid], Grid]:
-    """top(g) = map_color(mirror_recolor(g, a, b), c, d) -- mirror_recolor then a SECOND, independent
-    recolor. Uses mirror_recolor as a fragment and, unlike a D4 wrapper (which would collapse via the
-    group law, e.g. flip_v(rot180)=flip_h), does not algebraically shorten -- two distinct recolors
-    plus a rotation need all four floor applications, so the top is genuinely intractable raw."""
-
-    def solution(grid: Grid) -> Grid:
-        arr = grid.array[::-1, ::-1].copy()  # rot180
-        arr[arr == a] = b  # mirror_recolor's recolor
-        arr[arr == c] = d  # the outer map_color's recolor (distinct colors: no merge)
-        return Grid(arr)
-
-    return solution
-
-
-def _al1_grids(color: int) -> list[Grid]:
-    """Three distinct 2x3 grids, each asymmetric under rot180 and containing ``color`` (so a
-    recolor of that color is active -- keeping the intended composition the cheapest solution)."""
-    patterns = [
-        [[color, (color + 1) % 10, (color + 2) % 10], [(color + 3) % 10, (color + 4) % 10, color]],
-        [[(color + 2) % 10, color, (color + 5) % 10], [color, (color + 3) % 10, (color + 6) % 10]],
-        [[(color + 7) % 10, (color + 6) % 10, color], [(color + 1) % 10, color, (color + 2) % 10]],
-    ]
-    return [Grid.from_list(rows) for rows in patterns]
-
-
-def al1_mirror_tasks() -> tuple[GeneratedTask, ...]:
-    """Abstraction Ladder #1: L0 {flip_h, flip_v, map_color} -> rot180 -> mirror_recolor -> top.
-
-    At the reference budget (depth_limit=2) rot180 is reachable raw (2 applications) but
-    mirror_recolor (3) and the top (4) are not -- they collapse only once the rung below is
-    minted, so the wake-sleep loop must climb. Every task carries 2 train examples + 1 test;
-    (a,b) are fixed within a mirror_recolor/top task and vary across them so AntiunifyPairs mints
-    the general two-parameter form. See docs/abstraction_ladders/ABSTRACTION-LADDERS-2026-07-16.md.
-    """
-    tasks: list[GeneratedTask] = []
-    # rung 1: rot180 -- pure GRID->GRID, so no literal shortcut; 2 train + 1 heldout.
-    for i in range(2):
-        grids = _al1_grids(1 + i)
-        tasks.append(
-            make_task(
-                f"rot180-{i:02d}",
-                label="rot180",
-                split="train",
-                solution=_rot180_reference,
-                train_inputs=grids[:2],
-                test_inputs=grids[2:],
-            )
-        )
-    held = _al1_grids(5)
-    tasks.append(
-        make_task(
-            "rot180-heldout",
-            label="rot180",
-            split="heldout",
-            solution=_rot180_reference,
-            train_inputs=held[:2],
-            test_inputs=held[2:],
-        )
-    )
-    # rung 2: mirror_recolor -- (a,b) vary across tasks; unreachable at L0, minted after rot180.
-    for a, b in ((1, 2), (3, 4)):
-        grids = _al1_grids(a)
-        tasks.append(
-            make_task(
-                f"mirror-recolor-{a}-{b}",
-                label="mirror_recolor",
-                split="train",
-                solution=_mirror_recolor_solution(a, b),
-                train_inputs=grids[:2],
-                test_inputs=grids[2:],
-            )
-        )
-    grids = _al1_grids(2)
-    tasks.append(
-        make_task(
-            "mirror-recolor-2-3",
-            label="mirror_recolor",
-            split="heldout",
-            solution=_mirror_recolor_solution(2, 3),
-            train_inputs=grids[:2],
-            test_inputs=grids[2:],
-        )
-    )
-    # top: map_color(mirror_recolor(g,1,2),3,4) -- reachable only once both rungs are minted; the
-    # second independent recolor prevents the D4 group-law collapse a single-flip wrapper would have.
-    grids = _al1_grids(1)  # contains colors 1 and 3
-    tasks.append(
-        make_task(
-            "top-00",
-            label="top",
-            split="train",
-            solution=_al1_top_solution(1, 2, 3, 4),
-            train_inputs=grids[:2],
-            test_inputs=grids[2:],
-        )
-    )
-    grids = _al1_grids(5)  # contains colors 5 and 7 (unseen)
-    tasks.append(
-        make_task(
-            "top-heldout",
-            label="top",
-            split="heldout",
-            solution=_al1_top_solution(5, 6, 7, 8),
-            train_inputs=grids[:2],
-            test_inputs=grids[2:],
-        )
-    )
-    return tuple(tasks)
-
-
-def generate_al1_mirror(out_root: Path) -> Path:
-    return write_testbed(
-        "al1-mirror",
-        al1_mirror_tasks(),
-        out_root=out_root,
-        note=(
-            "Abstraction Ladder #1: L0{flip_h,flip_v,map_color} -> rot180 -> "
-            "mirror_recolor(g,a,b)=map_color(rot180(g),a,b) -> "
-            "top=map_color(mirror_recolor(g,1,2),3,4)."
-        ),
-    )
-
-
-# -- al2..al6: template-driven Abstraction Ladder testbeds ---------------------------
-# Each ladder's corpus is generated from its own rung templates (see taskgen/ladders.py), so the
-# demonstrating tasks cannot drift from the spine they demonstrate. The templates live with the
-# LadderSpec in program_search/ladders/registry/, keeping ONE source of truth per ladder.
-
-
-def _ladder_testbed_writer(name: str, module: object) -> Callable[[Path], Path]:
+def _ladder_testbed_writer(name: str) -> Callable[[Path], Path]:
     def generate(out_root: Path) -> Path:
-        testbed = module.testbed()  # type: ignore[attr-defined]
-        return write_testbed(name, testbed.tasks(), out_root=out_root, note=testbed.note)
+        from arc_lab.program_search.ladders.lang.load import ladder_tasks
+        from arc_lab.program_search.ladders.registry import load_ladder
+
+        loaded = load_ladder(name)
+        return write_testbed(
+            name,
+            ladder_tasks(loaded),
+            out_root=out_root,
+            note=f"Generated from {name}.ladder",
+        )
 
     return generate
 
 
-generate_al2_rot90 = _ladder_testbed_writer("al2-rot90-calibration", al2_rot90)
-generate_al3_quad = _ladder_testbed_writer("al3-quad-symmetrize", al3_quad)
-generate_al4_mask_crop = _ladder_testbed_writer("al4-mask-crop", al4_mask_crop)
-generate_al5_perceiver = _ladder_testbed_writer("al5-perceiver-chain", al5_perceiver)
-generate_al6_mirror_tall = _ladder_testbed_writer("al6-mirror-tall", al6_mirror_tall)
-generate_al7_fast_tower = _ladder_testbed_writer("al7-fast-tower", al7_fast_tower)
-generate_al8_lean_perceiver = _ladder_testbed_writer("al8-lean-perceiver", al8_lean_perceiver)
-generate_al9_decoy = _ladder_testbed_writer("al9-decoy", al9_decoy)
-generate_al10_skippable = _ladder_testbed_writer("al10-skippable", al10_skippable)
-generate_al11_greedy_trap = _ladder_testbed_writer("al11-greedy-trap", al11_greedy_trap)
-generate_al12_unlearnable = _ladder_testbed_writer("al12-unlearnable", al12_unlearnable)
-generate_al13_symmetry_repair = _ladder_testbed_writer("al13-symmetry-repair", al13_symmetry_repair)
-generate_al14_cell_row_grid = _ladder_testbed_writer("al14-cell-row-grid", al14_cell_row_grid)
-generate_al15_shift_frame = _ladder_testbed_writer("al15-shift-frame", al15_shift_frame)
-generate_al16_layout_nest = _ladder_testbed_writer("al16-layout-nest", al16_layout_nest)
-generate_al17_shift_frame_tall = _ladder_testbed_writer("al17-shift-frame-tall", al17_shift_frame_tall)
-generate_al18_fanin_rotate = _ladder_testbed_writer("al18-fanin-rotate", al18_fanin_rotate)
-generate_al19_fanin_recolor = _ladder_testbed_writer("al19-fanin-recolor", al19_fanin_recolor)
-generate_al20_recolor_telescope = _ladder_testbed_writer(
-    "al20-recolor-telescope", al20_recolor_telescope
-)
+def _ladder_generators() -> dict[str, Callable[[Path], Path]]:
+    from arc_lab.program_search.ladders.registry import ladder_paths
+
+    return {name: _ladder_testbed_writer(name) for name in ladder_paths()}
 
 
 #: Generator registry for the CLI (`arc-lab taskgen <name>`).
@@ -502,26 +335,7 @@ GENERATORS: dict[str, Callable[[Path], Path]] = {
     "perceive-transform": generate_perceive_transform,
     "layered-abstraction": generate_layered_abstraction,
     "grain-contrast": generate_grain_contrast,
-    "al1-mirror": generate_al1_mirror,
-    "al2-rot90-calibration": generate_al2_rot90,
-    "al3-quad-symmetrize": generate_al3_quad,
-    "al4-mask-crop": generate_al4_mask_crop,
-    "al5-perceiver-chain": generate_al5_perceiver,
-    "al6-mirror-tall": generate_al6_mirror_tall,
-    "al7-fast-tower": generate_al7_fast_tower,
-    "al8-lean-perceiver": generate_al8_lean_perceiver,
-    "al9-decoy": generate_al9_decoy,
-    "al10-skippable": generate_al10_skippable,
-    "al11-greedy-trap": generate_al11_greedy_trap,
-    "al12-unlearnable": generate_al12_unlearnable,
-    "al13-symmetry-repair": generate_al13_symmetry_repair,
-    "al14-cell-row-grid": generate_al14_cell_row_grid,
-    "al15-shift-frame": generate_al15_shift_frame,
-    "al16-layout-nest": generate_al16_layout_nest,
-    "al17-shift-frame-tall": generate_al17_shift_frame_tall,
-    "al18-fanin-rotate": generate_al18_fanin_rotate,
-    "al19-fanin-recolor": generate_al19_fanin_recolor,
-    "al20-recolor-telescope": generate_al20_recolor_telescope,
+    **_ladder_generators(),
 }
 
 

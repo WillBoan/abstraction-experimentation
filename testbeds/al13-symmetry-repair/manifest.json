@@ -1,6 +1,6 @@
 {
   "name": "al13-symmetry-repair",
-  "note": "al13-symmetry-repair: overlay-based symmetry repair; a rung that INFERS missing cells.",
+  "note": "Generated from al13-symmetry-repair.ladder",
   "content_hash": "b41d81930775151d",
   "tasks": [
     {

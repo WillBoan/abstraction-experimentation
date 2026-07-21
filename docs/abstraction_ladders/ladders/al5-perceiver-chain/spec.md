@@ -2,8 +2,10 @@
 
 # LadderSpec: al5-perceiver-chain
 
+Derived from `al5-perceiver-chain.ladder` (in `program_search/ladders/registry/`) -- that file is this ladder's source of truth: floor, rung templates, config and tasks. Everything below is COMPUTED from it.
+
 - Height: 4 (3 bridging rungs + top)
-- Floor (`L_0`, library `al5-L0`): `map_color`, `most_common_color`, `least_common_color`, `flip_h`, `flip_v`
+- Floor library: `al5-L0` (5 primitives)
 - Pinned `depth_limit` (the reference config's cap -- every sandwich claim below is stated against it): 3
 - Validity window: `depth_limit` in [3, 3] (inclusive)
 - Raw depth profile (top solutions unfolded to `L_0`): [8]
@@ -25,42 +27,34 @@
 
 ## Rung spine
 
-| level | rung            | d_i | double-jump | fan-in | demos |
-| ----- | --------------- | --- | ----------- | ------ | ----- |
-| 1     | `swap_extremes` | 3   | 5           | 0      | 2     |
-| 2     | `swap_mirror`   | 3   | 5           | 1      | 2     |
-| 3     | `swap_stack`    | 3   | 4           | 1      | 2     |
-| top   | (goal layer)    | 2   | -           | 1      | 1     |
+| level | rung            | d_i | double-jump | fan-in | demos | kind          |
+| ----- | --------------- | --- | ----------- | ------ | ----- | ------------- |
+| 1     | `swap_extremes` | 3   | 5           | 0      | 2     | full_solution |
+| 2     | `swap_mirror`   | 3   | 5           | 1      | 2     | full_solution |
+| 3     | `swap_stack`    | 3   | 4           | 1      | 2     | full_solution |
+| top   | (goal layer)    | 2   | -           | 1      | 1     | -             |
 
 - `d_i`: compositional depth of the template over `L_{i-1}` (top row: of the reference solutions over `L_k`)
 - `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
-
-## r_1: `swap_extremes`
-
-- Template (over `L_0`): `map_color(map_color(#0, most_common_color(#0), least_common_color(#0)), least_common_color(#0), most_common_color(#0))`
-- Demonstrations (full_solution): `swap_extremes-00`, `swap_extremes-01`
-
-## r_2: `swap_mirror`
-
-- Template (over `L_1`): `map_color(flip_h(swap_extremes(#0)), most_common_color(#0), #1)`
-- Demonstrations (full_solution): `swap_mirror-00`, `swap_mirror-01`
-
-## r_3: `swap_stack`
-
-- Template (over `L_2`): `map_color(flip_v(swap_mirror(#0, #1)), most_common_color(flip_h(#0)), #2)`
-- Demonstrations (full_solution): `swap_stack-00`, `swap_stack-01`
+- `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
 
 ## Top Rung (goal layer -- nothing is minted here)
 
-- `top-00`: `flip_h(swap_stack(input, 2, 6))` (d=2 over `L_3`; d_raw=8)
+- `top-00`: d=2 over `L_3`
 
-## Reference config
+## Reference config (resolved)
+
+The frozen ladder default with the source file's `config` block applied -- the effective machinery, which neither the default nor the file shows on its own.
 
 - Budget: `Budget`
   - depth_limit: `3`
   - max_arity: `3`
   - max_pool: `1500`
+  - considered_limit: `50000`
+  - considered_limit_mode: `immediate`
+  - solution_limit: `None`
+  - solution_limit_mode: `generation-end`
 - Search engine: `BottomUpSearchEngine`
   - constant_sources: `['finite-enumerate']`
   - function_hole_fill_mode: `none`
@@ -81,16 +75,3 @@
   - early_stop: `True`
   - reset_programs_each_wake: `True`
   - score_each_wake: `False`
-
-## Budget sweep cells
-
-- depth_limit=3, max_arity=3, max_pool=1500 (reference)
-
-## Corpus
-
-| label         | train                                  | heldout                    |
-| ------------- | -------------------------------------- | -------------------------- |
-| swap_extremes | `swap_extremes-00`, `swap_extremes-01` | `swap_extremes-heldout-00` |
-| swap_mirror   | `swap_mirror-00`, `swap_mirror-01`     | `swap_mirror-heldout-00`   |
-| swap_stack    | `swap_stack-00`, `swap_stack-01`       | `swap_stack-heldout-00`    |
-| top           | `top-00`                               | `top-heldout-00`           |

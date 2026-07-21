@@ -1,0 +1,175 @@
+ladder al11-greedy-trap
+
+# ``al11-greedy-trap`` (control): a distractor that is MORE compressive than the real rung.
+#
+# ``GreedyMDL`` mints whatever compresses the corpus most. This control puts a bigger shared template
+# in front of it: the distractor ``concat_h(concat_v(g, g), concat_v(g, g))`` is a 5-node motif shared
+# across its demos, against al7's r1 ``concat_h(g, flip_h g)`` at 4 nodes. If governance is purely
+# size-greedy it should prefer the distractor at the first sleep -- and the question is whether the
+# climb then recovers, stalls, or mints the real rung a wake later than it should.
+#
+# Distinct from al9-decoy: there the distractor is merely *available*, here it is deliberately made
+# *more attractive* than the rung it competes with.
+
+config {
+    budget.depth_limit: 2
+    learn.iterations: 8
+}
+
+floor al7-L0 {
+    use concat_h: (Grid, Grid) -> Grid
+    use concat_v: (Grid, Grid) -> Grid
+    use flip_h:   (Grid) -> Grid
+    use flip_v:   (Grid) -> Grid
+}
+
+rung {
+    mirror(g: Grid) -> Grid = concat_h(g, flip_h(g))
+
+    task mirror-00 {
+        solution: mirror(input)
+        train [[4, 1, 3], [5, 2, 4]]
+        train [[4, 2, 5], [3, 1, 4]]
+        test  [[4, 3, 2], [1, 5, 4]]
+    }
+    task mirror-01 {
+        solution: mirror(input)
+        train [[2, 5, 3], [1, 4, 2]]
+        train [[2, 1, 5], [4, 3, 2]]
+        test  [[2, 3, 4], [5, 1, 2]]
+    }
+    heldout task mirror-heldout-00 {
+        solution: mirror(input)
+        train [[5, 4, 3], [2, 1, 5]]
+        train [[5, 1, 2], [3, 4, 5]]
+        test  [[5, 2, 4], [1, 3, 5]]
+    }
+}
+
+rung {
+    stack2(g: Grid) -> Grid = concat_v(mirror(g), mirror(g))
+
+    task stack2-00 {
+        solution: stack2(input)
+        train [[3, 4, 5], [1, 2, 3]]
+        train [[3, 5, 2], [4, 1, 3]]
+        test  [[3, 1, 4], [2, 5, 3]]
+    }
+    task stack2-01 {
+        solution: stack2(input)
+        train [[1, 3, 5], [2, 4, 1]]
+        train [[1, 4, 2], [5, 3, 1]]
+        test  [[1, 5, 4], [3, 2, 1]]
+    }
+    heldout task stack2-heldout-00 {
+        solution: stack2(input)
+        train [[4, 2, 5], [3, 1, 4]]
+        train [[4, 3, 2], [1, 5, 4]]
+        test  [[4, 5, 1], [2, 3, 4]]
+    }
+}
+
+rung {
+    wide4(g: Grid) -> Grid = concat_h(stack2(g), stack2(g))
+
+    task wide4-00 {
+        solution: wide4(input)
+        train [[2, 1, 5], [4, 3, 2]]
+        train [[2, 3, 4], [5, 1, 2]]
+        test  [[2, 4, 1], [3, 5, 2]]
+    }
+    task wide4-01 {
+        solution: wide4(input)
+        train [[5, 1, 2], [3, 4, 5]]
+        train [[5, 2, 4], [1, 3, 5]]
+        test  [[5, 3, 1], [4, 2, 5]]
+    }
+    heldout task wide4-heldout-00 {
+        solution: wide4(input)
+        train [[3, 5, 2], [4, 1, 3]]
+        train [[3, 1, 4], [2, 5, 3]]
+        test  [[3, 2, 1], [5, 4, 3]]
+    }
+}
+
+rung {
+    tall4(g: Grid) -> Grid = concat_v(wide4(g), wide4(g))
+
+    task tall4-00 {
+        solution: tall4(input)
+        train [[1, 4, 2], [5, 3, 1]]
+        train [[1, 5, 4], [3, 2, 1]]
+        test  [[1, 2, 3], [4, 5, 1]]
+    }
+    task tall4-01 {
+        solution: tall4(input)
+        train [[4, 3, 2], [1, 5, 4]]
+        train [[4, 5, 1], [2, 3, 4]]
+        test  [[4, 1, 3], [5, 2, 4]]
+    }
+    heldout task tall4-heldout-00 {
+        solution: tall4(input)
+        train [[2, 3, 4], [5, 1, 2]]
+        train [[2, 4, 1], [3, 5, 2]]
+        test  [[2, 5, 3], [1, 4, 2]]
+    }
+}
+
+rung {
+    wide8(g: Grid) -> Grid = concat_h(tall4(g), tall4(g))
+
+    task wide8-00 {
+        solution: wide8(input)
+        train [[5, 2, 4], [1, 3, 5]]
+        train [[5, 3, 1], [4, 2, 5]]
+        test  [[5, 4, 3], [2, 1, 5]]
+    }
+    task wide8-01 {
+        solution: wide8(input)
+        train [[3, 1, 4], [2, 5, 3]]
+        train [[3, 2, 1], [5, 4, 3]]
+        test  [[3, 4, 5], [1, 2, 3]]
+    }
+    heldout task wide8-heldout-00 {
+        solution: wide8(input)
+        train [[1, 5, 4], [3, 2, 1]]
+        train [[1, 2, 3], [4, 5, 1]]
+        test  [[1, 3, 5], [2, 4, 1]]
+    }
+}
+
+distractor trap {
+    task trap-00 {
+        solution: concat_h(concat_v(input, input), concat_v(input, input))
+        train [[4, 5, 1], [2, 3, 4]]
+        train [[4, 1, 3], [5, 2, 4]]
+        test  [[4, 2, 5], [3, 1, 4]]
+    }
+    task trap-01 {
+        solution: concat_h(concat_v(input, input), concat_v(input, input))
+        train [[2, 4, 1], [3, 5, 2]]
+        train [[2, 5, 3], [1, 4, 2]]
+        test  [[2, 1, 5], [4, 3, 2]]
+    }
+    task trap-02 {
+        solution: concat_h(concat_v(input, input), concat_v(input, input))
+        train [[5, 3, 1], [4, 2, 5]]
+        train [[5, 4, 3], [2, 1, 5]]
+        test  [[5, 1, 2], [3, 4, 5]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: concat_v(wide8(input), wide8(input))
+        train [[3, 2, 1], [5, 4, 3]]
+        train [[3, 4, 5], [1, 2, 3]]
+        test  [[3, 5, 2], [4, 1, 3]]
+    }
+    heldout task top-heldout-00 {
+        solution: concat_v(wide8(input), wide8(input))
+        train [[1, 2, 3], [4, 5, 1]]
+        train [[1, 3, 5], [2, 4, 1]]
+        test  [[1, 4, 2], [5, 3, 1]]
+    }
+}

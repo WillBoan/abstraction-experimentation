@@ -2,8 +2,10 @@
 
 # LadderSpec: al9-decoy
 
+Derived from `al9-decoy.ladder` (in `program_search/ladders/registry/`) -- that file is this ladder's source of truth: floor, rung templates, config and tasks. Everything below is COMPUTED from it.
+
 - Height: 6 (5 bridging rungs + top)
-- Floor (`L_0`, library `al7-L0`): `concat_h`, `concat_v`, `flip_h`, `flip_v`
+- Floor library: `al7-L0` (4 primitives)
 - Pinned `depth_limit` (the reference config's cap -- every sandwich claim below is stated against it): 2
 - Validity window: `depth_limit` in [2, 2] (inclusive)
 - Raw depth profile (top solutions unfolded to `L_0`): [7]
@@ -26,54 +28,36 @@
 
 ## Rung spine
 
-| level | rung         | d_i | double-jump | fan-in | demos |
-| ----- | ------------ | --- | ----------- | ------ | ----- |
-| 1     | `mirror`     | 2   | 3           | 0      | 2     |
-| 2     | `stack2`     | 2   | 3           | 2      | 2     |
-| 3     | `wide4`      | 2   | 3           | 2      | 2     |
-| 4     | `tall4`      | 2   | 3           | 2      | 2     |
-| 5     | `wide8`      | 2   | 3           | 2      | 2     |
-| top   | (goal layer) | 2   | -           | 2      | 1     |
+| level | rung         | d_i | double-jump | fan-in | demos | kind          |
+| ----- | ------------ | --- | ----------- | ------ | ----- | ------------- |
+| 1     | `mirror`     | 2   | 3           | 0      | 2     | full_solution |
+| 2     | `stack2`     | 2   | 3           | 2      | 2     | full_solution |
+| 3     | `wide4`      | 2   | 3           | 2      | 2     | full_solution |
+| 4     | `tall4`      | 2   | 3           | 2      | 2     | full_solution |
+| 5     | `wide8`      | 2   | 3           | 2      | 2     | full_solution |
+| top   | (goal layer) | 2   | -           | 2      | 1     | -             |
 
 - `d_i`: compositional depth of the template over `L_{i-1}` (top row: of the reference solutions over `L_k`)
 - `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
-
-## r_1: `mirror`
-
-- Template (over `L_0`): `concat_h(#0, flip_h(#0))`
-- Demonstrations (full_solution): `mirror-00`, `mirror-01`
-
-## r_2: `stack2`
-
-- Template (over `L_1`): `concat_v(mirror(#0), mirror(#0))`
-- Demonstrations (full_solution): `stack2-00`, `stack2-01`
-
-## r_3: `wide4`
-
-- Template (over `L_2`): `concat_h(stack2(#0), stack2(#0))`
-- Demonstrations (full_solution): `wide4-00`, `wide4-01`
-
-## r_4: `tall4`
-
-- Template (over `L_3`): `concat_v(wide4(#0), wide4(#0))`
-- Demonstrations (full_solution): `tall4-00`, `tall4-01`
-
-## r_5: `wide8`
-
-- Template (over `L_4`): `concat_h(tall4(#0), tall4(#0))`
-- Demonstrations (full_solution): `wide8-00`, `wide8-01`
+- `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
 
 ## Top Rung (goal layer -- nothing is minted here)
 
-- `top-00`: `concat_v(wide8(input), wide8(input))` (d=2 over `L_5`; d_raw=7)
+- `top-00`: d=2 over `L_5`
 
-## Reference config
+## Reference config (resolved)
+
+The frozen ladder default with the source file's `config` block applied -- the effective machinery, which neither the default nor the file shows on its own.
 
 - Budget: `Budget`
   - depth_limit: `2`
   - max_arity: `2`
   - max_pool: `400`
+  - considered_limit: `50000`
+  - considered_limit_mode: `immediate`
+  - solution_limit: `None`
+  - solution_limit_mode: `generation-end`
 - Search engine: `BottomUpSearchEngine`
   - constant_sources: `[]`
   - function_hole_fill_mode: `none`
@@ -94,19 +78,3 @@
   - early_stop: `True`
   - reset_programs_each_wake: `True`
   - score_each_wake: `False`
-
-## Budget sweep cells
-
-- depth_limit=2, max_arity=2, max_pool=400 (reference)
-
-## Corpus
-
-| label  | train                    | heldout             |
-| ------ | ------------------------ | ------------------- |
-| decoy  | `decoy-00`, `decoy-01`   | -                   |
-| mirror | `mirror-00`, `mirror-01` | `mirror-heldout-00` |
-| stack2 | `stack2-00`, `stack2-01` | `stack2-heldout-00` |
-| tall4  | `tall4-00`, `tall4-01`   | `tall4-heldout-00`  |
-| top    | `top-00`                 | `top-heldout-00`    |
-| wide4  | `wide4-00`, `wide4-01`   | `wide4-heldout-00`  |
-| wide8  | `wide8-00`, `wide8-01`   | `wide8-heldout-00`  |

@@ -2,8 +2,10 @@
 
 # LadderSpec: al2-rot90-calibration
 
+Derived from `al2-rot90-calibration.ladder` (in `program_search/ladders/registry/`) -- that file is this ladder's source of truth: floor, rung templates, config and tasks. Everything below is COMPUTED from it.
+
 - Height: 2 (1 bridging rungs + top)
-- Floor (`L_0`, library `al2-L0`): `flip_h`, `transpose`
+- Floor library: `al2-L0` (2 primitives)
 - Pinned `depth_limit` (the reference config's cap -- every sandwich claim below is stated against it): 2
 - Validity window: `depth_limit` in [2, 3] (inclusive)
 - Raw depth profile (top solutions unfolded to `L_0`): [4]
@@ -23,30 +25,32 @@
 
 ## Rung spine
 
-| level | rung         | d_i | double-jump | fan-in | demos |
-| ----- | ------------ | --- | ----------- | ------ | ----- |
-| 1     | `rot90`      | 2   | 4           | 0      | 2     |
-| top   | (goal layer) | 2   | -           | 2      | 1     |
+| level | rung         | d_i | double-jump | fan-in | demos | kind          |
+| ----- | ------------ | --- | ----------- | ------ | ----- | ------------- |
+| 1     | `rot90`      | 2   | 4           | 0      | 2     | full_solution |
+| top   | (goal layer) | 2   | -           | 2      | 1     | -             |
 
 - `d_i`: compositional depth of the template over `L_{i-1}` (top row: of the reference solutions over `L_k`)
 - `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
-
-## r_1: `rot90`
-
-- Template (over `L_0`): `flip_h(transpose(#0))`
-- Demonstrations (full_solution): `rot90-00`, `rot90-01`
+- `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
 
 ## Top Rung (goal layer -- nothing is minted here)
 
-- `top-00`: `rot90(rot90(input))` (d=2 over `L_1`; d_raw=4)
+- `top-00`: d=2 over `L_1`
 
-## Reference config
+## Reference config (resolved)
+
+The frozen ladder default with the source file's `config` block applied -- the effective machinery, which neither the default nor the file shows on its own.
 
 - Budget: `Budget`
   - depth_limit: `2`
   - max_arity: `2`
   - max_pool: `400`
+  - considered_limit: `50000`
+  - considered_limit_mode: `immediate`
+  - solution_limit: `None`
+  - solution_limit_mode: `generation-end`
 - Search engine: `BottomUpSearchEngine`
   - constant_sources: `[]`
   - function_hole_fill_mode: `none`
@@ -67,15 +71,3 @@
   - early_stop: `True`
   - reset_programs_each_wake: `True`
   - score_each_wake: `False`
-
-## Budget sweep cells
-
-- depth_limit=2, max_arity=2, max_pool=400 (reference)
-- depth_limit=4, max_arity=2, max_pool=4000
-
-## Corpus
-
-| label | train                  | heldout            |
-| ----- | ---------------------- | ------------------ |
-| rot90 | `rot90-00`, `rot90-01` | `rot90-heldout-00` |
-| top   | `top-00`               | `top-heldout-00`   |

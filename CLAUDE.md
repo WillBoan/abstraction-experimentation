@@ -77,6 +77,7 @@ A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed s
 - **Add a machinery preset** → a `Config` in `execution/presets.py::PRESETS`.
 - **Add a constraint / cost / learn engine / proposer** → `search/constraints.py` / `search/cost.py` / `learn/engines.py` / `learn/antiunify.py`+`learn/stitch_shim.py`; frozen dataclasses, registered in `default_registry` (they are run identity).
 - **Add a study** → a generator in `taskgen/generators.py` (committed testbed under `testbeds/`) + a `StudySpec` builder in `execution/studies.py::STUDIES`; drive with `uv run arc-lab run-study <name>`.
+- **Add a ladder** → one `<name>.ladder` file in `program_search/ladders/registry/` (the format spec is `docs/abstraction_ladders/LADDER-FORMAT.md`); there is nothing to register — the directory is scanned. Then `uv run arc-lab taskgen <name>` to commit its testbed, and `run-ladder <name>` to drive it.
 - **Add a CLI command** → a thin module in `cli/`, registered in `cli/main.py`.
 
 ## Sources of truth (don't duplicate — point here)
@@ -87,7 +88,7 @@ A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed s
 - Behavior locks: `tests/program_search/execution/test_locks.py` (old-tree locks: `tests/test_integration.py`, until the deletion pass)
 - Commands: `Makefile`
 - Experiment history & findings: `EXPERIMENTS.md` · Planned experiments: `EXPERIMENT_QUEUE.md`
-- Ladder file format (`.ladder` source syntax/semantics; agreed spec, pre-build): `docs/abstraction_ladders/LADDER-FORMAT.md` · Ladder register: `docs/abstraction_ladders/LADDERS.md`
+- Ladder file format (`.ladder` = a ladder's single source of truth: spec, testbed, artifacts): `docs/abstraction_ladders/LADDER-FORMAT.md` · Ladder sources: `program_search/ladders/registry/*.ladder` · Ladder register: `docs/abstraction_ladders/LADDERS.md`
 - Lever maps (primitives / machinery / expressibility control): `ONTOLOGY.md` / `MACHINERY.md` / `SEARCH-SPACE.md`
 - Research frame (dated snapshot the maps are read against): `docs/RESEARCH-2026-07-08.md` (superseded snapshots live in `docs/archive/`)
 - Machinery build strategy (build vs. adopt vs. defer; dated): `docs/MACHINERY-STRATEGY-2026-07-07.md`

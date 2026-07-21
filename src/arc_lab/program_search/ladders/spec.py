@@ -333,12 +333,18 @@ class LadderSpec:
         return self.train_corpus.name.split(":")[0]
 
     def render(self) -> str:
-        """The generated spec artifact (``spec.md``): the ladder's full structure -- rung
-        templates, shape/dependencies, depth spine, reference config, corpus map -- as markdown,
-        with a Verification section separating what the static lint asserts from what only the
-        empirical certificate (results.md) can. The committed copy lives beside the worksheet in
-        ``docs/abstraction_ladders/ladders/<name>/`` (written by ``arc-lab run-ladder <name>
-        --artifacts``); never hand-edited, and exempt from editor formatting (.prettierignore)."""
+        """The generated spec artifact (``spec.md``): everything DERIVED from the ladder's source.
+
+        The ladder\'s ``.ladder`` file states what was chosen -- floor, templates, config block,
+        tasks (LADDER-FORMAT.md) -- so this artifact deliberately does not restate any of it. What
+        it carries is what follows: the depth spine, dependency structure, the validity window,
+        derived demonstration kinds, the RESOLVED reference config (the frozen ladder default plus
+        the file\'s overrides, which no single file shows), and the static lint\'s verdict --
+        separated from what only the empirical certificate (results.md) can say.
+
+        The committed copy lives beside the worksheet in ``docs/abstraction_ladders/ladders/
+        <name>/`` (written by ``arc-lab run-ladder <name> --artifacts``); never hand-edited, and
+        exempt from editor formatting (.prettierignore)."""
         shape = self.lint()
         k = len(self.rungs)
         lo, hi = shape.validity_window
@@ -355,9 +361,12 @@ class LadderSpec:
             "",
             f"# LadderSpec: {self.name}",
             "",
+            f"Derived from `{self.name}.ladder` (in `program_search/ladders/registry/`) -- that "
+            f"file is this ladder's source of truth: floor, rung templates, config and tasks. "
+            f"Everything below is COMPUTED from it.",
+            "",
             f"- Height: {shape.height} ({k} bridging rungs + top)",
-            f"- Floor (`L_0`, library `{floor.name}`): "
-            + ", ".join(f"`{p.name}`" for p in floor.primitives),
+            f"- Floor library: `{floor.name}` ({len(floor.primitives)} primitives)",
             f"- Pinned `depth_limit` (the reference config's cap -- every sandwich claim below "
             f"is stated against it): {pinned}",
             f"- Validity window: `depth_limit` in [{lo}, {hi}] (inclusive)",
@@ -404,7 +413,11 @@ class LadderSpec:
         for tid, sol in top_pairs:
             lines.append(f"  - top `{tid}`: {_calls_text(sol, rung_order)}")
 
-        rows = [["level", "rung", "d_i", "double-jump", "fan-in", "demos"]]
+        kinds = {
+            rung.name: "/".join(sorted({d.kind.value for d in rung.demonstrations})) or "-"
+            for rung in self.rungs
+        }
+        rows = [["level", "rung", "d_i", "double-jump", "fan-in", "demos", "kind"]]
         for s in shape.rungs:
             rows.append(
                 [
@@ -414,6 +427,7 @@ class LadderSpec:
                     "-" if s.double_jump_depth is None else str(s.double_jump_depth),
                     str(s.fan_in),
                     str(s.demonstration_count),
+                    kinds.get(s.name, "-"),
                 ]
             )
         rows.append(
@@ -424,6 +438,7 @@ class LadderSpec:
                 "-",
                 _span(top_fan_ins),
                 str(len(self.top.task_ids)),
+                "-",
             ]
         )
         lines += [
@@ -438,48 +453,25 @@ class LadderSpec:
             "this rung would cost in depth (for the last rung, from the top solutions)",
             "- `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count "
             "(design doc, section 2)",
+            "- `kind`: the demonstration kind DERIVED from each task's solution shape "
+            "(LADDER-FORMAT.md DRV-2), not declared anywhere",
         ]
 
-        for rung in self.rungs:
-            lines += [
-                "",
-                f"## r_{rung.level}: `{rung.name}`",
-                "",
-                f"- Template (over `L_{rung.level - 1}`): `{rung.template}`",
-            ]
-            by_kind: dict[str, list[str]] = {}
-            for demo in rung.demonstrations:
-                by_kind.setdefault(demo.kind.value, []).append(demo.task_id)
-            for kind, ids in sorted(by_kind.items()):
-                lines.append(f"- Demonstrations ({kind}): " + ", ".join(f"`{tid}`" for tid in ids))
         lines += ["", "## Top Rung (goal layer -- nothing is minted here)", ""]
-        for (tid, sol), d_top in zip(top_pairs, top_depths, strict=True):
-            d_raw = compositional_depth(unfold_program(sol, self.oracle_library(k)))
-            lines.append(f"- `{tid}`: `{sol}` (d={d_top} over `L_{k}`; d_raw={d_raw})")
-        lines += ["", "## Reference config", ""]
+        for (tid, _), d_top in zip(top_pairs, top_depths, strict=True):
+            lines.append(f"- `{tid}`: d={d_top} over `L_{k}`")
+        lines += [
+            "",
+            "## Reference config (resolved)",
+            "",
+            "The frozen ladder default with the source file's `config` block applied -- the "
+            "effective machinery, which neither the default nor the file shows on its own.",
+            "",
+        ]
         lines += _data_bullets("Budget", to_data(self.reference_config.budget))
         lines += _data_bullets("Search engine", to_data(self.reference_config.search_engine))
         if self.reference_config.learn is not None:
             lines += _data_bullets("Learn", to_data(self.reference_config.learn))
-        lines += ["", "## Budget sweep cells", ""]
-        for budget in self.budgets:
-            data = to_data(budget)
-            cell = ", ".join(f"{key}={value}" for key, value in data.items() if key != "kind")
-            marker = " (reference)" if budget == self.reference_config.budget else ""
-            lines.append(f"- {cell}{marker}")
-        train_by = _ids_by_label(self.train_corpus)
-        held_by = _ids_by_label(self.heldout_corpus)
-        labels = [*train_by, *(label for label in held_by if label not in train_by)]
-        corpus_rows = [["label", "train", "heldout"]]
-        for label in labels:
-            corpus_rows.append(
-                [
-                    label,
-                    ", ".join(f"`{tid}`" for tid in train_by.get(label, [])) or "-",
-                    ", ".join(f"`{tid}`" for tid in held_by.get(label, [])) or "-",
-                ]
-            )
-        lines += ["", "## Corpus", "", *table(corpus_rows)]
         return "\n".join(lines)
 
     def __str__(self) -> str:
@@ -545,15 +537,6 @@ def _data_bullets(label: str, data: object, indent: int = 0) -> list[str]:
         if key != "kind":
             lines += _data_bullets(str(key), value, indent + 1)
     return lines
-
-
-def _ids_by_label(corpus: Corpus) -> dict[str, list[str]]:
-    """Task ids grouped by their rung label (testbed manifest ``meta.label``), insertion-ordered."""
-    out: dict[str, list[str]] = {}
-    for entry in corpus.entries:
-        label = entry.meta.label if entry.meta is not None and entry.meta.label else "(unlabeled)"
-        out.setdefault(label, []).append(entry.task.task_id)
-    return out
 
 
 def _fan_in(template: Program, rung_names: set[str]) -> int:

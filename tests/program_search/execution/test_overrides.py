@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from arc_lab.program_search.execution.model import LearnSpec, RunSpec
+from arc_lab.program_search.execution.model import Config, LearnSpec, RunSpec
 from arc_lab.program_search.execution.overrides import apply_overrides, parse_set_values
 from arc_lab.program_search.execution.presets import PRESETS
 from arc_lab.program_search.learn.antiunify import AntiunifyPairs
@@ -94,3 +94,31 @@ def test_overridden_config_gets_its_own_run_identity() -> None:
         config=apply_overrides(PRESETS["d4"], {"budget.depth_limit": 2}), corpus=corpus
     )
     assert base.run_id != tweaked.run_id
+
+
+def test_component_fields_are_set_by_their_serde_kind() -> None:
+    """A machinery component is named by the same ``kind`` string ``to_data`` emits, so ``--set``
+    and a `.ladder` config block use the registry's vocabulary (LADDER-FORMAT.md CFG-6)."""
+    from arc_lab.program_search.ladders.registry import make_ladder
+
+    def proposer_name(config: Config) -> str:
+        assert config.learn is not None
+        engine = config.learn.learn_engine
+        assert isinstance(engine, GreedyMDLLearnEngine)
+        return type(engine.proposer).__name__
+
+    config = make_ladder("al1-mirror").reference_config
+    assert proposer_name(config) == "AntiunifyPairs"
+    swapped = apply_overrides(config, {"learn.learn_engine.proposer": "FrequentSubtree"})
+    assert proposer_name(swapped) == "FrequentSubtree"
+    assert type(apply_overrides(config, {"cost": "ProgramSize"}).cost).__name__ == "ProgramSize"
+
+
+def test_component_override_rejects_the_wrong_interface_and_unknown_kinds() -> None:
+    from arc_lab.program_search.ladders.registry import make_ladder
+
+    config = make_ladder("al1-mirror").reference_config
+    with pytest.raises(ValueError, match="is not a AbstractionProposer"):
+        apply_overrides(config, {"learn.learn_engine.proposer": "BottomUpSearchEngine"})
+    with pytest.raises(ValueError, match="unknown component 'Nope'"):
+        apply_overrides(config, {"learn.learn_engine.proposer": "Nope"})

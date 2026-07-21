@@ -1,6 +1,6 @@
 {
   "name": "al5-perceiver-chain",
-  "note": "al5-perceiver-chain: L0 {map_color, most_common_color, least_common_color, flip_h, flip_v} -> swap_extremes -> swap_mirror -> swap_stack -> top. The constant-heavy arm; free params 0 -> 1 -> 2 up the ladder.",
+  "note": "Generated from al5-perceiver-chain.ladder",
   "content_hash": "24c2d60eafeda27b",
   "tasks": [
     {

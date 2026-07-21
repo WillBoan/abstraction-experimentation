@@ -1,0 +1,61 @@
+ladder al10-skippable
+
+# ``al10-skippable`` (control): al2's spine at a budget deep enough to make its rung SKIPPABLE.
+#
+# Every other ladder enforces the sandwich strictly: the layer above must be unreachable without the
+# rung below. This control breaks exactly that one rule and nothing else. al2's top-skip depth is 4,
+# so pinning ``depth_limit=4`` (instead of 2) means the top is reachable raw -- the rung buys nothing.
+#
+# **This ladder is expected to FAIL its lint** (``top-double-jump-intractable``) and to be REJECTED by
+# the certificate (``no_skip_paths`` false). That is the control working, not a defect. What it
+# measures is what rung-necessity enforcement actually buys -- settling empirically what the design
+# doc settled by fiat.
+
+config {
+    budget.depth_limit: 4
+    budget.max_pool: 4000
+    learn.iterations: 4
+}
+
+floor al2-L0 {
+    use flip_h:    (Grid) -> Grid
+    use transpose: (Grid) -> Grid
+}
+
+rung {
+    rot90(g: Grid) -> Grid = flip_h(transpose(g))
+
+    task rot90-00 {
+        solution: rot90(input)
+        train [[4, 1, 3], [5, 2, 4]]
+        train [[4, 2, 5], [3, 1, 4]]
+        test  [[4, 3, 2], [1, 5, 4]]
+    }
+    task rot90-01 {
+        solution: rot90(input)
+        train [[2, 5, 3], [1, 4, 2]]
+        train [[2, 1, 5], [4, 3, 2]]
+        test  [[2, 3, 4], [5, 1, 2]]
+    }
+    heldout task rot90-heldout-00 {
+        solution: rot90(input)
+        train [[5, 4, 3], [2, 1, 5]]
+        train [[5, 1, 2], [3, 4, 5]]
+        test  [[5, 2, 4], [1, 3, 5]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: rot90(rot90(input))
+        train [[3, 4, 5], [1, 2, 3]]
+        train [[3, 5, 2], [4, 1, 3]]
+        test  [[3, 1, 4], [2, 5, 3]]
+    }
+    heldout task top-heldout-00 {
+        solution: rot90(rot90(input))
+        train [[1, 3, 5], [2, 4, 1]]
+        train [[1, 4, 2], [5, 3, 1]]
+        test  [[1, 5, 4], [3, 2, 1]]
+    }
+}

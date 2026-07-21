@@ -1,0 +1,113 @@
+ladder al5-perceiver-chain
+
+# ``al5-perceiver-chain``: the constant-heavy, free-param arm -- height 4, jumps [3,3,3].
+#
+# L0 {map_color, most_common_color, least_common_color, flip_h, flip_v} -> swap_extremes ->
+# swap_mirror -> swap_stack -> top. Free parameters grow 0 -> 1 -> 2 up the ladder, and ``map_color``
+# takes two COLOR arguments drawn from ``finite-enumerate``, so this is where the vocabulary tax
+# lands: AL1 measured a per-application factor of ~100 from exactly that pairing. al3 is the
+# zero-constant contrast; :mod:`al6_mirror_tall` is the same floor one rung taller (the height axis).
+#
+# ``swap_extremes`` is NOT a clean swap -- its first ``map_color`` rewrites the background before the
+# second recolour reads it, so the two recolours interact. That is fine (a task is whatever its
+# program computes) but it is why the generator evaluates the template rather than reimplementing it.
+
+config {
+    budget.depth_limit: 3
+    budget.max_arity: 3
+    budget.max_pool: 1500
+    search_engine.constant_sources: ['finite-enumerate']
+    learn.iterations: 6
+}
+
+floor al5-L0 {
+    use map_color:          (Grid, Color, Color) -> Grid
+    use most_common_color:  (Grid) -> Color
+    use least_common_color: (Grid) -> Color
+    use flip_h:             (Grid) -> Grid
+    use flip_v:             (Grid) -> Grid
+}
+
+rung {
+    swap_extremes(g: Grid) -> Grid = map_color(map_color(g, most_common_color(g), least_common_color(g)), least_common_color(g), most_common_color(g))
+
+    task swap_extremes-00 {
+        solution: swap_extremes(input)
+        train [[4, 2, 4], [2, 4, 2]]
+        train [[1, 4, 3], [2, 1, 4]]
+        test  [[2, 3, 4], [1, 2, 3]]
+    }
+    task swap_extremes-01 {
+        solution: swap_extremes(input)
+        train [[3, 2, 1], [4, 3, 2]]
+        train [[4, 1, 2], [3, 4, 1]]
+        test  [[1, 3, 1], [3, 1, 3]]
+    }
+    heldout task swap_extremes-heldout-00 {
+        solution: swap_extremes(input)
+        train [[2, 3, 4], [1, 2, 3]]
+        train [[3, 1, 3], [1, 3, 1]]
+        test  [[4, 3, 2], [1, 4, 3]]
+    }
+}
+
+rung {
+    swap_mirror(g: Grid, c: Color) -> Grid = map_color(flip_h(swap_extremes(g)), most_common_color(g), c)
+
+    task swap_mirror-00 {
+        solution: swap_mirror(input, 3)
+        train [[1, 3, 1], [3, 1, 3]]
+        train [[2, 1, 4], [3, 2, 1]]
+        test  [[3, 4, 1], [2, 3, 4]]
+    }
+    task swap_mirror-01 {
+        solution: swap_mirror(input, 7)
+        train [[4, 3, 2], [1, 4, 3]]
+        train [[1, 2, 3], [4, 1, 2]]
+        test  [[2, 4, 2], [4, 2, 4]]
+    }
+    heldout task swap_mirror-heldout-00 {
+        solution: swap_mirror(input, 5)
+        train [[3, 4, 1], [2, 3, 4]]
+        train [[4, 2, 4], [2, 4, 2]]
+        test  [[1, 4, 3], [2, 1, 4]]
+    }
+}
+
+rung {
+    swap_stack(g: Grid, c: Color, c2: Color) -> Grid = map_color(flip_v(swap_mirror(g, c)), most_common_color(flip_h(g)), c2)
+
+    task swap_stack-00 {
+        solution: swap_stack(input, 3, 8)
+        train [[2, 4, 2], [4, 2, 4]]
+        train [[3, 2, 1], [4, 3, 2]]
+        test  [[4, 1, 2], [3, 4, 1]]
+    }
+    task swap_stack-01 {
+        solution: swap_stack(input, 7, 9)
+        train [[1, 4, 3], [2, 1, 4]]
+        train [[2, 3, 4], [1, 2, 3]]
+        test  [[3, 1, 3], [1, 3, 1]]
+    }
+    heldout task swap_stack-heldout-00 {
+        solution: swap_stack(input, 5, 6)
+        train [[4, 1, 2], [3, 4, 1]]
+        train [[1, 3, 1], [3, 1, 3]]
+        test  [[2, 1, 4], [3, 2, 1]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: flip_h(swap_stack(input, 2, 6))
+        train [[3, 1, 3], [1, 3, 1]]
+        train [[4, 3, 2], [1, 4, 3]]
+        test  [[1, 2, 3], [4, 1, 2]]
+    }
+    heldout task top-heldout-00 {
+        solution: flip_h(swap_stack(input, 2, 6))
+        train [[2, 1, 4], [3, 2, 1]]
+        train [[3, 4, 1], [2, 3, 4]]
+        test  [[4, 2, 4], [2, 4, 2]]
+    }
+}

@@ -2,8 +2,10 @@
 
 # LadderSpec: al1-mirror
 
+Derived from `al1-mirror.ladder` (in `program_search/ladders/registry/`) -- that file is this ladder's source of truth: floor, rung templates, config and tasks. Everything below is COMPUTED from it.
+
 - Height: 3 (2 bridging rungs + top)
-- Floor (`L_0`, library `al1-L0`): `flip_h`, `flip_v`, `map_color`
+- Floor library: `al1-L0` (3 primitives)
 - Pinned `depth_limit` (the reference config's cap -- every sandwich claim below is stated against it): 2
 - Validity window: `depth_limit` in [2, 2] (inclusive)
 - Raw depth profile (top solutions unfolded to `L_0`): [4]
@@ -24,36 +26,33 @@
 
 ## Rung spine
 
-| level | rung             | d_i | double-jump | fan-in | demos |
-| ----- | ---------------- | --- | ----------- | ------ | ----- |
-| 1     | `rot180`         | 2   | 3           | 0      | 2     |
-| 2     | `mirror_recolor` | 2   | 3           | 1      | 2     |
-| top   | (goal layer)     | 2   | -           | 1      | 1     |
+| level | rung             | d_i | double-jump | fan-in | demos | kind          |
+| ----- | ---------------- | --- | ----------- | ------ | ----- | ------------- |
+| 1     | `rot180`         | 2   | 3           | 0      | 2     | full_solution |
+| 2     | `mirror_recolor` | 2   | 3           | 1      | 2     | full_solution |
+| top   | (goal layer)     | 2   | -           | 1      | 1     | -             |
 
 - `d_i`: compositional depth of the template over `L_{i-1}` (top row: of the reference solutions over `L_k`)
 - `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
-
-## r_1: `rot180`
-
-- Template (over `L_0`): `flip_h(flip_v(#0))`
-- Demonstrations (full_solution): `rot180-00`, `rot180-01`
-
-## r_2: `mirror_recolor`
-
-- Template (over `L_1`): `map_color(rot180(#0), #1, #2)`
-- Demonstrations (full_solution): `mirror-recolor-1-2`, `mirror-recolor-3-4`
+- `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
 
 ## Top Rung (goal layer -- nothing is minted here)
 
-- `top-00`: `map_color(mirror_recolor(input, 1, 2), 3, 4)` (d=2 over `L_2`; d_raw=4)
+- `top-00`: d=2 over `L_2`
 
-## Reference config
+## Reference config (resolved)
+
+The frozen ladder default with the source file's `config` block applied -- the effective machinery, which neither the default nor the file shows on its own.
 
 - Budget: `Budget`
   - depth_limit: `2`
   - max_arity: `2`
   - max_pool: `300`
+  - considered_limit: `50000`
+  - considered_limit_mode: `immediate`
+  - solution_limit: `None`
+  - solution_limit_mode: `generation-end`
 - Search engine: `BottomUpSearchEngine`
   - constant_sources: `['finite-enumerate']`
   - function_hole_fill_mode: `none`
@@ -74,15 +73,3 @@
   - early_stop: `True`
   - reset_programs_each_wake: `True`
   - score_each_wake: `False`
-
-## Budget sweep cells
-
-- depth_limit=2, max_arity=2, max_pool=300 (reference)
-
-## Corpus
-
-| label          | train                                      | heldout              |
-| -------------- | ------------------------------------------ | -------------------- |
-| mirror_recolor | `mirror-recolor-1-2`, `mirror-recolor-3-4` | `mirror-recolor-2-3` |
-| rot180         | `rot180-00`, `rot180-01`                   | `rot180-heldout`     |
-| top            | `top-00`                                   | `top-heldout`        |

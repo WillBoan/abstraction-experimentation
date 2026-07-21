@@ -148,9 +148,7 @@ def _seeds(
 ) -> tuple[Grid, ...]:
     """Dispatch to the seed generator named by ``seed_mode`` (shared by rungs and the goal layer)."""
     if seed_mode == "symmetry-repair":
-        return symmetry_repair_seeds(
-            count, rows=rows, cols=cols, variant=variant, palette=palette
-        )
+        return symmetry_repair_seeds(count, rows=rows, cols=cols, variant=variant, palette=palette)
     if seed_mode != "stride":
         raise ValueError(f"unknown seed_mode {seed_mode!r}")
     return seed_grids(

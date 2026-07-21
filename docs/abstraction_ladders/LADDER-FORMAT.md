@@ -6,7 +6,7 @@ A `.ladder` file is the **single source of truth for a ladder's identity**: it d
 
 This doc governs the implementation — where code and this spec disagree, this spec wins until deliberately amended.
 
-**Status: agreed design, 2026-07-21 — not yet implemented.** The Python registry modules (`src/arc_lab/program_search/ladders/registry/*.py`) remain the operative source until migration completes.
+**Status (2026-07-21): implemented; all 20 ladders migrated.** The language lives in `src/arc_lab/program_search/ladders/lang/`, and `ladders/registry/` now holds `.ladder` files only — the per-ladder Python modules are gone. A test locks every ladder's regenerated testbed against its committed one.
 
 ## 1. Motivation
 
@@ -26,7 +26,7 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 - **LEX-3** Blank lines and indentation are insignificant (braces carry structure).
 - **LEX-4** One statement per line; a statement continues across lines while brackets are unbalanced.
 - **LEX-5** A block opens with `{` at the end of its header line and closes with `}` on its own line.
-- **LEX-6** Reserved words: `ladder`, `floor`, `config`, `rung`, `top`, `task`, `heldout`, `use`, `solution`, `train`, `test`, `input`.
+- **LEX-6** Reserved words: `ladder`, `floor`, `config`, `rung`, `distractor`, `top`, `task`, `heldout`, `use`, `solution`, `train`, `test`, `input`.
 
 ### STR — file structure
 
@@ -34,10 +34,11 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 - **STR-2** `<name>` must equal the `ladder <name>` header.
 - **STR-3** `<name>` must be kebab-case: `[a-z0-9]+(-[a-z0-9]+)*`.
 - **STR-4** Section order is fixed; nothing else, nothing twice, nothing missing:
-  - `ladder` header
+  - `ladder <name>` header
   - `config`
-  - `floor`
+  - `floor <library-name>`
   - one or more `rung`
+  - zero or more `distractor <label>`
   - `top`
 
 ### NAM — naming & scoping
@@ -50,14 +51,15 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 
 ### FLR — floor
 
-- **FLR-1** Floor primitives are declared one per line: `use <name>: <signature>`.
-- **FLR-2** The Floor must have at least 1 primitive.
-- **FLR-3** The Floor must not have duplicate primitive names.
-- **FLR-4** Declaration order is significant: it is the `Library` primitive order.
-- **FLR-5** `<name>` must resolve in `BASE_PRIMITIVES`.
-- **FLR-6** The signature is required.
-- **FLR-7** The signature must exactly match the registry's signature for that primitive.
-- **FLR-8** Signature grammar: `(T1, T2, ...) -> T`, type names resolving against the substrate's type registry.
+- **FLR-1** The section header carries the Floor library's name: `floor <library-name> { ... }`. It is stated, not derived: a control ladder deliberately shares its parent's floor identity (al9/al11 share al7's, al10/al12 share al2's), and that sharing is what makes their columns comparable.
+- **FLR-2** Floor primitives are declared one per line: `use <name>: <signature>`.
+- **FLR-3** The Floor must have at least 1 primitive.
+- **FLR-4** The Floor must not have duplicate primitive names.
+- **FLR-5** Declaration order is significant: it is the `Library` primitive order.
+- **FLR-6** `<name>` must resolve in `BASE_PRIMITIVES`.
+- **FLR-7** The signature is required.
+- **FLR-8** The signature must exactly match the registry's signature for that primitive.
+- **FLR-9** Signature grammar: `(T1, T2, ...) -> T`, type names resolving against the substrate's type registry. A trailing `...` on the last parameter marks a variadic primitive (`overlay` is `(Color, Grid...) -> Grid`).
 
 ### CFG — config
 
@@ -76,6 +78,13 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 - **RNG-4** Whether a template is otherwise admissible (unused params, empty param lists, depth, etc.) is **delegated** to `make_abstraction` + `lint()`.
 - **RNG-5** After the definition: zero or more task blocks. Minimum counts are **delegated** to `lint()` (`min-2-demos`).
 
+### DST — distractors
+
+- **DST-1** A `distractor <label> { ... }` section holds tasks that sit in the corpus but off the ladder's spine — a control's learnable-but-unused competence (al9's `decoy`, al11's `trap`).
+- **DST-2** Its tasks follow the TSK rules; `<label>` becomes their corpus label.
+- **DST-3** Their solution scope is the Floor alone: a distractor must not reference a rung.
+- **DST-4** A distractor demonstrates nothing — no rung, no `DemonstrationKind`, nothing minted for it. It appears only in the corpus.
+
 ### TSK — tasks
 
 - **TSK-1** Header is `task <id> {` or `heldout task <id> {`. `heldout` routes the task to the heldout corpus; otherwise train.
@@ -90,13 +99,13 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 - **EXP-2** `f(a, b)` → `Apply("f", (a, b))`; `f` must resolve per the scope rules (NAM-4/5).
 - **EXP-3** `input` → `Input()`.
 - **EXP-4** A param name in a template body → `Param(index, type)` per RNG-3.
-- **EXP-5** An int literal → `Const(value, T)`, where `T` is the expected type of that argument position in the enclosing application; if that type is ambiguous (polymorphic), it is a load error.
-- **EXP-6** Every application is type/arity-checked — **delegated** to the substrate (`make_abstraction` for templates; type-check + evaluation for solutions).
+- **EXP-5** An int literal → `Const(value, T)`, where `T` is the expected type of that argument position in the enclosing application. `T` must be `Color` or `Int`; a polymorphic or non-scalar position is a load error.
+- **EXP-6** Elaboration type-checks and arity-checks every application, unifying each argument's type against the parameter position it fills. (Not delegable: the substrate types programs but does not verify them.) Still **delegated**: `make_abstraction` (a template is closed, with contiguous and consistently-typed param indices) and evaluation (spec DRV-3).
 - **EXP-7** Expressions produce only `Apply | Param | Const | Input` nodes; there is no surface syntax for `Lam`, `If`, `Var`, `AppFn`, `PrimRef`, or grid literals inside expressions.
 
 ### DRV — derivation (computed, never written)
 
-- **DRV-1** Rung levels (RNG-1), oracle libraries `L_i`, and library names (`<name>-L0`) are derived.
+- **DRV-1** Rung levels (RNG-1) and the oracle libraries `L_i` (including their names) are derived; the Floor library's own name is stated (FLR-1).
 - **DRV-2** `DemonstrationKind` is derived per task by structural comparison of solution vs the rung's template: solution = template instantiated ⇒ `full_solution`; template a proper subprogram with identical instantiation across the rung's **train** tasks ⇒ `fragment_identical`; else ⇒ `fragment_varying`. Heldout tasks don't vote.
 - **DRV-3** Task outputs are derived by executing the declared solution `Program` on each declared input through the engine's own evaluator. Execution failure on any input is a load error.
 - **DRV-4** The testbed (task JSONs + manifest, labels = rung names, splits per TSK-1) is generated from the file deterministically: same file ⇒ byte-identical testbed.
@@ -111,7 +120,7 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 
 | In the file (chosen) | Derived (never in the file) |
 | --- | --- |
-| Ladder name | Rung levels, library names, oracle libraries `L_i` |
+| Ladder name; Floor library name | Rung levels; oracle libraries `L_i` and their names |
 | Floor primitive references + asserted signatures | `DemonstrationKind` per task |
 | Reference config (as overrides on the frozen base) | Task outputs; testbed JSONs + manifest |
 | Rung definitions (signature + template) | Demonstration lists (tasks under their rung); depths, double-jumps, fan-in, validity window |
@@ -129,11 +138,11 @@ config {
     budget.max_arity: 2
     budget.max_pool: 300
     search_engine.constant_sources: ["finite-enumerate"]
-    learn.proposer: "antiunify-pairs"
+    learn.learn_engine.proposer: "AntiunifyPairs"
     learn.iterations: 5
 }
 
-floor {
+floor al1-L0 {
     use flip_h:    (Grid) -> Grid
     use flip_v:    (Grid) -> Grid
     use map_color: (Grid, Color, Color) -> Grid

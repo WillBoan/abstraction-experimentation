@@ -51,15 +51,21 @@ def test_render_marks_ok_and_lists_the_rungs() -> None:
     assert "al1-mirror" in text and "OK" in text and "rot180" in text and "mirror_recolor" in text
 
 
-def test_render_shows_templates_config_and_corpus() -> None:
-    # The spec.md artifact must carry the full structure: rung templates, the top reference
-    # solutions, the reference config, and the rung-labeled corpus map.
+def test_render_carries_derived_facts_only() -> None:
+    # spec.md holds what FOLLOWS from the ladder's source, never a restatement of it: the
+    # `.ladder` file owns templates, tasks and the config block (LADDER-FORMAT.md).
     text = make_ladder("al1-mirror").render()
-    assert "`flip_h(flip_v(#0))`" in text  # r_1 template
-    assert "`map_color(rot180(#0), #1, #2)`" in text  # r_2 template
-    assert "map_color(mirror_recolor(input, 1, 2), 3, 4)" in text  # top reference solution
-    assert "depth_limit: `2`" in text and "AntiunifyPairs" in text  # reference config bullets
-    assert "`rot180-00`" in text and "`top-heldout`" in text  # corpus map, both splits
+    assert "al1-mirror.ladder" in text  # the pointer to the source of truth
+    assert "`flip_h(flip_v(#0))`" not in text  # r_1's template belongs to the file
+    assert "map_color(mirror_recolor(input, 1, 2), 3, 4)" not in text  # ditto the top solution
+    assert "`rot180-00`" not in text  # ditto the corpus map
+    # The RESOLVED config is genuinely derived (frozen default + the file's overrides), as is the
+    # demonstration kind (from each solution's shape) and every depth.
+    assert "## Reference config (resolved)" in text
+    assert "depth_limit: `2`" in text and "AntiunifyPairs" in text
+    assert "considered_limit: `50000`" in text
+    assert "full_solution" in text
+    assert "d=2 over `L_2`" in text
 
 
 def test_render_separates_verification_and_shows_shape() -> None:

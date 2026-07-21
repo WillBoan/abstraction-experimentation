@@ -1,6 +1,6 @@
 {
   "name": "al6-mirror-tall",
-  "note": "al6-mirror-tall: AL1's floor + perceivers, climbed five levels (rot180 -> norm_mirror -> norm_stack -> norm_quad -> top). The height-axis partner of al5 and an upward extension of ladder #1.",
+  "note": "Generated from al6-mirror-tall.ladder",
   "content_hash": "7f695127ef3f852c",
   "tasks": [
     {

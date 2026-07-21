@@ -9,14 +9,17 @@ override layers in order — each layer a mapping of dotted paths to values:
 Paths navigate frozen-dataclass fields (``budget.depth_limit``, ``search_engine.beam_width``);
 every application is a ``dataclasses.replace``, so the result is a new frozen ``Config``
 with its own content-hashed ``run_id`` — overridden runs can never collide with the preset's
-cache. Two conveniences: ``library`` accepts a *name* resolved via the preset library
-registry, and a JSON-ish scalar string (``"4"``, ``"true"``, ``"[1, 2]"``) parses to its
-value (CLI values arrive as strings). Unknown fields and type mismatches fail loudly with
-the available options — an override typo must never silently no-op.
+cache. Three conveniences: ``library`` accepts a *name* resolved via the preset library
+registry, a component field accepts a serde ``kind`` (``learn.learn_engine.proposer=StitchProposer``
+— built with its defaults, then tunable by path), and a JSON-ish scalar string (``"4"``,
+``"true"``, ``"[1, 2]"``) parses to its value (CLI values arrive as strings). Unknown fields and
+type mismatches fail loudly with the available options — an override typo must never silently
+no-op.
 """
 
 from __future__ import annotations
 
+import abc
 import dataclasses
 import json
 from collections.abc import Mapping
@@ -94,6 +97,12 @@ def _coerce(current: object, value: object, full_path: str) -> object:
                     f"unknown library {value!r} for {full_path!r}; known: {known}"
                 ) from None
         raise ValueError(f"{full_path!r} takes a library name (string), got {value!r}")
+    if (
+        isinstance(value, str)
+        and dataclasses.is_dataclass(current)
+        and not isinstance(current, type)
+    ):
+        return _component(current, value, full_path)
     if isinstance(current, tuple) and isinstance(value, list):
         return tuple(value)
     if isinstance(current, bool) or isinstance(value, bool):
@@ -107,3 +116,34 @@ def _coerce(current: object, value: object, full_path: str) -> object:
             f"type mismatch for {full_path!r}: expected {type(current).__name__}, got {value!r}"
         )
     return value
+
+
+def _component(current: object, kind: str, full_path: str) -> object:
+    """Swap in the machinery component named by its serde ``kind``, built with its defaults.
+
+    A component field (search engine, proposer, learn engine, cost, ...) is set by *naming a kind* —
+    the same string ``to_data`` emits — so ``--set`` and a `.ladder` ``config`` block speak the
+    registry's own vocabulary rather than needing a constructed object. To vary the new component's
+    own fields, set them by path afterwards. The replacement must satisfy the field's interface
+    (the abstract base its current value implements), so a proposer can never become an engine.
+    """
+    from .model.config import default_registry
+
+    registry = default_registry()
+    replacement = registry.get(kind)
+    if replacement is None:
+        known = ", ".join(sorted(registry))
+        raise ValueError(f"unknown component {kind!r} for {full_path!r}; known: {known}")
+    # `ABC` and `object` are shared by every component, so neither constrains anything.
+    interfaces = tuple(base for base in type(current).__mro__[1:] if base not in (object, abc.ABC))
+    if interfaces and not issubclass(replacement, interfaces):
+        raise ValueError(
+            f"{kind!r} is not a {interfaces[0].__name__}, which {full_path!r} requires"
+        )
+    try:
+        return replacement()
+    except TypeError as exc:
+        raise ValueError(
+            f"cannot build {kind!r} for {full_path!r} from defaults ({exc}); "
+            "it needs explicit arguments"
+        ) from None

@@ -1,0 +1,123 @@
+ladder al4-mask-crop
+
+# ``al4-mask-crop``: the learned-``Mask``-intermediate arm -- height 4, jumps [3,4,3], d_raw 12.
+#
+# L0 (mask algebra + colour perceivers, with ``nonbg_mask``/``crop_to_content``/``bbox_mask``
+# **withheld**) -> nonbg_mask -> flatten_content -> stamp -> top. Because the withheld primitives are
+# shipped, every rung has a ready-made gen/full contrast.
+#
+# **Why this ladder is the odd one out.** r1's target, ``nonbg_mask``, is ``GRID -> MASK`` -- so no
+# grid-to-grid task can have it as a whole solution, and it can only ever be demonstrated as a
+# *fragment*. Its demonstrating tasks are therefore solved by a grid-to-grid wrapper that contains it
+# (``crop_to_mask(g, nonbg_mask g)``, ie ``crop_to_content``), the rung is marked
+# ``FRAGMENT_IDENTICAL``, and the proposer is ``FrequentSubtree`` rather than ``AntiunifyPairs`` --
+# which is what the lint's proposer-compatibility check demands, and what makes this the only ladder
+# in the batch not using the default proposer (a confound to remember when comparing across ladders).
+#
+# This is the same wall the quantity-typed rungs of `counting-histogram` hit, arriving early: any rung
+# whose type is not the task's goal type needs fragment machinery, not antiunification.
+
+config {
+    budget.depth_limit: 4
+    budget.max_arity: 3
+    budget.max_pool: 2000
+    search_engine.constant_sources: ['finite-enumerate']
+    learn.learn_engine.proposer: 'FrequentSubtree'
+    learn.iterations: 6
+}
+
+floor al4-L0 {
+    use mask_by_color:      (Grid, Color) -> Mask
+    use most_common_color:  (Grid) -> Color
+    use least_common_color: (Grid) -> Color
+    use mask_complement:    (Mask) -> Mask
+    use mask_union:         (Mask, Mask) -> Mask
+    use mask_intersect:     (Mask, Mask) -> Mask
+    use crop_to_mask:       (Grid, Mask) -> Grid
+    use paint_through_mask: (Grid, Mask, Color) -> Grid
+    use flip_h:             (Grid) -> Grid
+}
+
+rung {
+    nonbg_mask(g: Grid) -> Mask = mask_complement(mask_by_color(g, most_common_color(g)))
+
+    task nonbg_mask-00 {
+        solution: crop_to_mask(input, nonbg_mask(input))
+        train [[0, 0, 0, 0, 0], [0, 1, 3, 2, 0], [0, 2, 1, 3, 0], [0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0], [0, 3, 1, 2, 0], [0, 2, 3, 1, 0], [0, 0, 0, 0, 0]]
+        test  [[0, 0, 0, 0, 0], [0, 2, 1, 3, 0], [0, 3, 2, 1, 0], [0, 0, 0, 0, 0]]
+    }
+    task nonbg_mask-01 {
+        solution: crop_to_mask(input, nonbg_mask(input))
+        train [[0, 0, 0, 0, 0], [0, 1, 2, 3, 0], [0, 3, 1, 2, 0], [0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0], [0, 3, 2, 1, 0], [0, 1, 3, 2, 0], [0, 0, 0, 0, 0]]
+        test  [[0, 0, 0, 0, 0], [0, 2, 3, 1, 0], [0, 1, 2, 3, 0], [0, 0, 0, 0, 0]]
+    }
+    heldout task nonbg_mask-heldout-00 {
+        solution: crop_to_mask(input, nonbg_mask(input))
+        train [[0, 0, 0, 0, 0], [0, 1, 3, 2, 0], [0, 2, 1, 3, 0], [0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0], [0, 3, 1, 2, 0], [0, 2, 3, 1, 0], [0, 0, 0, 0, 0]]
+        test  [[0, 0, 0, 0, 0], [0, 2, 1, 3, 0], [0, 3, 2, 1, 0], [0, 0, 0, 0, 0]]
+    }
+}
+
+rung {
+    flatten_content(g: Grid, c: Color) -> Grid = paint_through_mask(crop_to_mask(g, nonbg_mask(g)), nonbg_mask(crop_to_mask(g, nonbg_mask(g))), c)
+
+    task flatten_content-00 {
+        solution: flatten_content(input, 3)
+        train [[0, 0, 0, 0, 0], [0, 1, 2, 3, 0], [0, 3, 1, 2, 0], [0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0], [0, 3, 2, 1, 0], [0, 1, 3, 2, 0], [0, 0, 0, 0, 0]]
+        test  [[0, 0, 0, 0, 0], [0, 2, 3, 1, 0], [0, 1, 2, 3, 0], [0, 0, 0, 0, 0]]
+    }
+    task flatten_content-01 {
+        solution: flatten_content(input, 7)
+        train [[0, 0, 0, 0, 0], [0, 1, 3, 2, 0], [0, 2, 1, 3, 0], [0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0], [0, 3, 1, 2, 0], [0, 2, 3, 1, 0], [0, 0, 0, 0, 0]]
+        test  [[0, 0, 0, 0, 0], [0, 2, 1, 3, 0], [0, 3, 2, 1, 0], [0, 0, 0, 0, 0]]
+    }
+    heldout task flatten_content-heldout-00 {
+        solution: flatten_content(input, 5)
+        train [[0, 0, 0, 0, 0], [0, 1, 2, 3, 0], [0, 3, 1, 2, 0], [0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0], [0, 3, 2, 1, 0], [0, 1, 3, 2, 0], [0, 0, 0, 0, 0]]
+        test  [[0, 0, 0, 0, 0], [0, 2, 3, 1, 0], [0, 1, 2, 3, 0], [0, 0, 0, 0, 0]]
+    }
+}
+
+rung {
+    stamp(g: Grid, c: Color, c2: Color) -> Grid = paint_through_mask(flip_h(flatten_content(g, c)), mask_by_color(flatten_content(g, c), c), c2)
+
+    task stamp-00 {
+        solution: stamp(input, 3, 8)
+        train [[0, 0, 0, 0, 0], [0, 1, 3, 2, 0], [0, 2, 1, 3, 0], [0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0], [0, 3, 1, 2, 0], [0, 2, 3, 1, 0], [0, 0, 0, 0, 0]]
+        test  [[0, 0, 0, 0, 0], [0, 2, 1, 3, 0], [0, 3, 2, 1, 0], [0, 0, 0, 0, 0]]
+    }
+    task stamp-01 {
+        solution: stamp(input, 7, 9)
+        train [[0, 0, 0, 0, 0], [0, 1, 2, 3, 0], [0, 3, 1, 2, 0], [0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0], [0, 3, 2, 1, 0], [0, 1, 3, 2, 0], [0, 0, 0, 0, 0]]
+        test  [[0, 0, 0, 0, 0], [0, 2, 3, 1, 0], [0, 1, 2, 3, 0], [0, 0, 0, 0, 0]]
+    }
+    heldout task stamp-heldout-00 {
+        solution: stamp(input, 5, 6)
+        train [[0, 0, 0, 0, 0], [0, 1, 3, 2, 0], [0, 2, 1, 3, 0], [0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0], [0, 3, 1, 2, 0], [0, 2, 3, 1, 0], [0, 0, 0, 0, 0]]
+        test  [[0, 0, 0, 0, 0], [0, 2, 1, 3, 0], [0, 3, 2, 1, 0], [0, 0, 0, 0, 0]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: flip_h(flip_h(stamp(input, 3, 5)))
+        train [[0, 0, 0, 0, 0], [0, 1, 2, 3, 0], [0, 3, 1, 2, 0], [0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0], [0, 3, 2, 1, 0], [0, 1, 3, 2, 0], [0, 0, 0, 0, 0]]
+        test  [[0, 0, 0, 0, 0], [0, 2, 3, 1, 0], [0, 1, 2, 3, 0], [0, 0, 0, 0, 0]]
+    }
+    heldout task top-heldout-00 {
+        solution: flip_h(flip_h(stamp(input, 3, 5)))
+        train [[0, 0, 0, 0, 0], [0, 1, 3, 2, 0], [0, 2, 1, 3, 0], [0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0], [0, 3, 1, 2, 0], [0, 2, 3, 1, 0], [0, 0, 0, 0, 0]]
+        test  [[0, 0, 0, 0, 0], [0, 2, 1, 3, 0], [0, 3, 2, 1, 0], [0, 0, 0, 0, 0]]
+    }
+}

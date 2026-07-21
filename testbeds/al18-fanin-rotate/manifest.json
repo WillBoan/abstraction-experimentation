@@ -1,6 +1,6 @@
 {
   "name": "al18-fanin-rotate",
-  "note": "al18-fanin-rotate: fan-in-2 recombination (pair over its rotation); certified clean.",
+  "note": "Generated from al18-fanin-rotate.ladder",
   "content_hash": "5d769976b57a4583",
   "tasks": [
     {

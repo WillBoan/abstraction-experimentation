@@ -1,6 +1,6 @@
 {
   "name": "al7-fast-tower",
-  "note": "al7-fast-tower: layout floor, height 6, every jump depth 2, no constant sources.",
+  "note": "Generated from al7-fast-tower.ladder",
   "content_hash": "25e418a90a898d49",
   "tasks": [
     {
