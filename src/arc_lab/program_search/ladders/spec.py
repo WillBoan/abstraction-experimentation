@@ -17,6 +17,7 @@ from dataclasses import dataclass, replace
 
 from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.dataset import Corpus
+from arc_lab.program_search.analysis.compression import CompressionMetric, SolvedTask
 from arc_lab.program_search.analysis.depth import compositional_depth
 from arc_lab.program_search.execution.model.config import Config
 from arc_lab.program_search.execution.model.serde import to_data
@@ -27,7 +28,7 @@ from arc_lab.program_search.ladders.shape import LadderShape, LintFinding, RungS
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.substrate.abstraction import make_abstraction, unfold_program
 from arc_lab.program_search.substrate.library import Library
-from arc_lab.program_search.substrate.program import Apply, Lam, Program
+from arc_lab.program_search.substrate.program import Apply, Input, Lam, Program
 
 
 class DemonstrationKind(enum.Enum):
@@ -59,10 +60,32 @@ _PROPOSER_CAPABILITIES: dict[str, frozenset[DemonstrationKind]] = {
 
 @dataclass(frozen=True, slots=True)
 class Demonstration:
-    """A demonstrating task (body in the corpus, resolved by id) + how its solution uses the rung."""
+    """A demonstrating task (body in the corpus, resolved by id) + how its solution uses the rung.
+
+    ``solution`` is the task's intended solving program stated over ``L_i`` (so it *calls* the
+    rung). Carrying it here is what lets :meth:`LadderSpec.lint` check the demonstration plan
+    itself -- which free-parameter values the rung is shown at, and whether the floor's vocabulary
+    is actually exercised -- rather than only the templates.
+    """
 
     task_id: str
     kind: DemonstrationKind
+    solution: Program
+
+
+@dataclass(frozen=True, slots=True)
+class Distractor:
+    """An off-spine task: learnable competence sitting in the corpus that no rung claims.
+
+    A control ladder puts these there deliberately (al9's ``decoy``, al11's ``trap``) to ask what
+    the loop does with mintable-but-useless material. They are part of the ladder\'s identity, so
+    the spec carries them -- and the lint must see them, or a floor primitive that only a
+    distractor exercises would read as dead vocabulary.
+    """
+
+    task_id: str
+    label: str
+    solution: Program
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -105,6 +128,8 @@ class LadderSpec:
     train_corpus: Corpus
     heldout_corpus: Corpus
     budgets: tuple[Budget, ...]  # RQ2 sweep; the reference budget must be one of them
+    #: Off-spine tasks (LADDER-FORMAT.md DST) -- empty for every ladder but the controls.
+    distractors: tuple[Distractor, ...] = ()
 
     def __post_init__(self) -> None:
         if self.reference_config.learn is None:
@@ -295,6 +320,62 @@ class LadderSpec:
                     f"{sorted(k.value for k in kinds - provided)} unservable by {type(proposer).__name__}",
                 )
 
+        # 7. The demonstration plan: what the tasks themselves show.
+        #
+        # These used to hold by construction -- `taskgen`'s seed generator built varied grids and
+        # `RungTasks.train_args` built the free-parameter sweep -- but a `.ladder` file states both
+        # as literal data, so nothing enforces them any more except this block.
+        for entry in (*self.train_corpus.entries, *self.heldout_corpus.entries):
+            task_id, train = entry.task.task_id, entry.task.train
+            inputs = [ex.input for ex in train]
+            outputs = [ex.output for ex in train]
+            err(
+                f"distinct-train-inputs[{task_id}]",
+                len(set(inputs)) == len(inputs),
+                "repeated train inputs: the example set is smaller than it looks",
+            )
+            err(
+                f"outputs-vary[{task_id}]",
+                len(set(outputs)) > 1 or len(outputs) < 2,
+                "every train output is the same grid: a constant program fits the task",
+            )
+            err(
+                f"not-identity[{task_id}]",
+                any(a != b for a, b in zip(inputs, outputs, strict=True)),
+                "output == input on every train example: the identity fits the task",
+            )
+        # Heldout must be a genuinely different task, or it measures transfer to itself.
+        train_keys = {_task_key(entry): entry.task.task_id for entry in self.train_corpus.entries}
+        for entry in self.heldout_corpus.entries:
+            twin = train_keys.get(_task_key(entry))
+            err(
+                f"heldout-distinct[{entry.task.task_id}]",
+                twin is None,
+                f"identical train examples to the train task {twin!r}",
+            )
+
+        # 8. Background-within / target-across: a rung's FREE parameters must be demonstrated at
+        # more than one value, or antiunification has nothing to generalise over and mints the
+        # specialised form. (A `fragment_identical` rung is exempt: identical instantiation across
+        # its demos is that kind's definition -- what varies for it is the surrounding context.)
+        for rung in rungs:
+            demos = [
+                d for d in rung.demonstrations if d.kind is not DemonstrationKind.FRAGMENT_IDENTICAL
+            ]
+            arity = len(_free_arguments(demos[0].solution, rung.name)) if demos else 0
+            for position in range(arity):
+                values = {
+                    str(_free_arguments(d.solution, rung.name)[position])
+                    for d in demos
+                    if position < len(_free_arguments(d.solution, rung.name))
+                }
+                err(
+                    f"free-param-varies[{rung.name}#{position + 1}]",
+                    len(values) > 1 or len(demos) < 2,
+                    f"every demonstration passes {values.pop() if values else '?'}: the mint "
+                    "will specialise to it instead of taking a parameter",
+                )
+
         # 9-10. Fan-in / telescope + lambda advisories.
         warn(
             "not-all-telescope",
@@ -306,6 +387,70 @@ class LadderSpec:
                 "no-lambda-in-templates",
                 False,
                 "a rung template contains a Lam; depth checks advisory",
+            )
+
+        # 12. Vocabulary: every floor primitive must be exercised by something the ladder states.
+        #
+        # A warning, not an error: a floor is sometimes deliberately broader than the spine (al4
+        # ships a realistic mask algebra). But an *accidental* dead primitive is not free -- it
+        # widens the round-0 leaf set for every task, inflating the very vocabulary tax the batch
+        # is trying to attribute.
+        stated: list[Program] = [
+            *(rung.template for rung in rungs),
+            *(demo.solution for rung in rungs for demo in rung.demonstrations),
+            *(d.solution for d in self.distractors),
+            *self.top.reference_solutions,
+        ]
+        exercised = {
+            node.primitive
+            for program in stated
+            for node in unfold_program(program, full_lib).walk()
+            if isinstance(node, Apply)
+        }
+        idle = [p.name for p in self.floor().primitives if p.name not in exercised]
+        warn(
+            "floor-fully-exercised",
+            not idle,
+            f"floor primitives no rung, demonstration, distractor or top solution uses: {idle}",
+        )
+
+        # 13. Two rungs computing the same function are one rung with two names: the second buys
+        # no depth and splits its own demonstrations.
+        unfolded = [unfold_program(rung.template, full_lib) for rung in rungs]
+        for i, rung in enumerate(rungs):
+            twin = next((rungs[j].name for j in range(i) if unfolded[j] == unfolded[i]), None)
+            err(
+                f"rung-distinct[{rung.name}]",
+                twin is None,
+                f"computes the same function as {twin!r}",
+            )
+
+        # 14. MDL break-even: minting a rung must lower the description length of the very
+        # solutions that demonstrate it, under the ladder's OWN configured metric -- otherwise
+        # greedy-MDL governance refuses the mint and the climb stalls at that rung.
+        metric = getattr(getattr(self.reference_config.learn, "learn_engine", None), "metric", None)
+        if metric is None:
+            metric = CompressionMetric()
+        for level, rung in enumerate(rungs, start=1):
+            entries = [
+                (by_id[d.task_id], d.solution) for d in rung.demonstrations if d.task_id in by_id
+            ]
+            if not entries:
+                continue
+            below, above = self.oracle_library(level - 1), self.oracle_library(level)
+            folded = [SolvedTask(annotated=a, program=p) for a, p in entries]
+            unminted = [
+                SolvedTask(
+                    annotated=a, program=unfold_program(p, above, expand=frozenset({rung.name}))
+                )
+                for a, p in entries
+            ]
+            gain = metric.describe(unminted, below).total - metric.describe(folded, above).total
+            err(
+                f"mdl-break-even[{rung.name}]",
+                gain > 0,
+                f"minting it costs {-gain:.1f} bits more than it saves on its own "
+                f"{len(entries)} demonstration(s), so governance will refuse it",
             )
 
         # 11. Validity window — inclusive, in depth_limit units (a depth-d program is reachable
@@ -404,6 +549,7 @@ class LadderSpec:
             "## Shape",
             "",
             f"- Overall: {overall}",
+            _off_spine_line(self.distractors),
             "- Dependencies (lower-rung calls, with multiplicity):",
         ]
         for rung in self.rungs:
@@ -489,10 +635,19 @@ class LadderSpec:
                     "name": r.name,
                     "template": r.template.to_dict(),
                     "demonstrations": [
-                        {"task_id": d.task_id, "kind": d.kind.value} for d in r.demonstrations
+                        {
+                            "task_id": d.task_id,
+                            "kind": d.kind.value,
+                            "solution": d.solution.to_dict(),
+                        }
+                        for d in r.demonstrations
                     ],
                 }
                 for r in self.rungs
+            ],
+            "distractors": [
+                {"task_id": d.task_id, "label": d.label, "solution": d.solution.to_dict()}
+                for d in self.distractors
             ],
             "top": {
                 "task_ids": list(self.top.task_ids),
@@ -537,6 +692,31 @@ def _data_bullets(label: str, data: object, indent: int = 0) -> list[str]:
         if key != "kind":
             lines += _data_bullets(str(key), value, indent + 1)
     return lines
+
+
+def _off_spine_line(distractors: tuple[Distractor, ...]) -> str:
+    """The Shape section's off-spine summary -- context the lint's findings are read against."""
+    if not distractors:
+        return "- Off-spine: none"
+    labels = ", ".join(f"`{label}`" for label in sorted({d.label for d in distractors}))
+    return f"- Off-spine: {len(distractors)} distractor task(s) under {labels}"
+
+
+def _task_key(entry: AnnotatedTask) -> tuple[tuple[object, object], ...]:
+    """A task's train examples as a hashable key -- what makes two tasks the same task."""
+    return tuple((example.input, example.output) for example in entry.task.train)
+
+
+def _free_arguments(solution: Program, rung_name: str) -> tuple[Program, ...]:
+    """The arguments the solution passes to ``rung_name``, excluding the input grid itself.
+
+    Those are the rung's FREE parameters at this demonstration -- the values the design doc
+    requires to vary across a rung's demonstrating tasks.
+    """
+    for node in solution.walk():
+        if isinstance(node, Apply) and node.primitive == rung_name:
+            return tuple(arg for arg in node.args if not isinstance(arg, Input))
+    return ()
 
 
 def _fan_in(template: Program, rung_names: set[str]) -> int:

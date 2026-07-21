@@ -97,11 +97,44 @@ def test_every_ladder_builds_a_spec(name: str) -> None:
     assert len(spec.top.task_ids) == len(spec.top.reference_solutions)
 
 
-def test_static_lint_passes_on_every_ladder_but_the_two_designed_to_fail() -> None:
-    """al10 and al12 are controls whose whole point is an unenforced sandwich, so they must fail
-    the lint; every other ladder must pass it (LADDERS.md, batch summary)."""
-    failing = {name for name in ladder_paths() if not make_ladder(name).lint().ok}
-    assert failing == {"al10-skippable", "al12-unlearnable"}
+def test_static_lint_records_the_batch_s_known_defects() -> None:
+    """Batch health, pinned. Two controls fail by design (al10's sandwich is deliberately
+    unenforced; al12's rung has one demonstration so nothing can antiunify). al4 and al13 fail on
+    real defects the demonstration-plan checks found: al4 ships a heldout task byte-identical to a
+    train task, and al13 shows both rung colour parameters only at 0 -- which is why it recovered
+    zero rungs. Fixing either is a deliberate act; update this set when you do."""
+    failing = {
+        name: sorted(
+            f.check for f in make_ladder(name).lint().findings if not f.ok and f.severity == "error"
+        )
+        for name in ladder_paths()
+    }
+    failing = {name: checks for name, checks in failing.items() if checks}
+    assert set(failing) == {
+        "al4-mask-crop",
+        "al10-skippable",
+        "al12-unlearnable",
+        "al13-symmetry-repair",
+    }
+    assert failing["al4-mask-crop"] == ["heldout-distinct[nonbg_mask-heldout-00]"]
+    assert failing["al13-symmetry-repair"] == [
+        "free-param-varies[sym_both#1]",
+        "free-param-varies[sym_h#1]",
+    ]
+    assert "mdl-break-even[rot90]" in failing["al12-unlearnable"]
+
+
+def test_the_demonstration_plan_checks_hold_across_the_batch() -> None:
+    """Within-task variation used to be guaranteed by `taskgen`'s seed generator, which the
+    `.ladder` migration retired -- so it is now only true if the lint says so."""
+    variation = {"distinct-train-inputs", "outputs-vary", "not-identity"}
+    offenders = [
+        (name, f.check)
+        for name in ladder_paths()
+        for f in make_ladder(name).lint().findings
+        if not f.ok and f.check.split("[")[0] in variation
+    ]
+    assert offenders == []
 
 
 def test_al1_reference_config_carries_the_frozen_guard() -> None:
@@ -254,3 +287,18 @@ def test_heldout_tasks_do_not_vote_on_the_kind() -> None:
     because a kind describes what sleep learns from (spec DRV-2)."""
     demos = resolve(parse_document(_FRAGMENT % ("1", "1"))).demonstrations[0]
     assert {demo.kind for demo in demos} == {DemonstrationKind.FRAGMENT_IDENTICAL}
+
+
+def test_draft_spec_matches_the_committed_testbed_spec() -> None:
+    """`lint-ladder` builds its corpus in memory so a DRAFT ladder can be checked before its
+    testbed exists. That is only safe if the two agree -- pinned here for every ladder."""
+    from arc_lab.program_search.ladders.lang.load import draft_spec, ladder_spec
+
+    for name in sorted(ladder_paths()):
+        loaded = load_ladder(name)
+        draft, committed = draft_spec(loaded), ladder_spec(loaded)
+        assert draft.train_corpus.content_hash() == committed.train_corpus.content_hash(), name
+        assert draft.heldout_corpus.content_hash() == committed.heldout_corpus.content_hash(), name
+        assert [(f.check, f.ok) for f in draft.lint().findings] == [
+            (f.check, f.ok) for f in committed.lint().findings
+        ], name

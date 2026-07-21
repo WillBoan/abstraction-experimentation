@@ -16,8 +16,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from arc_lab.core.dataset import load_testbed
+from arc_lab.core.annotation import AnnotatedTask, Split, Synthetic, TaskMeta
+from arc_lab.core.dataset import Corpus, load_testbed
 from arc_lab.core.grid import Grid
+from arc_lab.core.task import Task
 from arc_lab.program_search.execution.model.config import Config
 from arc_lab.program_search.execution.model.learn_spec import LearnSpec
 from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
@@ -34,6 +36,7 @@ from arc_lab.program_search.ladders.lang.type_syntax import (
 from arc_lab.program_search.ladders.spec import (
     Demonstration,
     DemonstrationKind,
+    Distractor,
     LadderSpec,
     Rung,
     TopRung,
@@ -163,9 +166,42 @@ def ladder_tasks(loaded: LoadedLadder) -> tuple[GeneratedTask, ...]:
     return tuple(tasks)
 
 
+def draft_spec(loaded: LoadedLadder) -> LadderSpec:
+    """A :class:`LadderSpec` whose corpus is generated in memory -- for LINTING ONLY.
+
+    A committed testbed is a run's corpus and therefore part of run identity, which is why
+    :func:`ladder_spec` reads it from disk rather than regenerating it (EXECUTION.md: regenerating
+    inline would silently mint new identities whenever generation logic changed). Linting executes
+    nothing, so it needs no such guarantee -- and this lets a *draft* ladder be checked before its
+    testbed exists, which is the difference between a tight authoring loop and a two-step one.
+
+    The two agree by construction: a test locks every ladder's regenerated tasks against its
+    committed ones.
+    """
+    # Sorted by task id, exactly as `load_tasks` reads a testbed directory -- so the draft corpus
+    # is byte-for-byte the corpus the committed testbed produces, hash included.
+    tasks = sorted(ladder_tasks(loaded), key=lambda generated: generated.task_id)
+    entries = tuple(
+        AnnotatedTask(
+            task=Task.from_dict(generated.task_id, generated.spec),
+            meta=TaskMeta(
+                provenance=Synthetic(loaded.name),
+                split=Split(generated.split),
+                label=generated.label,
+            ),
+        )
+        for generated in tasks
+    )
+    corpus = Corpus(name=loaded.name, entries=entries)
+    return _spec_with_corpora(loaded, *split_by_meta(corpus))
+
+
 def ladder_spec(loaded: LoadedLadder) -> LadderSpec:
     """Build the :class:`LadderSpec`, reading the ladder's committed testbed as its corpus."""
-    train, heldout = split_by_meta(load_testbed(loaded.name))
+    return _spec_with_corpora(loaded, *split_by_meta(load_testbed(loaded.name)))
+
+
+def _spec_with_corpora(loaded: LoadedLadder, train: Corpus, heldout: Corpus) -> LadderSpec:
     rungs = tuple(
         Rung(
             level=level,
@@ -178,9 +214,16 @@ def ladder_spec(loaded: LoadedLadder) -> LadderSpec:
         )
     )
     top_blocks = [task for task in loaded.document.top if not task.heldout]
+    distractors = tuple(
+        Distractor(task_id=task.task_id, label=block.label, solution=loaded.solutions[task.task_id])
+        for block in loaded.document.distractors
+        for task in block.tasks
+        if not task.heldout
+    )
     return LadderSpec(
         reference_config=loaded.config,
         rungs=rungs,
+        distractors=distractors,
         top=TopRung(
             task_ids=tuple(block.task_id for block in top_blocks),
             reference_solutions=tuple(loaded.solutions[block.task_id] for block in top_blocks),
@@ -359,4 +402,7 @@ def _demonstrations(block: RungBlock, solutions: dict[str, Program]) -> tuple[De
         kind = DemonstrationKind.FRAGMENT_IDENTICAL
     else:
         kind = DemonstrationKind.FRAGMENT_VARYING
-    return tuple(Demonstration(task_id=task.task_id, kind=kind) for task in train)
+    return tuple(
+        Demonstration(task_id=task.task_id, kind=kind, solution=solutions[task.task_id])
+        for task in train
+    )
