@@ -5,11 +5,17 @@ One row per candidate Ladder for the Abstraction Ladder Experiments ([ABSTRACTIO
 **Discipline:**
 
 - **One folder per row** — `ladders/<name>/` holds the worksheet (`worksheet.md`, copied from [ladders/TEMPLATE.md](ladders/TEMPLATE.md)) plus the generated artifacts: `spec.md` (structure, from `LadderSpec.render()`), `results.md` + `report.json` (from the ladder report) — all written by `arc-lab run-ladder <name> --artifacts ladders/<name>/`. The worksheet holds design work and narrative; generated artifacts own structure and results; this file only indexes.
-- **`alN-<slug>` identity.** A ladder is a durable asset (registry key + testbed + `LadderSpec`), so it gets a stable ID — unlike an `EXPERIMENT_QUEUE.md` row, which is ephemeral and stays nameless. `N` is minted when the ladder is adopted here (row + folder); the slug is the anchor competence (eg `al7-count-markers-per-region`). The number is an **identifier, not a ranking** — gaps from rejected ladders are expected and fine. Still distinct from E-numbers, which are minted per *run* in `EXPERIMENTS.md`: one ladder may carry many E-numbers.
+- **`alN-<slug>` identity.** A ladder is a durable asset (registry key + testbed + `LadderSpec`), so it gets a stable ID — unlike an `EXPERIMENT_QUEUE.md` row, which is ephemeral and stays nameless. `N` is minted when the ladder is adopted here (row + folder); the slug is the anchor competence (eg `al7-count-markers-per-region`). The number is an **identifier, not a ranking** — gaps from rejected ladders are expected and fine. Still distinct from E-numbers, which are minted per _run_ in `EXPERIMENTS.md`: one ladder may carry many E-numbers.
 - **Source-of-truth handoff.** Once a ladder becomes code (`LadderSpec` + generator + testbed), the spec owns the structure — the worksheet keeps rationale + dead ends only. Sized-to-run → one EXPERIMENT_QUEUE.md row pointing at the worksheet. Run → EXPERIMENTS.md entry.
 - **Rows persist after running** (a certified ladder + its testbed is a reusable asset). Delete a row only if the ladder is abandoned _and_ its worksheet records why.
-- **Statuses:** `sketch` → `linted` (static checks pass) → `tasks-drafted` → `certified` (oracle-chain empirical checks pass) → `admitted` (in the batch) → `run`.
-  - Terminal: `rejected` (reason in the worksheet; if the reason is itself a finding — eg a no-foothold gap — log it in `EXPERIMENTS.md` too).
+- **Statuses:**
+  - `sketch`
+  - `linted` (static checks pass)
+  - `tasks-drafted`
+  - `certified` (oracle-chain empirical checks pass)
+  - `admitted` (in the batch)
+  - `run`
+  - Terminal: `rejected` (reason in the worksheet; if the reason is itself a finding — eg a no-foothold gap — log it in `EXPERIMENTS.md` too)
 
 | Ladder | Anchor competence | Floor | Height | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
@@ -26,4 +32,4 @@ One row per candidate Ladder for the Abstraction Ladder Experiments ([ABSTRACTIO
 | [al11-greedy-trap](ladders/al11-greedy-trap/worksheet.md) | control: distractor that outcompetes the rung on MDL | al7's floor | 6 | linted | **Control.** Distractor is a 5-node shared motif vs r1's 4 — deliberately the better MDL bargain. Does greedy governance mint the wrong thing first, and does the climb recover? |
 | [al12-unlearnable](ladders/al12-unlearnable/worksheet.md) | control: a climb designed to fail | al2's floor | 2 | **linted (fails, by design)** | **Control.** rot90 has ONE demo, so `AntiunifyPairs` has nothing to pair and cannot mint it. Lint fails on `min-2-demos` as intended. **No experiment has ever produced a failed climb** — this is the reference for reading every success. |
 | [al13-symmetry-repair](ladders/al13-symmetry-repair/worksheet.md) | repair a grid from its own symmetry | `{overlay, flip_h, flip_v, transpose}` | 3 | linted | Jumps [2,3], `d_raw` 5, window [3,3]. `overlay(c, g, flip_h g)` fills missing cells from the mirror — the batch's only rung that **infers** rather than transforms. `overlay` is variadic (`max_arity` 3). |
-| [al14-cell-row-grid](ladders/al14-cell-row-grid/worksheet.md) | dimensional lift: cell → row → grid | `{read, set_cell, sub}` | 4 | linted | **The batch's strongest structural result.** Jumps [3,3,3], double-jumps [9,9,6], **`d_raw` 54** → **18x depth compression** (batch's next best: 3.5x), and window **[3,5]** — width 3, so budget is finally a sweepable axis (every other ladder has width 1). Raw depth *multiplies* (3→9→27→54) because each rung nests the one below on its deepest path. Caveats: abstractions are width-specific (not size-general, unlike E5–E9); INT index constants are the cost risk. |
+| [al14-cell-row-grid](ladders/al14-cell-row-grid/worksheet.md) | dimensional lift: cell → row → grid | `{read, set_cell, sub}` | 4 | linted | **The batch's strongest structural result.** Jumps [3,3,3], double-jumps [9,9,6], **`d_raw` 54** → **18x depth compression** (batch's next best: 3.5x), and window **[3,5]** — width 3, so budget is finally a sweepable axis (every other ladder has width 1). Raw depth _multiplies_ (3→9→27→54) because each rung nests the one below on its deepest path. Caveats: abstractions are width-specific (not size-general, unlike E5–E9); INT index constants are the cost risk. |
