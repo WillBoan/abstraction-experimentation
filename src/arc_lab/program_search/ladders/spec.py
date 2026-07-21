@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import enum
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 
 from arc_lab.core.annotation import AnnotatedTask
@@ -26,9 +27,10 @@ from arc_lab.program_search.ladders._render import table
 from arc_lab.program_search.ladders.chain import oracle_libraries
 from arc_lab.program_search.ladders.shape import LadderShape, LintFinding, RungShape
 from arc_lab.program_search.search.budget import Budget
+from arc_lab.program_search.search.search_engine import BRANCHING_ENTRY
 from arc_lab.program_search.substrate.abstraction import make_abstraction, unfold_program
 from arc_lab.program_search.substrate.library import Library
-from arc_lab.program_search.substrate.program import Apply, Input, Lam, Program
+from arc_lab.program_search.substrate.program import Apply, If, Input, Lam, PrimRef, Program
 
 
 class DemonstrationKind(enum.Enum):
@@ -173,7 +175,7 @@ class LadderSpec:
         def warn(check: str, ok: bool, detail: str) -> None:
             findings.append(LintFinding(check=check, ok=ok, detail=detail, severity="warn"))
 
-        # 1. Structural.
+        # Structure (S): levels, task resolution, alignment, demonstration counts.
         err(
             "levels-contiguous",
             tuple(r.level for r in rungs) == tuple(range(1, k + 1)),
@@ -203,7 +205,8 @@ class LadderSpec:
             f"tasks with < 2 train examples: {few_examples}",
         )
 
-        # 2. Type well-formedness (attempt make_abstraction over L_{i-1}; reuse its validation).
+        # Structure (S): type well-formedness (attempt make_abstraction over L_{i-1}; reuse its
+        # validation).
         for i, rung in enumerate(rungs):
             try:
                 make_abstraction(rung.name, rung.template, self.oracle_library(i))
@@ -211,7 +214,8 @@ class LadderSpec:
             except (ValueError, KeyError) as exc:
                 err(f"well-typed[{rung.name}]", False, f"{rung.name} ill-typed over L_{i}: {exc}")
 
-        # 3-5. Depth sandwich (the tractability claims, anchored at the reference budget).
+        # Depth sandwich (D): the tractability claims, anchored at the reference budget. (Also
+        # Structure's rung-referenced / top-uses-top-rung, which need this loop's inlining.)
         rung_shapes: list[RungShape] = []
         for i, rung in enumerate(rungs):
             d_i = compositional_depth(rung.template)
@@ -298,7 +302,7 @@ class LadderSpec:
         if rung_shapes and top_skips:
             rung_shapes[-1] = replace(rung_shapes[-1], double_jump_depth=min(top_skips))
 
-        # 6. Proposer compatibility.
+        # Learnability (L): proposer compatibility.
         proposer = getattr(
             getattr(self.reference_config.learn, "learn_engine", None), "proposer", None
         )
@@ -320,7 +324,7 @@ class LadderSpec:
                     f"{sorted(k.value for k in kinds - provided)} unservable by {type(proposer).__name__}",
                 )
 
-        # 7. The demonstration plan: what the tasks themselves show.
+        # Demonstration plan (P): what the tasks themselves show.
         #
         # These used to hold by construction -- `taskgen`'s seed generator built varied grids and
         # `RungTasks.train_args` built the free-parameter sweep -- but a `.ladder` file states both
@@ -354,29 +358,24 @@ class LadderSpec:
                 f"identical train examples to the train task {twin!r}",
             )
 
-        # 8. Background-within / target-across: a rung's FREE parameters must be demonstrated at
-        # more than one value, or antiunification has nothing to generalise over and mints the
-        # specialised form. (A `fragment_identical` rung is exempt: identical instantiation across
-        # its demos is that kind's definition -- what varies for it is the surrounding context.)
+        # Demonstration plan (P): background-within / target-across -- a rung's FREE parameters
+        # must be demonstrated at more than one value, or antiunification has nothing to
+        # generalise over and mints the specialised form. (A `fragment_identical` rung is exempt:
+        # identical instantiation across its demos is that kind's definition -- what varies for it
+        # is the surrounding context.)
         for rung in rungs:
             demos = [
                 d for d in rung.demonstrations if d.kind is not DemonstrationKind.FRAGMENT_IDENTICAL
             ]
-            arity = len(_free_arguments(demos[0].solution, rung.name)) if demos else 0
-            for position in range(arity):
-                values = {
-                    str(_free_arguments(d.solution, rung.name)[position])
-                    for d in demos
-                    if position < len(_free_arguments(d.solution, rung.name))
-                }
+            for free_index, values in _rung_argument_columns(demos, rung.name):
                 err(
-                    f"free-param-varies[{rung.name}#{position + 1}]",
+                    f"free-param-varies[{rung.name}#{free_index}]",
                     len(values) > 1 or len(demos) < 2,
-                    f"every demonstration passes {values.pop() if values else '?'}: the mint "
+                    f"every demonstration passes {min(values, default='?')}: the mint "
                     "will specialise to it instead of taking a parameter",
                 )
 
-        # 9-10. Fan-in / telescope + lambda advisories.
+        # Advisories (A): fan-in / telescope + lambda.
         warn(
             "not-all-telescope",
             any(s.fan_in > 1 for s in rung_shapes),
@@ -389,7 +388,8 @@ class LadderSpec:
                 "a rung template contains a Lam; depth checks advisory",
             )
 
-        # 12. Vocabulary: every floor primitive must be exercised by something the ladder states.
+        # Advisories (A): floor vocabulary -- every floor primitive should be exercised by
+        # something the ladder states.
         #
         # A warning, not an error: a floor is sometimes deliberately broader than the spine (al4
         # ships a realistic mask algebra). But an *accidental* dead primitive is not free -- it
@@ -401,12 +401,15 @@ class LadderSpec:
             *(d.solution for d in self.distractors),
             *self.top.reference_solutions,
         ]
-        exercised = {
-            node.primitive
-            for program in stated
-            for node in unfold_program(program, full_lib).walk()
-            if isinstance(node, Apply)
-        }
+        exercised: set[str] = set()
+        for program in stated:
+            for node in unfold_program(program, full_lib).walk():
+                if isinstance(node, Apply):
+                    exercised.add(node.primitive)
+                elif isinstance(node, PrimRef):
+                    exercised.add(node.name)  # used as a first-class function value
+                elif isinstance(node, If):
+                    exercised.add(BRANCHING_ENTRY)  # branching exercises the `if` summoner
         idle = [p.name for p in self.floor().primitives if p.name not in exercised]
         warn(
             "floor-fully-exercised",
@@ -414,20 +417,24 @@ class LadderSpec:
             f"floor primitives no rung, demonstration, distractor or top solution uses: {idle}",
         )
 
-        # 13. Two rungs computing the same function are one rung with two names: the second buys
-        # no depth and splits its own demonstrations.
+        # Structure (S): rung distinctness -- two rungs with identical unfolded templates are one
+        # rung with two names: the second buys no depth and splits its own demonstrations. (A
+        # syntactic comparison: extensionally-equal-but-differently-written twins pass it.)
         unfolded = [unfold_program(rung.template, full_lib) for rung in rungs]
         for i, rung in enumerate(rungs):
             twin = next((rungs[j].name for j in range(i) if unfolded[j] == unfolded[i]), None)
             err(
                 f"rung-distinct[{rung.name}]",
                 twin is None,
-                f"computes the same function as {twin!r}",
+                f"identical unfolded template to {twin!r}",
             )
 
-        # 14. MDL break-even: minting a rung must lower the description length of the very
-        # solutions that demonstrate it, under the ladder's OWN configured metric -- otherwise
-        # greedy-MDL governance refuses the mint and the climb stalls at that rung.
+        # Learnability (L): MDL break-even -- minting a rung must lower the description length of
+        # the very solutions that demonstrate it, under the ladder's OWN configured metric --
+        # otherwise greedy-MDL governance refuses the mint and the climb stalls at that rung.
+        # A per-rung-demonstrations PROXY for whole-corpus governance, conservative by design:
+        # real governance scores every solution at the iteration plus the library term, so a rung
+        # passing here can still be refused -- never the reverse claim.
         metric = getattr(getattr(self.reference_config.learn, "learn_engine", None), "metric", None)
         if metric is None:
             metric = CompressionMetric()
@@ -453,9 +460,10 @@ class LadderSpec:
                 f"{len(entries)} demonstration(s), so governance will refuse it",
             )
 
-        # 11. Validity window — inclusive, in depth_limit units (a depth-d program is reachable
-        # iff d <= depth_limit): lower = the deepest required jump/top depth; upper = one less
-        # than the shallowest forbidden depth (inlined double-jumps, raw top).
+        # Derived output (not a check; physically last because it consumes the sandwich
+        # quantities): the validity window — inclusive, in depth_limit units (a depth-d program is
+        # reachable iff d <= depth_limit): lower = the deepest required jump/top depth; upper =
+        # one less than the shallowest forbidden depth (inlined double-jumps, raw top).
         lower = max([*(s.jump_depth for s in rung_shapes), *top_depths])
         intractables = [
             *(s.double_jump_depth for s in rung_shapes if s.double_jump_depth is not None),
@@ -707,16 +715,32 @@ def _task_key(entry: AnnotatedTask) -> tuple[tuple[object, object], ...]:
     return tuple((example.input, example.output) for example in entry.task.train)
 
 
-def _free_arguments(solution: Program, rung_name: str) -> tuple[Program, ...]:
-    """The arguments the solution passes to ``rung_name``, excluding the input grid itself.
+def _rung_argument_columns(
+    demos: Sequence[Demonstration], rung_name: str
+) -> tuple[tuple[int, frozenset[str]], ...]:
+    """Per free argument position of ``rung_name``: (1-based index, distinct arguments observed).
 
-    Those are the rung's FREE parameters at this demonstration -- the values the design doc
-    requires to vary across a rung's demonstrating tasks.
+    Aggregated over EVERY call site of EVERY demonstration -- each call is an occurrence the
+    proposer sees, so a second call site with a different argument is variation. Arguments are
+    compared column-wise, keeping call sites aligned even when one demo pipes a computed grid
+    where another pipes ``input``; a column whose every observed argument is ``Input()`` is the
+    piped grid, not a free parameter, and is dropped, with the survivors renumbered 1..n.
     """
-    for node in solution.walk():
-        if isinstance(node, Apply) and node.primitive == rung_name:
-            return tuple(arg for arg in node.args if not isinstance(arg, Input))
-    return ()
+    calls = [
+        node.args
+        for demo in demos
+        for node in demo.solution.walk()
+        if isinstance(node, Apply) and node.primitive == rung_name
+    ]
+    columns: list[tuple[int, frozenset[str]]] = []
+    free_index = 0
+    for position in range(max((len(args) for args in calls), default=0)):
+        observed = [args[position] for args in calls if position < len(args)]
+        if all(isinstance(arg, Input) for arg in observed):
+            continue
+        free_index += 1
+        columns.append((free_index, frozenset(str(arg) for arg in observed)))
+    return tuple(columns)
 
 
 def _fan_in(template: Program, rung_names: set[str]) -> int:

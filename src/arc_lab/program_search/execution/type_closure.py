@@ -17,9 +17,9 @@ from arc_lab.program_search.search.leaves import ConstantSource
 from arc_lab.program_search.substrate.library import Primitive
 from arc_lab.program_search.substrate.types import ArrowType, Type, TypeCon
 
-#: The library's branching token (mirrors ``estimate_cost.py``'s ``_BRANCHING_ENTRY``): present as
-#: a name to summon short-circuit ``If``, never applied as an ordinary primitive — excluded from
-#: the closure/production computation.
+#: The library's branching token (mirrors ``search_engine.py``'s public ``BRANCHING_ENTRY``):
+#: present as a name to summon short-circuit ``If``, never applied as an ordinary primitive —
+#: excluded from the closure/production computation.
 BRANCHING_TOKEN = "if"
 
 #: Type-constructor names with an intrinsic leaf source, independent of any library content.

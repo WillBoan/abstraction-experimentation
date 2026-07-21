@@ -41,6 +41,7 @@ from arc_lab.program_search.search.context import Context
 from arc_lab.program_search.search.leaves import seed_leaves
 from arc_lab.program_search.search.scope import Scope
 from arc_lab.program_search.search.search_engine import (
+    BRANCHING_ENTRY,
     BeamBottomUpSearchEngine,
     BottomUpSearchEngine,
 )
@@ -48,10 +49,6 @@ from arc_lab.program_search.substrate.library import Library
 
 from .model.config import Config
 from .model.run_spec import RunSpec
-
-#: The library's branching token — mirrors ``search_engine.py``'s ``_BRANCHING_ENTRY``: present as a
-#: name, never applied as an ordinary primitive.
-_BRANCHING_ENTRY = "if"
 
 
 @dataclass(frozen=True, slots=True)
@@ -119,7 +116,7 @@ def _estimate_task(task: Task, config: Config) -> TaskCostEstimate:
         pool = min(leaf_count, cap)
         for depth in range(1, budget.depth_limit + 1):
             considered = _compose_term(pool, library, budget.max_arity)
-            if _BRANCHING_ENTRY in library:
+            if BRANCHING_ENTRY in library:
                 considered += _branch_term(pool)
             if engine.function_hole_fill_mode != "none":
                 considered += _appfn_term(pool, library)
@@ -140,7 +137,7 @@ def _leaf_count(task: Task, engine: BottomUpSearchEngine, library: Library) -> i
     contexts = tuple(Context(example.input) for example in train)
     leaves = sum(1 for _ in seed_leaves(Scope(()), contexts, engine.constant_sources, library))
     if engine.function_hole_fill_mode != "none":
-        leaves += sum(1 for prim in library.primitives if prim.name != _BRANCHING_ENTRY)
+        leaves += sum(1 for prim in library.primitives if prim.name != BRANCHING_ENTRY)
     return leaves
 
 
@@ -152,7 +149,7 @@ def _compose_term(pool_size: int, library: Library, max_arity: int) -> int:
     """
     total = 0
     for primitive in library.primitives:
-        if primitive.name == _BRANCHING_ENTRY:
+        if primitive.name == BRANCHING_ENTRY:
             continue
         if primitive.is_variadic:
             fixed_arity = len(primitive.param_types)
@@ -179,7 +176,7 @@ def _appfn_term(pool_size: int, library: Library) -> int:
     over-counts rather than under-counts — but it is not derived from the real currying/argument-fill
     logic, so it is flagged rather than trusted as an exact ceiling.
     """
-    max_arity = max((p.arity for p in library.primitives if p.name != _BRANCHING_ENTRY), default=0)
+    max_arity = max((p.arity for p in library.primitives if p.name != BRANCHING_ENTRY), default=0)
     return int(pool_size ** (max_arity + 1))
 
 
@@ -188,7 +185,7 @@ def _config_flags(config: Config) -> tuple[str, ...]:
     engine = config.search_engine
     assert isinstance(engine, BottomUpSearchEngine)
     flags: list[str] = []
-    if _BRANCHING_ENTRY in config.library:
+    if BRANCHING_ENTRY in config.library:
         flags.append(
             "branching ('if') is active: the branch-candidate term is a heuristic "
             "(pool_size**3), not the engine's exact per-type permutation count."

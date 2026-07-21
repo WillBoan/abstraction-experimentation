@@ -77,7 +77,7 @@ UnpinnedTypeVarMode: TypeAlias = Literal[
 
 #: The library's branching capability token (§5.4): its *presence* in the bag summons branching,
 #: but the enumerator translates it into short-circuit ``If`` nodes — it is never applied eagerly.
-_BRANCHING_ENTRY = "if"
+BRANCHING_ENTRY = "if"
 
 
 def _uses_new_layer(program: Program, new_layer: frozenset[int]) -> bool:
@@ -690,7 +690,7 @@ class BottomUpSearchEngine(SearchEngine):
         total_primitives = len(primitives)
         yielded = 0
         for index, primitive in enumerate(primitives, 1):
-            if primitive.name == _BRANCHING_ENTRY:
+            if primitive.name == BRANCHING_ENTRY:
                 continue  # the branching token becomes If nodes (§5.4), never an eager Apply
             for program, result_type in applications(
                 primitive, candidates, state.counter, budget.max_arity
@@ -943,7 +943,7 @@ class BottomUpSearchEngine(SearchEngine):
         if self.function_hole_fill_mode == "none":
             return
         for primitive in state.library.primitives:
-            if primitive.name == _BRANCHING_ENTRY:
+            if primitive.name == BRANCHING_ENTRY:
                 continue  # a PrimRef of the branching token would be applied eagerly — never minted
             arrow = ArrowType(primitive.param_types, primitive.return_type)
             yield from resolve(
@@ -963,7 +963,7 @@ class BottomUpSearchEngine(SearchEngine):
         combination does not apply. The new-layer restriction applies as it does to composition: at
         least one of the condition/branches must be from the previous round (``_uses_new_layer``).
         """
-        if _BRANCHING_ENTRY not in state.library:
+        if BRANCHING_ENTRY not in state.library:
             return []
         conditions = list(pool.items_of_type(BOOL))
         if not conditions:
