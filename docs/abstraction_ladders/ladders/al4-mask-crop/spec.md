@@ -12,12 +12,15 @@ Derived from `al4-mask-crop.ladder` (in `program_search/ladders/registry/`) -- t
 
 ## Verification
 
-- Static lint (what this file asserts): **OK** -- 26 checks (errors: 0, warnings: 0)
+- Static lint (what this file asserts): **FAILED** -- 73 checks (errors: 1, warnings: 1)
+  - ERROR `heldout-distinct[nonbg_mask-heldout-00]`: identical train examples to the train task 'nonbg_mask-00'
+  - warn `floor-fully-exercised`: floor primitives no rung, demonstration, distractor or top solution uses: ['least_common_color', 'mask_union', 'mask_intersect']
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
 ## Shape
 
 - Overall: chain with recombination (max fan-in 3)
+- Off-spine: none
 - Dependencies (lower-rung calls, with multiplicity):
   - r_1 `nonbg_mask`: floor primitives only
   - r_2 `flatten_content`: `nonbg_mask` x3

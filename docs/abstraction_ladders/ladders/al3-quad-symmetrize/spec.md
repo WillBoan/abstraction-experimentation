@@ -12,12 +12,13 @@ Derived from `al3-quad-symmetrize.ladder` (in `program_search/ladders/registry/`
 
 ## Verification
 
-- Static lint (what this file asserts): **OK** -- 26 checks (errors: 0, warnings: 0)
+- Static lint (what this file asserts): **OK** -- 70 checks (errors: 0, warnings: 0)
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
 ## Shape
 
 - Overall: chain with recombination (max fan-in 2)
+- Off-spine: none
 - Dependencies (lower-rung calls, with multiplicity):
   - r_1 `quad`: floor primitives only
   - r_2 `band`: `quad` x2

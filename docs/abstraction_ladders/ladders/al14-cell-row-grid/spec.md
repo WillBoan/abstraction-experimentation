@@ -12,12 +12,13 @@ Derived from `al14-cell-row-grid.ladder` (in `program_search/ladders/registry/`)
 
 ## Verification
 
-- Static lint (what this file asserts): **OK** -- 26 checks (errors: 0, warnings: 0)
+- Static lint (what this file asserts): **OK** -- 73 checks (errors: 0, warnings: 0)
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
 ## Shape
 
 - Overall: chain with recombination (max fan-in 3)
+- Off-spine: none
 - Dependencies (lower-rung calls, with multiplicity):
   - r_1 `move_cell_up`: floor primitives only
   - r_2 `move_row_up`: `move_cell_up` x3

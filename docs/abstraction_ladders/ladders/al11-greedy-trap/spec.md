@@ -12,12 +12,14 @@ Derived from `al11-greedy-trap.ladder` (in `program_search/ladders/registry/`) -
 
 ## Verification
 
-- Static lint (what this file asserts): **OK** -- 38 checks (errors: 0, warnings: 0)
+- Static lint (what this file asserts): **OK** -- 115 checks (errors: 0, warnings: 1)
+  - warn `floor-fully-exercised`: floor primitives no rung, demonstration, distractor or top solution uses: ['flip_v']
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
 ## Shape
 
 - Overall: chain with recombination (max fan-in 2)
+- Off-spine: 3 distractor task(s) under `trap`
 - Dependencies (lower-rung calls, with multiplicity):
   - r_1 `mirror`: floor primitives only
   - r_2 `stack2`: `mirror` x2

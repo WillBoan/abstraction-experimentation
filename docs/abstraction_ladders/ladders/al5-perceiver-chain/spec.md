@@ -12,13 +12,14 @@ Derived from `al5-perceiver-chain.ladder` (in `program_search/ladders/registry/`
 
 ## Verification
 
-- Static lint (what this file asserts): **OK** -- 26 checks (errors: 0, warnings: 1)
+- Static lint (what this file asserts): **OK** -- 73 checks (errors: 0, warnings: 1)
   - warn `not-all-telescope`: every rung has fan-in 1 (a pure telescope)
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
 ## Shape
 
 - Overall: chain, pure telescope (no rung or top solution calls a lower rung more than once)
+- Off-spine: none
 - Dependencies (lower-rung calls, with multiplicity):
   - r_1 `swap_extremes`: floor primitives only
   - r_2 `swap_mirror`: `swap_extremes` x1

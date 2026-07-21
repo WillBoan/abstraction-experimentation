@@ -83,14 +83,14 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 - **DST-1** A `distractor <label> { ... }` section holds tasks that sit in the corpus but off the ladder's spine — a control's learnable-but-unused competence (al9's `decoy`, al11's `trap`).
 - **DST-2** Its tasks follow the TSK rules; `<label>` becomes their corpus label.
 - **DST-3** Their solution scope is the Floor alone: a distractor must not reference a rung.
-- **DST-4** A distractor demonstrates nothing — no rung, no `DemonstrationKind`, nothing minted for it. It appears only in the corpus.
+- **DST-4** A distractor demonstrates nothing — no rung, no `DemonstrationKind`, nothing minted for it. It appears in the corpus and, as a `Distractor`, in the `LadderSpec` (so the lint can tell a primitive only a distractor exercises from dead floor vocabulary).
 
 ### TSK — tasks
 
 - **TSK-1** Header is `task <id> {` or `heldout task <id> {`. `heldout` routes the task to the heldout corpus; otherwise train.
 - **TSK-2** Field order is fixed: one `solution:`, then >= 1 `train <grid>` lines, then >= 1 `test <grid>` lines.
 - **TSK-3** A grid literal is a nested list of int literals, rectangular and non-empty; value-range and shape validation is **delegated** to `Grid.from_list`.
-- **TSK-4** Distinctness/variation of a task's inputs is **delegated** to `lint()`.
+- **TSK-4** Distinctness/variation of a task's examples is **delegated** to `lint()` (`distinct-train-inputs`, `outputs-vary`, `not-identity`, `heldout-distinct`) — properties `taskgen`'s seed generator used to guarantee by construction, and which literal grids no longer do.
 - **TSK-5** Top-block tasks follow the same rules; the non-heldout ones become `TopRung.task_ids` + `reference_solutions` (index-aligned); heldout top tasks exist only in the heldout corpus.
 
 ### EXP — expression elaboration (text → `Program`)

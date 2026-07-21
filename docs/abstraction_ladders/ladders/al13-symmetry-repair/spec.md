@@ -12,12 +12,15 @@ Derived from `al13-symmetry-repair.ladder` (in `program_search/ladders/registry/
 
 ## Verification
 
-- Static lint (what this file asserts): **OK** -- 20 checks (errors: 0, warnings: 0)
+- Static lint (what this file asserts): **FAILED** -- 54 checks (errors: 2, warnings: 0)
+  - ERROR `free-param-varies[sym_h#1]`: every demonstration passes 0: the mint will specialise to it instead of taking a parameter
+  - ERROR `free-param-varies[sym_both#1]`: every demonstration passes 0: the mint will specialise to it instead of taking a parameter
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
 ## Shape
 
 - Overall: chain with recombination (max fan-in 2)
+- Off-spine: none
 - Dependencies (lower-rung calls, with multiplicity):
   - r_1 `sym_h`: floor primitives only
   - r_2 `sym_both`: `sym_h` x2

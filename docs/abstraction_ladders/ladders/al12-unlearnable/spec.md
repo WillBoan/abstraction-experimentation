@@ -12,14 +12,16 @@ Derived from `al12-unlearnable.ladder` (in `program_search/ladders/registry/`) -
 
 ## Verification
 
-- Static lint (what this file asserts): **FAILED** -- 14 checks (errors: 1, warnings: 1)
+- Static lint (what this file asserts): **FAILED** -- 31 checks (errors: 2, warnings: 1)
   - ERROR `min-2-demos`: rungs with < 2 demonstrations: ['rot90']
+  - ERROR `mdl-break-even[rot90]`: minting it costs -0.0 bits more than it saves on its own 1 demonstration(s), so governance will refuse it
   - warn `not-all-telescope`: every rung has fan-in 1 (a pure telescope)
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
 ## Shape
 
 - Overall: chain with recombination (max fan-in 2)
+- Off-spine: none
 - Dependencies (lower-rung calls, with multiplicity):
   - r_1 `rot90`: floor primitives only
   - top `top-00`: `rot90` x2

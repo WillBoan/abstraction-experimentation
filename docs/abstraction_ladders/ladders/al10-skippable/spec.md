@@ -12,7 +12,7 @@ Derived from `al10-skippable.ladder` (in `program_search/ladders/registry/`) -- 
 
 ## Verification
 
-- Static lint (what this file asserts): **FAILED** -- 14 checks (errors: 2, warnings: 1)
+- Static lint (what this file asserts): **FAILED** -- 34 checks (errors: 2, warnings: 1)
   - ERROR `raw-intractable`: d_raw=4, must exceed depth_limit 4
   - ERROR `top-double-jump-intractable`: top over L_0 depth 4, must exceed depth_limit 4
   - warn `not-all-telescope`: every rung has fan-in 1 (a pure telescope)
@@ -21,6 +21,7 @@ Derived from `al10-skippable.ladder` (in `program_search/ladders/registry/`) -- 
 ## Shape
 
 - Overall: chain with recombination (max fan-in 2)
+- Off-spine: none
 - Dependencies (lower-rung calls, with multiplicity):
   - r_1 `rot90`: floor primitives only
   - top `top-00`: `rot90` x2
