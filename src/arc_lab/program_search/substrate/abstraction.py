@@ -81,7 +81,7 @@ def _param_types(template: Program) -> tuple[Type, ...]:
     return tuple(by_index[i] for i in range(n))
 
 
-def _rebuild(node: Program, children: tuple[Program, ...]) -> Program:
+def rebuild(node: Program, children: tuple[Program, ...]) -> Program:
     """Reconstruct a constructor node with its children replaced (programs are frozen).
 
     Only the four constructor kinds reach here; leaves (``Input``/``Const``/``Param``/``Var``/
@@ -132,7 +132,7 @@ def _substitute(node: Program, args: Sequence[Program]) -> Program:
     children = node.children()
     if not children:
         return node  # Input / Const / Var / PrimRef — leaves carrying no params
-    return _rebuild(node, tuple(_substitute(child, args) for child in children))
+    return rebuild(node, tuple(_substitute(child, args) for child in children))
 
 
 def unfold_program(
@@ -159,6 +159,6 @@ def unfold_program(
         children = node.children()
         if not children:
             return node
-        return _rebuild(node, tuple(go(child) for child in children))
+        return rebuild(node, tuple(go(child) for child in children))
 
     return go(program)
