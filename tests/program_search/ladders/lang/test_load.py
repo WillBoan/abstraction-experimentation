@@ -99,10 +99,14 @@ def test_every_ladder_builds_a_spec(name: str) -> None:
 
 def test_static_lint_records_the_batch_s_known_defects() -> None:
     """Batch health, pinned. Two controls fail by design (al10's sandwich is deliberately
-    unenforced; al12's rung has one demonstration so nothing can antiunify). al4 and al13 fail on
-    real defects the demonstration-plan checks found: al4 ships a heldout task byte-identical to a
-    train task, and al13 shows both rung colour parameters only at 0 -- which is why it recovered
-    zero rungs. Fixing either is a deliberate act; update this set when you do."""
+    unenforced; al12's rung has one demonstration so nothing can antiunify). The rest fail on
+    real defects the demonstration-plan checks found: al4 ships a heldout task byte-identical to
+    a train task; al13 shows both rung colour parameters only at 0 -- which is why it recovered
+    zero rungs. The `constant-subterm` rows are the literal-collapse law caught statically: al14's
+    index arithmetic is train-constant (the 2026-07-21 probe diagnosis, now static), and al4/al5/
+    al6's perceiver calls are train-constant on the flagged tasks -- which is why the certificate
+    recorded skip paths there and al5 recovered zero rungs (search substitutes the enumerated
+    literal for the perceiver). Fixing any of these is a deliberate act; update this set then."""
     failing = {
         name: sorted(
             f.check for f in make_ladder(name).lint().findings if not f.ok and f.severity == "error"
@@ -112,16 +116,84 @@ def test_static_lint_records_the_batch_s_known_defects() -> None:
     failing = {name: checks for name, checks in failing.items() if checks}
     assert set(failing) == {
         "al4-mask-crop",
+        "al5-perceiver-chain",
+        "al6-mirror-tall",
         "al10-skippable",
         "al12-unlearnable",
         "al13-symmetry-repair",
+        "al14-cell-row-grid",
     }
-    assert failing["al4-mask-crop"] == ["heldout-distinct[nonbg_mask-heldout-00]"]
+    assert failing["al4-mask-crop"] == [
+        "constant-subterm[flatten_content-00]",
+        "constant-subterm[flatten_content-01]",
+        "constant-subterm[nonbg_mask-00]",
+        "constant-subterm[nonbg_mask-01]",
+        "constant-subterm[stamp-00]",
+        "constant-subterm[stamp-01]",
+        "constant-subterm[top-00]",
+        "heldout-distinct[nonbg_mask-heldout-00]",
+    ]
+    assert failing["al5-perceiver-chain"] == [
+        "constant-subterm[swap_extremes-00]",
+        "constant-subterm[swap_mirror-00]",
+        "constant-subterm[swap_stack-00]",
+        "constant-subterm[top-00]",
+    ]
+    assert failing["al6-mirror-tall"] == [
+        "constant-subterm[norm_mirror-00]",
+        "constant-subterm[norm_quad-00]",
+        "constant-subterm[norm_stack-00]",
+        "constant-subterm[top-00]",
+    ]
+    assert failing["al14-cell-row-grid"] == [
+        "constant-subterm[move_cell_up-00]",
+        "constant-subterm[move_cell_up-01]",
+        "constant-subterm[move_grid_up-00]",
+        "constant-subterm[move_grid_up-01]",
+        "constant-subterm[move_row_up-00]",
+        "constant-subterm[move_row_up-01]",
+        "constant-subterm[top-00]",
+    ]
     assert failing["al13-symmetry-repair"] == [
         "free-param-varies[sym_both#1]",
         "free-param-varies[sym_h#1]",
     ]
     assert "mdl-break-even[rot90]" in failing["al12-unlearnable"]
+
+
+def test_the_evaluation_backed_checks_batch_posture() -> None:
+    """Where the new evaluation-backed checks fire, pinned batch-wide. `if-condition-varies` is
+    dormant (no ladder uses branching). `constant-subterm` ERRORS only where an enumerated
+    literal beats the subterm; al8 carries the same perceiver constancy at WARN tier because its
+    config mints no constants -- the severity split is the law's "does the beating literal exist
+    in this ladder's own search?" clause, working."""
+    by_ladder = {name: make_ladder(name).lint().findings for name in ladder_paths()}
+    assert not any(
+        f.check.startswith("if-condition-varies") for findings in by_ladder.values() for f in findings
+    )
+    constancy_errors = {
+        name
+        for name, findings in by_ladder.items()
+        for f in findings
+        if f.check.startswith("constant-subterm") and not f.ok and f.severity == "error"
+    }
+    assert constancy_errors == {
+        "al4-mask-crop",
+        "al5-perceiver-chain",
+        "al6-mirror-tall",
+        "al14-cell-row-grid",
+    }
+    al8_warns = [
+        f.check
+        for f in by_ladder["al8-lean-perceiver"]
+        if f.check.startswith("constant-subterm") and not f.ok and f.severity == "warn"
+    ]
+    assert al8_warns == [
+        "constant-subterm[swap_ext-00]",
+        "constant-subterm[swap_mir-00]",
+        "constant-subterm[swap_stk-00]",
+        "constant-subterm[top-00]",
+    ]
 
 
 def test_the_demonstration_plan_checks_hold_across_the_batch() -> None:

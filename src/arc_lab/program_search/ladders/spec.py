@@ -25,6 +25,7 @@ from arc_lab.program_search.execution.model.serde import to_data
 from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
 from arc_lab.program_search.ladders._render import table
 from arc_lab.program_search.ladders.chain import oracle_libraries
+from arc_lab.program_search.ladders.checks import conditional_findings, constancy_findings
 from arc_lab.program_search.ladders.shape import LadderShape, LintFinding, RungShape
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.search_engine import BRANCHING_ENTRY
@@ -375,6 +376,28 @@ class LadderSpec:
                     "will specialise to it instead of taking a parameter",
                 )
 
+        # Demonstration plan (P): constancy + conditionals -- evaluation-backed checks over the
+        # stated solutions, UNFOLDED to the floor (collapse lives in the floor's term space:
+        # al14's `sub(1, 1)` only appears after unfolding). One unfold per stated task, shared
+        # with the vocabulary advisory below.
+        stated_solutions: list[tuple[str, Program]] = [
+            *((d.task_id, d.solution) for rung in rungs for d in rung.demonstrations),
+            *((d.task_id, d.solution) for d in self.distractors),
+            *zip(self.top.task_ids, self.top.reference_solutions, strict=False),
+        ]
+        unfolded_stated = tuple(
+            (task_id, unfold_program(solution, full_lib)) for task_id, solution in stated_solutions
+        )
+        train_inputs = {
+            entry.task.task_id: tuple(ex.input for ex in entry.task.train)
+            for entry in (*self.train_corpus.entries, *self.heldout_corpus.entries)
+        }
+        sources = tuple(
+            getattr(self.reference_config.search_engine, "constant_sources", ()) or ()
+        )
+        findings.extend(constancy_findings(unfolded_stated, train_inputs, full_lib, sources))
+        findings.extend(conditional_findings(unfolded_stated, train_inputs, full_lib))
+
         # Advisories (A): fan-in / telescope + lambda.
         warn(
             "not-all-telescope",
@@ -395,15 +418,10 @@ class LadderSpec:
         # ships a realistic mask algebra). But an *accidental* dead primitive is not free -- it
         # widens the round-0 leaf set for every task, inflating the very vocabulary tax the batch
         # is trying to attribute.
-        stated: list[Program] = [
-            *(rung.template for rung in rungs),
-            *(demo.solution for rung in rungs for demo in rung.demonstrations),
-            *(d.solution for d in self.distractors),
-            *self.top.reference_solutions,
-        ]
+        unfolded_templates = [unfold_program(rung.template, full_lib) for rung in rungs]
         exercised: set[str] = set()
-        for program in stated:
-            for node in unfold_program(program, full_lib).walk():
+        for program in (*unfolded_templates, *(sol for _, sol in unfolded_stated)):
+            for node in program.walk():
                 if isinstance(node, Apply):
                     exercised.add(node.primitive)
                 elif isinstance(node, PrimRef):
@@ -420,9 +438,15 @@ class LadderSpec:
         # Structure (S): rung distinctness -- two rungs with identical unfolded templates are one
         # rung with two names: the second buys no depth and splits its own demonstrations. (A
         # syntactic comparison: extensionally-equal-but-differently-written twins pass it.)
-        unfolded = [unfold_program(rung.template, full_lib) for rung in rungs]
         for i, rung in enumerate(rungs):
-            twin = next((rungs[j].name for j in range(i) if unfolded[j] == unfolded[i]), None)
+            twin = next(
+                (
+                    rungs[j].name
+                    for j in range(i)
+                    if unfolded_templates[j] == unfolded_templates[i]
+                ),
+                None,
+            )
             err(
                 f"rung-distinct[{rung.name}]",
                 twin is None,

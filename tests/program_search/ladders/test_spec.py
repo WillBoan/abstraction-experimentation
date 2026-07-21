@@ -7,8 +7,15 @@ import dataclasses
 from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
 from arc_lab.program_search.ladders.registry import make_ladder
 from arc_lab.program_search.ladders.shape import LadderShape
-from arc_lab.program_search.substrate.program import Apply, Input, Param
-from arc_lab.program_search.substrate.types import COLOR, GRID
+from arc_lab.program_search.ladders.spec import (
+    Demonstration,
+    DemonstrationKind,
+    _rung_argument_columns,
+)
+from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
+from arc_lab.program_search.substrate.primitives.control import IF
+from arc_lab.program_search.substrate.program import Apply, Const, If, Input, Param
+from arc_lab.program_search.substrate.types import BOOL, COLOR, GRID
 
 
 def _failed(shape: LadderShape, check: str) -> bool:
@@ -133,3 +140,87 @@ def test_lint_catches_a_budget_that_makes_the_raw_top_reachable() -> None:
     shape = bad.lint()
     assert not shape.ok
     assert any(finding.check == "raw-intractable" and not finding.ok for finding in shape.findings)
+
+
+def test_lint_catches_the_al14_literal_collapse_statically() -> None:
+    # al14's stated solutions compute train-constant indices from enumerable INT constants --
+    # the 2026-07-21 probe diagnosis (search finds the literal-substituted depth-2 form), caught
+    # by the constancy check with no run.
+    shape = make_ladder("al14-cell-row-grid").lint()
+    assert _failed(shape, "constant-subterm[move_cell_up-00]")
+    # al1 also enumerates constants and stays clean: the check fires on train-constant COMPOSITE
+    # subterms, not on the mere presence of a constant domain.
+    assert not any(
+        f.check.startswith("constant-subterm") and not f.ok
+        for f in make_ladder("al1-mirror").lint().findings
+    )
+
+
+def test_constant_subterm_downgrades_to_warn_without_a_constant_domain() -> None:
+    # Same law, severity states whether the beating literal exists in THIS ladder's own search:
+    # with no constant sources the enumerated domain is empty, so al14's constancy errors all
+    # become fictional-depth warnings -- and nothing else fails al14's lint (which is exactly why
+    # its 2026-07-20 certificate could only come back censored/inconclusive, not rejected).
+    spec = make_ladder("al14-cell-row-grid")
+    assert isinstance(spec.reference_config.search_engine, BottomUpSearchEngine)
+    engine = dataclasses.replace(spec.reference_config.search_engine, constant_sources=())
+    config = dataclasses.replace(spec.reference_config, search_engine=engine)
+    shape = dataclasses.replace(spec, reference_config=config).lint()
+    assert shape.ok
+    downgraded = [
+        f for f in shape.findings if f.check == "constant-subterm[move_cell_up-00]" and not f.ok
+    ]
+    assert len(downgraded) == 1 and downgraded[0].severity == "warn"
+
+
+def test_lint_flags_a_degenerate_if_condition() -> None:
+    # An If whose condition is constant across train examples collapses to the taken branch.
+    spec = make_ladder("al1-mirror")
+    top_solution = spec.top.reference_solutions[0]
+    wrapped = If(cond=Const(True, BOOL), then=top_solution, orelse=top_solution)
+    shape = dataclasses.replace(
+        spec, top=dataclasses.replace(spec.top, reference_solutions=(wrapped,))
+    ).lint()
+    assert _failed(shape, f"if-condition-varies[{spec.top.task_ids[0]}]")
+
+
+def test_floor_if_summoner_is_exercised_by_an_if_node() -> None:
+    # `if` is summoned, never applied: an If node in a stated solution must count as exercising
+    # the floor's `if` entry, or every conditional floor would read as dead vocabulary.
+    spec = make_ladder("al1-mirror")
+    floor = spec.floor().extended(name=f"{spec.floor().name}+if", extra=(IF,))
+    config = dataclasses.replace(spec.reference_config, library=floor)
+    with_if_idle = dataclasses.replace(spec, reference_config=config).lint()
+    idle = next(f for f in with_if_idle.findings if f.check == "floor-fully-exercised")
+    assert not idle.ok and "'if'" in idle.detail  # nothing uses branching yet
+
+    demo = spec.rungs[0].demonstrations[0]
+    branching = dataclasses.replace(
+        demo, solution=If(cond=Const(True, BOOL), then=demo.solution, orelse=demo.solution)
+    )
+    rung = dataclasses.replace(
+        spec.rungs[0], demonstrations=(branching, *spec.rungs[0].demonstrations[1:])
+    )
+    with_if_used = dataclasses.replace(
+        spec, reference_config=config, rungs=(rung, *spec.rungs[1:])
+    ).lint()
+    used = next(f for f in with_if_used.findings if f.check == "floor-fully-exercised")
+    assert used.ok
+
+
+def test_free_param_variation_counts_every_call_site() -> None:
+    # Variation that lives only in the SECOND call site of each demo must count: the proposer
+    # sees every occurrence, and the old first-call-only read produced a false positive here.
+    def demo(task_id: str, inner_color: int) -> Demonstration:
+        inner = Apply("r", (Input(), Const(inner_color, COLOR)))
+        return Demonstration(
+            task_id=task_id,
+            kind=DemonstrationKind.FULL_SOLUTION,
+            solution=Apply("r", (inner, Const(1, COLOR))),
+        )
+
+    columns = _rung_argument_columns((demo("a", 2), demo("b", 3)), "r")
+    # Column 1 is the grid slot (computed in the outer call, `input` in the inner) -- derived,
+    # kept; column 2 is the colour, aggregating all four call sites: {1, 2, 3}.
+    assert [index for index, _ in columns] == [1, 2]
+    assert len(columns[1][1]) == 3
