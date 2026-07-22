@@ -165,3 +165,14 @@ def test_every_construct_round_trips(text: str, params: tuple[tuple[str, Type], 
     program = _elab(text, params)
     names = tuple(name for name, _ in params)
     assert _elab(render_expression(program, names), params) == program
+
+
+def test_binder_types_are_resolved_by_the_body() -> None:
+    """`map`'s hole is `(a) -> b`, so a binder's type is a type VARIABLE when it is bound and is
+    only pinned by what the body does with it. A stored program must carry the resolved type."""
+    program = _elab("map(lambda x: flip_h(x), gs)", (("gs", _GRIDS),))
+    assert isinstance(program, Apply)
+    lam = program.args[0]
+    assert isinstance(lam, Lam)
+    assert lam.param_type == GRID  # not an unresolved `t0`
+    assert lam.body == Apply("flip_h", (Var(0, GRID),))

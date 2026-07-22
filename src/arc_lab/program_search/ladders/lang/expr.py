@@ -125,7 +125,10 @@ class _Elaborator:
 
     def run(self, node: ast.expr) -> Program:
         program, _ = self.elaborate(node, None)
-        return program
+        # A binder's type is captured when it is bound, which can be BEFORE the body pins the
+        # type variable it came from (`map`'s hole is `(a) -> b`, and only the body says what `a`
+        # is). Resolving once at the end is what keeps a stored program monomorphic.
+        return _resolve_types(program, self.subst)
 
     def elaborate(self, node: ast.expr, expected: Type | None) -> tuple[Program, Type]:
         if isinstance(node, ast.Call):
@@ -441,6 +444,33 @@ def _render(program: Program, param_names: tuple[str, ...], binders: tuple[str, 
         inner = (*binders, *names)
         return f"lambda {', '.join(names)}: {_render(body, param_names, inner)}"
     raise LadderFormatError(f"{type(program).__name__} has no surface syntax")
+
+
+def _resolve_types(program: Program, subst: Substitution) -> Program:
+    """Apply the final substitution to every type a node carries (``Lam`` binders, ``Var``s)."""
+    if not subst:
+        return program
+    if isinstance(program, Lam):
+        return Lam(
+            param_type=apply_subst(subst, program.param_type),
+            body=_resolve_types(program.body, subst),
+        )
+    if isinstance(program, Var):
+        return Var(index=program.index, value_type=apply_subst(subst, program.value_type))
+    if isinstance(program, Apply):
+        return Apply(program.primitive, tuple(_resolve_types(a, subst) for a in program.args))
+    if isinstance(program, AppFn):
+        return AppFn(
+            fn=_resolve_types(program.fn, subst),
+            args=tuple(_resolve_types(a, subst) for a in program.args),
+        )
+    if isinstance(program, If):
+        return If(
+            cond=_resolve_types(program.cond, subst),
+            then=_resolve_types(program.then, subst),
+            orelse=_resolve_types(program.orelse, subst),
+        )
+    return program
 
 
 def _spell(node: ast.expr) -> str:

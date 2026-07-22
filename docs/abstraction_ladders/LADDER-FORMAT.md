@@ -120,7 +120,53 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 - **VAL-1** Any violation of this spec is a load error.
 - **VAL-2** After a successful load, the existing pipeline applies unchanged: `LadderSpec.lint()` (with `proposer-compat` consuming derived kinds), then the empirical certificate.
 
-## 3. Source/derived split (summary)
+## 3. Syntax reference
+
+Every example below is verified against the elaborator.
+
+### Types (FLR-9, RNG-2)
+
+| Written | Is |
+| --- | --- |
+| `Grid`, `Color`, `Int`, `Bool`, `Mask` | a base type — capitalised |
+| `a`, `b` | a type **variable** — lowercase |
+| `List[Grid]`, `Pair[Grid, Color]` | a parametric constructor |
+| `(Grid) -> Grid` | a function type |
+| `(Grid, Int, Int) -> Grid` | an n-ary function type |
+| `(Grid) -> (Grid) -> Grid` | a **curried** function type (right-associative) |
+| `(Color, Grid...) -> Grid` | variadic in its last parameter (`overlay`) |
+
+Capitalisation is load-bearing: it is what distinguishes a nullary constructor from a type variable without a lookup table that could drift from the substrate.
+
+### Expressions (EXP-1..11)
+
+Each row is a Python form, resolved by **the type of the position it sits in**.
+
+| Construct | Written | Elaborates to |
+| --- | --- | --- |
+| Task input | `flip_h(input)` | `Input` |
+| Rung parameter | `flip_h(g)` | `Param(0, Grid)` |
+| Application | `map_color(flip_h(g), src, dst)` | `Apply` |
+| Variadic application | `overlay(c, g, flip_h(g))` | `Apply` (extra args to the variadic tail) |
+| Colour / int literal | `map_color(g, 1, 2)`, `translate(g, 1, 0)` | `Const(1, Color)` / `Const(1, Int)` |
+| Negative literal | `translate(g, -1, 0)` | `Const(-1, Int)` |
+| Boolean literal | `flip_h(g) if true else g` | `Const(True, Bool)` — lowercase only |
+| Conditional | `flip_h(g) if eq(most_common_color(g), 0) else g` | `If` (short-circuit) |
+| Primitive as a value | `map(flip_h, gs)` | `PrimRef("flip_h")` |
+| Lambda, one binder | `map(lambda x: flip_h(x), gs)` | `Lam` + `Var(0)` |
+| Lambda, curried | `build_grid(height(g), width(g), lambda r, c: read(g, c, r))` | `Lam(Lam(...))`; `c` is `Var(0)`, `r` is `Var(1)` |
+| Applying a value | `f(g)` where `f: (Grid) -> Grid` | `AppFn` |
+| Applying a curried value | `f(g)(g)` where `f: (Grid) -> (Grid) -> Grid` | nested `AppFn` |
+
+Notes that catch people out:
+
+- **Binder types are never annotated.** Python lambdas cannot carry annotations, and they do not need to: the function-typed position supplies each binder's type, one arrow peeled per binder. That serves both `map`'s `(a) -> b` and `build_grid`'s curried `(int) -> (int) -> color`.
+- **A binder's type is resolved by the body.** In `map(lambda x: flip_h(x), gs)` the hole is `(a) -> b`, so `x` is only pinned to `Grid` by what the body does with it. The stored program carries the resolved type.
+- **De Bruijn order.** The innermost binder is `Var(0)`. In `lambda r, c:`, `c` is innermost.
+- **A curried function is applied one stage at a time** — `f(a)(b)`, not `f(a, b)`.
+- **Scope.** A rung template sees its own parameters, floor primitives and strictly earlier rungs — never `input` (NAM-4). A task solution sees `input`, the floor, and the rungs up to its own (NAM-5). A lambda binder may not shadow either.
+
+## 4. Source/derived split (summary)
 
 | In the file (chosen) | Derived (never in the file) |
 | --- | --- |
@@ -130,7 +176,7 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 | Rung definitions (signature + template) | Demonstration lists (tasks under their rung); depths, double-jumps, fan-in, validity window |
 | Tasks: id, heldout flag, solution, train/test inputs | `spec.md`, reports, certificate verdicts |
 
-## 4. Reference example
+## 5. Reference example
 
 Abridged from `al1-mirror` (the real ladder has more tasks per rung and a fuller config block):
 

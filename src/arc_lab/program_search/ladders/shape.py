@@ -30,6 +30,10 @@ class RungShape:
     #: ``compositional_depth`` of the rung template over ``L_{i-1}`` (affordable iff
     #: ``jump_depth <= Budget.depth_limit``).
     jump_depth: int
+    #: ``min_depth_limit`` of the same template: the smallest ``Budget.depth_limit`` that puts it
+    #: in REACH. Equal to ``jump_depth`` for a first-order template; larger when a lambda body
+    #: needs its own descended budget. Every affordability claim is stated in THIS one.
+    jump_needs: int
     #: Inlined depth of the layer above over ``L_{i-1}`` (this rung's calls expanded one level):
     #: the next rung's template, or -- for the last bridging rung -- the shallowest top reference
     #: solution. What skipping this rung would cost in depth.
@@ -38,7 +42,8 @@ class RungShape:
     #: count): 0 = floor-only (typical for r_1), 1 throughout = pure telescope, > 1 = recombining.
     fan_in: int
     demonstration_count: int
-    #: ``True`` if the template contains a ``Lam`` -> depth checks are advisory (HO sub-search).
+    #: ``True`` if the template contains a ``Lam``. The depth claims still hold (they are stated
+    #: in ``jump_needs``); what stays advisory is reachability under example propagation.
     involves_lambda: bool
 
 

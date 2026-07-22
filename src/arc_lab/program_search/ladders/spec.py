@@ -266,6 +266,7 @@ class LadderSpec:
                     level=rung.level,
                     name=rung.name,
                     jump_depth=d_i,
+                    jump_needs=need_i,
                     double_jump_depth=double_jump,
                     fan_in=_fan_in(rung.template, {r.name for r in rungs}),
                     demonstration_count=len(rung.demonstrations),
@@ -490,6 +491,17 @@ class LadderSpec:
             f"floor primitives no rung, demonstration, distractor or top solution uses: {idle}",
         )
 
+        # Vocabulary (V), the complement: an `If` is a NODE, not an `Apply`, so a template can
+        # branch without naming any primitive -- but the engine only enumerates branches when the
+        # `if` summoner is in the library (`_branch_candidates`). Without it the ladder is
+        # writable and unreachable, which is the one way branching syntax can silently lie.
+        err(
+            "branching-summoned",
+            BRANCHING_ENTRY not in exercised or BRANCHING_ENTRY in self.floor(),
+            f"a template or solution branches, but the floor does not declare "
+            f"`{BRANCHING_ENTRY}`: search can never reach it",
+        )
+
         # Structure (S): rung distinctness -- two rungs with identical unfolded templates are one
         # rung with two names: the second buys no depth and splits its own demonstrations. (A
         # syntactic comparison: extensionally-equal-but-differently-written twins pass it.)
@@ -581,6 +593,7 @@ class LadderSpec:
         rung_order = [rung.name for rung in self.rungs]
         top_pairs = list(zip(self.top.task_ids, self.top.reference_solutions, strict=False))
         top_depths = [compositional_depth(sol) for _, sol in top_pairs]
+        top_needs = [min_depth_limit(sol) for _, sol in top_pairs]
         top_fan_ins = [_fan_in(sol, set(rung_order)) for _, sol in top_pairs]
 
         lines = [
@@ -646,13 +659,14 @@ class LadderSpec:
             rung.name: "/".join(sorted({d.kind.value for d in rung.demonstrations})) or "-"
             for rung in self.rungs
         }
-        rows = [["level", "rung", "d_i", "double-jump", "fan-in", "demos", "kind"]]
+        rows = [["level", "rung", "d_i", "needs", "double-jump", "fan-in", "demos", "kind"]]
         for s in shape.rungs:
             rows.append(
                 [
                     str(s.level),
                     f"`{s.name}`",
                     str(s.jump_depth),
+                    str(s.jump_needs),
                     "-" if s.double_jump_depth is None else str(s.double_jump_depth),
                     str(s.fan_in),
                     str(s.demonstration_count),
@@ -664,6 +678,7 @@ class LadderSpec:
                 "top",
                 "(goal layer)",
                 _span(top_depths),
+                _span(top_needs),
                 "-",
                 _span(top_fan_ins),
                 str(len(self.top.task_ids)),
@@ -676,8 +691,12 @@ class LadderSpec:
             "",
             *table(rows),
             "",
-            "- `d_i`: compositional depth of the template over `L_{i-1}` "
-            "(top row: of the reference solutions over `L_k`)",
+            "- `d_i`: the GENERATION the engine composes the template at over `L_{i-1}`, a leaf "
+            "being 0 (top row: of the reference solutions over `L_k`). The design doc's jump "
+            "depth, and the unit `solved_at_generation` reports in.",
+            "- `needs`: the smallest `depth_limit` that puts it in REACH -- the quantity every "
+            "affordability claim above is stated in. Equal to `d_i` for a first-order template; "
+            "larger when a lambda body needs its own descended budget (`analysis/depth.py`).",
             "- `double-jump`: depth of the layer above with this rung inlined -- what skipping "
             "this rung would cost in depth (for the last rung, from the top solutions)",
             "- `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count "
@@ -687,8 +706,8 @@ class LadderSpec:
         ]
 
         lines += ["", "## Top Rung (goal layer -- nothing is minted here)", ""]
-        for (tid, _), d_top in zip(top_pairs, top_depths, strict=True):
-            lines.append(f"- `{tid}`: d={d_top} over `L_{k}`")
+        for (tid, _), d_top, need_top in zip(top_pairs, top_depths, top_needs, strict=True):
+            lines.append(f"- `{tid}`: d={d_top}, needs depth_limit {need_top}, over `L_{k}`")
         lines += [
             "",
             "## Reference config (resolved)",
