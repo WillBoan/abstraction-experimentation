@@ -224,3 +224,17 @@ def test_free_param_variation_counts_every_call_site() -> None:
     # kept; column 2 is the colour, aggregating all four call sites: {1, 2, 3}.
     assert [index for index, _ in columns] == [1, 2]
     assert len(columns[1][1]) == 3
+
+
+def test_lint_catches_the_al7_telescoping_statically() -> None:
+    # The certificate found al7's skip paths empirically (2026-07-20); the rewrite check finds
+    # them statically, witnesses printed -- and stays silent on the sound ladders.
+    shape = make_ladder("al7-fast-tower").lint()
+    assert _failed(shape, "rewrite-shallow[wide4]")
+    assert _failed(shape, "rewrite-shallow[tall4]")
+    assert _failed(shape, "rewrite-shallow[wide8]")
+    for sound in ("al1-mirror", "al2-rot90-calibration"):
+        assert not any(
+            f.check.startswith("rewrite-shallow") and not f.ok
+            for f in make_ladder(sound).lint().findings
+        )

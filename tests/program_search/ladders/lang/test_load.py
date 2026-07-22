@@ -16,9 +16,20 @@ from arc_lab.program_search.ladders.lang import LadderFormatError
 from arc_lab.program_search.ladders.lang.load import ladder_tasks, resolve
 from arc_lab.program_search.ladders.lang.parse import parse_document
 from arc_lab.program_search.ladders.registry import ladder_paths, load_ladder, make_ladder
+from arc_lab.program_search.ladders.shape import LintFinding
 from arc_lab.program_search.ladders.spec import DemonstrationKind
 
 REPO = Path(__file__).resolve().parents[4]
+
+_LINT_CACHE: dict[str, tuple[LintFinding, ...]] = {}
+
+
+def _lint_findings(name: str) -> tuple[LintFinding, ...]:
+    """One batch-wide lint sweep shared by the lock tests (linting all 20 is seconds, and
+    three sweeps would be three times that for identical answers)."""
+    if name not in _LINT_CACHE:
+        _LINT_CACHE[name] = make_ladder(name).lint().findings
+    return _LINT_CACHE[name]
 
 MINIMAL = """
 ladder t1
@@ -106,23 +117,42 @@ def test_static_lint_records_the_batch_s_known_defects() -> None:
     index arithmetic is train-constant (the 2026-07-21 probe diagnosis, now static), and al4/al5/
     al6's perceiver calls are train-constant on the flagged tasks -- which is why the certificate
     recorded skip paths there and al5 recovered zero rungs (search substitutes the enumerated
-    literal for the perceiver). Fixing any of these is a deliberate act; update this set then."""
+    literal for the perceiver). The `rewrite-shallow` rows are the equational skip paths caught
+    statically, each with a behaviorally-confirmed witness: the al3/al7 self-similar doubling
+    (`tall4 == stack2(stack2 g)` and kin, inherited verbatim by the al9/al11 controls), al6's
+    hidden flip_h.flip_h cancellation (r1 contributes nothing to r2), and al10's deliberately
+    reachable raw top (the control working as designed, now with the witness printed). Fixing
+    any of these is a deliberate act; update this set then."""
     failing = {
         name: sorted(
-            f.check for f in make_ladder(name).lint().findings if not f.ok and f.severity == "error"
+            f.check for f in _lint_findings(name) if not f.ok and f.severity == "error"
         )
         for name in ladder_paths()
     }
     failing = {name: checks for name, checks in failing.items() if checks}
     assert set(failing) == {
+        "al3-quad-symmetrize",
         "al4-mask-crop",
         "al5-perceiver-chain",
         "al6-mirror-tall",
+        "al7-fast-tower",
+        "al9-decoy",
         "al10-skippable",
+        "al11-greedy-trap",
         "al12-unlearnable",
         "al13-symmetry-repair",
         "al14-cell-row-grid",
     }
+    assert failing["al3-quad-symmetrize"] == ["rewrite-shallow[band]"]
+    doubling = ["rewrite-shallow[tall4]", "rewrite-shallow[wide4]", "rewrite-shallow[wide8]"]
+    assert failing["al7-fast-tower"] == doubling
+    assert failing["al9-decoy"] == doubling  # inherited spine, identical collapse
+    assert failing["al11-greedy-trap"] == doubling
+    assert failing["al10-skippable"] == [
+        "raw-intractable",
+        "rewrite-shallow[rot90]",
+        "top-double-jump-intractable",
+    ]
     assert failing["al4-mask-crop"] == [
         "constant-subterm[flatten_content-00]",
         "constant-subterm[flatten_content-01]",
@@ -144,6 +174,7 @@ def test_static_lint_records_the_batch_s_known_defects() -> None:
         "constant-subterm[norm_quad-00]",
         "constant-subterm[norm_stack-00]",
         "constant-subterm[top-00]",
+        "rewrite-shallow[rot180]",
     ]
     assert failing["al14-cell-row-grid"] == [
         "constant-subterm[move_cell_up-00]",
@@ -167,7 +198,7 @@ def test_the_evaluation_backed_checks_batch_posture() -> None:
     literal beats the subterm; al8 carries the same perceiver constancy at WARN tier because its
     config mints no constants -- the severity split is the law's "does the beating literal exist
     in this ladder's own search?" clause, working."""
-    by_ladder = {name: make_ladder(name).lint().findings for name in ladder_paths()}
+    by_ladder = {name: _lint_findings(name) for name in ladder_paths()}
     assert not any(
         f.check.startswith("if-condition-varies") for findings in by_ladder.values() for f in findings
     )
@@ -182,6 +213,20 @@ def test_the_evaluation_backed_checks_batch_posture() -> None:
         "al5-perceiver-chain",
         "al6-mirror-tall",
         "al14-cell-row-grid",
+    }
+    rewrite_errors = {
+        name
+        for name, findings in by_ladder.items()
+        for f in findings
+        if f.check.startswith("rewrite-shallow") and not f.ok
+    }
+    assert rewrite_errors == {
+        "al3-quad-symmetrize",
+        "al6-mirror-tall",
+        "al7-fast-tower",
+        "al9-decoy",
+        "al10-skippable",
+        "al11-greedy-trap",
     }
     al8_warns = [
         f.check
@@ -203,7 +248,7 @@ def test_the_demonstration_plan_checks_hold_across_the_batch() -> None:
     offenders = [
         (name, f.check)
         for name in ladder_paths()
-        for f in make_ladder(name).lint().findings
+        for f in _lint_findings(name)
         if not f.ok and f.check.split("[")[0] in variation
     ]
     assert offenders == []

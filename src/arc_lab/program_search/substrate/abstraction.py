@@ -15,7 +15,7 @@ template with its arguments bound to the ``Param`` holes.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.substrate.library import Library, Primitive, Value
@@ -147,18 +147,43 @@ def unfold_program(
     ``expand={r_i}`` expands exactly ``r_i``'s call sites, leaving ``r_i``'s template's own
     references to ``r_{i-1}`` folded (the inlined double-jump form). Terminates because a template
     only references strictly-lower abstractions (libraries are built by extension, never cyclic).
+
+    Memoized by node identity: a shared subtree unfolds once, and its expansion is shared in the
+    output too. Deeply-nested abstraction calls (a ladder top wrapping a rung tens of times)
+    otherwise materialize millions of distinct objects, which every later traversal then pays
+    for; with the memo the output's DISTINCT node count stays near the sum of template sizes,
+    while ``==``/hash semantics are untouched (identical structure either way).
     """
+    # The memo VALUE keeps a strong reference to the keyed node: intermediate nodes built during
+    # unfolding are otherwise freed, and a recycled id() would alias a fresh node to a stale
+    # entry (id is only unique among live objects).
+    memo: dict[int, tuple[Program, Program]] = {}
 
     def go(node: Program) -> Program:
-        if isinstance(node, Apply):
-            unfolded_args = tuple(go(arg) for arg in node.args)
-            template = library.get(node.primitive).template if node.primitive in library else None
-            if template is not None and (expand is None or node.primitive in expand):
-                return go(substitute_params(template, unfolded_args))
-            return Apply(primitive=node.primitive, args=unfolded_args)
-        children = node.children()
-        if not children:
-            return node
-        return rebuild(node, tuple(go(child) for child in children))
+        key = id(node)
+        cached = memo.get(key)
+        if cached is not None and cached[0] is node:
+            return cached[1]
+        result = _unfold_one(node, go, library, expand)
+        memo[key] = (node, result)
+        return result
 
     return go(program)
+
+
+def _unfold_one(
+    node: Program,
+    go: Callable[[Program], Program],
+    library: Library,
+    expand: frozenset[str] | None,
+) -> Program:
+    if isinstance(node, Apply):
+        unfolded_args = tuple(go(arg) for arg in node.args)
+        template = library.get(node.primitive).template if node.primitive in library else None
+        if template is not None and (expand is None or node.primitive in expand):
+            return go(substitute_params(template, unfolded_args))
+        return Apply(primitive=node.primitive, args=unfolded_args)
+    children = node.children()
+    if not children:
+        return node
+    return rebuild(node, tuple(go(child) for child in children))

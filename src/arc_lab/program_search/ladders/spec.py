@@ -18,6 +18,7 @@ from dataclasses import dataclass, replace
 
 from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.dataset import Corpus
+from arc_lab.core.grid import Grid
 from arc_lab.program_search.analysis.compression import CompressionMetric, SolvedTask
 from arc_lab.program_search.analysis.depth import compositional_depth
 from arc_lab.program_search.execution.model.config import Config
@@ -25,7 +26,11 @@ from arc_lab.program_search.execution.model.serde import to_data
 from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
 from arc_lab.program_search.ladders._render import table
 from arc_lab.program_search.ladders.chain import oracle_libraries
-from arc_lab.program_search.ladders.checks import conditional_findings, constancy_findings
+from arc_lab.program_search.ladders.checks import (
+    conditional_findings,
+    constancy_findings,
+    rewrite_findings,
+)
 from arc_lab.program_search.ladders.shape import LadderShape, LintFinding, RungShape
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.search_engine import BRANCHING_ENTRY
@@ -303,6 +308,47 @@ class LadderSpec:
         if rung_shapes and top_skips:
             rung_shapes[-1] = replace(rung_shapes[-1], double_jump_depth=min(top_skips))
 
+        # The shared unfold cache: every stated program's floor form, computed ONCE. al14's top
+        # unfolds to millions of node occurrences; the rewrite, constancy, conditional and
+        # vocabulary checks below all read these instead of re-unfolding.
+        stated_solutions: list[tuple[str, Program]] = [
+            *((d.task_id, d.solution) for rung in rungs for d in rung.demonstrations),
+            *((d.task_id, d.solution) for d in self.distractors),
+            *zip(self.top.task_ids, self.top.reference_solutions, strict=False),
+        ]
+        unfolded_stated = tuple(
+            (task_id, unfold_program(solution, full_lib)) for task_id, solution in stated_solutions
+        )
+        unfolded_by_id = dict(unfolded_stated)
+        unfolded_templates = [unfold_program(rung.template, full_lib) for rung in rungs]
+
+        # Depth sandwich (D): rewrite-shallow -- bounded equational skip-path detection. The
+        # depth checks above measure the INTENDED template; this one asks whether a few known
+        # equations re-express the layer above a skipped rung shallowly anyway (al7's
+        # tall4 == stack2(stack2 g)). Capped and behaviorally confirmed; silent-pass on caps.
+        libraries = [self.oracle_library(level) for level in range(k + 1)]
+        probe_inputs: dict[str, tuple[Grid, ...]] = {
+            rung.name: tuple(
+                ex.input
+                for demo in rung.demonstrations
+                if demo.task_id in by_id
+                for ex in by_id[demo.task_id].task.train
+            )
+            for rung in rungs
+        }
+        for task_id in self.top.task_ids:
+            if task_id in by_id:
+                probe_inputs[task_id] = tuple(ex.input for ex in by_id[task_id].task.train)
+        findings.extend(
+            rewrite_findings(
+                list(zip((rung.name for rung in rungs), unfolded_templates, strict=True)),
+                [(tid, unfolded_by_id[tid]) for tid in self.top.task_ids if tid in unfolded_by_id],
+                libraries,
+                ref_limit,
+                probe_inputs,
+            )
+        )
+
         # Learnability (L): proposer compatibility.
         proposer = getattr(
             getattr(self.reference_config.learn, "learn_engine", None), "proposer", None
@@ -378,16 +424,8 @@ class LadderSpec:
 
         # Demonstration plan (P): constancy + conditionals -- evaluation-backed checks over the
         # stated solutions, UNFOLDED to the floor (collapse lives in the floor's term space:
-        # al14's `sub(1, 1)` only appears after unfolding). One unfold per stated task, shared
-        # with the vocabulary advisory below.
-        stated_solutions: list[tuple[str, Program]] = [
-            *((d.task_id, d.solution) for rung in rungs for d in rung.demonstrations),
-            *((d.task_id, d.solution) for d in self.distractors),
-            *zip(self.top.task_ids, self.top.reference_solutions, strict=False),
-        ]
-        unfolded_stated = tuple(
-            (task_id, unfold_program(solution, full_lib)) for task_id, solution in stated_solutions
-        )
+        # al14's `sub(1, 1)` only appears after unfolding; the shared cache above owns the
+        # unfolds).
         train_inputs = {
             entry.task.task_id: tuple(ex.input for ex in entry.task.train)
             for entry in (*self.train_corpus.entries, *self.heldout_corpus.entries)
@@ -418,16 +456,21 @@ class LadderSpec:
         # ships a realistic mask algebra). But an *accidental* dead primitive is not free -- it
         # widens the round-0 leaf set for every task, inflating the very vocabulary tax the batch
         # is trying to attribute.
-        unfolded_templates = [unfold_program(rung.template, full_lib) for rung in rungs]
         exercised: set[str] = set()
-        for program in (*unfolded_templates, *(sol for _, sol in unfolded_stated)):
-            for node in program.walk():
-                if isinstance(node, Apply):
-                    exercised.add(node.primitive)
-                elif isinstance(node, PrimRef):
-                    exercised.add(node.name)  # used as a first-class function value
-                elif isinstance(node, If):
-                    exercised.add(BRANCHING_ENTRY)  # branching exercises the `if` summoner
+        visited: set[int] = set()
+        stack: list[Program] = [*unfolded_templates, *(sol for _, sol in unfolded_stated)]
+        while stack:  # distinct-id traversal: shared subtrees of a deep unfold visit once
+            node = stack.pop()
+            if id(node) in visited:
+                continue
+            visited.add(id(node))
+            if isinstance(node, Apply):
+                exercised.add(node.primitive)
+            elif isinstance(node, PrimRef):
+                exercised.add(node.name)  # used as a first-class function value
+            elif isinstance(node, If):
+                exercised.add(BRANCHING_ENTRY)  # branching exercises the `if` summoner
+            stack.extend(node.children())
         idle = [p.name for p in self.floor().primitives if p.name not in exercised]
         warn(
             "floor-fully-exercised",

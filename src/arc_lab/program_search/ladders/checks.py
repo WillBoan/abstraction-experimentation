@@ -24,12 +24,18 @@ never flagged.
 
 from __future__ import annotations
 
+import itertools
 from collections.abc import Callable, Mapping, Sequence
 
 from arc_lab.core.grid import Grid
+from arc_lab.program_search.analysis.rewrite import (
+    RewriteLimits,
+    ShallowWitness,
+    shallow_equivalent,
+)
 from arc_lab.program_search.ladders.shape import LintFinding
 from arc_lab.program_search.search.leaves import ConstantSource, policy_constants
-from arc_lab.program_search.substrate.library import Library
+from arc_lab.program_search.substrate.library import Library, Value
 from arc_lab.program_search.substrate.program import (
     AppFn,
     Apply,
@@ -111,9 +117,7 @@ def constancy_findings(
                 )
             )
         else:
-            findings.append(
-                LintFinding(check=f"constant-subterm[{task_id}]", ok=True, detail="")
-            )
+            findings.append(LintFinding(check=f"constant-subterm[{task_id}]", ok=True, detail=""))
     return tuple(findings)
 
 
@@ -157,6 +161,129 @@ def conditional_findings(
                 LintFinding(check=f"if-condition-varies[{task_id}]", ok=True, detail="")
             )
     return tuple(findings)
+
+
+def rewrite_findings(
+    rungs: Sequence[tuple[str, Program]],
+    top_solutions: Sequence[tuple[str, Program]],
+    libraries: Sequence[Library],
+    depth_limit: int,
+    probe_inputs: Mapping[str, tuple[Grid, ...]],
+    limits: RewriteLimits | None = None,
+) -> tuple[LintFinding, ...]:
+    """``rewrite-shallow[<skipped-rung>]``: bounded equational skip-path detection.
+
+    For each skipped rung ``r_i``: can the layer above it (rung ``r_{i+1}``'s template, or —
+    for ``r_k`` — each top reference solution) be re-expressed over ``L_{i-1}`` within the
+    pinned ``depth_limit``? A found witness is the collapse the depth sandwich cannot see
+    (al7's ``tall4 == stack2(stack2 g)``); it is reported only after BEHAVIORAL confirmation
+    on the target's own probe inputs, because normal-form equality inherits the interchange
+    law's shape side-condition. No witness (or any cap) is a silent pass — this check can
+    convict, never acquit.
+
+    ``rungs`` are ``(name, unfolded template)`` in level order and ``top_solutions`` are
+    ``(task_id, unfolded solution)`` — targets arrive PRE-UNFOLDED to the floor (the caller's
+    shared cache owns the expensive unfolds; al14's top is millions of node occurrences).
+    ``libraries`` is ``L_0..L_k``; ``probe_inputs`` maps a rung name (its demos' train inputs)
+    or a top task id to grids.
+    """
+    active_limits = limits if limits is not None else RewriteLimits()
+    full_lib = libraries[-1]
+    findings: list[LintFinding] = []
+    k = len(rungs)
+    for i in range(1, k + 1):
+        skipped_name = rungs[i - 1][0]
+        skip_library = libraries[i - 1]
+        if i < k:
+            above_name, above_template = rungs[i]
+            targets = [(above_name, above_template, probe_inputs.get(above_name, ()))]
+        else:
+            targets = [
+                (task_id, solution, probe_inputs.get(task_id, ()))
+                for task_id, solution in top_solutions
+            ]
+        for label, target, grids in targets:
+            witness = shallow_equivalent(
+                target, skip_library, libraries[0], depth_limit, active_limits
+            )
+            confirmed = witness is not None and _witness_confirmed(witness, target, full_lib, grids)
+            detail = ""
+            if confirmed and witness is not None:
+                detail = (
+                    f"{label} is reachable over L_{i - 1} at depth {witness.depth} "
+                    f"(<= depth_limit {depth_limit}) via {_spell(witness.term)}"
+                )
+            findings.append(
+                LintFinding(
+                    check=f"rewrite-shallow[{skipped_name}]",
+                    ok=not confirmed,
+                    detail=detail,
+                    severity="error",
+                )
+            )
+    return tuple(findings)
+
+
+#: Scalar probe values for non-GRID template parameters during witness confirmation.
+_SCALAR_PROBES: dict[str, tuple[Value, ...]] = {
+    "int": (0, 1, 2, 3),
+    "color": (0, 1, 2, 3),
+    "bool": (False, True),
+}
+
+#: Cap on probe bindings per confirmation (mirrors the behavioral checker's combo cap in spirit).
+_MAX_PROBE_BINDINGS = 16
+
+#: Closed templates never consult the outer grid during evaluation.
+_DUMMY_GRID = Grid.from_list([[0]])
+
+
+def _witness_confirmed(
+    witness: ShallowWitness, target: Program, library: Library, grids: tuple[Grid, ...]
+) -> bool:
+    """Both programs agree on every probe binding where the target evaluates; at least one
+    binding must be exercised. The witness erring (or disagreeing) where the target evaluates
+    refutes it."""
+    if not grids:
+        return False
+    exercised = 0
+    for grid, env in _probe_bindings(target, library, grids):
+        try:
+            expected = target.evaluate(grid, library, env)
+        except Exception:
+            continue
+        try:
+            actual = witness.term.evaluate(grid, library, env)
+        except Exception:
+            return False
+        if actual != expected:
+            return False
+        exercised += 1
+    return exercised > 0
+
+
+def _probe_bindings(
+    target: Program, library: Library, grids: tuple[Grid, ...]
+) -> list[tuple[Grid, tuple[Value, ...]]]:
+    """Probe (grid, env) pairs: a closed template binds grids/scalars into its ``Param`` holes
+    positionally; an ``Input``-rooted solution takes each probe grid as the input itself."""
+    params = _param_types_in_order(target)
+    if not params:
+        return [(grid, ()) for grid in grids]
+    per_slot: list[tuple[Value, ...]] = []
+    for param_type in params:
+        scalars = _SCALAR_PROBES.get(getattr(param_type, "name", ""))
+        per_slot.append(scalars if scalars is not None else tuple(grids))
+    combos = itertools.islice(itertools.product(*per_slot), _MAX_PROBE_BINDINGS)
+    return [(_DUMMY_GRID, env) for env in combos]
+
+
+def _param_types_in_order(target: Program) -> tuple[Type, ...]:
+    by_index: dict[int, Type] = {}
+    for node in target.walk():
+        if isinstance(node, Param):
+            by_index.setdefault(node.index, node.value_type)
+    return tuple(by_index[i] for i in sorted(by_index))
 
 
 def _subterm_values(root: Program, grid: Grid, library: Library) -> dict[int, object]:
@@ -250,7 +377,14 @@ _SPELL_LIMIT = 120
 
 
 def _spell(node: Program) -> str:
-    """A readable, bounded spelling for a finding detail — surface syntax where possible."""
+    """A readable, bounded spelling for a finding detail — surface syntax where possible.
+
+    Rendering is skipped outright for oversized nodes: a subterm of an unfolded solution can be
+    megabytes deep, and materializing the full spelling before truncating is what the bound is
+    for."""
+    if _occurrence_count(node, 400) is None:
+        head = node.primitive if isinstance(node, Apply) else type(node).__name__
+        return f"{head}(...deep...)"
     try:
         from arc_lab.program_search.ladders.lang.expr import render_expression
 
@@ -260,6 +394,20 @@ def _spell(node: Program) -> str:
     if len(spelling) > _SPELL_LIMIT:
         return f"{spelling[:_SPELL_LIMIT]}..."
     return spelling
+
+
+def _occurrence_count(program: Program, cap: int) -> int | None:
+    """Node-occurrence count with early abort past ``cap`` (shared subtrees count per occurrence,
+    exactly like a rendering would visit them)."""
+    count = 0
+    stack = [program]
+    while stack:
+        node = stack.pop()
+        count += 1
+        if count > cap:
+            return None
+        stack.extend(node.children())
+    return count
 
 
 def _offenders(named: Mapping[str, object], limit: int = 5) -> str:
