@@ -564,7 +564,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-22 — The rung probe: the certificate's verdicts, rung-locally, in 100 seconds
 
-- **Commit:** `2fe5aa6`. Notebook: [experiments/2026-07-22-rung-probe/](experiments/2026-07-22-rung-probe/). Machinery: `ladders/probe.py`, `arc-lab probe-ladder`.
+- **Commit:** `33dcf77`. Notebook: [experiments/2026-07-22-rung-probe/](experiments/2026-07-22-rung-probe/). Machinery: `ladders/probe.py`, `arc-lab probe-ladder`.
 - **Question:** ladder design's only empirical feedback was `run_ladder` — a full climb plus the oracle chain, paid after the testbed and spec were written (which is how 2026-07-20 produced 20 builds and 8 late rejections). Can the certificate's questions be asked per RUNG, at design time, cheaply — and does the answer agree with the recorded runs?
 - **Ran:** built the probe (wake / skip / sleep / forecast per rung under `L_{i-1}`, in process, recording nothing), then swept every rung of all 20 ladders.
 - **Result:**
