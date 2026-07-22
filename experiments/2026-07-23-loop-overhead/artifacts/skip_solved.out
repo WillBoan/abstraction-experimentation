@@ -1,0 +1,13 @@
+al1-mirror: schedule=skip-solved  minted=['abs0', 'abs1', 'abs2']  converged=True
+  e2e considered: full=200,280  skip-solved=80,852  -> 0.40x (2.5x cheaper)
+  wake 0: searched 5 tasks: ['mirror-recolor-1-2', 'mirror-recolor-3-4', 'rot180-00', 'rot180-01', 'top-00']
+  wake 1: searched 3 tasks: ['mirror-recolor-1-2', 'mirror-recolor-3-4', 'top-00']
+  wake 2: searched 1 tasks: ['top-00']
+  wake 3: searched 0 tasks: []
+al17-shift-frame-tall: schedule=skip-solved  minted=['abs0', 'abs1', 'abs2', 'abs3', 'abs4']  converged=True
+  e2e considered: full=107,772  skip-solved=59,824  -> 0.56x (1.8x cheaper)
+  wake 0: searched 7 tasks: ['frame1-00', 'frame1-01', 'shift1-00', 'shift1-01', 'shift2-00', 'shift2-01', 'top-00']
+  wake 1: searched 5 tasks: ['frame1-00', 'frame1-01', 'shift2-00', 'shift2-01', 'top-00']
+  wake 2: searched 3 tasks: ['shift2-00', 'shift2-01', 'top-00']
+  wake 3: searched 1 tasks: ['top-00']
+  wake 4: searched 0 tasks: []

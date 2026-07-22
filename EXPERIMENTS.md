@@ -675,3 +675,15 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - **Off-chain necessity separates the set as designed:** al15/al18/al19 tops need the whole chain; the telescoping tops (al1/al2/al16/al17/al20) do not — al19-vs-al20 reads exactly as the 2026-07-21 resolution said.
 - **Interpretation:** decision 1's mechanism works at batch scale and produces claims in both directions: proven bounds where raw is genuinely out of reach, honest small ratios where it is not. The set's story inverts the estimator era: the *rebuilds* — designed against the collapse findings — are the strong ladders, and the shape-control telescope is marginal. This table supersedes every previously quoted number for these 8 ladders.
 - **Next:** the second half of Phase 2 item 4 — grow the set (new ladders must lint clean, probe clean, and produce usable cost data); sleep-side attribution (item 5); `w` calibration so RQ1 denominators can include learning cost.
+
+## 2026-07-23 — Loop overhead decomposed: the flavor gap is zero; skip-solved buys 1.8-2.5x and mints junk
+
+- **Commit:** `PENDING`. Notebook: [experiments/2026-07-23-loop-overhead/](experiments/2026-07-23-loop-overhead/).
+- **Question:** what separates al1's 3.59x marginal ratio from its 0.96x achieved one — and how much does the new `wake_schedule` machinery recover?
+- **Ran:** (1) learned-vs-oracle flavor gap read off the fresh artifacts: wake iteration i under `L^learned_i` vs oracle column `L_i`, all 8 ladders; (2) al1 + al17 climbs re-run under `skip-solved` (fresh run_ids; arm-labeled), extra mints inspected.
+- **Result:**
+  - **Flavor gap = 1.00x on all 24 wake iterations of all 8 ladders — byte-identical considered counts.** On the clean set sleep's mints are cost-equivalent to the oracle rungs; the gap is a property of imperfect climbs, of which the admitted set has none. Phase 2 item 6 answered for the clean set; measuring a nonzero gap needs a deliberately imperfect cell (folded into item 5).
+  - **skip-solved: e2e 2.5x cheaper on al1 (200,280 -> 80,852), 1.8x on al17.** Wake sets shrink 5->3->1->0 / 7->5->3->1->0 as designed. **al1 breaks even again under it: 2.39x achieved** (vs 0.96x full) — the difference between al1 paying and not paying is entirely re-search.
+  - **But the arm label earns its keep immediately:** both climbs mint EXTRAS from stale carried solutions — al1 a frozen specialization (`map_color(#0, 3, 4)`), al17 a reparameterized duplicate of frame1. Recovery still 100%, costs already include the junk's vocab tax, but the downstream library is dirtier — a transfer liability the e2e number does not price.
+- **Interpretation:** the loop-overhead story is now fully attributed: re-search (removable by scheduling, at a library-quality price), full-budget failures on unreachable tasks, and vocabulary tax. And the first witnessed sleep-side mechanism — specialization-from-stale-input — gives item 5's micro-probes a concrete target.
+- **Next:** sleep-side single-factor batteries (item 5): demonstration-mix vs mint arity, proposer choice, governance refusals, stale-input specialization; `w` calibration alongside.
