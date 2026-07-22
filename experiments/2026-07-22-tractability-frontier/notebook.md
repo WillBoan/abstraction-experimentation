@@ -91,6 +91,10 @@ as a proportional shrink across types where the engine cuts **cheapest-first**. 
 direction (it under-predicts precisely where the true answer is "cheap and flat"), but the honest
 statement is: **trust the forecaster in the growth regime, not at or past saturation.** The
 backtest's 97%-within-2x was measured at the reference budgets, which sit in the growth regime.
+*(Amended 2026-07-23: even that was too generous — the estimator-validation sweep found the
+one-round-ahead projection 25x under on two of five floors at freed pools. The forecaster's
+validated uses are attribution, saturation detection, and guard-setting; its cost numbers carry
+wide error margins outside the narrow regime it was backtested in.)*
 
 ## Decisions
 

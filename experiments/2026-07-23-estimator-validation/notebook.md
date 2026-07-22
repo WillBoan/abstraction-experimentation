@@ -144,3 +144,22 @@ was swapped:
 - If extrapolation survives in any form, the forecaster's two 0.04x cells are worth diagnosing:
   both are floors where the modelled census growth (`survivors = composed x rate`) lags the engine's
   real pool growth, which is a fixable modelling gap rather than an inherent limit.
+
+## Addendum (2026-07-23) — decision taken
+
+Recorded in [AL-PLAN-2026-07-23.md](../../docs/abstraction_ladders/AL-PLAN-2026-07-23.md). The
+choice is none of the notebook's options 1–3 verbatim but the measured/bounded split option 2
+gestured at, made concrete:
+
+> RQ1 = `raw / (laddered + learning)` (design doc §4 — raw in the numerator, so > 1 means the
+> ladder won). Run the raw arm deliberately (depth toward `d_raw`, pool freed, saturation-checked)
+> with guard = **K x the measured laddered cost**. Solve ⇒ a *measured* ratio (<= K); censor ⇒ a
+> *proven bound*: ratio >= K. Every bound reported with its `(depth, pool, spend)` conditions.
+
+The extrapolated bracket is retired from results (advisory only, carrying its 2/10 caveats).
+Estimation research is deferred, not abandoned — but nothing may depend on an estimator that has
+not survived a validation of this kind. This session also corrected the framing this notebook's
+sibling documents carried: prediction of rung cost without running it, and `b_eff` from early
+rounds, failed for the same root reason raw extrapolation did (the survival/dedup term is semantic
+and does not hold still), and the docs now say so plainly rather than scoping it as "reliable
+within a regime".

@@ -40,8 +40,13 @@ bug fixes the batteries themselves produced (Result 5).
 | + `set_cell` | `+ grid(1) x int(4) x int(4) x color(10)` | 163 |
 | + `move_cell` | `+ grid(1) x int(4)^4` | 259 |
 
-This matters beyond bookkeeping: it means the cost of a proposed rung can be computed from its
-floor's *signature* before anything is built or run.
+This matters beyond bookkeeping — but its scope needs stating precisely *(amended 2026-07-23 after
+the estimator validation)*: what is computable from the floor's signature is the **round-1
+composition count** and, more generally, each round's count *given its census*. Whole-cell cost is
+that exact arithmetic times a survival term that is semantic (dedup = how many distinct functions
+exist among the candidates), must be measured, and cannot be projected far: the one-round-ahead
+projection ranged 0.04x–1.24x across floors. So the law supports *attribution and guards*, not
+cost prediction — a rung's cost is known by running the cell, not by computing it.
 
 ## Result 2 — arity is not the driver; the product of type populations is
 
