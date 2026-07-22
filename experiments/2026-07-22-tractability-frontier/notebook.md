@@ -97,8 +97,17 @@ backtest's 97%-within-2x was measured at the reference budgets, which sit in the
 - Ladder budgets should be stated as a `(depth_limit, max_pool)` pair, and a jump described as
   "depth 3 at pool 20,000", never "depth 3" alone.
 - A saturated round (composed == 0) should be surfaced by the probe: it means the cell is
-  pool-starved and the depth setting is decorative. Not built yet.
+  pool-starved and the depth setting is decorative. **Built 2026-07-22** (`probe.Saturation`,
+  reported with the cell's *effective* depth; advisory, outside `ok` — starvation is a defect in
+  what a cell measures, not in whether its jump is sound).
 - The forecaster needs a saturation flag before it is used to price cells near the cap.
+  **Built 2026-07-22** (`TaskForecast.saturated_at` + a flag naming the total as a lower bound).
+
+One thing fell out of building the first of those, and it sharpens the finding above: al1's r1
+probes clean at its reference depth of 2, but at `depth_limit` 5 its **top becomes reachable
+straight from `L_0`** (`flip_h(flip_v(map_color(input, 1, 2)))`, depth 3) — the ladder stops being
+a ladder. So depth is not a free design parameter even where it is cheap: raising it can open skip
+paths, which is a *third* reason "just unlock deeper jumps" was never the move. Pinned as a test.
 
 ## Next
 

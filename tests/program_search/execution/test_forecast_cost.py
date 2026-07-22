@@ -113,3 +113,26 @@ def test_a_non_bottom_up_engine_is_refused_rather_than_guessed() -> None:
             replace(config, search_engine=_NotAnEngine()),  # type: ignore[arg-type]
             task,
         )
+
+
+def test_saturation_is_flagged_rather_than_reported_as_a_cheap_deep_round() -> None:
+    # Past the round where `max_pool` freezes the modelled census, the new-layer restriction makes
+    # every deeper round exactly zero -- which reads as "depth 6 is free" unless it is labelled.
+    # The 2026-07-22 frontier sweep measured the real gap at that point: ~0.15x, i.e. the engine
+    # composes nearly 7x what the model does, because it truncates cheapest-first.
+    config, task = _cell("al1-mirror", 1)
+    forecast = forecast_cost(config, task, depth_limit=6)
+    saturated_at = forecast.saturated_at
+    assert saturated_at is not None
+    assert all(r.composed == 0 and r.saturated for r in forecast.rounds[saturated_at:])
+    assert all(not r.saturated for r in forecast.rounds[:saturated_at])
+    assert any("LOWER BOUND" in flag for flag in forecast.flags)
+
+
+def test_a_pool_that_does_not_bind_is_not_flagged_as_saturated() -> None:
+    # The negative that makes the flag mean something: same cell, same depth, pool freed.
+    config, task = _cell("al1-mirror", 1)
+    freed = replace(config, budget=replace(config.budget, max_pool=50_000))
+    forecast = forecast_cost(freed, task, depth_limit=4)
+    assert forecast.saturated_at is None
+    assert not any("SATURATED" in flag for flag in forecast.flags)

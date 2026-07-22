@@ -124,6 +124,9 @@ Admission requires every jump tractable and every skip verdict literally `True`.
 | **skip** | does anything one level up already solve from `L_{i-1}`? | `no-skip` · `skip-path` · `inconclusive` (censored) |
 | **sleep** | fed what wake ACTUALLY retained, does governance mint the intended abstraction, at the intended arity? | recovered/missed + minted arity vs intended |
 | **forecast** | what would ONE MORE round of depth cost here? | predicted `considered` + the dominant product term, from `execution/forecast_cost.py` calibrated on the funnel the wake probe just produced (backtested to ~1.07x geomean, 97% within 2x) |
+| **saturation** | do the rounds this cell already pays for compose anything? | first round with `composed == 0` + the cell's *effective* depth. Advisory, deliberately outside `ok` |
+
+**On saturation** (added 2026-07-22 after the frontier sweep). Once `max_pool` binds and nothing new survives dedup + eviction, the new-layer restriction makes every deeper round **structurally empty**: the search still runs, still solves or does not, but its depth setting is decorative. al1's r1 at `depth_limit` 5 and its own pool of 300 composes `(11, 102, 6630, 22848, 6426, 0)` — effective depth 4. This is a defect in what the cell *measures*, not in whether the jump is sound, which is why it is reported but kept out of `findings()` and `ok`. The forecaster carries the matching flag (`TaskForecast.saturated_at`): past that round its total is a **lower bound, not a prediction** — measured ~0.15x of actual, because the model shrinks the census proportionally where the engine cuts cheapest-first.
 
 **This closes the task-collision gap** (§6.4's "no shallower program coincides with the intended solution on all train examples"): the wake probe compares the retained program against the intended one on grids beyond the task's own train support, so a program that merely *fits* is separated from one that is *right*.
 

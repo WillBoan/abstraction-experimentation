@@ -29,7 +29,7 @@ lambda synthesis is not modelled at all (same gap ``estimate_cost`` flags).
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from math import prod
 
 from arc_lab.core.task import Task, train_with_output
@@ -64,6 +64,10 @@ class RoundForecast:
     census: Mapping[str, int]
     composed: int
     entered_pool: int
+    #: This round composed nothing: the modelled census is unchanged from the previous round, so
+    #: the new-layer restriction makes its count structurally zero. See :attr:`TaskForecast.
+    #: saturated_at` for why that is a lower bound rather than a prediction.
+    saturated: bool = False
     #: The primitive contributing the most candidates this round, and why: its slot census as a
     #: product string (``"set_cell: grid(10615) x int(17) x int(17) x color(14)"``). The answer to
     #: "which factor is eating the budget", read straight off the model.
@@ -83,6 +87,18 @@ class TaskForecast:
     def dominant_round(self) -> RoundForecast | None:
         """The round predicted to dominate the total — where the cost actually lives."""
         return max(self.rounds, key=lambda r: r.composed) if self.rounds else None
+
+    @property
+    def saturated_at(self) -> int | None:
+        """The first round whose modelled census had stopped growing — ``None`` if none did.
+
+        Past this round the forecast is a **lower bound, not a prediction**: ``max_pool`` has
+        frozen the modelled census, so every deeper round's new-layer term is exactly zero, while
+        the engine (which cuts cheapest-first rather than proportionally) keeps composing. The
+        measured gap at saturation is ~0.15x — the forecaster under-reads by nearly 7x
+        (2026-07-22 frontier sweep). Treat a saturated total as "at least this much".
+        """
+        return next((r.round_index for r in self.rounds if r.saturated), None)
 
 
 def survival_from(stats: SearchStats) -> tuple[float, ...]:
@@ -157,17 +173,28 @@ def forecast_cost(
                 composed=composed,
                 entered_pool=entered,
                 dominant=_attribute(terms, census),
+                saturated=composed == 0,
             )
         )
         previous = dict(census)
         census = _capped(_grown(census, terms, rate), cap)
 
-    return TaskForecast(
+    forecast = TaskForecast(
         task_id=task.task_id,
         rounds=tuple(rounds),
         total_considered=sum(r.composed for r in rounds),
         flags=tuple(flags),
     )
+    empty = forecast.saturated_at
+    if empty is not None:
+        flags.append(
+            f"SATURATED at round {empty}: the modelled census stops growing (max_pool = {cap}), so "
+            f"rounds {empty}..{horizon} forecast zero. The engine truncates cheapest-first, not "
+            "proportionally, and keeps composing past this point — this total is a LOWER BOUND "
+            "(measured ~0.15x of actual at saturation). Raise max_pool to forecast the depth."
+        )
+        forecast = replace(forecast, flags=tuple(flags))
+    return forecast
 
 
 def _round_terms(

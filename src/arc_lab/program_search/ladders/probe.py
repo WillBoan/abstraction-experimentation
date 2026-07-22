@@ -20,7 +20,9 @@ Four questions per rung ``r_i``, all against the real ``SearchEngine`` at the pi
    5-param mint is what this catches.
 4. **Forecast** — what ONE MORE round of depth would cost here (``execution/forecast_cost``),
    calibrated on the funnel the wake probe just produced, with the factor that dominates it named.
-   The deep-jump question ("can this rung afford depth 3?"), priced before it is paid.
+   The deep-jump question ("can this rung afford depth 3?"), priced before it is paid. Reported
+   alongside :class:`Saturation`: whether the rounds this cell already pays for compose anything
+   at all, or whether ``max_pool`` has made its depth setting decorative.
 
 Asymmetry worth stating: a clean probe does not guarantee the ladder certifies (the climb pays
 each jump under a library inflated by earlier mints, and cross-rung interactions are invisible
@@ -98,6 +100,40 @@ class MintProbe:
 
 
 @dataclass(frozen=True, slots=True)
+class Saturation:
+    """Whether this cell's deeper rounds actually did anything — the (depth x pool) pair, read off.
+
+    A round that composes **zero** candidates is the signature of pool starvation: once ``max_pool``
+    binds and nothing new survives dedup + eviction, the new-layer restriction
+    (``search_engine.py::_uses_new_layer``) makes every deeper round structurally empty. The rung
+    still runs, still solves or does not; what is no longer true is its *cost claim*. A rung pinned
+    at ``depth_limit`` 4 that saturates at round 2 is a depth-2 jump wearing a depth-4 budget.
+
+    Deliberately NOT part of :attr:`RungProbe.ok`: starvation is a defect in what the cell measures,
+    not in whether the ladder is sound, and the probe's admission verdict is about soundness. It is
+    reported because the 2026-07-22 frontier sweep spent a whole sweep measuring starvation while
+    believing it was measuring depth.
+    """
+
+    depth_limit: int
+    max_pool: int
+    #: First round (1-based; round 0 is leaves) that composed nothing — ``None`` if every round did.
+    first_empty_round: int | None
+    final_pool: int
+    #: Per-round ``composed``, round 0 first — the evidence for the above.
+    composed: tuple[int, ...]
+
+    @property
+    def saturated(self) -> bool:
+        return self.first_empty_round is not None
+
+    @property
+    def effective_depth(self) -> int:
+        """The depth the cell actually reached — the pinned limit, or where it went empty."""
+        return self.depth_limit if self.first_empty_round is None else self.first_empty_round - 1
+
+
+@dataclass(frozen=True, slots=True)
 class DepthForecast:
     """What one more round of depth would cost here — calibrated on this cell's own funnel."""
 
@@ -117,6 +153,7 @@ class RungProbe:
     skip: tuple[TaskProbe, ...]
     mint: MintProbe | None
     deeper: DepthForecast | None
+    saturation: Saturation | None = None
 
     @property
     def wake_ok(self) -> bool:
@@ -209,6 +246,14 @@ class RungProbe:
                 f"~{self.deeper.total_considered:,} considered, calibrated on this cell's funnel"
                 + (f"; dominated by {self.deeper.dominant}" if self.deeper.dominant else "")
             )
+        saturation = self.saturation
+        if saturation is not None and saturation.saturated:
+            lines.append(
+                f"- SATURATED: round {saturation.first_empty_round} composed nothing at max_pool "
+                f"{saturation.max_pool:,} (pool ended at {saturation.final_pool:,}) — this cell's "
+                f"effective depth is {saturation.effective_depth}, not {saturation.depth_limit}. "
+                "Its cost readings measure pool starvation, not depth."
+            )
         for finding in self.findings():
             lines.append(f"  ! {finding}")
         return "\n".join(lines)
@@ -280,6 +325,39 @@ def probe_rung(spec: LadderSpec, level: int, *, budget: Budget | None = None) ->
         skip=tuple(skip),
         mint=_probe_sleep(spec, rung.name, rung.template, below, tuple(solved), probe_grids),
         deeper=_forecast_deeper(spec, below, effective, observed),
+        saturation=_saturation(effective, observed),
+    )
+
+
+def _saturation(budget: Budget, observed: tuple[Task, SearchResult] | None) -> Saturation | None:
+    """Did this cell's deeper rounds compose anything, or is its depth setting decorative?
+
+    Read off the wake probe's own funnel — the same run the forecast is calibrated on, so the two
+    always describe one cell. A round cut short by an ``immediate`` stop limit is flagged
+    ``incomplete`` and skipped: it composed less than a full round by construction, and a censored
+    run tells us nothing about what a complete round would have built.
+    """
+    if observed is None:
+        return None
+    generations = list(observed[1].stats.generations)
+    if not generations:
+        return None
+    first_empty: int | None = None
+    composed: list[int] = []
+    for index, generation in enumerate(generations):
+        count = generation.get("composed")
+        composed.append(count if isinstance(count, int) else 0)
+        if index == 0 or generation.get("incomplete"):
+            continue
+        if count == 0 and first_empty is None:
+            first_empty = index
+    final_pool = generations[-1].get("pool_size_end")
+    return Saturation(
+        depth_limit=budget.depth_limit,
+        max_pool=budget.max_pool,
+        first_empty_round=first_empty,
+        final_pool=final_pool if isinstance(final_pool, int) else 0,
+        composed=tuple(composed),
     )
 
 

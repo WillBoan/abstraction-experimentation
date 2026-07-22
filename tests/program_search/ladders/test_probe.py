@@ -116,3 +116,44 @@ def test_the_probe_prices_one_round_deeper_and_names_the_dominant_factor() -> No
     assert probe.deeper.total_considered > 0
     assert "grid(" in probe.deeper.dominant
     assert "one round deeper (depth_limit 3)" in probe.render()
+
+
+def test_the_probe_reports_a_saturated_cell_without_calling_it_unsound() -> None:
+    # al1's r1 at depth 5 and its own pool of 300: round 5 composes NOTHING, because once the pool
+    # is full and nothing survives eviction the new-layer restriction leaves no new tuples. The
+    # cell's effective depth is 4, and its cost readings past that measure starvation, not depth --
+    # the mistake the 2026-07-22 frontier sweep made for a whole sweep. Starvation is a defect in
+    # what the cell MEASURES, not in whether the jump is sound, so it stays out of `findings()`:
+    # the wake is still as-intended and sleep still recovers the rung at its arity.
+    spec = make_ladder("al1-mirror")
+    deep = dataclasses.replace(spec.reference_config.budget, depth_limit=5)
+    probe = probe_rung(spec, 1, budget=deep)
+    saturation = probe.saturation
+    assert saturation is not None and saturation.saturated
+    assert saturation.first_empty_round == 5
+    assert saturation.effective_depth == 4
+    assert probe.wake_ok and probe.mint_ok
+    assert not any("SATURAT" in finding.upper() for finding in probe.findings())
+    assert "SATURATED" in probe.render()
+
+
+def test_raising_depth_alone_can_open_a_skip_path() -> None:
+    # Worth pinning as its own fact, because it is the cost of the "just unlock deeper jumps"
+    # instinct: al1's r1 probes clean at its reference depth of 2, but at depth 5 the TOP becomes
+    # reachable straight from L_0 (`flip_h(flip_v(map_color(input, 1, 2)))`, depth 3) and the
+    # ladder stops being a ladder. Depth is not a free parameter of a ladder's design.
+    spec = make_ladder("al1-mirror")
+    assert probe_rung(spec, 1).skip_ok
+    deep = dataclasses.replace(spec.reference_config.budget, depth_limit=5)
+    probe = probe_rung(spec, 1, budget=deep)
+    assert not probe.skip_ok
+    assert all(p.verdict == SKIP_PATH for p in probe.skip)
+
+
+def test_a_cell_whose_rounds_all_build_something_is_not_reported_as_saturated() -> None:
+    probe = probe_rung(make_ladder("al1-mirror"), 1)
+    saturation = probe.saturation
+    assert saturation is not None
+    assert not saturation.saturated and saturation.effective_depth == 2
+    assert all(count > 0 for count in saturation.composed)
+    assert "SATURATED" not in probe.render()
