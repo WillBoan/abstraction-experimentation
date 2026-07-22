@@ -31,6 +31,7 @@ def _lint_findings(name: str) -> tuple[LintFinding, ...]:
         _LINT_CACHE[name] = make_ladder(name).lint().findings
     return _LINT_CACHE[name]
 
+
 MINIMAL = """
 ladder t1
 
@@ -124,9 +125,7 @@ def test_static_lint_records_the_batch_s_known_defects() -> None:
     reachable raw top (the control working as designed, now with the witness printed). Fixing
     any of these is a deliberate act; update this set then."""
     failing = {
-        name: sorted(
-            f.check for f in _lint_findings(name) if not f.ok and f.severity == "error"
-        )
+        name: sorted(f.check for f in _lint_findings(name) if not f.ok and f.severity == "error")
         for name in ladder_paths()
     }
     failing = {name: checks for name, checks in failing.items() if checks}
@@ -200,7 +199,9 @@ def test_the_evaluation_backed_checks_batch_posture() -> None:
     in this ladder's own search?" clause, working."""
     by_ladder = {name: _lint_findings(name) for name in ladder_paths()}
     assert not any(
-        f.check.startswith("if-condition-varies") for findings in by_ladder.values() for f in findings
+        f.check.startswith("if-condition-varies")
+        for findings in by_ladder.values()
+        for f in findings
     )
     constancy_errors = {
         name
@@ -419,3 +420,30 @@ def test_draft_spec_matches_the_committed_testbed_spec() -> None:
         assert [(f.check, f.ok) for f in draft.lint().findings] == [
             (f.check, f.ok) for f in committed.lint().findings
         ], name
+
+
+def test_every_ladder_is_first_order_so_the_depth_measures_agree() -> None:
+    """The batch is strictly `Apply | Param | Const | Input`, so `compositional_depth` (the
+    generation) and `min_depth_limit` (the budget) return the same number everywhere -- which is
+    why the 2026-07-22 correction to the `Lam` weight moved no ladder's numbers.
+
+    If this fails, a ladder has gained a higher-order template and its sandwich claims are now
+    stated in `min_depth_limit`, which can exceed the reported `d_i`.
+    """
+    from arc_lab.program_search.analysis.depth import compositional_depth, min_depth_limit
+    from arc_lab.program_search.substrate.program import AppFn, Lam, PrimRef, Var
+
+    higher_order = (Lam, AppFn, PrimRef, Var)
+    for name in sorted(ladder_paths()):
+        spec = make_ladder(name)
+        programs = [
+            *(rung.template for rung in spec.rungs),
+            *spec.top.reference_solutions,
+            *(demo.solution for rung in spec.rungs for demo in rung.demonstrations),
+            *(d.solution for d in spec.distractors),
+        ]
+        for program in programs:
+            assert not any(isinstance(n, higher_order) for n in program.walk()), (
+                f"{name}: {program} is no longer first-order"
+            )
+            assert compositional_depth(program) == min_depth_limit(program), f"{name}: {program}"

@@ -20,7 +20,7 @@ from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.dataset import Corpus
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.analysis.compression import CompressionMetric, SolvedTask
-from arc_lab.program_search.analysis.depth import compositional_depth
+from arc_lab.program_search.analysis.depth import compositional_depth, min_depth_limit
 from arc_lab.program_search.execution.model.config import Config
 from arc_lab.program_search.execution.model.serde import to_data
 from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
@@ -225,10 +225,14 @@ class LadderSpec:
         rung_shapes: list[RungShape] = []
         for i, rung in enumerate(rungs):
             d_i = compositional_depth(rung.template)
+            # The claim is about REACH, so it is stated in `min_depth_limit`, which equals `d_i`
+            # for a first-order template and exceeds it when the template carries a lambda whose
+            # body needs its own (descended) budget.
+            need_i = min_depth_limit(rung.template)
             err(
                 f"jump-affordable[{rung.name}]",
-                d_i <= ref_limit,
-                f"d={d_i}, need <= depth_limit {ref_limit}",
+                need_i <= ref_limit,
+                f"needs depth_limit {need_i} (d={d_i}), have {ref_limit}",
             )
             # Demonstration relationship (1): a rung is a PROPER composition over L_{i-1}. A
             # depth-1 template is a bare primitive already in that library, so it belongs to a
@@ -253,8 +257,9 @@ class LadderSpec:
                 double_jump = compositional_depth(inlined)
                 err(
                     f"double-jump-intractable[{rung.name}]",
-                    double_jump > ref_limit,
-                    f"inlined depth {double_jump}, must exceed depth_limit {ref_limit}",
+                    min_depth_limit(inlined) > ref_limit,
+                    f"inlined depth {double_jump} needs depth_limit "
+                    f"{min_depth_limit(inlined)}, must exceed {ref_limit}",
                 )
             rung_shapes.append(
                 RungShape(
@@ -277,8 +282,9 @@ class LadderSpec:
             top_depths.append(d_top)
             err(
                 "top-affordable-with-ladder",
-                d_top <= ref_limit,
-                f"top d={d_top} over L_{k}, need <= depth_limit {ref_limit}",
+                min_depth_limit(sol) <= ref_limit,
+                f"top over L_{k} needs depth_limit {min_depth_limit(sol)} (d={d_top}), "
+                f"have {ref_limit}",
             )
             # The Top Rung's whole definition: its solutions USE the top bridging rung as a
             # fragment. A top that never calls r_k isn't standing on the ladder at all.
@@ -287,21 +293,23 @@ class LadderSpec:
                 _calls(sol, rungs[-1].name) >= 1,
                 f"a top reference solution never calls {rungs[-1].name}",
             )
-            d_raw = compositional_depth(unfold_program(sol, full_lib))
+            unfolded = unfold_program(sol, full_lib)
+            d_raw = compositional_depth(unfolded)
             raw_profile.append(d_raw)
             err(
                 "raw-intractable",
-                d_raw > ref_limit,
-                f"d_raw={d_raw}, must exceed depth_limit {ref_limit}",
+                min_depth_limit(unfolded) > ref_limit,
+                f"d_raw={d_raw} needs depth_limit {min_depth_limit(unfolded)}, "
+                f"must exceed {ref_limit}",
             )
-            skip_top = compositional_depth(
-                unfold_program(sol, full_lib, expand=frozenset({rungs[-1].name}))
-            )
+            skipped = unfold_program(sol, full_lib, expand=frozenset({rungs[-1].name}))
+            skip_top = compositional_depth(skipped)
             top_skips.append(skip_top)
             err(
                 "top-double-jump-intractable",
-                skip_top > ref_limit,
-                f"top over L_{k - 1} depth {skip_top}, must exceed depth_limit {ref_limit}",
+                min_depth_limit(skipped) > ref_limit,
+                f"top over L_{k - 1} depth {skip_top} needs depth_limit "
+                f"{min_depth_limit(skipped)}, must exceed {ref_limit}",
             )
         # The last bridging rung's double jump is the layer above it -- the Top: the shallowest
         # top solution inlined over L_{k-1} (what skipping r_k would cost in depth).
@@ -430,9 +438,7 @@ class LadderSpec:
             entry.task.task_id: tuple(ex.input for ex in entry.task.train)
             for entry in (*self.train_corpus.entries, *self.heldout_corpus.entries)
         }
-        sources = tuple(
-            getattr(self.reference_config.search_engine, "constant_sources", ()) or ()
-        )
+        sources = tuple(getattr(self.reference_config.search_engine, "constant_sources", ()) or ())
         findings.extend(constancy_findings(unfolded_stated, train_inputs, full_lib, sources))
         findings.extend(conditional_findings(unfolded_stated, train_inputs, full_lib))
 
@@ -442,11 +448,17 @@ class LadderSpec:
             any(s.fan_in > 1 for s in rung_shapes),
             "every rung has fan-in 1 (a pure telescope)",
         )
+        # The depth checks above are now EXACT for a lambda-bearing template (they are stated in
+        # `min_depth_limit`, which accounts for the descended body budget). What stays advisory is
+        # the thing no depth function can express: a higher-order call nested under a wrapper can
+        # have its lambda body filtered out by example propagation, making it unreachable at ANY
+        # budget (measured 2026-07-22 -- see analysis/depth.py).
         if any(s.involves_lambda for s in rung_shapes):
             warn(
                 "no-lambda-in-templates",
                 False,
-                "a rung template contains a Lam; depth checks advisory",
+                "a rung template contains a Lam: depth claims hold, but a higher-order call that "
+                "is not at the root of its solution may be unreachable at any depth_limit",
             )
 
         # Advisories (A): floor vocabulary -- every floor primitive should be exercised by
@@ -483,11 +495,7 @@ class LadderSpec:
         # syntactic comparison: extensionally-equal-but-differently-written twins pass it.)
         for i, rung in enumerate(rungs):
             twin = next(
-                (
-                    rungs[j].name
-                    for j in range(i)
-                    if unfolded_templates[j] == unfolded_templates[i]
-                ),
+                (rungs[j].name for j in range(i) if unfolded_templates[j] == unfolded_templates[i]),
                 None,
             )
             err(

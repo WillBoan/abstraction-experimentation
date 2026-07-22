@@ -66,6 +66,8 @@ Enforced by `ladders/lang/`; every error carries its line number. Roughly forty 
 
 Plus the computed **validity window** in `depth_limit` units.
 
+Since 2026-07-22 every check in this block is stated in `min_depth_limit` rather than `compositional_depth` — identical for the first-order templates the batch actually uses, but correct for a lambda-bearing one, whose body needs its own descended budget (`analysis/depth.py`). The reported `d_i` / `d_raw` stay the generation measure.
+
 ### The demonstration plan
 
 Added 2026-07-21. These properties used to hold by construction — `taskgen`'s seed generator built varied grids and `RungTasks.train_args` built the free-parameter sweep — but a `.ladder` file states both as literal data, so nothing enforces them except this block.

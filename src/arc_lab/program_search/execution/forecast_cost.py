@@ -309,9 +309,7 @@ def _attribute(terms: Sequence[tuple[Primitive, int]], census: Mapping[Type, int
     primitive, count = max(terms, key=lambda item: item[1])
     if count <= 0:
         return ""
-    slots = " x ".join(
-        f"{_type_name(t)}({_available(t, census)})" for t in primitive.param_types
-    )
+    slots = " x ".join(f"{_type_name(t)}({_available(t, census)})" for t in primitive.param_types)
     return f"{primitive.name}: {slots or 'nullary'}"
 
 

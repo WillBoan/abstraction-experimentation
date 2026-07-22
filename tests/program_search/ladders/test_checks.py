@@ -42,9 +42,7 @@ _G2 = Grid.from_list([[5, 6, 7]])
 _INPUTS = {"t": (_G1, _G2)}
 
 #: shift(input, sub(2, 1)) — the composite index is train-constant 1, and 1 is enumerable.
-_CONSTANT_INDEX: Program = Apply(
-    "shift", (Input(), Apply("sub", (Const(2, INT), Const(1, INT))))
-)
+_CONSTANT_INDEX: Program = Apply("shift", (Input(), Apply("sub", (Const(2, INT), Const(1, INT)))))
 
 
 def _one(findings: tuple[LintFinding, ...]) -> LintFinding:
@@ -79,9 +77,7 @@ def test_constancy_skips_erroring_subterms_and_short_tasks() -> None:
 def test_a_bare_literal_is_never_flagged() -> None:
     # A Const is depth 0 -- nothing shallower beats it; only COMPOSITE subterms carry the law.
     literal_only: Program = Apply("shift", (Input(), Const(1, INT)))
-    finding = _one(
-        constancy_findings([("t", literal_only)], _INPUTS, _LIB, ("finite-enumerate",))
-    )
+    finding = _one(constancy_findings([("t", literal_only)], _INPUTS, _LIB, ("finite-enumerate",)))
     assert finding.ok
 
 
