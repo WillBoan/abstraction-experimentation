@@ -18,8 +18,9 @@ Four questions per rung ``r_i``, all against the real ``SearchEngine`` at the pi
 3. **Sleep** — run the configured proposer/governance on what wake ACTUALLY retained (not on the
    intended solutions): does it mint the intended abstraction, and at the intended arity? al14's
    5-param mint is what this catches.
-4. **Forecast** — the static cost ceiling for the wake cell (``execution/estimate_cost``), so an
-   unaffordable cell is visible before it is paid for.
+4. **Forecast** — what ONE MORE round of depth would cost here (``execution/forecast_cost``),
+   calibrated on the funnel the wake probe just produced, with the factor that dominates it named.
+   The deep-jump question ("can this rung afford depth 3?"), priced before it is paid.
 
 Asymmetry worth stating: a clean probe does not guarantee the ladder certifies (the climb pays
 each jump under a library inflated by earlier mints, and cross-rung interactions are invisible
@@ -30,14 +31,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
-from arc_lab.core.dataset import Corpus
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 from arc_lab.program_search.analysis.behavioral import matches_target
 from arc_lab.program_search.analysis.compression import SolvedTask
 from arc_lab.program_search.analysis.depth import compositional_depth
-from arc_lab.program_search.execution.estimate_cost import estimate_cost
-from arc_lab.program_search.execution.model.run_spec import RunSpec
+from arc_lab.program_search.execution.forecast_cost import (
+    DEFAULT_SURVIVAL,
+    forecast_cost,
+    survival_from,
+)
 from arc_lab.program_search.ladders._render import table
 from arc_lab.program_search.ladders.spec import LadderSpec
 from arc_lab.program_search.search.budget import Budget
@@ -95,6 +98,15 @@ class MintProbe:
 
 
 @dataclass(frozen=True, slots=True)
+class DepthForecast:
+    """What one more round of depth would cost here — calibrated on this cell's own funnel."""
+
+    depth_limit: int
+    total_considered: int
+    dominant: str
+
+
+@dataclass(frozen=True, slots=True)
 class RungProbe:
     """One rung's four probes + the verdict they add up to."""
 
@@ -104,7 +116,7 @@ class RungProbe:
     wake: tuple[TaskProbe, ...]
     skip: tuple[TaskProbe, ...]
     mint: MintProbe | None
-    forecast_ceiling: int | None
+    deeper: DepthForecast | None
 
     @property
     def wake_ok(self) -> bool:
@@ -191,8 +203,12 @@ class RungProbe:
                 f"- sleep: {grade}; minted {list(self.mint.minted)} at arity "
                 f"{self.mint.minted_arity} (intended {self.mint.intended_arity})",
             ]
-        if self.forecast_ceiling is not None:
-            lines.append(f"- forecast: <= {self.forecast_ceiling:,} considered (static ceiling)")
+        if self.deeper is not None:
+            lines.append(
+                f"- one round deeper (depth_limit {self.deeper.depth_limit}): "
+                f"~{self.deeper.total_considered:,} considered, calibrated on this cell's funnel"
+                + (f"; dominated by {self.deeper.dominant}" if self.deeper.dominant else "")
+            )
         for finding in self.findings():
             lines.append(f"  ! {finding}")
         return "\n".join(lines)
@@ -216,6 +232,7 @@ def probe_rung(spec: LadderSpec, level: int, *, budget: Budget | None = None) ->
 
     wake: list[TaskProbe] = []
     solved: list[SolvedTask] = []
+    observed: tuple[Task, SearchResult] | None = None
     for task_id, stated in demos:
         entry = by_id[task_id]
         result = _search(spec, entry.task, below, effective)
@@ -225,6 +242,8 @@ def probe_rung(spec: LadderSpec, level: int, *, budget: Budget | None = None) ->
         wake.append(_grade_wake(task_id, result, intended, below, probe_grids, entry.task))
         if result.ranked_programs:
             solved.append(SolvedTask(annotated=entry, program=result.ranked_programs[0]))
+        if observed is None:
+            observed = (entry.task, result)
 
     skip_ids = (
         [d.task_id for d in spec.rungs[level].demonstrations]
@@ -260,7 +279,7 @@ def probe_rung(spec: LadderSpec, level: int, *, budget: Budget | None = None) ->
         wake=tuple(wake),
         skip=tuple(skip),
         mint=_probe_sleep(spec, rung.name, rung.template, below, tuple(solved), probe_grids),
-        forecast_ceiling=_forecast(spec, [by_id[t].task for t, _ in demos], below, effective),
+        deeper=_forecast_deeper(spec, below, effective, observed),
     )
 
 
@@ -417,20 +436,40 @@ def _probe_sleep(
     )
 
 
-def _forecast(spec: LadderSpec, tasks: list[Task], library: Library, budget: Budget) -> int | None:
-    """The static worst-case ``considered`` ceiling for this wake cell (never a prediction).
+def _forecast_deeper(
+    spec: LadderSpec,
+    library: Library,
+    budget: Budget,
+    observed: tuple[Task, SearchResult] | None,
+) -> DepthForecast | None:
+    """What one more round of depth would cost in this cell — the deep-jump question, priced.
 
-    A ceiling from the full cartesian product per round — loose by design (``estimate_cost``'s
-    own caveat), and the reason the AL plan's next instrument is a calibrated forecaster.
+    Calibrated, not assumed: the wake probe has just run this exact cell, so its own funnel
+    supplies the per-round survival rates (`forecast_cost`'s measured mode) instead of a prior.
+    The deepest observed rate is carried forward one round; since dedup RISES with pool size the
+    true rate is usually lower, so this errs toward over-stating the cost -- the safe direction
+    for a budget.
     """
-    if not tasks:
+    if observed is None:
         return None
+    task, result = observed
     config = replace(spec.reference_config, library=library, budget=budget)
+    deeper = budget.depth_limit + 1
     try:
-        estimate = estimate_cost(RunSpec(config=config, corpus=Corpus.of("probe", tasks)))
+        forecast = forecast_cost(
+            config,
+            task,
+            survival=survival_from(result.stats) or DEFAULT_SURVIVAL,
+            depth_limit=deeper,
+        )
     except NotImplementedError:
         return None
-    return estimate.total_considered_ceiling
+    dominant = forecast.dominant_round
+    return DepthForecast(
+        depth_limit=deeper,
+        total_considered=forecast.total_considered,
+        dominant="" if dominant is None else dominant.dominant,
+    )
 
 
 def render_probes(probes: tuple[RungProbe, ...]) -> str:

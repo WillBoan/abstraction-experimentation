@@ -123,7 +123,7 @@ Admission requires every jump tractable and every skip verdict literally `True`.
 | **wake** | do `r_i`'s demonstrations solve from `L_{i-1}`, and is what search RETAINS the intended program? | `as-intended` · `collapsed` (same function, shallower spelling) · `collision` (different function, fits the train support only) · `alternative` · `unsolved` · `censored` |
 | **skip** | does anything one level up already solve from `L_{i-1}`? | `no-skip` · `skip-path` · `inconclusive` (censored) |
 | **sleep** | fed what wake ACTUALLY retained, does governance mint the intended abstraction, at the intended arity? | recovered/missed + minted arity vs intended |
-| **forecast** | what does this cell cost? | `estimate_cost`'s static ceiling (loose by construction — the calibrated forecaster is AL-PLAN Phase 0 item 3) |
+| **forecast** | what would ONE MORE round of depth cost here? | predicted `considered` + the dominant product term, from `execution/forecast_cost.py` calibrated on the funnel the wake probe just produced (backtested to ~1.07x geomean, 97% within 2x) |
 
 **This closes the task-collision gap** (§6.4's "no shallower program coincides with the intended solution on all train examples"): the wake probe compares the retained program against the intended one on grids beyond the task's own train support, so a program that merely *fits* is separated from one that is *right*.
 

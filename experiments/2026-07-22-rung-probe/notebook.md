@@ -13,7 +13,7 @@
 | wake | do the demos solve, and is what search RETAINS the intended program? | `as-intended` · `collapsed` · `collision` · `alternative` · `unsolved` · `censored` |
 | skip | does anything one level up already solve from `L_{i-1}`? | `no-skip` · `skip-path` · `inconclusive` |
 | sleep | fed what wake ACTUALLY retained, does governance mint the rung, at the right arity? | recovered/missed + arity |
-| forecast | what does the cell cost? | `estimate_cost` static ceiling |
+| forecast | what does the cell cost? | `estimate_cost` static ceiling — *superseded the same day by the calibrated forecaster, below* |
 
 This is the home of design-doc §6.4's **task-collision check** — the one planned check that could never live in `lint()`, because deciding it requires a search.
 
@@ -67,4 +67,49 @@ Totals across the batch: **35 skip paths, 14 collapses, 9 collisions**.
 
 ## Next
 
-Forecaster on `estimate_cost.py` (per-type censuses, new-layer factor, measured survival rates), backtested against the 245 recorded runs — so a cell's cost is known before it is paid.
+Forecaster (per-type censuses, new-layer factor, measured survival rates), backtested — so a cell's cost is known before it is paid. **Done the same day; see below.**
+
+---
+
+# The calibrated forecaster (same day)
+
+**Goal.** The probe's fourth column was `estimate_cost`'s worst-case ceiling — honest but useless for planning (al14: 6.4e13). Replace it with a *prediction*, and do not trust it until it is backtested.
+
+## The model
+
+`execution/forecast_cost.py`, deliberately a sibling of `estimate_cost.py` rather than a replacement: a **ceiling** must never under-count, a **forecast** should be close. Three corrections over the ceiling, each mirroring what the engine does:
+
+1. **Typed census** — the pool is bucketed by type, so `set_cell(Grid, Int, Int, Color)` costs `|grid| x |int| x |int| x |color|` (al14: 10,615 x 17 x 17 x 14 = 43M), not `pool**4` (1.6e13).
+2. **New-layer restriction** — round `d` composes only tuples using an argument from the previous round: `PROD(census_d) - PROD(census_{d-1})` per primitive. This is `estimate_cost`'s own named "deliberate, unbuilt refinement".
+3. **Measured survival** — next round's pool is what neither errored, nor was pruned, nor deduped. `survival_from(stats)` reads the rate per round off a real funnel.
+
+## Backtest (`artifacts/forecast_backtest.py`, output `forecast_backtest.out`)
+
+336 completed rounds across 54 rung cells; ground truth is the engine's own funnel (censored rounds excluded — a cut-short round is not a measurement).
+
+| predictor | geomean predicted/actual | within 2x | worst |
+| --- | --- | --- | --- |
+| `ceiling` (`estimate_cost`) | **21.63x** | 60% | 1.22e9x over |
+| `cold` (prior only) | **1.07x** | **97%** | 33.7x |
+| `warm` (calibrated on first 2 rounds) | 1.17x | 92% | 95.1x |
+
+Measured survival across the batch: **median 0.445**, mean 0.488 (n=265) — now `DEFAULT_SURVIVAL`.
+
+**A bug the backtest caught.** The first run showed `cold=0` against actual 6,370 on al3 and al11. Cause: `int(count * rate)` truncated a small round's survivors to zero, which froze the census, which made the *next* round's new-layer term exactly zero — the forecast collapsed to 0 for every deeper round. Fixed by guaranteeing at least one survivor per composing primitive; `cold` went from 88% to **97%** within 2x. Worth stating plainly: without the backtest this would have shipped as confident arithmetic that silently returns zero on deep cells.
+
+**A finding, not a bug.** `warm` is *worse* than `cold` at depth. Carrying an early survival rate forward over-predicts, because dedup rises with pool size — early rounds survive at ~1.0, late rounds far lower. So calibrating on the first two rounds and projecting is optimistic; the measured prior is better for deep projection. The probe therefore carries the *deepest* observed rate forward, and the docstring states the residual bias (over-stating cost — the safe direction for a budget).
+
+## Wired into the probe
+
+The probe's forecast column is now "what would one more round of depth cost here?", calibrated on the funnel the wake probe just produced, with the dominant factor named:
+
+```
+- one round deeper (depth_limit 3): ~159,752 considered, calibrated on this cell's funnel;
+  dominated by concat_v: grid(397) x grid(397)
+```
+
+That is the deep-jump question priced per cell — and al17's answer (~160k considered for depth 3) is **affordable**, which is the first direct evidence for the plan's "the depth-2/3 ceiling was a design habit, never a measured limit" correction.
+
+## Next
+
+The frontier sweep (Phase 1): `cost_L(d)` tables over (floor x depth x arity x pool) on representative floors, using the forecaster to choose which cells to actually run.

@@ -89,7 +89,7 @@ def test_a_wrong_arity_mint_is_a_finding() -> None:
         wake=(),
         skip=(),
         mint=MintProbe(minted=("abs0",), recovered=True, minted_arity=5, intended_arity=3),
-        forecast_ceiling=None,
+        deeper=None,
     )
     assert not probe.mint_ok
     assert "minted at arity 5" in probe.findings()[0]
@@ -105,3 +105,14 @@ def test_probe_ladder_covers_every_rung_bottom_up() -> None:
 
 def test_probe_grids_are_grids() -> None:
     assert all(isinstance(g, Grid) for g in _discriminating_grids({(3, 3)}))
+
+
+def test_the_probe_prices_one_round_deeper_and_names_the_dominant_factor() -> None:
+    # The deep-jump question, priced: the probe has just run this cell, so the projection is
+    # calibrated on its own funnel rather than a prior -- and it says WHICH product term dominates.
+    probe = probe_rung(make_ladder("al17-shift-frame-tall"), 1)
+    assert probe.deeper is not None
+    assert probe.deeper.depth_limit == 3  # the reference depth_limit is 2
+    assert probe.deeper.total_considered > 0
+    assert "grid(" in probe.deeper.dominant
+    assert "one round deeper (depth_limit 3)" in probe.render()

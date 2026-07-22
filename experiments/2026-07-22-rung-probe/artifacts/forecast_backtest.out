@@ -1,0 +1,19 @@
+scored rounds: 336  (across 54 rung cells)
+
+measured survival (entered_pool/composed): median=0.445 mean=0.488 n=265
+
+ceiling  predicted/actual: median=        1.00  geomean=       21.63  within 2x:   60%  max=1.22e+09  min=0.714
+
+cold     predicted/actual: median=        1.00  geomean=        1.07  within 2x:   97%  max=33.7  min=0.519
+
+warm     predicted/actual: median=        1.00  geomean=        1.17  within 2x:   92%  max=95.1  min=0.381
+
+worst cold-forecast cells (predicted/actual):
+  al13-symmetry-repair     r1 sym_h-00             round 1: actual=        33 cold=       1,113 warm=       1,113 ceiling=          16,126
+  al13-symmetry-repair     r1 sym_h-01             round 1: actual=        33 cold=       1,113 warm=       1,113 ceiling=          16,126
+  al13-symmetry-repair     r2 sym_both-00          round 1: actual=        43 cold=       1,123 warm=       1,123 ceiling=          16,247
+  al13-symmetry-repair     r2 sym_both-01          round 1: actual=        43 cold=       1,123 warm=       1,123 ceiling=          16,247
+  al4-mask-crop            r3 stamp-00             round 3: actual=    36,210 cold=     216,705 warm=   3,444,606 ceiling=   8,020,010,000
+  al8-lean-perceiver       r3 swap_stk-00          round 3: actual=       175 cold=         874 warm=       4,296 ceiling=      57,068,935
+  al8-lean-perceiver       r3 swap_stk-01          round 3: actual=       175 cold=         874 warm=       4,296 ceiling=      57,068,935
+  al8-lean-perceiver       r1 swap_ext-00          round 3: actual=        56 cold=         176 warm=         736 ceiling=       3,049,205
