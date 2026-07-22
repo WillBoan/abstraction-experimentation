@@ -24,40 +24,40 @@
         "abs0"
       ],
       "proposal_count": 2,
-      "wake_considered": 33715,
+      "wake_considered": 46425,
       "wake_solved": [
-        "rot180-00",
-        "rot180-01"
+        "pair-00",
+        "pair-01"
       ]
     },
     {
-      "antiunify_pair_count": 6,
+      "antiunify_pair_count": 2,
       "converged": false,
       "iteration": 1,
       "minted": [
         "abs1"
       ],
       "proposal_count": 4,
-      "wake_considered": 34560,
+      "wake_considered": 48145,
       "wake_solved": [
-        "mirror-recolor-1-2",
-        "mirror-recolor-3-4",
-        "rot180-00",
-        "rot180-01"
+        "pair-00",
+        "pair-01",
+        "recol-00",
+        "recol-01"
       ]
     },
     {
-      "antiunify_pair_count": 6,
+      "antiunify_pair_count": 3,
       "converged": true,
       "iteration": 2,
       "minted": [],
       "proposal_count": 2,
-      "wake_considered": 132005,
+      "wake_considered": 49895,
       "wake_solved": [
-        "mirror-recolor-1-2",
-        "mirror-recolor-3-4",
-        "rot180-00",
-        "rot180-01",
+        "pair-00",
+        "pair-01",
+        "recol-00",
+        "recol-01",
         "top-00"
       ]
     }
@@ -65,93 +65,93 @@
   "comparisons": {
     "enablement": {
       "1": [
-        "mirror-recolor-1-2",
-        "mirror-recolor-3-4"
+        "recol-00",
+        "recol-01"
       ],
       "2": [
         "top-00"
       ]
     },
-    "loop_overhead_factor": 3.728845115525684,
+    "loop_overhead_factor": 3.0218378061790117,
     "marginal_rung_value": [
       {
         "censored": true,
-        "cost_with_rung": 13824,
-        "cost_without_rung": 13486,
-        "layer_above": "mirror_recolor",
-        "own_tasks_speedup": 1.008849557522124,
-        "own_tasks_to_first_with": 226,
-        "own_tasks_to_first_without": 228,
-        "ratio": 0.9755497685185185,
-        "rung": "rot180"
+        "cost_with_rung": 19258,
+        "cost_without_rung": 18570,
+        "layer_above": "recol",
+        "own_tasks_speedup": 1.037593984962406,
+        "own_tasks_to_first_with": 266,
+        "own_tasks_to_first_without": 276,
+        "ratio": 0.9642745871845467,
+        "rung": "pair"
       },
       {
         "censored": true,
-        "cost_with_rung": 26401,
-        "cost_without_rung": 6912,
+        "cost_with_rung": 9979,
+        "cost_without_rung": 9629,
         "layer_above": "top",
-        "own_tasks_speedup": 3.423357664233577,
-        "own_tasks_to_first_with": 274,
-        "own_tasks_to_first_without": 938,
-        "ratio": 0.2618082648384531,
-        "rung": "mirror_recolor"
+        "own_tasks_speedup": 38.06716417910448,
+        "own_tasks_to_first_with": 268,
+        "own_tasks_to_first_without": 10202,
+        "ratio": 0.9649263453251828,
+        "rung": "recol"
       }
     ],
     "vocabulary_tax": [
       {
-        "at_full_library": 52802,
-        "at_own_level": 13486,
-        "factor": 3.915319590686638,
-        "rung": "rot180"
+        "at_full_library": 19958,
+        "at_own_level": 18570,
+        "factor": 1.074744211093161,
+        "rung": "pair"
       },
       {
-        "at_full_library": 52802,
-        "at_own_level": 13824,
-        "factor": 3.8195891203703702,
-        "rung": "mirror_recolor"
+        "at_full_library": 19958,
+        "at_own_level": 19258,
+        "factor": 1.036348530480839,
+        "rung": "recol"
       }
     ]
   },
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
-      "high": 529.6762860494126,
-      "low": 77.55569622609893
+      "high": 1166.6176710523564,
+      "low": 121.7245800824147
     },
     "budget_compression_depth": {
       "max_jump_depth": 2,
       "raw_depth": 4
     },
     "jump_costs": {
-      "mirror_recolor": 13824,
-      "rot180": 13486
+      "pair": 18570,
+      "recol": 19258
     },
     "jump_costs_to_first": {
-      "mirror_recolor": 938,
-      "rot180": 228
+      "pair": 276,
+      "recol": 10202
     },
-    "laddered_end_to_end_considered": 200280,
-    "laddered_marginal_considered": 53711,
-    "laddered_marginal_to_first": 8372,
-    "off_chain_top_solved": true,
+    "laddered_end_to_end_considered": 144465,
+    "laddered_marginal_considered": 47807,
+    "laddered_marginal_to_first": 12869,
+    "off_chain_top_solved": false,
     "raw_arm": {
-      "amortization_ratio": 3.5907914579881215,
-      "amortization_ratio_kind": "measured",
+      "amortization_ratio": 10.0,
+      "amortization_ratio_kind": "lower-bound",
       "conditions": {
         "depth_limit": 4,
         "max_pool": 200000,
         "solution_limit": 1
       },
-      "guard_per_task": 537110,
+      "guard_per_task": 478070,
       "k": 10,
-      "laddered_marginal": 53711,
+      "laddered_marginal": 47807,
       "saturated_at": null,
-      "solved": true,
+      "solved": false,
       "sound": true,
-      "spend_considered": 192865
+      "spend_considered": 478070
     },
     "raw_censored": true,
-    "raw_considered": 6743,
+    "raw_considered": 9285,
     "raw_estimate": {
       "available": true,
       "caveats": [
@@ -163,185 +163,185 @@
         "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
       ],
       "d_raw": 4,
-      "estimate_high": 28449443,
-      "estimate_low": 4165594,
-      "growth_ratio_geometric": 24.55,
-      "growth_ratio_last": 65.0,
+      "estimate_high": 55772491,
+      "estimate_low": 5819287,
+      "growth_ratio_geometric": 24.7,
+      "growth_ratio_last": 77.56,
       "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
       "observed_composed": [
-        11,
-        102,
-        6630
+        15,
+        118,
+        9152
       ],
-      "observed_considered": 6743,
+      "observed_considered": 9285,
       "observed_through_depth": 2,
       "rounds_extrapolated": 2,
       "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
     },
     "raw_limit_censored": false,
     "raw_solved": false,
-    "top_jump_cost": 26401,
-    "top_jump_cost_to_first": 7206
+    "top_jump_cost": 9979,
+    "top_jump_cost_to_first": 2391
   },
   "cost_matrix": [
     {
       "columns": {
         "0": {
-          "b_eff": 24.55,
+          "b_eff": 24.7,
+          "censored": false,
+          "cheapest_solution_index": 138,
+          "considered": 9285,
+          "first_solution_index": 138,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 25.16,
+          "censored": false,
+          "cheapest_solution_index": 133,
+          "considered": 9629,
+          "first_solution_index": 133,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 25.62,
+          "censored": false,
+          "cheapest_solution_index": 133,
+          "considered": 9979,
+          "first_solution_index": 133,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "pair",
+      "task_id": "pair-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 24.7,
+          "censored": false,
+          "cheapest_solution_index": 138,
+          "considered": 9285,
+          "first_solution_index": 138,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 25.16,
+          "censored": false,
+          "cheapest_solution_index": 133,
+          "considered": 9629,
+          "first_solution_index": 133,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 25.62,
+          "censored": false,
+          "cheapest_solution_index": 133,
+          "considered": 9979,
+          "first_solution_index": 133,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "pair",
+      "task_id": "pair-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 24.7,
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 6743,
+          "considered": 9285,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 24.86,
+          "b_eff": 25.16,
           "censored": false,
-          "cheapest_solution_index": 458,
-          "considered": 6912,
-          "first_solution_index": 458,
+          "cheapest_solution_index": 5101,
+          "considered": 9629,
+          "first_solution_index": 5101,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 48.79,
+          "b_eff": 25.62,
           "censored": false,
-          "cheapest_solution_index": 126,
-          "considered": 26401,
-          "first_solution_index": 126,
+          "cheapest_solution_index": 134,
+          "considered": 9979,
+          "first_solution_index": 134,
           "solve_generation": 1,
           "solved": true
         }
       },
-      "rung": "mirror_recolor",
-      "task_id": "mirror-recolor-1-2"
+      "rung": "recol",
+      "task_id": "recol-00"
     },
     {
       "columns": {
         "0": {
-          "b_eff": 24.55,
+          "b_eff": 24.7,
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 6743,
+          "considered": 9285,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 24.86,
+          "b_eff": 25.16,
           "censored": false,
-          "cheapest_solution_index": 480,
-          "considered": 6912,
-          "first_solution_index": 480,
+          "cheapest_solution_index": 5101,
+          "considered": 9629,
+          "first_solution_index": 5101,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 48.79,
+          "b_eff": 25.62,
           "censored": false,
-          "cheapest_solution_index": 148,
-          "considered": 26401,
-          "first_solution_index": 148,
+          "cheapest_solution_index": 134,
+          "considered": 9979,
+          "first_solution_index": 134,
           "solve_generation": 1,
           "solved": true
         }
       },
-      "rung": "mirror_recolor",
-      "task_id": "mirror-recolor-3-4"
+      "rung": "recol",
+      "task_id": "recol-01"
     },
     {
       "columns": {
         "0": {
-          "b_eff": 24.55,
-          "censored": false,
-          "cheapest_solution_index": 114,
-          "considered": 6743,
-          "first_solution_index": 114,
-          "solve_generation": 2,
-          "solved": true
-        },
-        "1": {
-          "b_eff": 24.86,
-          "censored": false,
-          "cheapest_solution_index": 113,
-          "considered": 6912,
-          "first_solution_index": 113,
-          "solve_generation": 1,
-          "solved": true
-        },
-        "2": {
-          "b_eff": 48.79,
-          "censored": false,
-          "cheapest_solution_index": 113,
-          "considered": 26401,
-          "first_solution_index": 113,
-          "solve_generation": 1,
-          "solved": true
-        }
-      },
-      "rung": "rot180",
-      "task_id": "rot180-00"
-    },
-    {
-      "columns": {
-        "0": {
-          "b_eff": 24.55,
-          "censored": false,
-          "cheapest_solution_index": 114,
-          "considered": 6743,
-          "first_solution_index": 114,
-          "solve_generation": 2,
-          "solved": true
-        },
-        "1": {
-          "b_eff": 24.86,
-          "censored": false,
-          "cheapest_solution_index": 113,
-          "considered": 6912,
-          "first_solution_index": 113,
-          "solve_generation": 1,
-          "solved": true
-        },
-        "2": {
-          "b_eff": 48.79,
-          "censored": false,
-          "cheapest_solution_index": 113,
-          "considered": 26401,
-          "first_solution_index": 113,
-          "solve_generation": 1,
-          "solved": true
-        }
-      },
-      "rung": "rot180",
-      "task_id": "rot180-01"
-    },
-    {
-      "columns": {
-        "0": {
-          "b_eff": 24.55,
+          "b_eff": 24.7,
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 6743,
+          "considered": 9285,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 24.86,
+          "b_eff": 25.16,
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 6912,
+          "considered": 9629,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "2": {
-          "b_eff": 48.79,
+          "b_eff": 25.62,
           "censored": false,
-          "cheapest_solution_index": 7206,
-          "considered": 26401,
-          "first_solution_index": 7206,
+          "cheapest_solution_index": 2391,
+          "considered": 9979,
+          "first_solution_index": 2391,
           "solve_generation": 2,
           "solved": true
         }
@@ -358,15 +358,15 @@
         "depth_limit": 2,
         "kind": "Budget",
         "max_arity": 2,
-        "max_pool": 300,
+        "max_pool": 400,
         "solution_limit": null,
         "solution_limit_mode": "generation-end"
       }
     ],
     "distractors": [],
     "heldout_corpus": {
-      "content_hash": "26bb1f1993eb3a12",
-      "name": "al1-mirror:heldout",
+      "content_hash": "37127270734d3855",
+      "name": "al19-fanin-recolor:heldout",
       "task_count": 3
     },
     "reference_config": {
@@ -377,7 +377,7 @@
         "depth_limit": 2,
         "kind": "Budget",
         "max_arity": 2,
-        "max_pool": 300,
+        "max_pool": 400,
         "solution_limit": null,
         "solution_limit_mode": "generation-end"
       },
@@ -413,20 +413,32 @@
         "wake_schedule": "full"
       },
       "library": {
-        "name": "al1-L0",
+        "name": "al19-L0",
         "primitives": [
           {
-            "name": "flip_h",
+            "name": "concat_h",
             "param_types": [
+              "grid",
               "grid"
             ],
             "return_type": "grid",
             "variadic_param": null
           },
           {
-            "name": "flip_v",
+            "name": "concat_v",
             "param_types": [
+              "grid",
               "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "translate",
+            "param_types": [
+              "grid",
+              "int",
+              "int"
             ],
             "return_type": "grid",
             "variadic_param": null
@@ -468,9 +480,9 @@
                 }
               ],
               "op": "apply",
-              "primitive": "rot180"
+              "primitive": "pair"
             },
-            "task_id": "rot180-00"
+            "task_id": "pair-00"
           },
           {
             "kind": "full_solution",
@@ -481,29 +493,44 @@
                 }
               ],
               "op": "apply",
-              "primitive": "rot180"
+              "primitive": "pair"
             },
-            "task_id": "rot180-01"
+            "task_id": "pair-01"
           }
         ],
         "level": 1,
-        "name": "rot180",
+        "name": "pair",
         "template": {
           "args": [
+            {
+              "index": 0,
+              "op": "param",
+              "value_type": "grid"
+            },
             {
               "args": [
                 {
                   "index": 0,
                   "op": "param",
                   "value_type": "grid"
+                },
+                {
+                  "op": "const",
+                  "value": 1,
+                  "value_type": "int"
+                },
+                {
+                  "op": "const",
+                  "value": 0,
+                  "value_type": "int"
                 }
               ],
               "op": "apply",
-              "primitive": "flip_v"
+              "primitive": "translate"
             }
           ],
           "op": "apply",
-          "primitive": "flip_h"
+          "primitive": "concat_h"
         }
       },
       {
@@ -514,22 +541,12 @@
               "args": [
                 {
                   "op": "input"
-                },
-                {
-                  "op": "const",
-                  "value": 1,
-                  "value_type": "color"
-                },
-                {
-                  "op": "const",
-                  "value": 2,
-                  "value_type": "color"
                 }
               ],
               "op": "apply",
-              "primitive": "mirror_recolor"
+              "primitive": "recol"
             },
-            "task_id": "mirror-recolor-1-2"
+            "task_id": "recol-00"
           },
           {
             "kind": "full_solution",
@@ -537,26 +554,16 @@
               "args": [
                 {
                   "op": "input"
-                },
-                {
-                  "op": "const",
-                  "value": 3,
-                  "value_type": "color"
-                },
-                {
-                  "op": "const",
-                  "value": 4,
-                  "value_type": "color"
                 }
               ],
               "op": "apply",
-              "primitive": "mirror_recolor"
+              "primitive": "recol"
             },
-            "task_id": "mirror-recolor-3-4"
+            "task_id": "recol-01"
           }
         ],
         "level": 2,
-        "name": "mirror_recolor",
+        "name": "recol",
         "template": {
           "args": [
             {
@@ -568,16 +575,16 @@
                 }
               ],
               "op": "apply",
-              "primitive": "rot180"
+              "primitive": "pair"
             },
             {
-              "index": 1,
-              "op": "param",
+              "op": "const",
+              "value": 1,
               "value_type": "color"
             },
             {
-              "index": 2,
-              "op": "param",
+              "op": "const",
+              "value": 7,
               "value_type": "color"
             }
           ],
@@ -594,34 +601,23 @@
               "args": [
                 {
                   "op": "input"
-                },
-                {
-                  "op": "const",
-                  "value": 1,
-                  "value_type": "color"
-                },
-                {
-                  "op": "const",
-                  "value": 2,
-                  "value_type": "color"
                 }
               ],
               "op": "apply",
-              "primitive": "mirror_recolor"
+              "primitive": "pair"
             },
             {
-              "op": "const",
-              "value": 3,
-              "value_type": "color"
-            },
-            {
-              "op": "const",
-              "value": 4,
-              "value_type": "color"
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recol"
             }
           ],
           "op": "apply",
-          "primitive": "map_color"
+          "primitive": "concat_v"
         }
       ],
       "task_ids": [
@@ -629,8 +625,8 @@
       ]
     },
     "train_corpus": {
-      "content_hash": "ad9ef8d0ffda58a9",
-      "name": "al1-mirror:train",
+      "content_hash": "2def1c7e4f6777a1",
+      "name": "al19-fanin-recolor:train",
       "task_count": 5
     }
   },
@@ -642,7 +638,7 @@
         "abs0"
       ],
       "recovered": true,
-      "rung": "rot180"
+      "rung": "pair"
     },
     {
       "level": 2,
@@ -650,7 +646,7 @@
         "abs1"
       ],
       "recovered": true,
-      "rung": "mirror_recolor"
+      "rung": "recol"
     }
   ],
   "shape": {

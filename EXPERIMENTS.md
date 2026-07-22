@@ -661,3 +661,17 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - The retired estimate had raw at 4.17M-28.4M: **22x-147x above the measured cost**, on the very ladder it was headline-quoted for. Not even the bracket's low end was close.
 - **Interpretation:** al1's ladder does pay for itself, measured — but by ~4x, not by two orders of magnitude. The honest sentence for the register: "al1: RQ1 = 3.6x measured (conservative)". This also retro-validates decision 1's design: the same arm that produced this number would have produced a proven ">= 10x" bound had raw been genuinely intractable, and it cost 16 seconds. al2's arm, run the same day, measured 0.48x — the trivial-regime instrument honestly reads "not worth a ladder", which the estimator (raw "estimated" at 31) could also never say.
 - **Next:** the Phase 2 clean-set re-run gives every admitted ladder its measured-or-bounded RQ1 under the staged pipeline; quote no ratio until then.
+
+## 2026-07-23 — Clean-set re-run: al15-al20 prove >= 10x amortization; al1, the old headline, is the weakest
+
+- **Commit:** `PENDING`. Notebook: [experiments/2026-07-23-clean-set-rerun/](experiments/2026-07-23-clean-set-rerun/).
+- **Question:** the 2026-07-20 batch's numbers predate every instrument and the RQ1 decision. What do the 8 admitted ladders actually measure under the staged pipeline + raw arms (K=10)?
+- **Ran:** gates first — all 8 lint clean and probe clean after the `.ladder` format upgrades and depth rework (a real regression check). Then `run-ladder --artifacts` per ladder: chain -> certificate -> climb -> raw arm, artifacts written (al15-al20's first folders; al1/al2's stale pre-decision-1 artifacts regenerated).
+- **Result:**
+  - **Metrics:** all 8 re-admitted · **16/16 rungs recovered** · loop overhead 2.2x-4.0x · no saturated arm (every bound sound).
+  - **al15-al20: RQ1 >= 10x, PROVEN** — each raw arm spent 10x its laddered marginal (18.6k-478k considered) at a freed pool without solving. The rebuild set's amortization is no longer an estimate of any kind.
+  - **al1: 3.59x measured** — the ladder whose estimated 78x-530x anchored the program's story is the WEAKEST admitted ladder; the estimate had the ranking upside down.
+  - **al2: 0.48x measured** — the trivial-regime instrument's ladder costs ~2x raw, stated plainly for the first time.
+  - **Off-chain necessity separates the set as designed:** al15/al18/al19 tops need the whole chain; the telescoping tops (al1/al2/al16/al17/al20) do not — al19-vs-al20 reads exactly as the 2026-07-21 resolution said.
+- **Interpretation:** decision 1's mechanism works at batch scale and produces claims in both directions: proven bounds where raw is genuinely out of reach, honest small ratios where it is not. The set's story inverts the estimator era: the *rebuilds* — designed against the collapse findings — are the strong ladders, and the shape-control telescope is marginal. This table supersedes every previously quoted number for these 8 ladders.
+- **Next:** the second half of Phase 2 item 4 — grow the set (new ladders must lint clean, probe clean, and produce usable cost data); sleep-side attribution (item 5); `w` calibration so RQ1 denominators can include learning cost.

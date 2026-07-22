@@ -1,0 +1,10 @@
+ladder                   admit  RQ1 ratio         kind      spend  laddered  loopx  recov off-chain
+al1-mirror                True      3.59x     measured     192865     53711    3.7    2/2      True
+al2-rot90-calibration     True      0.48x     measured         13        27    2.2    1/1      True
+al15-shift-frame          True     10.00x  lower-bound     186270     18627    3.0    2/2     False
+al16-layout-nest          True     10.00x  lower-bound      18170      1817    3.1    2/2      True
+al17-shift-frame-tall     True     10.00x  lower-bound     266770     26677    4.0    3/3      True
+al18-fanin-rotate         True     10.00x  lower-bound      21610      2161    3.1    2/2     False
+al19-fanin-recolor        True     10.00x  lower-bound     478070     47807    3.0    2/2     False
+al20-recolor-telescope    True     10.00x  lower-bound     362790     36279    3.0    2/2      True
+

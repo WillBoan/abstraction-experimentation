@@ -24,40 +24,40 @@
         "abs0"
       ],
       "proposal_count": 2,
-      "wake_considered": 33715,
+      "wake_considered": 17935,
       "wake_solved": [
-        "rot180-00",
-        "rot180-01"
+        "shift_stack-00",
+        "shift_stack-01"
       ]
     },
     {
-      "antiunify_pair_count": 6,
+      "antiunify_pair_count": 2,
       "converged": false,
       "iteration": 1,
       "minted": [
         "abs1"
       ],
       "proposal_count": 4,
-      "wake_considered": 34560,
+      "wake_considered": 18795,
       "wake_solved": [
-        "mirror-recolor-1-2",
-        "mirror-recolor-3-4",
-        "rot180-00",
-        "rot180-01"
+        "framed-00",
+        "framed-01",
+        "shift_stack-00",
+        "shift_stack-01"
       ]
     },
     {
-      "antiunify_pair_count": 6,
+      "antiunify_pair_count": 3,
       "converged": true,
       "iteration": 2,
       "minted": [],
       "proposal_count": 2,
-      "wake_considered": 132005,
+      "wake_considered": 19675,
       "wake_solved": [
-        "mirror-recolor-1-2",
-        "mirror-recolor-3-4",
-        "rot180-00",
-        "rot180-01",
+        "framed-00",
+        "framed-01",
+        "shift_stack-00",
+        "shift_stack-01",
         "top-00"
       ]
     }
@@ -65,93 +65,93 @@
   "comparisons": {
     "enablement": {
       "1": [
-        "mirror-recolor-1-2",
-        "mirror-recolor-3-4"
+        "framed-00",
+        "framed-01"
       ],
       "2": [
         "top-00"
       ]
     },
-    "loop_overhead_factor": 3.728845115525684,
+    "loop_overhead_factor": 3.0281312073871263,
     "marginal_rung_value": [
       {
         "censored": true,
-        "cost_with_rung": 13824,
-        "cost_without_rung": 13486,
-        "layer_above": "mirror_recolor",
-        "own_tasks_speedup": 1.008849557522124,
-        "own_tasks_to_first_with": 226,
-        "own_tasks_to_first_without": 228,
-        "ratio": 0.9755497685185185,
-        "rung": "rot180"
+        "cost_with_rung": 7518,
+        "cost_without_rung": 7174,
+        "layer_above": "framed",
+        "own_tasks_speedup": 1.0138888888888888,
+        "own_tasks_to_first_with": 144,
+        "own_tasks_to_first_without": 146,
+        "ratio": 0.954243149773876,
+        "rung": "shift_stack"
       },
       {
         "censored": true,
-        "cost_with_rung": 26401,
-        "cost_without_rung": 6912,
+        "cost_with_rung": 3935,
+        "cost_without_rung": 3759,
         "layer_above": "top",
-        "own_tasks_speedup": 3.423357664233577,
-        "own_tasks_to_first_with": 274,
-        "own_tasks_to_first_without": 938,
-        "ratio": 0.2618082648384531,
-        "rung": "mirror_recolor"
+        "own_tasks_speedup": 30.356164383561644,
+        "own_tasks_to_first_with": 146,
+        "own_tasks_to_first_without": 4432,
+        "ratio": 0.9552731893265566,
+        "rung": "framed"
       }
     ],
     "vocabulary_tax": [
       {
-        "at_full_library": 52802,
-        "at_own_level": 13486,
-        "factor": 3.915319590686638,
-        "rung": "rot180"
+        "at_full_library": 7870,
+        "at_own_level": 7174,
+        "factor": 1.0970170058544746,
+        "rung": "shift_stack"
       },
       {
-        "at_full_library": 52802,
-        "at_own_level": 13824,
-        "factor": 3.8195891203703702,
-        "rung": "mirror_recolor"
+        "at_full_library": 7870,
+        "at_own_level": 7518,
+        "factor": 1.0468209630220804,
+        "rung": "framed"
       }
     ]
   },
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
-      "high": 529.6762860494126,
-      "low": 77.55569622609893
+      "high": 44981.5258495732,
+      "low": 724.2150104686744
     },
     "budget_compression_depth": {
       "max_jump_depth": 2,
-      "raw_depth": 4
+      "raw_depth": 5
     },
     "jump_costs": {
-      "mirror_recolor": 13824,
-      "rot180": 13486
+      "framed": 7518,
+      "shift_stack": 7174
     },
     "jump_costs_to_first": {
-      "mirror_recolor": 938,
-      "rot180": 228
+      "framed": 4432,
+      "shift_stack": 146
     },
-    "laddered_end_to_end_considered": 200280,
-    "laddered_marginal_considered": 53711,
-    "laddered_marginal_to_first": 8372,
-    "off_chain_top_solved": true,
+    "laddered_end_to_end_considered": 56405,
+    "laddered_marginal_considered": 18627,
+    "laddered_marginal_to_first": 8436,
+    "off_chain_top_solved": false,
     "raw_arm": {
-      "amortization_ratio": 3.5907914579881215,
-      "amortization_ratio_kind": "measured",
+      "amortization_ratio": 10.0,
+      "amortization_ratio_kind": "lower-bound",
       "conditions": {
-        "depth_limit": 4,
+        "depth_limit": 5,
         "max_pool": 200000,
         "solution_limit": 1
       },
-      "guard_per_task": 537110,
+      "guard_per_task": 186270,
       "k": 10,
-      "laddered_marginal": 53711,
+      "laddered_marginal": 18627,
       "saturated_at": null,
-      "solved": true,
+      "solved": false,
       "sound": true,
-      "spend_considered": 192865
+      "spend_considered": 186270
     },
     "raw_censored": true,
-    "raw_considered": 6743,
+    "raw_considered": 3587,
     "raw_estimate": {
       "available": true,
       "caveats": [
@@ -162,186 +162,186 @@
         "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
         "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
       ],
-      "d_raw": 4,
-      "estimate_high": 28449443,
-      "estimate_low": 4165594,
-      "growth_ratio_geometric": 24.55,
-      "growth_ratio_last": 65.0,
+      "d_raw": 5,
+      "estimate_high": 837870882,
+      "estimate_low": 13489953,
+      "growth_ratio_geometric": 15.31,
+      "growth_ratio_last": 61.67,
       "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
       "observed_composed": [
-        11,
-        102,
-        6630
+        15,
+        57,
+        3515
       ],
-      "observed_considered": 6743,
+      "observed_considered": 3587,
       "observed_through_depth": 2,
-      "rounds_extrapolated": 2,
+      "rounds_extrapolated": 3,
       "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
     },
     "raw_limit_censored": false,
     "raw_solved": false,
-    "top_jump_cost": 26401,
-    "top_jump_cost_to_first": 7206
+    "top_jump_cost": 3935,
+    "top_jump_cost_to_first": 3858
   },
   "cost_matrix": [
     {
       "columns": {
         "0": {
-          "b_eff": 24.55,
+          "b_eff": 15.31,
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 6743,
+          "considered": 3587,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 24.86,
+          "b_eff": 15.68,
           "censored": false,
-          "cheapest_solution_index": 458,
-          "considered": 6912,
-          "first_solution_index": 458,
+          "cheapest_solution_index": 2216,
+          "considered": 3759,
+          "first_solution_index": 2216,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 48.79,
+          "b_eff": 16.04,
           "censored": false,
-          "cheapest_solution_index": 126,
-          "considered": 26401,
-          "first_solution_index": 126,
+          "cheapest_solution_index": 73,
+          "considered": 3935,
+          "first_solution_index": 73,
           "solve_generation": 1,
           "solved": true
         }
       },
-      "rung": "mirror_recolor",
-      "task_id": "mirror-recolor-1-2"
+      "rung": "framed",
+      "task_id": "framed-00"
     },
     {
       "columns": {
         "0": {
-          "b_eff": 24.55,
+          "b_eff": 15.31,
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 6743,
+          "considered": 3587,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 24.86,
+          "b_eff": 15.68,
           "censored": false,
-          "cheapest_solution_index": 480,
-          "considered": 6912,
-          "first_solution_index": 480,
+          "cheapest_solution_index": 2216,
+          "considered": 3759,
+          "first_solution_index": 2216,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 48.79,
+          "b_eff": 16.04,
           "censored": false,
-          "cheapest_solution_index": 148,
-          "considered": 26401,
-          "first_solution_index": 148,
+          "cheapest_solution_index": 73,
+          "considered": 3935,
+          "first_solution_index": 73,
           "solve_generation": 1,
           "solved": true
         }
       },
-      "rung": "mirror_recolor",
-      "task_id": "mirror-recolor-3-4"
+      "rung": "framed",
+      "task_id": "framed-01"
     },
     {
       "columns": {
         "0": {
-          "b_eff": 24.55,
+          "b_eff": 15.31,
           "censored": false,
-          "cheapest_solution_index": 114,
-          "considered": 6743,
-          "first_solution_index": 114,
-          "solve_generation": 2,
-          "solved": true
-        },
-        "1": {
-          "b_eff": 24.86,
-          "censored": false,
-          "cheapest_solution_index": 113,
-          "considered": 6912,
-          "first_solution_index": 113,
-          "solve_generation": 1,
-          "solved": true
-        },
-        "2": {
-          "b_eff": 48.79,
-          "censored": false,
-          "cheapest_solution_index": 113,
-          "considered": 26401,
-          "first_solution_index": 113,
-          "solve_generation": 1,
-          "solved": true
-        }
-      },
-      "rung": "rot180",
-      "task_id": "rot180-00"
-    },
-    {
-      "columns": {
-        "0": {
-          "b_eff": 24.55,
-          "censored": false,
-          "cheapest_solution_index": 114,
-          "considered": 6743,
-          "first_solution_index": 114,
+          "cheapest_solution_index": 73,
+          "considered": 3587,
+          "first_solution_index": 73,
           "solve_generation": 2,
           "solved": true
         },
         "1": {
-          "b_eff": 24.86,
+          "b_eff": 15.68,
           "censored": false,
-          "cheapest_solution_index": 113,
-          "considered": 6912,
-          "first_solution_index": 113,
+          "cheapest_solution_index": 72,
+          "considered": 3759,
+          "first_solution_index": 72,
           "solve_generation": 1,
           "solved": true
         },
         "2": {
-          "b_eff": 48.79,
+          "b_eff": 16.04,
           "censored": false,
-          "cheapest_solution_index": 113,
-          "considered": 26401,
-          "first_solution_index": 113,
+          "cheapest_solution_index": 72,
+          "considered": 3935,
+          "first_solution_index": 72,
           "solve_generation": 1,
           "solved": true
         }
       },
-      "rung": "rot180",
-      "task_id": "rot180-01"
+      "rung": "shift_stack",
+      "task_id": "shift_stack-00"
     },
     {
       "columns": {
         "0": {
-          "b_eff": 24.55,
+          "b_eff": 15.31,
+          "censored": false,
+          "cheapest_solution_index": 73,
+          "considered": 3587,
+          "first_solution_index": 73,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 15.68,
+          "censored": false,
+          "cheapest_solution_index": 72,
+          "considered": 3759,
+          "first_solution_index": 72,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 16.04,
+          "censored": false,
+          "cheapest_solution_index": 72,
+          "considered": 3935,
+          "first_solution_index": 72,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "shift_stack",
+      "task_id": "shift_stack-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 15.31,
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 6743,
+          "considered": 3587,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 24.86,
+          "b_eff": 15.68,
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 6912,
+          "considered": 3759,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "2": {
-          "b_eff": 48.79,
+          "b_eff": 16.04,
           "censored": false,
-          "cheapest_solution_index": 7206,
-          "considered": 26401,
-          "first_solution_index": 7206,
+          "cheapest_solution_index": 3858,
+          "considered": 3935,
+          "first_solution_index": 3858,
           "solve_generation": 2,
           "solved": true
         }
@@ -358,15 +358,15 @@
         "depth_limit": 2,
         "kind": "Budget",
         "max_arity": 2,
-        "max_pool": 300,
+        "max_pool": 400,
         "solution_limit": null,
         "solution_limit_mode": "generation-end"
       }
     ],
     "distractors": [],
     "heldout_corpus": {
-      "content_hash": "26bb1f1993eb3a12",
-      "name": "al1-mirror:heldout",
+      "content_hash": "0a30807383683c89",
+      "name": "al15-shift-frame:heldout",
       "task_count": 3
     },
     "reference_config": {
@@ -377,7 +377,7 @@
         "depth_limit": 2,
         "kind": "Budget",
         "max_arity": 2,
-        "max_pool": 300,
+        "max_pool": 400,
         "solution_limit": null,
         "solution_limit_mode": "generation-end"
       },
@@ -413,29 +413,32 @@
         "wake_schedule": "full"
       },
       "library": {
-        "name": "al1-L0",
+        "name": "al15-L0",
         "primitives": [
           {
-            "name": "flip_h",
-            "param_types": [
-              "grid"
-            ],
-            "return_type": "grid",
-            "variadic_param": null
-          },
-          {
-            "name": "flip_v",
-            "param_types": [
-              "grid"
-            ],
-            "return_type": "grid",
-            "variadic_param": null
-          },
-          {
-            "name": "map_color",
+            "name": "concat_v",
             "param_types": [
               "grid",
-              "color",
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "translate",
+            "param_types": [
+              "grid",
+              "int",
+              "int"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "pad",
+            "param_types": [
+              "grid",
+              "int",
               "color"
             ],
             "return_type": "grid",
@@ -468,9 +471,9 @@
                 }
               ],
               "op": "apply",
-              "primitive": "rot180"
+              "primitive": "shift_stack"
             },
-            "task_id": "rot180-00"
+            "task_id": "shift_stack-00"
           },
           {
             "kind": "full_solution",
@@ -481,29 +484,44 @@
                 }
               ],
               "op": "apply",
-              "primitive": "rot180"
+              "primitive": "shift_stack"
             },
-            "task_id": "rot180-01"
+            "task_id": "shift_stack-01"
           }
         ],
         "level": 1,
-        "name": "rot180",
+        "name": "shift_stack",
         "template": {
           "args": [
+            {
+              "index": 0,
+              "op": "param",
+              "value_type": "grid"
+            },
             {
               "args": [
                 {
                   "index": 0,
                   "op": "param",
                   "value_type": "grid"
+                },
+                {
+                  "op": "const",
+                  "value": 0,
+                  "value_type": "int"
+                },
+                {
+                  "op": "const",
+                  "value": 1,
+                  "value_type": "int"
                 }
               ],
               "op": "apply",
-              "primitive": "flip_v"
+              "primitive": "translate"
             }
           ],
           "op": "apply",
-          "primitive": "flip_h"
+          "primitive": "concat_v"
         }
       },
       {
@@ -514,22 +532,12 @@
               "args": [
                 {
                   "op": "input"
-                },
-                {
-                  "op": "const",
-                  "value": 1,
-                  "value_type": "color"
-                },
-                {
-                  "op": "const",
-                  "value": 2,
-                  "value_type": "color"
                 }
               ],
               "op": "apply",
-              "primitive": "mirror_recolor"
+              "primitive": "framed"
             },
-            "task_id": "mirror-recolor-1-2"
+            "task_id": "framed-00"
           },
           {
             "kind": "full_solution",
@@ -537,26 +545,16 @@
               "args": [
                 {
                   "op": "input"
-                },
-                {
-                  "op": "const",
-                  "value": 3,
-                  "value_type": "color"
-                },
-                {
-                  "op": "const",
-                  "value": 4,
-                  "value_type": "color"
                 }
               ],
               "op": "apply",
-              "primitive": "mirror_recolor"
+              "primitive": "framed"
             },
-            "task_id": "mirror-recolor-3-4"
+            "task_id": "framed-01"
           }
         ],
         "level": 2,
-        "name": "mirror_recolor",
+        "name": "framed",
         "template": {
           "args": [
             {
@@ -568,21 +566,21 @@
                 }
               ],
               "op": "apply",
-              "primitive": "rot180"
+              "primitive": "shift_stack"
             },
             {
-              "index": 1,
-              "op": "param",
-              "value_type": "color"
+              "op": "const",
+              "value": 1,
+              "value_type": "int"
             },
             {
-              "index": 2,
-              "op": "param",
+              "op": "const",
+              "value": 5,
               "value_type": "color"
             }
           ],
           "op": "apply",
-          "primitive": "map_color"
+          "primitive": "pad"
         }
       }
     ],
@@ -594,34 +592,14 @@
               "args": [
                 {
                   "op": "input"
-                },
-                {
-                  "op": "const",
-                  "value": 1,
-                  "value_type": "color"
-                },
-                {
-                  "op": "const",
-                  "value": 2,
-                  "value_type": "color"
                 }
               ],
               "op": "apply",
-              "primitive": "mirror_recolor"
-            },
-            {
-              "op": "const",
-              "value": 3,
-              "value_type": "color"
-            },
-            {
-              "op": "const",
-              "value": 4,
-              "value_type": "color"
+              "primitive": "framed"
             }
           ],
           "op": "apply",
-          "primitive": "map_color"
+          "primitive": "shift_stack"
         }
       ],
       "task_ids": [
@@ -629,8 +607,8 @@
       ]
     },
     "train_corpus": {
-      "content_hash": "ad9ef8d0ffda58a9",
-      "name": "al1-mirror:train",
+      "content_hash": "4726db5e6f42f1ef",
+      "name": "al15-shift-frame:train",
       "task_count": 5
     }
   },
@@ -642,7 +620,7 @@
         "abs0"
       ],
       "recovered": true,
-      "rung": "rot180"
+      "rung": "shift_stack"
     },
     {
       "level": 2,
@@ -650,7 +628,7 @@
         "abs1"
       ],
       "recovered": true,
-      "rung": "mirror_recolor"
+      "rung": "framed"
     }
   ],
   "shape": {
@@ -658,7 +636,7 @@
     "lint_ok": true,
     "max_jump_depth": 2,
     "raw_depth_profile": [
-      4
+      5
     ],
     "validity_window": [
       2,

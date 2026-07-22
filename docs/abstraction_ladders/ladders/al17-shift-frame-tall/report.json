@@ -1,0 +1,889 @@
+{
+  "certificate": {
+    "admitted": true,
+    "demonstration_health": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0
+    },
+    "no_skip_paths": {
+      "1": true,
+      "2": true,
+      "3": true
+    },
+    "tractable_jumps": {
+      "1": true,
+      "2": true,
+      "3": true
+    }
+  },
+  "climb_executed": true,
+  "climb_trace": [
+    {
+      "antiunify_pair_count": 0,
+      "converged": false,
+      "iteration": 0,
+      "minted": [
+        "abs0"
+      ],
+      "proposal_count": 2,
+      "wake_considered": 25109,
+      "wake_solved": [
+        "shift1-00",
+        "shift1-01"
+      ]
+    },
+    {
+      "antiunify_pair_count": 2,
+      "converged": false,
+      "iteration": 1,
+      "minted": [
+        "abs1"
+      ],
+      "proposal_count": 4,
+      "wake_considered": 26313,
+      "wake_solved": [
+        "frame1-00",
+        "frame1-01",
+        "shift1-00",
+        "shift1-01"
+      ]
+    },
+    {
+      "antiunify_pair_count": 6,
+      "converged": false,
+      "iteration": 2,
+      "minted": [
+        "abs2"
+      ],
+      "proposal_count": 6,
+      "wake_considered": 27545,
+      "wake_solved": [
+        "frame1-00",
+        "frame1-01",
+        "shift1-00",
+        "shift1-01",
+        "shift2-00",
+        "shift2-01"
+      ]
+    },
+    {
+      "antiunify_pair_count": 6,
+      "converged": true,
+      "iteration": 3,
+      "minted": [],
+      "proposal_count": 3,
+      "wake_considered": 28805,
+      "wake_solved": [
+        "frame1-00",
+        "frame1-01",
+        "shift1-00",
+        "shift1-01",
+        "shift2-00",
+        "shift2-01",
+        "top-00"
+      ]
+    }
+  ],
+  "comparisons": {
+    "enablement": {
+      "1": [
+        "frame1-00",
+        "frame1-01"
+      ],
+      "2": [
+        "shift2-00",
+        "shift2-01"
+      ],
+      "3": [
+        "top-00"
+      ]
+    },
+    "loop_overhead_factor": 4.039884544738913,
+    "marginal_rung_value": [
+      {
+        "censored": true,
+        "cost_with_rung": 7518,
+        "cost_without_rung": 7174,
+        "layer_above": "frame1",
+        "own_tasks_speedup": 1.0138888888888888,
+        "own_tasks_to_first_with": 144,
+        "own_tasks_to_first_without": 146,
+        "ratio": 0.954243149773876,
+        "rung": "shift1"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 7870,
+        "cost_without_rung": 7518,
+        "layer_above": "shift2",
+        "own_tasks_speedup": 30.356164383561644,
+        "own_tasks_to_first_with": 146,
+        "own_tasks_to_first_without": 4432,
+        "ratio": 0.9552731893265566,
+        "rung": "frame1"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 4115,
+        "cost_without_rung": 3935,
+        "layer_above": "top",
+        "own_tasks_speedup": 52.13513513513514,
+        "own_tasks_to_first_with": 148,
+        "own_tasks_to_first_without": 7716,
+        "ratio": 0.9562575941676792,
+        "rung": "shift2"
+      }
+    ],
+    "vocabulary_tax": [
+      {
+        "at_full_library": 8230,
+        "at_own_level": 7174,
+        "factor": 1.1471982157792027,
+        "rung": "shift1"
+      },
+      {
+        "at_full_library": 8230,
+        "at_own_level": 7518,
+        "factor": 1.094706038840117,
+        "rung": "frame1"
+      },
+      {
+        "at_full_library": 8230,
+        "at_own_level": 7870,
+        "factor": 1.04574332909784,
+        "rung": "shift2"
+      }
+    ]
+  },
+  "cost": {
+    "amortization_ratio_considered": null,
+    "amortization_ratio_estimated": {
+      "high": 1936825.8634404168,
+      "low": 7740.976271694718
+    },
+    "budget_compression_depth": {
+      "max_jump_depth": 2,
+      "raw_depth": 6
+    },
+    "jump_costs": {
+      "frame1": 7518,
+      "shift1": 7174,
+      "shift2": 7870
+    },
+    "jump_costs_to_first": {
+      "frame1": 4432,
+      "shift1": 146,
+      "shift2": 7716
+    },
+    "laddered_end_to_end_considered": 107772,
+    "laddered_marginal_considered": 26677,
+    "laddered_marginal_to_first": 14785,
+    "off_chain_top_solved": true,
+    "raw_arm": {
+      "amortization_ratio": 10.0,
+      "amortization_ratio_kind": "lower-bound",
+      "conditions": {
+        "depth_limit": 6,
+        "max_pool": 200000,
+        "solution_limit": 1
+      },
+      "guard_per_task": 266770,
+      "k": 10,
+      "laddered_marginal": 26677,
+      "saturated_at": null,
+      "solved": false,
+      "sound": true,
+      "spend_considered": 266770
+    },
+    "raw_censored": true,
+    "raw_considered": 3587,
+    "raw_estimate": {
+      "available": true,
+      "caveats": [
+        "THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells",
+        "accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)",
+        "finite-space floors: both fits over-project (up to 3.71x) once the space is exhausted",
+        "error compounds per extrapolated round and is floor-dependent even at a 1-round gap",
+        "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
+        "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
+      ],
+      "d_raw": 6,
+      "estimate_high": 51668703559,
+      "estimate_low": 206506024,
+      "growth_ratio_geometric": 15.31,
+      "growth_ratio_last": 61.67,
+      "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
+      "observed_composed": [
+        15,
+        57,
+        3515
+      ],
+      "observed_considered": 3587,
+      "observed_through_depth": 2,
+      "rounds_extrapolated": 4,
+      "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
+    },
+    "raw_limit_censored": false,
+    "raw_solved": false,
+    "top_jump_cost": 4115,
+    "top_jump_cost_to_first": 2491
+  },
+  "cost_matrix": [
+    {
+      "columns": {
+        "0": {
+          "b_eff": 15.31,
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 3587,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 15.68,
+          "censored": false,
+          "cheapest_solution_index": 2216,
+          "considered": 3759,
+          "first_solution_index": 2216,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 16.04,
+          "censored": false,
+          "cheapest_solution_index": 73,
+          "considered": 3935,
+          "first_solution_index": 73,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 16.41,
+          "censored": false,
+          "cheapest_solution_index": 73,
+          "considered": 4115,
+          "first_solution_index": 73,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "frame1",
+      "task_id": "frame1-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 15.31,
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 3587,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 15.68,
+          "censored": false,
+          "cheapest_solution_index": 2216,
+          "considered": 3759,
+          "first_solution_index": 2216,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 16.04,
+          "censored": false,
+          "cheapest_solution_index": 73,
+          "considered": 3935,
+          "first_solution_index": 73,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 16.41,
+          "censored": false,
+          "cheapest_solution_index": 73,
+          "considered": 4115,
+          "first_solution_index": 73,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "frame1",
+      "task_id": "frame1-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 15.31,
+          "censored": false,
+          "cheapest_solution_index": 73,
+          "considered": 3587,
+          "first_solution_index": 73,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 15.68,
+          "censored": false,
+          "cheapest_solution_index": 72,
+          "considered": 3759,
+          "first_solution_index": 72,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 16.04,
+          "censored": false,
+          "cheapest_solution_index": 72,
+          "considered": 3935,
+          "first_solution_index": 72,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 16.41,
+          "censored": false,
+          "cheapest_solution_index": 72,
+          "considered": 4115,
+          "first_solution_index": 72,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "shift1",
+      "task_id": "shift1-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 15.31,
+          "censored": false,
+          "cheapest_solution_index": 73,
+          "considered": 3587,
+          "first_solution_index": 73,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 15.68,
+          "censored": false,
+          "cheapest_solution_index": 72,
+          "considered": 3759,
+          "first_solution_index": 72,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 16.04,
+          "censored": false,
+          "cheapest_solution_index": 72,
+          "considered": 3935,
+          "first_solution_index": 72,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 16.41,
+          "censored": false,
+          "cheapest_solution_index": 72,
+          "considered": 4115,
+          "first_solution_index": 72,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "shift1",
+      "task_id": "shift1-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 15.31,
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 3587,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 15.68,
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 3759,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 16.04,
+          "censored": false,
+          "cheapest_solution_index": 3858,
+          "considered": 3935,
+          "first_solution_index": 3858,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 16.41,
+          "censored": false,
+          "cheapest_solution_index": 74,
+          "considered": 4115,
+          "first_solution_index": 74,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "shift2",
+      "task_id": "shift2-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 15.31,
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 3587,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 15.68,
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 3759,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 16.04,
+          "censored": false,
+          "cheapest_solution_index": 3858,
+          "considered": 3935,
+          "first_solution_index": 3858,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 16.41,
+          "censored": false,
+          "cheapest_solution_index": 74,
+          "considered": 4115,
+          "first_solution_index": 74,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "shift2",
+      "task_id": "shift2-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 15.31,
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 3587,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 15.68,
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 3759,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 16.04,
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 3935,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "3": {
+          "b_eff": 16.41,
+          "censored": false,
+          "cheapest_solution_index": 2491,
+          "considered": 4115,
+          "first_solution_index": 2491,
+          "solve_generation": 2,
+          "solved": true
+        }
+      },
+      "rung": "top",
+      "task_id": "top-00"
+    }
+  ],
+  "ladder": {
+    "budgets": [
+      {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "kind": "Budget",
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      }
+    ],
+    "distractors": [],
+    "heldout_corpus": {
+      "content_hash": "649f1a40f24ecae8",
+      "name": "al17-shift-frame-tall:heldout",
+      "task_count": 4
+    },
+    "reference_config": {
+      "attempts_per_test": 2,
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "kind": "Budget",
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "constraints": [],
+      "cost": {
+        "kind": "ProgramSize"
+      },
+      "learn": {
+        "curriculum": null,
+        "early_stop": true,
+        "iterations": 6,
+        "kind": "LearnSpec",
+        "learn_engine": {
+          "kind": "GreedyMDLLearnEngine",
+          "metric": {
+            "bits_per_primitive": 1.0,
+            "cost": {
+              "kind": "ProgramSize"
+            },
+            "kind": "CompressionMetric"
+          },
+          "name_prefix": "abs",
+          "proposer": {
+            "bound_var_safe": false,
+            "kind": "AntiunifyPairs"
+          },
+          "selector": {
+            "kind": "GreedyMDL"
+          }
+        },
+        "reset_programs_each_wake": true,
+        "score_each_wake": false,
+        "wake_schedule": "full"
+      },
+      "library": {
+        "name": "al17-L0",
+        "primitives": [
+          {
+            "name": "concat_v",
+            "param_types": [
+              "grid",
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "translate",
+            "param_types": [
+              "grid",
+              "int",
+              "int"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "pad",
+            "param_types": [
+              "grid",
+              "int",
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          }
+        ],
+        "version": 1
+      },
+      "search_engine": {
+        "constant_sources": [
+          "finite-enumerate"
+        ],
+        "function_hole_fill_mode": "none",
+        "function_sample_size": 4,
+        "inverse_semantics_propagation": false,
+        "kind": "BottomUpSearchEngine",
+        "polymorphism_instantiation": "monomorphize",
+        "unpinned_type_var_mode": "reject"
+      }
+    },
+    "rungs": [
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "shift1"
+            },
+            "task_id": "shift1-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "shift1"
+            },
+            "task_id": "shift1-01"
+          }
+        ],
+        "level": 1,
+        "name": "shift1",
+        "template": {
+          "args": [
+            {
+              "index": 0,
+              "op": "param",
+              "value_type": "grid"
+            },
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                },
+                {
+                  "op": "const",
+                  "value": 0,
+                  "value_type": "int"
+                },
+                {
+                  "op": "const",
+                  "value": 1,
+                  "value_type": "int"
+                }
+              ],
+              "op": "apply",
+              "primitive": "translate"
+            }
+          ],
+          "op": "apply",
+          "primitive": "concat_v"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "frame1"
+            },
+            "task_id": "frame1-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "frame1"
+            },
+            "task_id": "frame1-01"
+          }
+        ],
+        "level": 2,
+        "name": "frame1",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "shift1"
+            },
+            {
+              "op": "const",
+              "value": 1,
+              "value_type": "int"
+            },
+            {
+              "op": "const",
+              "value": 5,
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "pad"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "shift2"
+            },
+            "task_id": "shift2-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "shift2"
+            },
+            "task_id": "shift2-01"
+          }
+        ],
+        "level": 3,
+        "name": "shift2",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "frame1"
+            }
+          ],
+          "op": "apply",
+          "primitive": "shift1"
+        }
+      }
+    ],
+    "top": {
+      "reference_solutions": [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "shift2"
+            },
+            {
+              "op": "const",
+              "value": 1,
+              "value_type": "int"
+            },
+            {
+              "op": "const",
+              "value": 6,
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "pad"
+        }
+      ],
+      "task_ids": [
+        "top-00"
+      ]
+    },
+    "train_corpus": {
+      "content_hash": "ae2df1a711850a52",
+      "name": "al17-shift-frame-tall:train",
+      "task_count": 7
+    }
+  },
+  "probe_cap": 512,
+  "rung_recovery": [
+    {
+      "level": 1,
+      "matched_by": [
+        "abs0"
+      ],
+      "recovered": true,
+      "rung": "shift1"
+    },
+    {
+      "level": 2,
+      "matched_by": [
+        "abs1"
+      ],
+      "recovered": true,
+      "rung": "frame1"
+    },
+    {
+      "level": 3,
+      "matched_by": [
+        "abs2"
+      ],
+      "recovered": true,
+      "rung": "shift2"
+    }
+  ],
+  "shape": {
+    "height": 4,
+    "lint_ok": true,
+    "max_jump_depth": 2,
+    "raw_depth_profile": [
+      6
+    ],
+    "validity_window": [
+      2,
+      2
+    ]
+  },
+  "wake_schedule": "full"
+}

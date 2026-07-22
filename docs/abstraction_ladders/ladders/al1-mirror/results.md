@@ -38,6 +38,7 @@
 | `top-00`             | top            | 6,743   | 6,912   | 26,401 * |
 
 - `*` = the search solved that task in that column; a bare number is cost-paid-full on an unsolved task (a censored lower bound on what solving would cost).
+- `!` = that search was cut short by a `Budget.considered_limit`, so its number is the limit itself, not a measurement -- and its `unsolved` says nothing about whether a solution exists within the budget.
 - `L_i` = Floor + the intended rungs `r_1..r_i` gifted (the oracle chain), all at the pinned budget.
 - These are **cost-paid-full** figures: with no early stop every search enumerates the entire budgeted space, so a column varies by task only through signature dedup -- near-constant columns are expected, not a bug. The task-sensitive currency is **cost-to-first**, in the next table.
 
@@ -68,8 +69,8 @@
   - jump `mirror_recolor`: 13,824
   - top jump: 26,401
 - Laddered end-to-end: 200,280 (every wake re-searches every task)
-- Raw (Floor on the top tasks), measured: 6,743 -- a full-budget FAILURE, not a raw cost (the top is unreachable raw by design); see the estimate below
-- Amortization considered-ratio (measured): n/a -- raw is estimated, see below
+- Raw (Floor on the top tasks, reference budget): 6,743 -- a full-budget FAILURE at the reference budget, not a raw cost (the top is unreachable raw by design); the raw ARM below is the RQ1 authority
+- Amortization considered-ratio (reference-budget raw): n/a -- see the raw arm under RQ1
 - Depth compression: d_raw 4 -> max jump depth 2
 - Off-chain (Floor + top rung only) solves the top: yes
 
@@ -86,11 +87,15 @@
 
 ### Raw vs laddered (RQ1)
 
-- **Raw cost (estimated): 4,165,594 - 28,449,443 considered.** Raw is never measured -- for any ladder worth building it is intractable by construction. It is extrapolated from the rounds the Floor search DID complete: observed composed counts [11, 102, 6630] through depth 2, projected 2 more rounds to `d_raw`=4 at growth ratios 24.55x (low fit) to 65.0x (high fit).
-- **Amortization ratio (estimated): 78x - 530x** against laddered marginal 53,711. Even the low bracket is the RQ1 answer for this ladder; the spread is method uncertainty, not measurement noise.
+- **Amortization ratio (measured): 3.6x** -- raw arm spend 192,865 against laddered marginal 53,711, guard 10x laddered (537,110 per top task) at depth_limit 4, max_pool 200,000, solution_limit 1.
+  - The arm SOLVED every top task, so the ratio is measured; its numerator is cost-to-first, so it conservatively understates the ladder's win.
+- Raw cost estimate (ADVISORY -- not an RQ1 input): 4,165,594 - 28,449,443 considered, extrapolated from observed composed counts [11, 102, 6630] through depth 2 (2 rounds projected to `d_raw`=4). Validated 2026-07-23: the bracket contained the measured truth in 2 of 10 cells, erring both directions -- treat as an order-of-magnitude sketch of unknown sign, never a result.
+  - caveat: THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells
+  - caveat: accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)
+  - caveat: finite-space floors: both fits over-project (up to 3.71x) once the space is exhausted
+  - caveat: error compounds per extrapolated round and is floor-dependent even at a 1-round gap
   - caveat: assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails
-  - caveat: growth decays as dedup rises, so the high fit is an upper bracket, not a prediction
-  - caveat: order-of-magnitude, not a measurement -- validate on a calibration ladder
+  - caveat: an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign
 - Depth compression (always honest, no censoring): d_raw 4 -> max jump depth 2 -- the ladder converts one deep search into shallow ones
 
 ### Marginal vs end-to-end laddered cost

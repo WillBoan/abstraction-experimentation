@@ -73,3 +73,5 @@ The frozen ladder default with the source file's `config` block applied -- the e
   - early_stop: `True`
   - reset_programs_each_wake: `True`
   - score_each_wake: `False`
+  - wake_schedule: `full`
+  - curriculum: `None`

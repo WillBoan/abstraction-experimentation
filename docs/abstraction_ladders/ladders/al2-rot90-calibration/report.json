@@ -11,6 +11,7 @@
       "1": true
     }
   },
+  "climb_executed": true,
   "climb_trace": [
     {
       "antiunify_pair_count": 0,
@@ -89,14 +90,33 @@
     "laddered_marginal_considered": 27,
     "laddered_marginal_to_first": 20,
     "off_chain_top_solved": true,
+    "raw_arm": {
+      "amortization_ratio": 0.48148148148148145,
+      "amortization_ratio_kind": "measured",
+      "conditions": {
+        "depth_limit": 4,
+        "max_pool": 200000,
+        "solution_limit": 1
+      },
+      "guard_per_task": 270,
+      "k": 10,
+      "laddered_marginal": 27,
+      "saturated_at": null,
+      "solved": true,
+      "sound": true,
+      "spend_considered": 13
+    },
     "raw_censored": true,
     "raw_considered": 7,
     "raw_estimate": {
       "available": true,
       "caveats": [
+        "THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells",
+        "accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)",
+        "finite-space floors: both fits over-project (up to 3.71x) once the space is exhausted",
+        "error compounds per extrapolated round and is floor-dependent even at a 1-round gap",
         "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
-        "growth decays as dedup rises, so the high fit is an upper bracket, not a prediction",
-        "order-of-magnitude, not a measurement -- validate on a calibration ladder"
+        "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
       ],
       "d_raw": 4,
       "estimate_high": 31,
@@ -111,8 +131,10 @@
       ],
       "observed_considered": 7,
       "observed_through_depth": 2,
-      "rounds_extrapolated": 2
+      "rounds_extrapolated": 2,
+      "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
     },
+    "raw_limit_censored": false,
     "raw_solved": false,
     "top_jump_cost": 13,
     "top_jump_cost_to_first": 12
@@ -122,6 +144,7 @@
       "columns": {
         "0": {
           "b_eff": 2.0,
+          "censored": false,
           "cheapest_solution_index": 4,
           "considered": 7,
           "first_solution_index": 4,
@@ -130,6 +153,7 @@
         },
         "1": {
           "b_eff": 3.0,
+          "censored": false,
           "cheapest_solution_index": 3,
           "considered": 13,
           "first_solution_index": 3,
@@ -144,6 +168,7 @@
       "columns": {
         "0": {
           "b_eff": 2.0,
+          "censored": false,
           "cheapest_solution_index": 4,
           "considered": 7,
           "first_solution_index": 4,
@@ -152,6 +177,7 @@
         },
         "1": {
           "b_eff": 3.0,
+          "censored": false,
           "cheapest_solution_index": 3,
           "considered": 13,
           "first_solution_index": 3,
@@ -166,6 +192,7 @@
       "columns": {
         "0": {
           "b_eff": 2.0,
+          "censored": false,
           "cheapest_solution_index": null,
           "considered": 7,
           "first_solution_index": null,
@@ -174,6 +201,7 @@
         },
         "1": {
           "b_eff": 3.0,
+          "censored": false,
           "cheapest_solution_index": 12,
           "considered": 13,
           "first_solution_index": 12,
@@ -188,18 +216,17 @@
   "ladder": {
     "budgets": [
       {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
         "depth_limit": 2,
         "kind": "Budget",
         "max_arity": 2,
-        "max_pool": 400
-      },
-      {
-        "depth_limit": 4,
-        "kind": "Budget",
-        "max_arity": 2,
-        "max_pool": 4000
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
       }
     ],
+    "distractors": [],
     "heldout_corpus": {
       "content_hash": "5305010ffeb299bc",
       "name": "al2-rot90-calibration:heldout",
@@ -208,16 +235,21 @@
     "reference_config": {
       "attempts_per_test": 2,
       "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
         "depth_limit": 2,
         "kind": "Budget",
         "max_arity": 2,
-        "max_pool": 400
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
       },
       "constraints": [],
       "cost": {
         "kind": "ProgramSize"
       },
       "learn": {
+        "curriculum": null,
         "early_stop": true,
         "iterations": 4,
         "kind": "LearnSpec",
@@ -240,7 +272,8 @@
           }
         },
         "reset_programs_each_wake": true,
-        "score_each_wake": false
+        "score_each_wake": false,
+        "wake_schedule": "full"
       },
       "library": {
         "name": "al2-L0",
@@ -279,10 +312,28 @@
         "demonstrations": [
           {
             "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "rot90"
+            },
             "task_id": "rot90-00"
           },
           {
             "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "rot90"
+            },
             "task_id": "rot90-01"
           }
         ],
@@ -357,5 +408,6 @@
       2,
       3
     ]
-  }
+  },
+  "wake_schedule": "full"
 }
