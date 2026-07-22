@@ -705,7 +705,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-23 — Wake-schedule comparison: the oracle curriculum IS the marginal accounting (loop overhead 3-4x)
 
-- **Commit:** `PENDING`. Notebook: [experiments/2026-07-23-schedule-comparison/](experiments/2026-07-23-schedule-comparison/).
+- **Commit:** `68db634`. Notebook: [experiments/2026-07-23-schedule-comparison/](experiments/2026-07-23-schedule-comparison/).
 - **Question:** complete the full / skip-solved / curriculum table across the admitted set (TODO item 4, multi-ladder) — how much would perfect scheduling save, and does the cheap honest mode approach it?
 - **Ran:** 7 clean ladders x 3 schedules; curriculum built from each spec's own rungs (one group per level, top last); per cell e2e considered + recovery + mints.
 - **Result:**
