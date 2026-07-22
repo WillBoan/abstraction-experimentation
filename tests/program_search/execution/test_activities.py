@@ -150,9 +150,7 @@ def test_skip_solved_wakes_search_only_the_unsolved(tmp_path: Path) -> None:
     config = _learn_config(iterations=2)
     assert config.learn is not None
     config = config.with_(
-        learn=dataclasses.replace(
-            config.learn, wake_schedule="skip-solved", early_stop=False
-        )
+        learn=dataclasses.replace(config.learn, wake_schedule="skip-solved", early_stop=False)
     )
     record = execute(RunSpec(config=config, corpus=_TRAIN), runs_root=tmp_path)
     wakes = _wake_rows(list(record.trace_rows()))

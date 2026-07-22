@@ -90,6 +90,23 @@ def elaborate_expression(
     elaborates to a :class:`Param`. ``allow_input`` gates :data:`INPUT_KEYWORD`: false inside a rung
     template, which must be closed (spec NAM-4), true in a task solution (spec NAM-5).
     """
+    program, _ = elaborate_typed(text, library=library, params=params, allow_input=allow_input)
+    return program
+
+
+def elaborate_typed(
+    text: str,
+    *,
+    library: Library,
+    params: Sequence[tuple[str, Type]] = (),
+    allow_input: bool,
+) -> tuple[Program, Type]:
+    """:func:`elaborate_expression`, plus the RESOLVED type of the whole expression.
+
+    The substrate cannot recover that type from the program alone (``Program.result_type`` does
+    not unify), so a caller that needs it -- checking a rung body against its declared return
+    type, and minting the abstraction -- must take it from elaboration.
+    """
     stripped = text.strip()
     if not stripped:
         raise LadderFormatError("empty expression")
@@ -97,7 +114,7 @@ def elaborate_expression(
         tree = ast.parse(stripped, mode="eval")
     except SyntaxError as exc:
         raise LadderFormatError(f"could not parse expression {stripped!r}: {exc.msg}") from None
-    return _Elaborator(library=library, params=params, allow_input=allow_input).run(tree.body)
+    return _Elaborator(library=library, params=params, allow_input=allow_input).run_typed(tree.body)
 
 
 def render_expression(program: Program, param_names: Sequence[str] = ()) -> str:
@@ -123,12 +140,12 @@ class _Elaborator:
         #: Lambda binders, OUTERMOST first. A name's De Bruijn index counts from the other end.
         self.binders: list[tuple[str, Type]] = []
 
-    def run(self, node: ast.expr) -> Program:
-        program, _ = self.elaborate(node, None)
+    def run_typed(self, node: ast.expr) -> tuple[Program, Type]:
+        program, value_type = self.elaborate(node, None)
         # A binder's type is captured when it is bound, which can be BEFORE the body pins the
         # type variable it came from (`map`'s hole is `(a) -> b`, and only the body says what `a`
         # is). Resolving once at the end is what keeps a stored program monomorphic.
-        return _resolve_types(program, self.subst)
+        return _resolve_types(program, self.subst), apply_subst(self.subst, value_type)
 
     def elaborate(self, node: ast.expr, expected: Type | None) -> tuple[Program, Type]:
         if isinstance(node, ast.Call):

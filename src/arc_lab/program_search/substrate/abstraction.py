@@ -36,15 +36,38 @@ from arc_lab.program_search.substrate.types import Type
 _DUMMY_GRID: Grid = Grid.from_list([[0]])
 
 
-def make_abstraction(name: str, template: Program, library: Library) -> Primitive:
+def make_abstraction(
+    name: str,
+    template: Program,
+    library: Library,
+    *,
+    signature: tuple[tuple[Type, ...], Type] | None = None,
+) -> Primitive:
     """Build a :class:`Primitive` that evaluates ``template`` with args bound to its Params.
 
     ``library`` must contain every primitive the template references (its lower atoms); the
     ``impl`` closes over it. The template must be *closed* (no ``Input``) and use contiguous
-    param indices ``0..n-1`` with a consistent type per index — enforced here.
+    param indices ``0..n-1`` with a consistent type per index — enforced here, always.
+
+    ``signature`` supplies ``(param_types, return_type)`` when the caller already knows them and
+    the template alone cannot recover them. That is not an optimisation but a correctness fix:
+    ``Program.result_type`` reports a primitive's DECLARED return type without unification, so a
+    template rooted at a polymorphic primitive (``map``, ``filter``, ``head``, ...) derives a free
+    type variable — ``map(f, gs)`` yields ``list[b]``, never ``list[grid]``. Both callers do know:
+    a `.ladder` rung states its signature and elaboration verifies it by unification, and a
+    serialised library carries the signature it was minted with. Without it, any abstraction over
+    a polymorphic combinator mints unusably.
     """
-    param_types = _param_types(template)
-    return_type = template.result_type(library)
+    derived = _param_types(template)  # validates closed + contiguous, whatever the signature says
+    if signature is None:
+        param_types, return_type = derived, template.result_type(library)
+    else:
+        param_types, return_type = signature
+        if len(param_types) != len(derived):
+            raise ValueError(
+                f"{name}: signature declares {len(param_types)} parameter(s) but the template "
+                f"uses {len(derived)}"
+            )
     snapshot = library
 
     def impl(*args: Value) -> Value:

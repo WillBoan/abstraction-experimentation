@@ -122,8 +122,13 @@ def test_static_lint_records_the_batch_s_known_defects() -> None:
     statically, each with a behaviorally-confirmed witness: the al3/al7 self-similar doubling
     (`tall4 == stack2(stack2 g)` and kin, inherited verbatim by the al9/al11 controls), al6's
     hidden flip_h.flip_h cancellation (r1 contributes nothing to r2), and al10's deliberately
-    reachable raw top (the control working as designed, now with the witness printed). Fixing
-    any of these is a deliberate act; update this set then."""
+    reachable raw top (the control working as designed, now with the witness printed).
+
+    This is a LINT-LOCK, not a to-fix list. Every ladder here is `retired` or a control, and a
+    retired ladder is never fixed under its own ID (AL-PLAN-2026-07-23 decision 2) -- its row and
+    `.ladder` file persist precisely as the fixture that keeps these checks honest. So a change to
+    this set means one of two things, both deliberate: a new retirement, or a regression in the
+    checks themselves."""
     failing = {
         name: sorted(f.check for f in _lint_findings(name) if not f.ok and f.severity == "error")
         for name in ladder_paths()

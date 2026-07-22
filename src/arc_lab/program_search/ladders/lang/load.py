@@ -27,11 +27,12 @@ from arc_lab.program_search.execution.overrides import apply_overrides
 from arc_lab.program_search.execution.studies import split_by_meta
 from arc_lab.program_search.ladders.chain import oracle_libraries
 from arc_lab.program_search.ladders.lang.errors import LadderFormatError, at_line
-from arc_lab.program_search.ladders.lang.expr import elaborate_expression
+from arc_lab.program_search.ladders.lang.expr import elaborate_expression, elaborate_typed
 from arc_lab.program_search.ladders.lang.parse import LadderDocument, RungBlock, TaskBlock
 from arc_lab.program_search.ladders.lang.type_syntax import (
     PrimitiveSignature,
     render_primitive_signature,
+    render_type,
 )
 from arc_lab.program_search.ladders.spec import (
     Demonstration,
@@ -47,8 +48,9 @@ from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.substrate.abstraction import make_abstraction
 from arc_lab.program_search.substrate.library import Library
-from arc_lab.program_search.substrate.program import Apply, Program
+from arc_lab.program_search.substrate.program import Apply, Param, Program
 from arc_lab.program_search.substrate.registry import BASE_PRIMITIVES
+from arc_lab.program_search.substrate.types import unify
 from arc_lab.taskgen import GeneratedTask, make_task
 
 
@@ -285,39 +287,41 @@ def _chain(
 
 
 def _template(block: RungBlock, below: Library) -> Program:
-    """One rung's template, elaborated and checked against its declared signature."""
+    """One rung's template, elaborated and checked against its declared signature.
+
+    The declared signature is authoritative and elaboration is what verifies it: the check is
+    UNIFICATION, not equality, because the substrate cannot re-derive a polymorphic root's type
+    (see :func:`make_abstraction`). What the declaration cannot fake is the parameter count --
+    that comes from the template's own ``Param`` nodes, so an unused parameter still fails.
+    """
+    declared = block.header
     try:
-        template = elaborate_expression(
-            block.body, library=below, params=block.header.params, allow_input=False
+        template, actual = elaborate_typed(
+            block.body, library=below, params=declared.params, allow_input=False
         )
     except LadderFormatError as exc:
         raise at_line(exc, block.line) from None
+    if unify(actual, declared.return_type) is None:
+        raise LadderFormatError(
+            f"rung {block.name!r} is declared to return `{render_type(declared.return_type)}` "
+            f"but its body returns `{render_type(actual)}`",
+            line=block.line,
+        )
     try:
-        primitive = make_abstraction(block.name, template, below)
+        primitive = make_abstraction(
+            block.name,
+            template,
+            below,
+            signature=(declared.param_types, declared.return_type),
+        )
     except (ValueError, KeyError) as exc:  # spec RNG-4 (closed, contiguous, consistent params)
-        raise LadderFormatError(f"rung {block.name!r}: {exc}", line=block.line) from None
-    declared = block.header
-    if primitive.param_types != declared.param_types:
-        unused = [
-            name
-            for index, (name, _) in enumerate(declared.params)
-            if index >= len(primitive.param_types)
-        ]
+        used = {node.index for node in template.walk() if isinstance(node, Param)}
+        unused = [name for index, (name, _) in enumerate(declared.params) if index not in used]
         detail = (
-            f"parameter(s) {', '.join(unused)} are never used in the body"
-            if unused
-            else f"the body uses {[str(t) for t in primitive.param_types]}"
+            f"parameter(s) {', '.join(unused)} are never used in the body" if unused else str(exc)
         )
-        raise LadderFormatError(
-            f"rung {block.name!r}'s declared parameters do not match its body: {detail}",
-            line=block.line,
-        )
-    if primitive.return_type != declared.return_type:
-        raise LadderFormatError(
-            f"rung {block.name!r} is declared to return "
-            f"`{declared.return_type}` but its body returns `{primitive.return_type}`",
-            line=block.line,
-        )
+        raise LadderFormatError(f"rung {block.name!r}: {detail}", line=block.line) from None
+    assert primitive.return_type == declared.return_type
     return template
 
 

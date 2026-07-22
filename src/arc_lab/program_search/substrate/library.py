@@ -25,7 +25,13 @@ from typing import TYPE_CHECKING, TypeAlias
 
 from arc_lab.core.grid import Grid
 from arc_lab.core.mask import Mask
-from arc_lab.program_search.substrate.types import GRID, Type, type_to_serializable
+from arc_lab.program_search.substrate.types import (
+    GRID,
+    Serialized,
+    Type,
+    type_from_serializable,
+    type_to_serializable,
+)
 
 if TYPE_CHECKING:
     from arc_lab.core.task import TrainExamples
@@ -190,6 +196,12 @@ class Primitive:
         return data
 
 
+def _serialized_type(value: object) -> Serialized:
+    if isinstance(value, (str, dict)):
+        return value
+    raise ValueError(f"malformed serialized type: {value!r}")
+
+
 def apply_function_value(fn: Value, args: tuple[Value, ...]) -> Value:
     """Apply a function value to arguments — the shared higher-order application semantics.
 
@@ -280,7 +292,23 @@ class Library:
                 built.append(resolve_primitive(prim_name))
             elif isinstance(template_raw, Mapping):
                 lower = Library(name=name, primitives=tuple(built), version=version)
-                built.append(make_abstraction(prim_name, Program.from_dict(template_raw), lower))
+                # Pass the serialised signature: a template rooted at a polymorphic primitive
+                # cannot be re-derived (see `make_abstraction`), so recomputing would silently
+                # change the entry's type on every round-trip.
+                params_raw, return_raw = entry["param_types"], entry["return_type"]
+                if not isinstance(params_raw, list) or not isinstance(return_raw, (str, dict)):
+                    raise ValueError(f"malformed signature for primitive {prim_name!r}")
+                built.append(
+                    make_abstraction(
+                        prim_name,
+                        Program.from_dict(template_raw),
+                        lower,
+                        signature=(
+                            tuple(type_from_serializable(_serialized_type(x)) for x in params_raw),
+                            type_from_serializable(return_raw),
+                        ),
+                    )
+                )
             else:
                 raise ValueError(f"malformed template for primitive {prim_name!r}")
         return Library(name=name, primitives=tuple(built), version=version)
