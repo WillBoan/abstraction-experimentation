@@ -702,3 +702,15 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - Governance refused nothing in the probed range (2-3 op motifs x 2-3 uses) — the break-even frontier sits below it.
 - **Interpretation:** the demonstration plan IS the mint's specification. With S-B's law, ladder generation can guarantee intended arities by construction, and two of the clean-set table's three caveats (flavor gap, sleep cost) are now measured no-ops — marginal-vs-end-to-end is the one that matters.
 - **Next:** param-covariance lint (small); grow the ladder set (needs interestingness steer); granularity family.
+
+## 2026-07-23 — Wake-schedule comparison: the oracle curriculum IS the marginal accounting (loop overhead 3-4x)
+
+- **Commit:** `PENDING`. Notebook: [experiments/2026-07-23-schedule-comparison/](experiments/2026-07-23-schedule-comparison/).
+- **Question:** complete the full / skip-solved / curriculum table across the admitted set (TODO item 4, multi-ladder) — how much would perfect scheduling save, and does the cheap honest mode approach it?
+- **Ran:** 7 clean ladders x 3 schedules; curriculum built from each spec's own rungs (one group per level, top last); per cell e2e considered + recovery + mints.
+- **Result:**
+  - **Curriculum e2e == the ladder's MARGINAL laddered cost, EXACTLY, on all 7** (verified against the clean-set report.json marginals). Definitional and now demonstrated: marginal = each rung's demos searched once under L_{i-1}, which is what the curriculum schedule does. So **the loop-overhead factor is exactly full/curriculum: measured 3.0x-4.0x**, growing with height (al17 the tallest at 4.04x).
+  - **skip-solved (honest, no injected knowledge) recovers ~40-60% of that gap**: 1.69x-2.48x vs curriculum's 3.0x-4.0x. The rest needs knowing which rung a task belongs to.
+  - **Recovery 100% in every cell.** Junk mints are schedule-invariant among carrying schedules and ladder-dependent: al1 (+1) and al17 (+2) mint the SAME extras under both skip-solved and curriculum (frozen-param specializations, sleep-probes S-D confirmed at batch scale); the other 5 mint clean under either. full mints clean everywhere (re-expresses each wake).
+- **Interpretation:** the marginal-vs-end-to-end gap — the one accounting distinction that survived the sleep-probes cleanup — now has an achievable interpretation: marginal is what an oracle scheduler delivers, curriculum delivers it, and skip-solved captures about half of it honestly. For 5/7 ladders skip-solved is a strictly-better screening mode than full (cheaper, full recovery, clean library); for the 2 with frozen-param demos it is cheaper + recovers but dirties the library — the arm label's exact use case.
+- **Next:** refold-carried-solutions (TODO item 9) — re-express carried solutions through the current library before sleep to keep the 1.7-4x saving without the pollution; testable against these al1/al17 cells.
