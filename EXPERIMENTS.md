@@ -664,7 +664,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-23 — Clean-set re-run: al15-al20 prove >= 10x amortization; al1, the old headline, is the weakest
 
-- **Commit:** `PENDING`. Notebook: [experiments/2026-07-23-clean-set-rerun/](experiments/2026-07-23-clean-set-rerun/).
+- **Commit:** `83adf2f`. Notebook: [experiments/2026-07-23-clean-set-rerun/](experiments/2026-07-23-clean-set-rerun/).
 - **Question:** the 2026-07-20 batch's numbers predate every instrument and the RQ1 decision. What do the 8 admitted ladders actually measure under the staged pipeline + raw arms (K=10)?
 - **Ran:** gates first — all 8 lint clean and probe clean after the `.ladder` format upgrades and depth rework (a real regression check). Then `run-ladder --artifacts` per ladder: chain -> certificate -> climb -> raw arm, artifacts written (al15-al20's first folders; al1/al2's stale pre-decision-1 artifacts regenerated).
 - **Result:**
