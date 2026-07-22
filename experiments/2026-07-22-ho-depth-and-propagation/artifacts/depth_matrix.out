@@ -1,0 +1,20 @@
+A0 leaf              depth=0 raw=0 binders=0 frames=[(0, 0)] eff=0 | min_limit=0 gen=0 considered=4
+                     input
+A1 one apply         depth=1 raw=1 binders=0 frames=[(1, 0)] eff=1 | min_limit=1 gen=1 considered=10
+                     flip_h(input)
+A2 two applies       depth=2 raw=2 binders=0 frames=[(2, 0)] eff=2 | min_limit=2 gen=2 considered=28
+                     flip_h(flip_v(input))
+A3 three applies     depth=3 raw=3 binders=0 frames=[(3, 0)] eff=3 | min_limit=3 gen=3 considered=46
+                     variant-> flip_h(flip_v(transpose(input)))
+                     transpose(flip_h(flip_v(input)))
+B0 body depth 0      depth=2 raw=3 binders=2 frames=[(2, 0), (0, 1)] eff=2 | min_limit=2 gen=2 considered=236
+                     build_grid(height(input), width(input), lam:int(lam:int(0)))
+B1 body depth 1      depth=2 raw=4 binders=2 frames=[(2, 0), (1, 1)] eff=2 | min_limit=2 gen=2 considered=44
+                     build_grid(width(input), height(input), lam:int(lam:int(read(input, $0, $1))))
+B2 body depth 2      depth=2 raw=5 binders=2 frames=[(2, 0), (2, 1)] eff=3 | min_limit=3 gen=2 considered=572
+                     variant-> build_grid(height(input), width(input), lam:int(lam:int(read(input, sub($0, $0), $0))))
+                     build_grid(height(input), width(input), lam:int(lam:int(read(input, sub($1, $1), $0))))
+B3 body depth 3      depth=2 raw=6 binders=2 frames=[(2, 0), (3, 1)] eff=4 | min_limit=4 gen=2 considered=4000000
+                     build_grid(height(input), width(input), lam:int(lam:int(read(input, sub(height(input), 1), $0))))
+B4 outer depth 3     depth=3 raw=5 binders=2 frames=[(3, 0), (1, 1)] eff=3 | min_limit=None gen=None considered=None
+                     flip_h(build_grid(width(input), height(input), lam:int(lam:int(read(input, $0, $1)))))

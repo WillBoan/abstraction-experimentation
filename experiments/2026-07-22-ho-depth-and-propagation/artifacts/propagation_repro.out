@@ -1,0 +1,8 @@
+effective depth of the target = 3 (top frame 3 + descent 0; body 1 + descent 1)
+compositional depth = 3 
+
+propagation ON  (as shipped) depth_limit=3: solved=False gen=None considered=118
+propagation ON  (as shipped) depth_limit=4: solved=False gen=None considered=118
+propagation ON  (as shipped) depth_limit=5: solved=False gen=None considered=118
+propagation OFF (baseline)   depth_limit=3: solved=True gen=3 considered=862
+      flip_h(build_grid(width(input), height(input), lam:int(lam:int(read(input, $0, $1)))))
