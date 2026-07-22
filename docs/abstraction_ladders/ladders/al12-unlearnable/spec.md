@@ -12,7 +12,7 @@ Derived from `al12-unlearnable.ladder` (in `program_search/ladders/registry/`) -
 
 ## Verification
 
-- Static lint (what this file asserts): **FAILED** -- 31 checks (errors: 2, warnings: 1)
+- Static lint (what this file asserts): **FAILED** -- 35 checks (errors: 2, warnings: 1)
   - ERROR `min-2-demos`: rungs with < 2 demonstrations: ['rot90']
   - ERROR `mdl-break-even[rot90]`: minting it costs -0.0 bits more than it saves on its own 1 demonstration(s), so governance will refuse it
   - warn `not-all-telescope`: every rung has fan-in 1 (a pure telescope)
@@ -28,19 +28,20 @@ Derived from `al12-unlearnable.ladder` (in `program_search/ladders/registry/`) -
 
 ## Rung spine
 
-| level | rung         | d_i | double-jump | fan-in | demos | kind          |
-| ----- | ------------ | --- | ----------- | ------ | ----- | ------------- |
-| 1     | `rot90`      | 2   | 4           | 0      | 1     | full_solution |
-| top   | (goal layer) | 2   | -           | 2      | 1     | -             |
+| level | rung         | d_i | needs | double-jump | fan-in | demos | kind          |
+| ----- | ------------ | --- | ----- | ----------- | ------ | ----- | ------------- |
+| 1     | `rot90`      | 2   | 2     | 4           | 0      | 1     | full_solution |
+| top   | (goal layer) | 2   | 2     | -           | 2      | 1     | -             |
 
-- `d_i`: compositional depth of the template over `L_{i-1}` (top row: of the reference solutions over `L_k`)
+- `d_i`: the GENERATION the engine composes the template at over `L_{i-1}`, a leaf being 0 (top row: of the reference solutions over `L_k`). The design doc's jump depth, and the unit `solved_at_generation` reports in.
+- `needs`: the smallest `depth_limit` that puts it in REACH -- the quantity every affordability claim above is stated in. Equal to `d_i` for a first-order template; larger when a lambda body needs its own descended budget (`analysis/depth.py`).
 - `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
 - `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
 
 ## Top Rung (goal layer -- nothing is minted here)
 
-- `top-00`: d=2 over `L_1`
+- `top-00`: d=2, needs depth_limit 2, over `L_1`
 
 ## Reference config (resolved)
 

@@ -12,7 +12,7 @@ Derived from `al13-symmetry-repair.ladder` (in `program_search/ladders/registry/
 
 ## Verification
 
-- Static lint (what this file asserts): **FAILED** -- 54 checks (errors: 2, warnings: 0)
+- Static lint (what this file asserts): **FAILED** -- 62 checks (errors: 2, warnings: 0)
   - ERROR `free-param-varies[sym_h#1]`: every demonstration passes 0: the mint will specialise to it instead of taking a parameter
   - ERROR `free-param-varies[sym_both#1]`: every demonstration passes 0: the mint will specialise to it instead of taking a parameter
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
@@ -28,20 +28,21 @@ Derived from `al13-symmetry-repair.ladder` (in `program_search/ladders/registry/
 
 ## Rung spine
 
-| level | rung         | d_i | double-jump | fan-in | demos | kind          |
-| ----- | ------------ | --- | ----------- | ------ | ----- | ------------- |
-| 1     | `sym_h`      | 2   | 4           | 0      | 2     | full_solution |
-| 2     | `sym_both`   | 3   | 4           | 2      | 2     | full_solution |
-| top   | (goal layer) | 2   | -           | 1      | 1     | -             |
+| level | rung         | d_i | needs | double-jump | fan-in | demos | kind          |
+| ----- | ------------ | --- | ----- | ----------- | ------ | ----- | ------------- |
+| 1     | `sym_h`      | 2   | 2     | 4           | 0      | 2     | full_solution |
+| 2     | `sym_both`   | 3   | 3     | 4           | 2      | 2     | full_solution |
+| top   | (goal layer) | 2   | 2     | -           | 1      | 1     | -             |
 
-- `d_i`: compositional depth of the template over `L_{i-1}` (top row: of the reference solutions over `L_k`)
+- `d_i`: the GENERATION the engine composes the template at over `L_{i-1}`, a leaf being 0 (top row: of the reference solutions over `L_k`). The design doc's jump depth, and the unit `solved_at_generation` reports in.
+- `needs`: the smallest `depth_limit` that puts it in REACH -- the quantity every affordability claim above is stated in. Equal to `d_i` for a first-order template; larger when a lambda body needs its own descended budget (`analysis/depth.py`).
 - `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
 - `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
 
 ## Top Rung (goal layer -- nothing is minted here)
 
-- `top-00`: d=2 over `L_2`
+- `top-00`: d=2, needs depth_limit 2, over `L_2`
 
 ## Reference config (resolved)
 

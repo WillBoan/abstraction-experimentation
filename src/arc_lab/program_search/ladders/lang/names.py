@@ -28,6 +28,8 @@ RESERVED_WORDS: frozenset[str] = frozenset(
         "train",
         "test",
         "input",
+        "true",
+        "false",
     }
 )
 

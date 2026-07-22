@@ -79,3 +79,58 @@ def test_climb_rejected_forces_the_climb_stage(tmp_path: Path) -> None:
     assert result.learn is not None and result.off_chain is not None
     report = create_ladder_report(result)
     assert report["climb_executed"] is True
+
+
+def test_the_raw_arm_measures_al2s_ratio_and_it_is_honest(tmp_path: Path) -> None:
+    # al2 is the trivial-regime instrument: its D4 floor makes raw genuinely cheap, so the arm
+    # SOLVES and RQ1 is a measured ratio -- and it is BELOW 1 (raw-to-first 13 vs laddered 27):
+    # al2's ladder does not pay for itself, which is the honest reading the retired estimator
+    # (raw "estimated" at 31) could never establish. Decision 1's solve branch, end to end.
+    result = run_ladder(make_ladder("al2-rot90-calibration"), runs_root=tmp_path)
+
+    arm = result.raw_arm
+    assert arm is not None
+    assert arm.laddered_marginal > 0
+    assert arm.guard_per_task == 10 * arm.laddered_marginal  # one top task: guard = k x M
+    report = create_ladder_report(result)
+    cost = report["cost"]
+    assert isinstance(cost, dict)
+    view = cost["raw_arm"]
+    assert isinstance(view, dict)
+    assert view["solved"] is True and view["sound"] is True
+    assert view["amortization_ratio_kind"] == "measured"
+    ratio = view["amortization_ratio"]
+    assert isinstance(ratio, float) and ratio < 1.0
+
+
+def test_a_censoring_raw_arm_is_a_lower_bound_not_a_measurement(tmp_path: Path) -> None:
+    # Force the censor branch by sizing the guard below raw's cost-to-first (a doctored marginal
+    # of 1 at k=1): the arm spends its guard without solving, and the report labels the ratio a
+    # LOWER BOUND -- never "measured".
+    import dataclasses
+
+    from arc_lab.program_search.ladders.run import run_raw_arm
+
+    spec = make_ladder("al2-rot90-calibration")
+    result = run_ladder(spec, runs_root=tmp_path)
+    tiny = run_raw_arm(spec, 1, k=1, runs_root=tmp_path)
+    assert tiny is not None and tiny.guard_per_task == 1
+
+    report = create_ladder_report(dataclasses.replace(result, raw_arm=tiny))
+    cost = report["cost"]
+    assert isinstance(cost, dict)
+    view = cost["raw_arm"]
+    assert isinstance(view, dict)
+    assert view["solved"] is False
+    assert view["amortization_ratio_kind"] == "lower-bound"
+    assert view["spend_considered"] == 1  # exactly the guard: `immediate` censoring is exact
+
+
+def test_the_raw_arm_refuses_to_run_unguarded() -> None:
+    # No measured laddered cost (or k < 1) -> nothing to size the spend against -> no arm.
+    # An unguarded raw run is exactly what decision 1 forbids.
+    from arc_lab.program_search.ladders.run import run_raw_arm
+
+    spec = make_ladder("al2-rot90-calibration")
+    assert run_raw_arm(spec, 0, k=10) is None
+    assert run_raw_arm(spec, 100, k=0) is None

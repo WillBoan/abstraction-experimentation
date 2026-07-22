@@ -12,7 +12,11 @@ Derived from `al8-lean-perceiver.ladder` (in `program_search/ladders/registry/`)
 
 ## Verification
 
-- Static lint (what this file asserts): **OK** -- 70 checks (errors: 0, warnings: 1)
+- Static lint (what this file asserts): **OK** -- 81 checks (errors: 0, warnings: 5)
+  - warn `constant-subterm[swap_ext-00]`: train-constant subterms (fictional depth; value not mintable here): least_common_color(input)=2
+  - warn `constant-subterm[swap_mir-00]`: train-constant subterms (fictional depth; value not mintable here): most_common_color(input)=1
+  - warn `constant-subterm[swap_stk-00]`: train-constant subterms (fictional depth; value not mintable here): most_common_color(flip_v(input))=2, most_common_color(input)=2
+  - warn `constant-subterm[top-00]`: train-constant subterms (fictional depth; value not mintable here): least_common_color(flip_h(input))=1, least_common_color(input)=1
   - warn `not-all-telescope`: every rung has fan-in 1 (a pure telescope)
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
@@ -28,21 +32,22 @@ Derived from `al8-lean-perceiver.ladder` (in `program_search/ladders/registry/`)
 
 ## Rung spine
 
-| level | rung         | d_i | double-jump | fan-in | demos | kind          |
-| ----- | ------------ | --- | ----------- | ------ | ----- | ------------- |
-| 1     | `swap_ext`   | 3   | 5           | 0      | 2     | full_solution |
-| 2     | `swap_mir`   | 3   | 5           | 1      | 2     | full_solution |
-| 3     | `swap_stk`   | 3   | 4           | 1      | 2     | full_solution |
-| top   | (goal layer) | 2   | -           | 1      | 1     | -             |
+| level | rung         | d_i | needs | double-jump | fan-in | demos | kind          |
+| ----- | ------------ | --- | ----- | ----------- | ------ | ----- | ------------- |
+| 1     | `swap_ext`   | 3   | 3     | 5           | 0      | 2     | full_solution |
+| 2     | `swap_mir`   | 3   | 3     | 5           | 1      | 2     | full_solution |
+| 3     | `swap_stk`   | 3   | 3     | 4           | 1      | 2     | full_solution |
+| top   | (goal layer) | 2   | 2     | -           | 1      | 1     | -             |
 
-- `d_i`: compositional depth of the template over `L_{i-1}` (top row: of the reference solutions over `L_k`)
+- `d_i`: the GENERATION the engine composes the template at over `L_{i-1}`, a leaf being 0 (top row: of the reference solutions over `L_k`). The design doc's jump depth, and the unit `solved_at_generation` reports in.
+- `needs`: the smallest `depth_limit` that puts it in REACH -- the quantity every affordability claim above is stated in. Equal to `d_i` for a first-order template; larger when a lambda body needs its own descended budget (`analysis/depth.py`).
 - `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
 - `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
 
 ## Top Rung (goal layer -- nothing is minted here)
 
-- `top-00`: d=2 over `L_3`
+- `top-00`: d=2, needs depth_limit 2, over `L_3`
 
 ## Reference config (resolved)
 

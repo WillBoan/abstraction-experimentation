@@ -82,14 +82,14 @@ def test_variadic_primitive_accepts_extra_arguments() -> None:
         ("rot180(input)", "unknown function"),
         ("flip_h(x)", "unknown name"),
         ("flip_h", "write `flip_h\\(...\\)`"),
-        ("1", "an int literal only appears in a typed argument position"),
-        ("flip_h(-1)", "unary operator"),
+        ("1", "a literal only appears in a typed argument position"),
+        ("flip_h(-1)", "cannot fill a `Grid` position"),  # negative ints are legal now
         ("flip_h(input) + flip_v(input)", "arithmetic operator"),
         ("map_color(input, from=1, to=2)", "could not parse"),
         ("flip_h([[1, 2]])", "list literal"),
-        ("flip_h(lambda g: g)", "lambda"),
+        ("flip_h(lambda g: g)", "no function type"),  # lambdas are legal now, but not here
         ("flip_h(*args)", "`\\*` argument"),
-        ("map_color(input, True, 2)", "unsupported literal"),
+        ("map_color(input, True, 2)", "write `true`, not `True`"),
         ("map_color(input, 1.5, 2)", "unsupported literal"),
         ("", "empty expression"),
     ],
@@ -107,7 +107,7 @@ def test_input_is_out_of_scope_in_a_closed_template() -> None:
 
 
 def test_a_parameter_cannot_be_applied() -> None:
-    with pytest.raises(LadderFormatError, match="is a parameter, not a function"):
+    with pytest.raises(LadderFormatError, match=r"`g` is not a function \(Grid\)"):
         elaborate_expression("g(input)", library=_FLOOR, params=(("g", GRID),), allow_input=False)
 
 

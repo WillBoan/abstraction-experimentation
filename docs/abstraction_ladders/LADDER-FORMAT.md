@@ -6,7 +6,7 @@ A `.ladder` file is the **single source of truth for a ladder's identity**: it d
 
 This doc governs the implementation — where code and this spec disagree, this spec wins until deliberately amended.
 
-**Status (2026-07-21): implemented; all 20 ladders migrated.** The language lives in `src/arc_lab/program_search/ladders/lang/`, and `ladders/registry/` now holds `.ladder` files only — the per-ladder Python modules are gone. A test locks every ladder's regenerated testbed against its committed one.
+**Status (2026-07-22): implemented; all 20 ladders migrated; the expression grammar now covers all nine substrate node kinds.** The language lives in `src/arc_lab/program_search/ladders/lang/`, and `ladders/registry/` holds `.ladder` files only. A test locks every ladder's regenerated testbed against its committed one. One known gap sits *below* the format: `substitute_params` cannot inline a higher-order template whose call site passes a lambda-bound variable (it needs De Bruijn shifting), so that one shape has no `d_raw`.
 
 ## 1. Motivation
 
@@ -26,7 +26,7 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 - **LEX-3** Blank lines and indentation are insignificant (braces carry structure).
 - **LEX-4** One statement per line; a statement continues across lines while brackets are unbalanced.
 - **LEX-5** A block opens with `{` at the end of its header line and closes with `}` on its own line.
-- **LEX-6** Reserved words: `ladder`, `floor`, `config`, `rung`, `distractor`, `top`, `task`, `heldout`, `use`, `solution`, `train`, `test`, `input`.
+- **LEX-6** Reserved words: `ladder`, `floor`, `config`, `rung`, `distractor`, `top`, `task`, `heldout`, `use`, `solution`, `train`, `test`, `input`, `true`, `false`.
 
 ### STR — file structure
 
@@ -95,13 +95,17 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 
 ### EXP — expression elaboration (text → `Program`)
 
-- **EXP-1** An expression is positional application of named functions over identifiers and int literals — nothing else: no operators, keyword args, lambdas, attributes, subscripts, or comprehensions.
-- **EXP-2** `f(a, b)` → `Apply("f", (a, b))`; `f` must resolve per the scope rules (NAM-4/5).
+- **EXP-1** An expression is a subset of Python expressions: application, identifiers, int and boolean literals, conditionals and lambdas — nothing else (no operators, keyword args, attributes, subscripts, comprehensions, or list literals).
+- **EXP-2** `f(a, b)` → `Apply("f", (a, b))` when `f` is a library primitive; `f` must resolve per the scope rules (NAM-4/5).
 - **EXP-3** `input` → `Input()`.
-- **EXP-4** A param name in a template body → `Param(index, type)` per RNG-3.
-- **EXP-5** An int literal → `Const(value, T)`, where `T` is the expected type of that argument position in the enclosing application. `T` must be `Color` or `Int`; a polymorphic or non-scalar position is a load error.
+- **EXP-4** A rung parameter's name → `Param(index, type)` per RNG-3; a lambda binder's name → `Var(index, type)`, De Bruijn, innermost = 0.
+- **EXP-5** An int literal (optionally negated: `-1`) → `Const(value, T)` where `T` is the expected type of that argument position; `T` must be `Color` or `Int`. `true` / `false` → `Const(value, Bool)`, lowercase only. A polymorphic or non-scalar position is a load error.
 - **EXP-6** Elaboration type-checks and arity-checks every application, unifying each argument's type against the parameter position it fills. (Not delegable: the substrate types programs but does not verify them.) Still **delegated**: `make_abstraction` (a template is closed, with contiguous and consistently-typed param indices) and evaluation (spec DRV-3).
-- **EXP-7** Expressions produce only `Apply | Param | Const | Input` nodes; there is no surface syntax for `Lam`, `If`, `Var`, `AppFn`, `PrimRef`, or grid literals inside expressions.
+- **EXP-7** `a if c else b` → `If(cond, then, orelse)` — short-circuit, as in Python.
+- **EXP-8** A bare primitive name in a position whose expected type is a **function type** → `PrimRef(name)`. Anywhere else it stays an error.
+- **EXP-9** `lambda p1, p2: body` → a curried `Lam` chain, one arrow peeled from the expected type per binder. Binder types are never annotated — the function-typed position supplies them. A binder may not shadow a rung parameter or an enclosing binder.
+- **EXP-10** `f(a)` where `f` resolves to a **function value** (a parameter, a binder, a lambda, a `PrimRef`) → `AppFn(f, args)`. A curried function is applied one stage at a time, as `f(a)(b)`.
+- **EXP-11** The expression grammar covers all nine substrate node kinds. Grid literals inside expressions remain absent (the substrate's `Const` holds `int | bool` only).
 
 ### DRV — derivation (computed, never written)
 

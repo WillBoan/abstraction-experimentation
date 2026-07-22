@@ -12,8 +12,15 @@ Derived from `al4-mask-crop.ladder` (in `program_search/ladders/registry/`) -- t
 
 ## Verification
 
-- Static lint (what this file asserts): **FAILED** -- 73 checks (errors: 1, warnings: 1)
+- Static lint (what this file asserts): **FAILED** -- 84 checks (errors: 8, warnings: 1)
   - ERROR `heldout-distinct[nonbg_mask-heldout-00]`: identical train examples to the train task 'nonbg_mask-00'
+  - ERROR `constant-subterm[nonbg_mask-00]`: train-constant subterms beaten by an enumerated literal: most_common_color(input)=0
+  - ERROR `constant-subterm[nonbg_mask-01]`: train-constant subterms beaten by an enumerated literal: most_common_color(input)=0
+  - ERROR `constant-subterm[flatten_content-00]`: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
+  - ERROR `constant-subterm[flatten_content-01]`: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
+  - ERROR `constant-subterm[stamp-00]`: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
+  - ERROR `constant-subterm[stamp-01]`: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
+  - ERROR `constant-subterm[top-00]`: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
   - warn `floor-fully-exercised`: floor primitives no rung, demonstration, distractor or top solution uses: ['least_common_color', 'mask_union', 'mask_intersect']
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
@@ -29,21 +36,22 @@ Derived from `al4-mask-crop.ladder` (in `program_search/ladders/registry/`) -- t
 
 ## Rung spine
 
-| level | rung              | d_i | double-jump | fan-in | demos | kind               |
-| ----- | ----------------- | --- | ----------- | ------ | ----- | ------------------ |
-| 1     | `nonbg_mask`      | 3   | 8           | 0      | 2     | fragment_identical |
-| 2     | `flatten_content` | 4   | 6           | 3      | 2     | full_solution      |
-| 3     | `stamp`           | 3   | 5           | 2      | 2     | full_solution      |
-| top   | (goal layer)      | 3   | -           | 1      | 1     | -                  |
+| level | rung              | d_i | needs | double-jump | fan-in | demos | kind               |
+| ----- | ----------------- | --- | ----- | ----------- | ------ | ----- | ------------------ |
+| 1     | `nonbg_mask`      | 3   | 3     | 8           | 0      | 2     | fragment_identical |
+| 2     | `flatten_content` | 4   | 4     | 6           | 3      | 2     | full_solution      |
+| 3     | `stamp`           | 3   | 3     | 5           | 2      | 2     | full_solution      |
+| top   | (goal layer)      | 3   | 3     | -           | 1      | 1     | -                  |
 
-- `d_i`: compositional depth of the template over `L_{i-1}` (top row: of the reference solutions over `L_k`)
+- `d_i`: the GENERATION the engine composes the template at over `L_{i-1}`, a leaf being 0 (top row: of the reference solutions over `L_k`). The design doc's jump depth, and the unit `solved_at_generation` reports in.
+- `needs`: the smallest `depth_limit` that puts it in REACH -- the quantity every affordability claim above is stated in. Equal to `d_i` for a first-order template; larger when a lambda body needs its own descended budget (`analysis/depth.py`).
 - `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
 - `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
 
 ## Top Rung (goal layer -- nothing is minted here)
 
-- `top-00`: d=3 over `L_3`
+- `top-00`: d=3, needs depth_limit 3, over `L_3`
 
 ## Reference config (resolved)
 

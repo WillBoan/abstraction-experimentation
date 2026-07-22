@@ -72,7 +72,7 @@ def test_render_carries_derived_facts_only() -> None:
     assert "depth_limit: `2`" in text and "AntiunifyPairs" in text
     assert "considered_limit: `50000`" in text
     assert "full_solution" in text
-    assert "d=2 over `L_2`" in text
+    assert "d=2, needs depth_limit 2, over `L_2`" in text
 
 
 def test_render_separates_verification_and_shows_shape() -> None:
