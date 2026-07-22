@@ -25,9 +25,12 @@ iteration-0 wake -- simpler for the certificate, which needs per-task solve resu
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from math import ceil
 from pathlib import Path
 
+from arc_lab.core.dataset import Corpus
+from arc_lab.program_search.analysis.depth import min_depth_limit
 from arc_lab.program_search.execution.execute import execute
 from arc_lab.program_search.execution.model.run_record import RunRecord
 from arc_lab.program_search.execution.model.run_spec import RunSpec
@@ -37,6 +40,12 @@ from arc_lab.program_search.ladders.shape import LadderShape
 from arc_lab.program_search.ladders.spec import LadderSpec
 from arc_lab.program_search.substrate.abstraction import make_abstraction, unfold_program
 from arc_lab.program_search.substrate.library import Library
+
+#: The raw arm's `max_pool`. The bound is only sound if the arm does not SATURATE (a pool-starved
+#: search idles, and its spend stops being evidence about the true raw cost -- 2026-07-22 frontier
+#: sweep), so the pool is freed to the setting the estimator-validation sweep ran clean at. The
+#: report checks the arm's funnels and withdraws soundness if any complete round composed zero.
+RAW_ARM_POOL = 200_000
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,9 +59,35 @@ class LadderChainResult:
 
 
 @dataclass(frozen=True, slots=True)
+class RawArm:
+    """The deliberately-purchased raw baseline (AL-PLAN-2026-07-23 decision 1).
+
+    The top tasks searched under the Floor at a budget that puts raw in reach (``depth_limit`` from
+    ``min_depth_limit`` of the unfolded top solutions; pool freed to :data:`RAW_ARM_POOL`), guarded
+    at ``K x the measured laddered cost`` split per task. Two outcomes, by construction:
+
+    - **it solves** -- RQ1 is a *measured* ratio (and <= K). ``solution_limit=1 immediate`` makes
+      the spend cost-to-first, so the measured ratio conservatively understates the ladder's win
+      (raw-to-first over laddered-paid-full).
+    - **it censors** -- RQ1 is a *proven lower bound*: raw cost exceeds the spend, so
+      ratio >= spend / laddered ~= K. Sound only if no funnel saturated -- the report checks.
+    """
+
+    record: RunRecord
+    k: int
+    #: The per-task ``considered_limit`` the arm ran under: ``ceil(k x laddered / |top tasks|)``.
+    guard_per_task: int
+    #: The denominator the guard was sized from: the chain-measured marginal laddered cost.
+    laddered_marginal: int
+    depth_limit: int
+    max_pool: int
+
+
+@dataclass(frozen=True, slots=True)
 class LadderResult:
-    """Everything ``run_ladder`` produced. ``learn`` / ``off_chain`` are ``None`` exactly when the
-    certificate rejected and the climb stage was skipped (the default for a rejected ladder)."""
+    """Everything ``run_ladder`` produced. ``learn`` / ``off_chain`` / ``raw_arm`` are ``None``
+    exactly when the certificate rejected and the climb stage was skipped (the default for a
+    rejected ladder -- RQ1 is not a question about a ladder that is not a ladder)."""
 
     spec: LadderSpec
     shape: LadderShape
@@ -61,6 +96,7 @@ class LadderResult:
     oracle_chain: dict[int, RunRecord]
     learn: LearnActivityResult | None
     off_chain: RunRecord | None
+    raw_arm: RawArm | None
 
     @property
     def climbed(self) -> bool:
@@ -80,19 +116,26 @@ def run_ladder_chain(spec: LadderSpec, *, runs_root: Path | None = None) -> Ladd
 
 
 def run_ladder(
-    spec: LadderSpec, *, runs_root: Path | None = None, climb_rejected: bool = False
+    spec: LadderSpec,
+    *,
+    runs_root: Path | None = None,
+    climb_rejected: bool = False,
+    raw_arm_k: int = 10,
 ) -> LadderResult:
-    """Execute a ladder, staged: chain, certificate, and -- only if admitted -- the climb.
+    """Execute a ladder, staged: chain, certificate, and -- only if admitted -- the climb + raw arm.
 
     ``climb_rejected=True`` runs the climb stage regardless of the verdict; for control arms whose
     measurement IS the climb under a rejected structure (al8's head-to-head cost read), never for
-    ordinary ladders.
+    ordinary ladders. ``raw_arm_k`` is decision 1's claim strength: the raw arm's total guard is
+    ``raw_arm_k x the chain-measured marginal laddered cost``, so a censoring arm proves an
+    amortization ratio of at least ``raw_arm_k``.
     """
     chain = run_ladder_chain(spec, runs_root=runs_root)
     certificate = certify(chain)
 
     learn: LearnActivityResult | None = None
     off_chain: RunRecord | None = None
+    raw_arm: RawArm | None = None
     if certificate.admitted or climb_rejected:
         learn = run_search_learn(
             spec.reference_config, spec.train_corpus, spec.heldout_corpus, runs_root=runs_root
@@ -104,6 +147,12 @@ def run_ladder(
             ),
             runs_root=runs_root,
         )
+        raw_arm = run_raw_arm(
+            spec,
+            _laddered_marginal(spec, chain.oracle_chain),
+            k=raw_arm_k,
+            runs_root=runs_root,
+        )
     return LadderResult(
         spec=spec,
         shape=chain.shape,
@@ -111,7 +160,79 @@ def run_ladder(
         oracle_chain=chain.oracle_chain,
         learn=learn,
         off_chain=off_chain,
+        raw_arm=raw_arm,
     )
+
+
+def run_raw_arm(
+    spec: LadderSpec, laddered_marginal: int, *, k: int = 10, runs_root: Path | None = None
+) -> RawArm | None:
+    """Purchase the raw baseline: the top tasks under the Floor, guarded at ``k x laddered``.
+
+    ``None`` when the ladder has no top tasks or the measured laddered cost is zero -- there is
+    nothing to size the spend against, and an unguarded raw run is exactly what decision 1 forbids.
+    """
+    top_ids = set(spec.top.task_ids)
+    by_id = {entry.task.task_id: entry.task for entry in spec.train_corpus.entries}
+    tasks = [by_id[tid] for tid in spec.top.task_ids if tid in by_id]
+    if not tasks or laddered_marginal <= 0 or k < 1:
+        return None
+
+    full_lib = spec.oracle_library(len(spec.rungs))
+    depth = max(
+        min_depth_limit(unfold_program(sol, full_lib)) for sol in spec.top.reference_solutions
+    )
+    guard = ceil(k * laddered_marginal / len(tasks))
+    budget = replace(
+        spec.reference_config.budget,
+        depth_limit=depth,
+        max_pool=RAW_ARM_POOL,
+        considered_limit=guard,
+        considered_limit_mode="immediate",
+        solution_limit=1,
+        solution_limit_mode="immediate",
+    )
+    config = spec.reference_config.with_(library=spec.floor(), budget=budget, learn=None)
+    corpus = Corpus.of(
+        f"{spec.train_corpus.name}:raw-arm",
+        [by_id[tid] for tid in sorted(top_ids) if tid in by_id],
+    )
+    record = execute(RunSpec(config=config, corpus=corpus), runs_root=runs_root)
+    return RawArm(
+        record=record,
+        k=k,
+        guard_per_task=guard,
+        laddered_marginal=laddered_marginal,
+        depth_limit=depth,
+        max_pool=RAW_ARM_POOL,
+    )
+
+
+def _laddered_marginal(spec: LadderSpec, oracle_chain: dict[int, RunRecord]) -> int:
+    """The chain-measured marginal laddered cost: rung ``i``'s demonstrations under ``L_{i-1}``,
+    plus the top under ``L_k`` -- the raw arm's denominator, and the guard's sizing base. The same
+    sum the report's ``laddered_marginal_considered`` makes; recomputed here because the report is
+    read-side and the arm must be sized before it exists."""
+    total = 0
+    k = len(spec.rungs)
+    for i, rung in enumerate(spec.rungs, start=1):
+        considered = _considered_by_task(oracle_chain[i - 1])
+        total += sum(considered.get(demo.task_id, 0) for demo in rung.demonstrations)
+    considered = _considered_by_task(oracle_chain[k])
+    total += sum(considered.get(tid, 0) for tid in spec.top.task_ids)
+    return total
+
+
+def _considered_by_task(record: RunRecord) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for row in record.trace_rows():
+        tid = row.get("task_id")
+        stats = row.get("search_stats")
+        if isinstance(tid, str) and isinstance(stats, dict):
+            total = stats.get("total")  # the funnel's outcome block owns `considered` in the trace
+            if isinstance(total, dict) and isinstance(total.get("considered"), int):
+                out[tid] = total["considered"]
+    return out
 
 
 def _off_chain_library(spec: LadderSpec) -> Library:

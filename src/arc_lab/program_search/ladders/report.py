@@ -92,8 +92,7 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
     )
     # Off-chain is a climb-stage run: ``None`` (not measured) when the climb was skipped.
     off_solved: bool | None = (
-        bool(top_ids)
-        and all(tid in _search_solved_ids(result.off_chain) for tid in top_ids)
+        bool(top_ids) and all(tid in _search_solved_ids(result.off_chain) for tid in top_ids)
         if result.off_chain is not None
         else None
     )
@@ -130,6 +129,57 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
             wake_considered = entry.get("wake_considered")
             if isinstance(wake_considered, int):
                 end_to_end += wake_considered
+
+    # The raw arm (AL-PLAN-2026-07-23 decision 1): the deliberately-purchased raw baseline, and
+    # RQ1's ONLY authority -- a MEASURED ratio when the arm solved every top task, a PROVEN lower
+    # bound when it censored. Sound only if no funnel saturated: a pool-starved search idles, and
+    # its spend stops being evidence about the true raw cost.
+    raw_arm_view: dict[str, object] | None = None
+    if result.raw_arm is not None:
+        arm = result.raw_arm
+        arm_cells = _per_task_cells(arm.record)
+        arm_spend = sum(
+            _as_int(cell["considered"]) for tid, cell in arm_cells.items() if tid in set(top_ids)
+        )
+        arm_solved = _search_solved_ids(arm.record)
+        all_solved = bool(top_ids) and all(tid in arm_solved for tid in top_ids)
+        saturated_at: dict[str, int] = {}
+        for tid in top_ids:
+            for index, generation in enumerate(_task_generations(arm.record, tid)):
+                if (
+                    index > 0
+                    and isinstance(generation, dict)
+                    and generation.get("composed") == 0
+                    and not generation.get("incomplete")
+                ):
+                    saturated_at[tid] = index
+                    break
+        sound = not saturated_at
+        arm_ratio = arm_spend / arm.laddered_marginal if arm.laddered_marginal else None
+        raw_arm_view = {
+            "k": arm.k,
+            "guard_per_task": arm.guard_per_task,
+            "laddered_marginal": arm.laddered_marginal,
+            "conditions": {
+                "depth_limit": arm.depth_limit,
+                "max_pool": arm.max_pool,
+                "solution_limit": 1,
+            },
+            "spend_considered": arm_spend,
+            "solved": all_solved,
+            "saturated_at": saturated_at or None,
+            "sound": sound,
+            "amortization_ratio": arm_ratio,
+            # measured: the arm solved -- the numerator is cost-to-first, so the measured ratio
+            # conservatively UNDERSTATES the ladder's win. lower-bound: the arm censored without
+            # solving, so raw cost provably exceeds the spend (ratio >= ~k). A saturated bound is
+            # reported but withdrawn: raise max_pool and re-run to restore soundness.
+            "amortization_ratio_kind": (
+                "measured"
+                if all_solved
+                else ("lower-bound" if sound else "lower-bound (UNSOUND: pool-saturated)")
+            ),
+        }
 
     # The cost matrix (design doc 3.5): cost(task, library) over the oracle-chain columns, with
     # each cell's solve detail. The source for every comparison view below.
@@ -252,6 +302,10 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
             # from `raw_censored` because only this one means "we chose to stop paying".
             "raw_limit_censored": bool(top_ids)
             and any(tid in search_censored_ids(result.oracle_chain[0]) for tid in top_ids),
+            "raw_arm": raw_arm_view,
+            # ADVISORY ONLY (AL-PLAN-2026-07-23 decision 1): the extrapolated estimate is retired
+            # from results -- its bracket held in 2/10 validation cells. `raw_arm` above is RQ1's
+            # authority; these two fields survive as diagnostics carrying their measured caveats.
             "raw_estimate": raw_estimate,
             "amortization_ratio_estimated": (
                 {
@@ -450,15 +504,15 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
         f"  - top jump: {_count(cost.get('top_jump_cost'))}",
         f"- Laddered end-to-end: {_count(cost.get('laddered_end_to_end_considered'))} "
         "(every wake re-searches every task)",
-        f"- Raw (Floor on the top tasks), measured: {_count(cost.get('raw_considered'))}"
+        f"- Raw (Floor on the top tasks, reference budget): {_count(cost.get('raw_considered'))}"
         + (
-            " -- a full-budget FAILURE, not a raw cost (the top is unreachable raw by design); "
-            "see the estimate below"
+            " -- a full-budget FAILURE at the reference budget, not a raw cost (the top is "
+            "unreachable raw by design); the raw ARM below is the RQ1 authority"
             if censored
             else ""
         ),
-        "- Amortization considered-ratio (measured): "
-        + (f"{ratio:.2f}" if isinstance(ratio, float) else "n/a -- raw is estimated, see below"),
+        "- Amortization considered-ratio (reference-budget raw): "
+        + (f"{ratio:.2f}" if isinstance(ratio, float) else "n/a -- see the raw arm under RQ1"),
         f"- Depth compression: d_raw {compression.get('raw_depth')} -> "
         f"max jump depth {compression.get('max_jump_depth')}",
         f"- Off-chain (Floor + top rung only) solves the top: "
@@ -497,6 +551,7 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
         "",
         "### Raw vs laddered (RQ1)",
         "",
+        *_raw_arm_lines(cost),
         *_raw_estimate_lines(cost),
         f"- Depth compression (always honest, no censoring): d_raw "
         f"{compression.get('raw_depth')} -> max jump depth {compression.get('max_jump_depth')} -- "
@@ -614,33 +669,65 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _raw_arm_lines(cost: Mapping[str, Any]) -> list[str]:
+    """RQ1's authority (AL-PLAN-2026-07-23 decision 1): measured when the arm solved, a proven
+    lower bound when it censored -- never an extrapolation."""
+    arm: Mapping[str, Any] = cost.get("raw_arm") or {}
+    if not arm:
+        return [
+            "- Raw arm: NOT RUN (the climb stage was skipped, or the ladder has nothing to size "
+            "the spend against). RQ1 has no answer for this ladder."
+        ]
+    ratio = arm.get("amortization_ratio")
+    kind = arm.get("amortization_ratio_kind")
+    conditions: Mapping[str, Any] = arm.get("conditions") or {}
+    lines = [
+        f"- **Amortization ratio ({kind}): "
+        + (f"{ratio:.1f}x" if isinstance(ratio, float) else "n/a")
+        + f"** -- raw arm spend {_count(arm.get('spend_considered'))} against laddered marginal "
+        f"{_count(arm.get('laddered_marginal'))}, guard {arm.get('k')}x laddered "
+        f"({_count(arm.get('guard_per_task'))} per top task) at depth_limit "
+        f"{conditions.get('depth_limit')}, max_pool {_count(conditions.get('max_pool'))}, "
+        "solution_limit 1.",
+    ]
+    if arm.get("solved"):
+        lines.append(
+            "  - The arm SOLVED every top task, so the ratio is measured; its numerator is "
+            "cost-to-first, so it conservatively understates the ladder's win."
+        )
+    elif arm.get("sound"):
+        lines.append(
+            "  - The arm censored without solving: raw cost provably exceeds the spend, so the "
+            "ratio is a LOWER BOUND. Raise --raw-arm-k for a stronger claim."
+        )
+    else:
+        lines.append(
+            f"  - WITHDRAWN: the arm's search saturated (rounds composing zero at "
+            f"{arm.get('saturated_at')}), so its spend is pool starvation, not evidence about raw "
+            "cost. Raise the arm's max_pool and re-run."
+        )
+    return lines
+
+
 def _raw_estimate_lines(cost: Mapping[str, Any]) -> list[str]:
-    """The RQ1 headline: raw is ESTIMATED by extrapolation, never measured (design doc 5.3)."""
+    """ADVISORY ONLY: the extrapolated estimate, retired from results (AL-PLAN-2026-07-23
+    decision 1 -- its bracket held in 2/10 validation cells). Rendered as a diagnostic beneath the
+    raw arm, never as an RQ1 answer."""
     estimate: Mapping[str, Any] = cost.get("raw_estimate") or {}
-    marginal = cost.get("laddered_marginal_considered")
     if not estimate.get("available"):
         return [
-            f"- Raw cost estimate: unavailable -- {estimate.get('reason', 'no fit possible')}",
+            f"- Raw cost estimate (advisory): unavailable -- "
+            f"{estimate.get('reason', 'no fit possible')}",
         ]
-    ratios: Mapping[str, Any] = cost.get("amortization_ratio_estimated") or {}
     low, high = estimate.get("estimate_low"), estimate.get("estimate_high")
     lines = [
-        f"- **Raw cost (estimated): {_count(low)} - {_count(high)} considered.** Raw is never "
-        "measured -- for any ladder worth building it is intractable by construction. It is "
-        "extrapolated from the rounds the Floor search DID complete: observed composed counts "
+        f"- Raw cost estimate (ADVISORY -- not an RQ1 input): {_count(low)} - {_count(high)} "
+        "considered, extrapolated from observed composed counts "
         f"{estimate.get('observed_composed')} through depth "
-        f"{estimate.get('observed_through_depth')}, projected "
-        f"{estimate.get('rounds_extrapolated')} more rounds to `d_raw`={estimate.get('d_raw')} "
-        f"at growth ratios {estimate.get('growth_ratio_geometric')}x (low fit) to "
-        f"{estimate.get('growth_ratio_last')}x (high fit).",
-        "- **Amortization ratio (estimated): "
-        + (
-            f"{ratios['low']:.0f}x - {ratios['high']:.0f}x"
-            if isinstance(ratios.get("low"), float) and isinstance(ratios.get("high"), float)
-            else "n/a"
-        )
-        + f"** against laddered marginal {_count(marginal)}. Even the low bracket is the RQ1 "
-        "answer for this ladder; the spread is method uncertainty, not measurement noise.",
+        f"{estimate.get('observed_through_depth')} ({estimate.get('rounds_extrapolated')} rounds "
+        f"projected to `d_raw`={estimate.get('d_raw')}). Validated 2026-07-23: the bracket "
+        "contained the measured truth in 2 of 10 cells, erring both directions -- treat as an "
+        "order-of-magnitude sketch of unknown sign, never a result.",
     ]
     for caveat in estimate.get("caveats") or []:
         lines.append(f"  - caveat: {caveat}")

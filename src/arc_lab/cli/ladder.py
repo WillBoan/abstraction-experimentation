@@ -33,6 +33,12 @@ def run_ladder_command(
         help="Run the climb stage even if the certificate rejects -- for control arms whose "
         "measurement IS the climb under a rejected structure, never for ordinary ladders.",
     ),
+    raw_arm_k: int = typer.Option(
+        10,
+        "--raw-arm-k",
+        help="RQ1 claim strength: the raw arm's guard is K x the measured laddered cost. If the "
+        "arm censors, the amortization ratio is proven >= K; if it solves, the ratio is measured.",
+    ),
 ) -> None:
     try:
         spec = make_ladder(name)
@@ -42,7 +48,7 @@ def run_ladder_command(
     if not spec.lint().ok:
         typer.echo("WARNING: ladder lint has errors (see the render above); running anyway.")
     typer.echo(f"running ladder {name} (chain + certificate first; climb only if admitted)...")
-    result = run_ladder(spec, runs_root=None, climb_rejected=climb_rejected)
+    result = run_ladder(spec, runs_root=None, climb_rejected=climb_rejected, raw_arm_k=raw_arm_k)
     if result.certificate.admitted:
         typer.echo("certificate: ADMITTED -- climb executed.")
     elif result.climbed:
