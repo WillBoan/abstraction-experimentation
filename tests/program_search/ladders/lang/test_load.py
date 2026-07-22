@@ -247,6 +247,23 @@ def test_the_evaluation_backed_checks_batch_posture() -> None:
     ]
 
 
+def test_the_two_future_proofing_checks_are_dormant_on_the_batch() -> None:
+    """`free-params-covary` and `hof-holes-fillable` (both added 2026-07-23) guard failure modes
+    no current ladder has: two rung params that covary across every demo (arity fusion,
+    sleep-probes S-B), and a higher-order floor whose holes this config cannot fill (micro-probes
+    battery E). No batch ladder has covarying params or a HOF floor, so both fire NOWHERE -- their
+    value is on the ladders Phase 2/3 will build, not this batch. If either lights up here, a real
+    ladder tripped it and the finding is genuine."""
+    fired = {
+        (name, f.check)
+        for name in ladder_paths()
+        for f in _lint_findings(name)
+        if not f.ok
+        and (f.check.startswith("free-params-covary") or f.check == "hof-holes-fillable")
+    }
+    assert fired == set()
+
+
 def test_the_demonstration_plan_checks_hold_across_the_batch() -> None:
     """Within-task variation used to be guaranteed by `taskgen`'s seed generator, which the
     `.ladder` migration retired -- so it is now only true if the lint says so."""

@@ -6,7 +6,7 @@ import dataclasses
 
 from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
 from arc_lab.program_search.ladders.registry import make_ladder
-from arc_lab.program_search.ladders.shape import LadderShape
+from arc_lab.program_search.ladders.shape import LadderShape, LintFinding
 from arc_lab.program_search.ladders.spec import (
     Demonstration,
     DemonstrationKind,
@@ -221,9 +221,10 @@ def test_free_param_variation_counts_every_call_site() -> None:
 
     columns = _rung_argument_columns((demo("a", 2), demo("b", 3)), "r")
     # Column 1 is the grid slot (computed in the outer call, `input` in the inner) -- derived,
-    # kept; column 2 is the colour, aggregating all four call sites: {1, 2, 3}.
+    # kept; column 2 is the colour, aggregating all four call sites: distinct {1, 2, 3}. The
+    # column now keeps ORDER (a tuple, for the covariance check), so ask set for distinctness.
     assert [index for index, _ in columns] == [1, 2]
-    assert len(columns[1][1]) == 3
+    assert len(set(columns[1][1])) == 3
 
 
 def test_lint_catches_the_al7_telescoping_statically() -> None:
@@ -238,3 +239,65 @@ def test_lint_catches_the_al7_telescoping_statically() -> None:
             f.check.startswith("rewrite-shallow") and not f.ok
             for f in make_ladder(sound).lint().findings
         )
+
+
+def _covary_demo(task_id: str, a: int, b: int) -> Demonstration:
+    # One call site of `mirror_recolor` (the arity-3 rung: grid + two colour params) -- the
+    # arity-2-fusing shape from sleep-probes S-B.
+    return Demonstration(
+        task_id=task_id,
+        kind=DemonstrationKind.FULL_SOLUTION,
+        solution=Apply("mirror_recolor", (Input(), Const(a, COLOR), Const(b, COLOR))),
+    )
+
+
+def _with_recolor_demos(*demos: Demonstration) -> tuple[LintFinding, ...]:
+    spec = make_ladder("al1-mirror")
+    rung = dataclasses.replace(spec.rungs[1], demonstrations=demos)
+    return dataclasses.replace(spec, rungs=(spec.rungs[0], rung)).lint().findings
+
+
+def test_free_params_covary_fires_when_two_positions_hold_equal_values() -> None:
+    # (2,2) and (5,5): both positions VARY (so free-param-varies passes), but they hold identical
+    # values at every call site, so antiunification fuses them into one shared param -- arity 2
+    # where the demos meant arity 3. The failure mode sleep-probes S-B measured.
+    findings = _with_recolor_demos(_covary_demo("a", 2, 2), _covary_demo("b", 5, 5))
+    covary = next(f for f in findings if f.check.startswith("free-params-covary"))
+    assert not covary.ok and covary.severity == "error"
+    # free-param-varies must stay clean on the same demos -- both columns do vary.
+    assert all(f.ok for f in findings if f.check.startswith("free-param-varies[mirror_recolor"))
+
+
+def test_free_params_covary_stays_silent_when_positions_differ() -> None:
+    # (2,4) and (5,3): the columns never hold equal values at a shared call site, so the two params
+    # stay distinct and the mint keeps its full arity.
+    findings = _with_recolor_demos(_covary_demo("a", 2, 4), _covary_demo("b", 5, 3))
+    assert all(f.ok for f in findings if f.check.startswith("free-params-covary"))
+
+
+def test_hof_holes_fillable_flags_a_floor_the_config_cannot_synthesize() -> None:
+    # A `map` floor under the default `unpinned_type_var_mode='reject'` with lambda synthesis on:
+    # map's hole result `b` is pinned by no sibling, so synthesis is skipped and the primitive is
+    # silently point-free-only -- exactly battery E's finding. filter/fold (pinned hole results)
+    # do not fire.
+    from arc_lab.program_search.ladders.spec import unfillable_function_holes
+    from arc_lab.program_search.substrate.library import Library
+    from arc_lab.program_search.substrate.registry import BASE_PRIMITIVES
+
+    lib = Library(
+        name="hof",
+        primitives=tuple(BASE_PRIMITIVES[n] for n in ("map", "filter", "fold", "flip_h")),
+    )
+    base = make_ladder("al1-mirror").reference_config.search_engine
+    assert isinstance(base, BottomUpSearchEngine)  # narrow off the abstract SearchEngine field
+    engine = dataclasses.replace(
+        base,
+        function_hole_fill_mode="lambda-synthesis",
+        unpinned_type_var_mode="reject",
+    )
+    flagged = {f.split(":")[0] for f in unfillable_function_holes(lib, engine)}
+    assert flagged == {"map"}  # filter/fold pinned; flip_h has no holes
+
+    # Relaxing the mode clears it -- the check tracks the config, not just the library.
+    grounded = dataclasses.replace(engine, unpinned_type_var_mode="eager_grounding_over_universe")
+    assert unfillable_function_holes(lib, grounded) == ()

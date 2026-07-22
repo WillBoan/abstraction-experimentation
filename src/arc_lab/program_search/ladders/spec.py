@@ -15,6 +15,7 @@ import enum
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
+from itertools import combinations
 
 from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.dataset import Corpus
@@ -37,6 +38,7 @@ from arc_lab.program_search.search.search_engine import BRANCHING_ENTRY
 from arc_lab.program_search.substrate.abstraction import make_abstraction, unfold_program
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.program import Apply, If, Input, Lam, PrimRef, Program
+from arc_lab.program_search.substrate.types import ArrowType, Type, TypeVar
 
 
 class DemonstrationKind(enum.Enum):
@@ -423,12 +425,27 @@ class LadderSpec:
             demos = [
                 d for d in rung.demonstrations if d.kind is not DemonstrationKind.FRAGMENT_IDENTICAL
             ]
-            for free_index, values in _rung_argument_columns(demos, rung.name):
+            columns = _rung_argument_columns(demos, rung.name)
+            for free_index, values in columns:
                 err(
                     f"free-param-varies[{rung.name}#{free_index}]",
-                    len(values) > 1 or len(demos) < 2,
+                    len(set(values)) > 1 or len(demos) < 2,
                     f"every demonstration passes {min(values, default='?')}: the mint "
                     "will specialise to it instead of taking a parameter",
+                )
+            # Covariance: antiunification gives ONE parameter to every position whose disagreement
+            # pair is the same, so two free positions that hold identical values at every call site
+            # fuse into a single shared param. Measured 2026-07-23 (sleep-probes S-B): demos
+            # `(2,2)` and `(5,5)` for a 2-param rung mint arity 2 with a shared `#1, #1`, not the
+            # intended arity 3. Both positions VARY, so `free-param-varies` above passes clean --
+            # this is the failure mode it cannot see.
+            for (left, left_values), (right, right_values) in combinations(columns, 2):
+                err(
+                    f"free-params-covary[{rung.name}#{left},#{right}]",
+                    left_values != right_values or len(set(left_values)) < 2 or len(demos) < 2,
+                    f"positions #{left} and #{right} hold the same value at every call site, so "
+                    "antiunification shares ONE parameter between them: the mint fuses the two "
+                    "and cannot express the case where they differ",
                 )
 
         # Demonstration plan (P): constancy + conditionals -- evaluation-backed checks over the
@@ -495,6 +512,13 @@ class LadderSpec:
         # branch without naming any primitive -- but the engine only enumerates branches when the
         # `if` summoner is in the library (`_branch_candidates`). Without it the ladder is
         # writable and unreachable, which is the one way branching syntax can silently lie.
+        # Vocabulary (V): the same coherence question for FUNCTION holes. A higher-order floor
+        # primitive whose holes this config can never fill is not rejected by the engine -- it is
+        # silently skipped, costing exactly nothing, so the ladder runs clean and never exercises
+        # the capability it declares (micro-probes battery E).
+        for detail in unfillable_function_holes(self.floor(), self.reference_config.search_engine):
+            warn("hof-holes-fillable", False, f"declared but unfillable: {detail}")
+
         err(
             "branching-summoned",
             BRANCHING_ENTRY not in exercised or BRANCHING_ENTRY in self.floor(),
@@ -811,14 +835,19 @@ def _task_key(entry: AnnotatedTask) -> tuple[tuple[object, object], ...]:
 
 def _rung_argument_columns(
     demos: Sequence[Demonstration], rung_name: str
-) -> tuple[tuple[int, frozenset[str]], ...]:
-    """Per free argument position of ``rung_name``: (1-based index, distinct arguments observed).
+) -> tuple[tuple[int, tuple[str, ...]], ...]:
+    """Per free argument position of ``rung_name``: (1-based index, arguments observed IN ORDER).
 
     Aggregated over EVERY call site of EVERY demonstration -- each call is an occurrence the
     proposer sees, so a second call site with a different argument is variation. Arguments are
     compared column-wise, keeping call sites aligned even when one demo pipes a computed grid
     where another pipes ``input``; a column whose every observed argument is ``Input()`` is the
     piped grid, not a free parameter, and is dropped, with the survivors renumbered 1..n.
+
+    Order is preserved (not a set) because two checks need different things from it:
+    ``free-param-varies`` asks how many DISTINCT values a column holds, while
+    ``free-params-covary`` asks whether two columns hold the same value *at the same call site* --
+    which set equality cannot see (``[2, 5]`` and ``[5, 2]`` share a set but never covary).
     """
     calls = [
         node.args
@@ -826,15 +855,82 @@ def _rung_argument_columns(
         for node in demo.solution.walk()
         if isinstance(node, Apply) and node.primitive == rung_name
     ]
-    columns: list[tuple[int, frozenset[str]]] = []
+    columns: list[tuple[int, tuple[str, ...]]] = []
     free_index = 0
     for position in range(max((len(args) for args in calls), default=0)):
         observed = [args[position] for args in calls if position < len(args)]
         if all(isinstance(arg, Input) for arg in observed):
             continue
         free_index += 1
-        columns.append((free_index, frozenset(str(arg) for arg in observed)))
+        columns.append((free_index, tuple(str(arg) for arg in observed)))
     return tuple(columns)
+
+
+def _final_result(vtype: Type) -> Type:
+    """An arrow's ultimate result, chasing curried arrows (``(a) -> (b) -> c`` gives ``c``)."""
+    while isinstance(vtype, ArrowType):
+        vtype = vtype.result
+    return vtype
+
+
+def _type_vars(vtype: Type) -> set[str]:
+    """Every :class:`TypeVar` name occurring anywhere in ``vtype``."""
+    if isinstance(vtype, TypeVar):
+        return {vtype.name}
+    if isinstance(vtype, ArrowType):
+        return {*_type_vars(vtype.result), *(n for p in vtype.params for n in _type_vars(p))}
+    return {name for arg in getattr(vtype, "args", ()) for name in _type_vars(arg)}
+
+
+def unfillable_function_holes(library: Library, engine: object) -> tuple[str, ...]:
+    """Floor primitives whose FUNCTION HOLES cannot be filled under this engine's policies.
+
+    A higher-order primitive whose hole can never be filled is not an error the engine reports --
+    it is simply skipped, costing exactly nothing (measured 2026-07-22, micro-probes battery E:
+    ``map @ none`` is byte-identical to a floor without ``map``). So a ladder can declare a
+    higher-order floor, run clean, and never once exercise it. Two ways that happens:
+
+    - ``function_hole_fill_mode='none'`` -- no hole is ever filled, point-free or synthesized.
+    - ``unpinned_type_var_mode='reject'`` (the default in EVERY preset) with lambda synthesis on --
+      a hole whose ultimate RESULT type is a type variable that no ordinary sibling argument pins
+      cannot have its binder type resolved, so synthesis is skipped for it and only pooled
+      function values remain. ``map : ((a) -> b, list[a]) -> list[b]`` is the case in point: ``a``
+      is pinned by ``list[a]``, ``b`` by nothing. Measured: relaxing the mode moves ``map`` from
+      140 to 625 considered at depth 3 while ``filter``/``fold`` (pinned hole results) do not move
+      at all.
+
+    Returns one ``"name: reason"`` per affected primitive, sorted.
+    """
+    fill_mode = getattr(engine, "function_hole_fill_mode", "none")
+    unpinned_mode = getattr(engine, "unpinned_type_var_mode", "reject")
+    findings: list[str] = []
+    for primitive in library.primitives:
+        arrows = [t for t in primitive.param_types if isinstance(t, ArrowType)]
+        if not arrows:
+            continue
+        if fill_mode == "none":
+            findings.append(f"{primitive.name}: function_hole_fill_mode='none' fills no hole")
+            continue
+        if fill_mode != "lambda-synthesis" or unpinned_mode != "reject":
+            continue
+        pinned = {
+            name
+            for t in primitive.param_types
+            if not isinstance(t, ArrowType)
+            for name in _type_vars(t)
+        }
+        loose = sorted(
+            str(_final_result(arrow))
+            for arrow in arrows
+            if isinstance(_final_result(arrow), TypeVar) and str(_final_result(arrow)) not in pinned
+        )
+        if loose:
+            findings.append(
+                f"{primitive.name}: hole result {', '.join(loose)} is pinned by no sibling "
+                "argument, so unpinned_type_var_mode='reject' skips synthesis (point-free fill "
+                "only)"
+            )
+    return tuple(sorted(findings))
 
 
 def _fan_in(template: Program, rung_names: set[str]) -> int:

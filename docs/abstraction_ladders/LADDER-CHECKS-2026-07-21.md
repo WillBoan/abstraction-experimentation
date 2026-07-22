@@ -48,7 +48,7 @@ Enforced by `ladders/lang/`; every error carries its line number. Roughly forty 
 
 ## Layer 2 — Static lint
 
-**28 checks: 24 error-class, 4 warnings** (`constant-subterm` is error-class with a warn tier — see its row). Most are parametrised per rung or per task, so a real ladder runs many more instances (al13 runs 61).
+**30 checks: 25 error-class, 5 warnings** (`constant-subterm` is error-class with a warn tier — see its row). Most are parametrised per rung or per task, so a real ladder runs many more instances (al13 runs 61). The two added 2026-07-23 (`free-params-covary`, `hof-holes-fillable`) are dormant on the current batch — they guard failure modes only Phase 2/3 ladders will hit.
 
 ### Structure
 
@@ -90,6 +90,7 @@ Added 2026-07-21. These properties used to hold by construction — `taskgen`'s 
 | `not-identity` | output != input on at least one train example |
 | `heldout-distinct` | no heldout task duplicates a train task's examples |
 | `free-param-varies` | a rung's free parameters are demonstrated at more than one value (aggregated over EVERY call site of every demonstration) |
+| `free-params-covary` | no two free positions of a rung hold the same value at every call site — else antiunification shares ONE parameter between them and the mint fuses the two, losing an arity (measured 2026-07-23, sleep-probes S-B: demos `(2,2) (5,5)` mint arity 2 with `#1,#1`). Distinct from `free-param-varies`: both positions can VARY and still covary |
 | `constant-subterm` | no composite scalar subterm of a stated solution (unfolded to the floor) is constant across the task's train examples — the literal-collapse law made static: signature dedup keeps the cheapest representative, so a train-constant subterm is strictly beaten by its literal. **Error** when the (type, value) is in the ladder's own configured constant domain (`leaves.py::policy_constants`); **warn** when merely constant (fictional depth) |
 | `if-condition-varies` | every `If` condition takes both truth values across the task's train examples, else the conditional collapses to the taken branch (dormant: no ladder uses branching yet) |
 
@@ -105,6 +106,7 @@ Added 2026-07-21. These properties used to hold by construction — `taskgen`'s 
 | Check | Warns when |
 | --- | --- |
 | `floor-fully-exercised` | a floor primitive is used by no rung, demonstration, distractor or top solution |
+| `hof-holes-fillable` | a higher-order floor primitive's function holes CAN be filled under the config — else the engine silently skips it at zero cost and the ladder never exercises the capability it declares (micro-probes battery E: `map @ lambda-synthesis` is a no-op under `unpinned_type_var_mode='reject'` because its hole result is pinned by no sibling). Tracks the config, not just the library |
 | `min-2-train-examples` | a demonstrating task has < 2 train examples |
 | `not-all-telescope` | every rung has fan-in 1 (a pure telescope) |
 | `no-lambda-in-templates` | a template contains a `Lam`, making the depth checks advisory (no current ladder does) |
