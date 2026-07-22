@@ -270,6 +270,14 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
             "demonstration_health": cert.demonstration_health,
         },
         "climb_executed": result.climbed,
+        # The wake-schedule arm label (design doc 3.7): any non-"full" value means the climb's
+        # end-to-end cost, loop-overhead factor, and what sleep saw were measured under
+        # assistance and are NOT comparable against full-wake cells.
+        "wake_schedule": (
+            spec.reference_config.learn.wake_schedule
+            if spec.reference_config.learn is not None
+            else None
+        ),
         "climb_trace": climb,
         "rung_recovery": recovery,
         "probe_cap": MAX_PROBE_COMBOS,
@@ -386,6 +394,16 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
             "ran and no learning was paid for. The sections below reflect the oracle chain only; "
             "climb trace and rung recovery are absent, not zero. To force a climb anyway (control "
             "arms only): `arc-lab run-ladder <name> --climb-rejected`.",
+        ]
+
+    schedule = report.get("wake_schedule")
+    if isinstance(schedule, str) and schedule != "full":
+        lines += [
+            "",
+            f"> **ARM LABEL: wake schedule `{schedule}`** -- the climb's end-to-end cost, "
+            "loop-overhead factor, and what sleep saw were measured under assistance "
+            "(design doc 3.7). Do not compare them against full-wake cells; recovery claims "
+            "need an honest `full` cell too.",
         ]
 
     climb_rows = [["iter", "wake solved", "considered (all tasks)", "minted", "converged"]]

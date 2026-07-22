@@ -135,3 +135,60 @@ def test_analyze_run_reads_both_run_kinds(tmp_path: Path) -> None:
 
     with pytest.raises(FileNotFoundError):
         analyze_run("nope", runs_root=tmp_path)
+
+
+def _wake_rows(record_trace_rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    return [row for row in record_trace_rows if row.get("phase") == "wake"]
+
+
+def test_skip_solved_wakes_search_only_the_unsolved(tmp_path: Path) -> None:
+    # Iteration 0 solves both tasks; under `skip-solved` iteration 1's wake must re-search
+    # NOTHING (solutions carry), where a `full` wake re-searches everything. The wake rows carry
+    # the arm label so no report can mistake this for a full-wake cost measurement.
+    import dataclasses
+
+    config = _learn_config(iterations=2)
+    assert config.learn is not None
+    config = config.with_(
+        learn=dataclasses.replace(
+            config.learn, wake_schedule="skip-solved", early_stop=False
+        )
+    )
+    record = execute(RunSpec(config=config, corpus=_TRAIN), runs_root=tmp_path)
+    wakes = _wake_rows(list(record.trace_rows()))
+    assert len(wakes) == 2
+    assert all(row["schedule"] == "skip-solved" for row in wakes)
+    first_stats = wakes[0]["search_stats"]
+    second_stats = wakes[1]["search_stats"]
+    assert isinstance(first_stats, dict) and sorted(first_stats) == ["t1", "t2"]
+    assert isinstance(second_stats, dict) and sorted(second_stats) == []  # nothing re-searched
+    assert wakes[1]["solved"] == ["t1", "t2"]  # carried solutions still reach sleep
+    assert record.results()["wake_schedule"] == "skip-solved"
+
+
+def test_curriculum_wakes_search_exactly_their_group(tmp_path: Path) -> None:
+    # The oracle-schedule arm: iteration i searches exactly curriculum[i] (later iterations:
+    # the full corpus). The groups are explicit task ids in run identity -- the executor never
+    # infers a schedule from task metadata.
+    import dataclasses
+
+    config = _learn_config(iterations=3)
+    assert config.learn is not None
+    config = config.with_(
+        learn=dataclasses.replace(
+            config.learn,
+            wake_schedule="curriculum",
+            curriculum=(("t1",), ("t2",)),
+            early_stop=False,
+        )
+    )
+    record = execute(RunSpec(config=config, corpus=_TRAIN), runs_root=tmp_path)
+    wakes = _wake_rows(list(record.trace_rows()))
+    assert len(wakes) == 3
+    assert [row.get("scheduled") for row in wakes] == [["t1"], ["t2"], None]
+    first, second, third = (row["search_stats"] for row in wakes)
+    assert isinstance(first, dict) and sorted(first) == ["t1"]
+    assert isinstance(second, dict) and sorted(second) == ["t2"]
+    # Iteration 2 is past the last group -> full corpus, but both tasks are carried: no re-search.
+    assert isinstance(third, dict) and sorted(third) == []
+    assert wakes[2]["solved"] == ["t1", "t2"]

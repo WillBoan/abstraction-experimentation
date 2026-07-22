@@ -646,7 +646,9 @@ def _run_learn(run_spec: RunSpec, record: RunRecord, trace: TraceSpec) -> dict[s
             if converged and learn.early_stop:
                 break
             # WAKE — batched over the whole corpus before any sleep (cross-task compression).
-            if learn.reset_programs_each_wake:
+            # Only the `full` schedule resets: the non-full schedules imply carrying (skip-solved
+            # IS carrying; a curriculum without it would hand sleep only the current group).
+            if learn.reset_programs_each_wake and learn.wake_schedule == "full":
                 solutions = {}
             wake_row, wake_outcomes = _wake(run_spec, library, solutions, iteration, record, trace)
             for task_id, tracked in wake_outcomes.items():
@@ -682,6 +684,7 @@ def _run_learn(run_spec: RunSpec, record: RunRecord, trace: TraceSpec) -> dict[s
         "description_length": description_length,
         "library_size": len(library.primitives),
         "library_version": library.version,
+        "wake_schedule": learn.wake_schedule,
     }
 
 
@@ -704,13 +707,22 @@ def _wake(
     config = run_spec.config
     learn = config.learn
     assert learn is not None
+    # The wake schedule (an arm label — see LearnSpec.wake_schedule): `None` means every task.
+    # A curriculum iteration past the last group falls back to the full corpus.
+    scheduled: frozenset[str] | None = None
+    if learn.wake_schedule == "curriculum":
+        assert learn.curriculum is not None  # LearnSpec.__post_init__ guarantees it
+        if iteration < len(learn.curriculum):
+            scheduled = frozenset(learn.curriculum[iteration])
     considered = 0
     search_stats: dict[str, object] = {}
     scores: dict[str, bool] = {}
     outcomes: dict[str, _TrackedOutcome] = {}
     for entry in run_spec.corpus.entries:  # entries: SolvedTask keeps meta co-located
         task = entry.task
-        if task.task_id in solutions:  # only when reset_programs_each_wake=False
+        if scheduled is not None and task.task_id not in scheduled:
+            continue
+        if task.task_id in solutions:  # carried: any non-`full` schedule, or reset=False
             continue
         capture_path = (
             record.capture_dir / f"iter-{iteration}" / f"{task.task_id}.jsonl"
@@ -743,7 +755,12 @@ def _wake(
         "considered": considered,
         "search_stats": search_stats,
         "programs": {task_id: st.program.to_dict() for task_id, st in solutions.items()},
+        # The arm label, on every wake row: any non-`full` value means this wake's cost and what
+        # sleep saw were measured under assistance (LearnSpec.wake_schedule).
+        "schedule": learn.wake_schedule,
     }
+    if scheduled is not None:
+        wake_row["scheduled"] = sorted(scheduled)
     if scores:
         wake_row["scores"] = scores
     return wake_row, outcomes

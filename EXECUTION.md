@@ -89,6 +89,9 @@ RunSpec                                      # the recorded-run atom — exactly
   │       ├─ iterations: int                 #   max wake–sleep cycles (a cap, not a mandate)
   │       ├─ early_stop: bool = True         #   stop when sleep converges (library unchanged / no MDL gain)
   │       ├─ reset_programs_each_wake: bool = True
+  │       ├─ wake_schedule: "full" | "skip-solved" | "curriculum" = "full"   #   an ARM LABEL (design doc §3.7): non-full
+  │       ├─ curriculum: tuple[tuple[task_id, ...], ...] | None = None      #   cells measure assisted costs; groups are explicit ids
+
   │       └─ score_each_wake: bool = False   #   telemetry only; never feedback
   ├─ corpus: Corpus ↗                        # the content (WHAT)
   └─ run_id (derived) = hash(config × corpus.content_hash)    # commit + run_started_at recorded but EXCLUDED

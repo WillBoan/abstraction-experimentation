@@ -191,3 +191,38 @@ def test_task_result_round_trip() -> None:
         task_id="t2", score=TaskScore(solved=False, per_test=(False,)), seconds=0.1, error="boom"
     )
     assert TaskResult.from_dict(failed.to_dict()) == failed
+
+
+def test_wake_schedule_is_run_identity_and_round_trips() -> None:
+    # The schedule is an ARM LABEL (design doc 3.7): two runs differing only in it measure
+    # different things, so they must never share a run_id -- and the curriculum groups are part
+    # of that identity (a different schedule of the same tasks is a different experiment).
+    corpus = _corpus()
+
+    def learn_config(**kwargs: object) -> Config:
+        return _config(
+            learn=LearnSpec(learn_engine=FakeLearnEngine(), iterations=2, **kwargs)  # type: ignore[arg-type]
+        )
+
+    full = RunSpec(config=learn_config(), corpus=corpus)
+    skip = RunSpec(config=learn_config(wake_schedule="skip-solved"), corpus=corpus)
+    curriculum = RunSpec(
+        config=learn_config(wake_schedule="curriculum", curriculum=(("a",), ("b",))),
+        corpus=corpus,
+    )
+    other_groups = RunSpec(
+        config=learn_config(wake_schedule="curriculum", curriculum=(("b",), ("a",))),
+        corpus=corpus,
+    )
+    ids = [full.run_id, skip.run_id, curriculum.run_id, other_groups.run_id]
+    assert len(set(ids)) == 4
+
+    for spec in (skip.config, curriculum.config):
+        assert Config.from_dict(spec.to_dict(), registry=REGISTRY) == spec
+
+
+def test_curriculum_groups_and_schedule_must_agree() -> None:
+    with pytest.raises(ValueError, match="curriculum"):
+        LearnSpec(learn_engine=FakeLearnEngine(), iterations=2, wake_schedule="curriculum")
+    with pytest.raises(ValueError, match="curriculum"):
+        LearnSpec(learn_engine=FakeLearnEngine(), iterations=2, curriculum=(("a",),))
