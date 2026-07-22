@@ -606,7 +606,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-22 — Micro-probe batteries: arity is not the driver, the type-population product is
 
-- **Commit:** `PENDING`. Notebook: [experiments/2026-07-22-micro-probes/](experiments/2026-07-22-micro-probes/). Instruments: `ladders/probe.py::Saturation`, `execution/forecast_cost.py::TaskForecast.saturated_at`.
+- **Commit:** `3a2824f` (fixes: `b1c9b91`). Notebook: [experiments/2026-07-22-micro-probes/](experiments/2026-07-22-micro-probes/). Instruments: `ladders/probe.py::Saturation`, `execution/forecast_cost.py::TaskForecast.saturated_at`.
 - **Question:** the batch ranked cost factors by comparing ladders that differed in several ways at once. With the `(depth x pool)` confound now controlled, what does each factor cost *on its own* — arity, constants, conditionals, HOFs?
 - **Ran:** first the frontier sweep's two open follow-ups (saturation surfaced in both probe and forecaster, so a starved cell can never be mistaken for a cheap one again), then six batteries: one task, one budget, one factor moved per cell, on a floor deliberately **unsolvable** so every cell pays the full depth (`cost_L(d)`, not cost-to-solution). No cell saturated.
 - **Result:**
