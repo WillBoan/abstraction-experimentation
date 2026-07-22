@@ -592,7 +592,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-22 — The tractability frontier: depth is not the cost driver, `(depth x max_pool)` is
 
-- **Commit:** `<pending>`. Notebook: [experiments/2026-07-22-tractability-frontier/](experiments/2026-07-22-tractability-frontier/).
+- **Commit:** `dff6273`. Notebook: [experiments/2026-07-22-tractability-frontier/](experiments/2026-07-22-tractability-frontier/).
 - **Question:** every ladder in the batch pins jump depth at 2-4, on a convention that was never measured (the `considered_limit=50000` guard that produced the "intractable" verdicts arrived at the END of the batch, and al14's diagnosis showed it was 3 orders too small). What does enumerating to depth `d` actually cost?
 - **Ran:** `cost_L(d)` on four representative floors (param-free geometric; layout+INT/COLOR params; two-COLOR-param; the al14 cell floor) at `depth_limit` 2-5, guard 5M `immediate`. Then re-ran the first three at `max_pool` 400 vs 20,000 after the first sweep turned out to be measuring the wrong thing.
 - **Result:**
