@@ -1,0 +1,117 @@
+# Micro-probe batteries — pool 20,000, guard 2,000,000, task deliberately unsolvable
+
+## A. Arity tax (depth 2)
+
+Each cell = the base floor plus ONE primitive. All GRID -> GRID, so survivors land in the
+same census bucket and the only thing moving is the number of argument slots.
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+base (3 unary)                   1           13    1.0x     0.0         3         3                        1,3,9  
++ identity (arity 1)             1           17    1.3x     0.0         4         4                       1,4,12  
++ scale (arity 2)                5           47    3.6x     0.0         7         7                       5,7,35  
++ translate (arity 3)            5          252   19.4x     0.0        19        19                     5,19,228  
++ set_cell (arity 4)            15       15,174 1167.2x     0.3       163       163                15,163,14,996  
++ move_cell (arity 5)            5       19,689 1514.5x     0.4       259       259                 5,259,19,425  
+
+## A. Arity tax (depth 3)
+
+Each cell = the base floor plus ONE primitive. All GRID -> GRID, so survivors land in the
+same census bucket and the only thing moving is the number of argument slots.
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+base (3 unary)                   1           22    1.0x     0.0         3         3                      1,3,9,9  
++ identity (arity 1)             1           29    1.3x     0.0         4         4                    1,4,12,12  
++ scale (arity 2)                5          131    6.0x     0.0         7         7                    5,7,35,84  
++ translate (arity 3)            5        1,012   46.0x     0.0        19        19                 5,19,228,760  
++ set_cell (arity 4)            15      632,944 28770.2x   101.4       163       163        15,163,14,996,617,770  
++ move_cell (arity 5)            5      591,302 26877.4x   136.7       259       259         5,259,19,425,571,613  
+
+## A2. Same arity, different slot types (depth 2)
+
+Three arity-3 GRID -> GRID primitives. Identical arity, identical return bucket; the only
+difference is whether a slot draws from INT (0..max-dim, so 4 here) or COLOR (0..9, so 10).
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+base (3 unary)                   1           13    1.0x     0.0         3         3                        1,3,9  
++ translate (grid,int,int)       5          252   19.4x     0.0        19        19                     5,19,228  
++ pad (grid,int,color)          15        1,477  113.6x     0.0        43        43                  15,43,1,419  
++ map_color (grid,col,col)      11        9,693  745.6x     0.2       103       103                 11,103,9,579  
+
+## A2. Same arity, different slot types (depth 3)
+
+Three arity-3 GRID -> GRID primitives. Identical arity, identical return bucket; the only
+difference is whether a slot draws from INT (0..max-dim, so 4 here) or COLOR (0..9, so 10).
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+base (3 unary)                   1           22    1.0x     0.0         3         3                      1,3,9,9  
++ translate (grid,int,int)       5        1,012   46.0x     0.0        19        19                 5,19,228,760  
++ pad (grid,int,color)          15       41,596 1890.7x     2.6        43        43           15,43,1,419,40,119  
++ map_color (grid,col,col)      11      408,612 18573.3x    59.3       103       103         11,103,9,579,398,919  
+
+## B. Constant-domain width (depth 2)
+
+Fixed library (base + `translate`: two INT slots), fixed task; only the constant policy
+moves. `leaves` is the round-0 census the policy actually mints — the measured width the
+cost should be read against, rather than a width chosen in advance.
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+no constants                     1           13    1.0x     0.0         3         3                        1,3,9  
+harvest-from-instance            2           22    1.7x     0.0         4         4                       2,4,16  
+finite-enumerate                 5          252   19.4x     0.0        19        19                     5,19,228  
+both                             6          253   19.5x     0.0        19        19                     6,19,228  
+
+## B. Constant-domain width (depth 3)
+
+Fixed library (base + `translate`: two INT slots), fixed task; only the constant policy
+moves. `leaves` is the round-0 census the policy actually mints — the measured width the
+cost should be read against, rather than a width chosen in advance.
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+no constants                     1           22    1.0x     0.0         3         3                      1,3,9,9  
+harvest-from-instance            2           34    1.5x     0.0         4         4                    2,4,16,12  
+finite-enumerate                 5        1,012   46.0x     0.0        19        19                 5,19,228,760  
+both                             6        1,013   46.0x     0.0        19        19                 6,19,228,760  
+
+## C. If-tax (depth 2)
+
+`if` is not an ordinary primitive: it summons an `If` node over a BOOL condition x every
+ORDERED same-typed branch pair, so its term is quadratic in the pool where a primitive's
+is a product of type populations. `gt` is included to supply real BOOL conditions — with
+no BOOL producer the only conditions are the two enumerated literals.
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+base                             1           13    1.0x     0.0         3         3                        1,3,9  
+base + if                        3           43    3.3x     0.0         7         7                       3,7,33  
+base + gt                        7           35    2.7x     0.0        19        19                       7,19,9  
+base + gt + if                   7           87    6.7x     0.0        47        47                      7,47,33  
+
+## C. If-tax (depth 3)
+
+`if` is not an ordinary primitive: it summons an `If` node over a BOOL condition x every
+ORDERED same-typed branch pair, so its term is quadratic in the pool where a primitive's
+is a product of type populations. `gt` is included to supply real BOOL conditions — with
+no BOOL producer the only conditions are the two enumerated literals.
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+base                             1           22    1.0x     0.0         3         3                      1,3,9,9  
+base + if                        3          112    5.1x     0.0         7         7                    3,7,33,69  
+base + gt                        7           44    2.0x     0.0        19        19                     7,19,9,9  
+base + gt + if                   7          156    7.1x     0.0        47        47                   7,47,33,69  
+
+## D. Arity trade (depth 2)
+
+Same expressible set of translations, two spellings. The arity-3 floor spends one round;
+the arity-2 floor spends two rounds but a narrower product per round.
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+arity-3 `translate`              5          252    1.0x     0.0        19        19                     5,19,228  
+arity-2 x2 (h then v)            5          104    0.4x     0.0        11        11                      5,11,88  
+
+## D. Arity trade (depth 3)
+
+Same expressible set of translations, two spellings. The arity-3 floor spends one round;
+the arity-2 floor spends two rounds but a narrower product per round.
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+arity-3 `translate`              5        1,012    1.0x     0.0        19        19                 5,19,228,760  
+arity-2 x2 (h then v)            5          379    0.4x     0.0        11        11                  5,11,88,275  

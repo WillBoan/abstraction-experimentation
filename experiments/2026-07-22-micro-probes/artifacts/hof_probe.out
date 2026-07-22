@@ -1,0 +1,45 @@
+# Battery E: the higher-order tax
+
+## E. Higher-order tax (depth 2)
+
+Every cell carries the same list plumbing; only the HOF and its hole-fill policy move.
+`none` is the control: it shows what a HOF costs when its holes can never be filled.
+`synth, grounded` re-runs lambda-synthesis with `unpinned_type_var_mode` relaxed, which
+is the only cell where `map`'s free hole return type can be resolved at all.
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+plumbing only (no HOF)          15           47    1.0x     0.0         4         4                      15,4,28  
++ map @ none                    15           47    1.0x     0.0         4         4                      15,4,28  
++ map @ point-free              15           68    1.4x     0.0         4         8                      20,8,40  r1 prediction MISSED
++ map @ lambda-synthesis        15           68    1.4x     0.0         4         8                      20,8,40  r1 prediction MISSED
++ map @ synth, grounded         15          102    2.2x     0.0         4         8                      20,8,45  r1 prediction MISSED
++ filter @ none                 17           49    1.0x     0.0         4         4                      17,4,28  
++ filter @ point-free           17           70    1.5x     0.0         4         8                      22,8,40  r1 prediction MISSED
++ filter @ lambda-synthesis      17          103    2.2x     0.0         4         8                      22,8,42  r1 prediction MISSED
++ filter @ synth, grounded      17          103    2.2x     0.0         4         8                      22,8,42  r1 prediction MISSED
++ fold @ none                   15           47    1.0x     0.0         4         4                      15,4,28  
++ fold @ point-free             15           68    1.4x     0.0         4         8                      20,8,40  r1 prediction MISSED
++ fold @ lambda-synthesis       15          981   20.9x     0.1         4         8                     20,8,203  r1 prediction MISSED
++ fold @ synth, grounded        15          981   20.9x     0.1         4         8                     20,8,203  r1 prediction MISSED
+
+## E. Higher-order tax (depth 3)
+
+Every cell carries the same list plumbing; only the HOF and its hole-fill policy move.
+`none` is the control: it shows what a HOF costs when its holes can never be filled.
+`synth, grounded` re-runs lambda-synthesis with `unpinned_type_var_mode` relaxed, which
+is the only cell where `map`'s free hole return type can be resolved at all.
+
+cell                        leaves   considered  x base    secs   r1 pred   r1 real                    per round  flags
+plumbing only (no HOF)          15          107    1.0x     0.0         4         4                   15,4,28,60  
++ map @ none                    15          107    1.0x     0.0         4         4                   15,4,28,60  
++ map @ point-free              15          140    1.3x     0.0         4         8                   20,8,40,72  r1 prediction MISSED
++ map @ lambda-synthesis        15          140    1.3x     0.0         4         8                   20,8,40,72  r1 prediction MISSED
++ map @ synth, grounded         15          625    5.8x     0.0         4         8                  20,8,51,270  r1 prediction MISSED
++ filter @ none                 17          109    1.0x     0.0         4         4                   17,4,28,60  
++ filter @ point-free           17          142    1.3x     0.0         4         8                   22,8,40,72  r1 prediction MISSED
++ filter @ lambda-synthesis      17          464    4.3x     0.0         4         8                  22,8,42,108  r1 prediction MISSED
++ filter @ synth, grounded      17          464    4.3x     0.0         4         8                  22,8,42,108  r1 prediction MISSED
++ fold @ none                   15          107    1.0x     0.0         4         4                   15,4,28,60  
++ fold @ point-free             15          140    1.3x     0.0         4         8                   20,8,40,72  r1 prediction MISSED
++ fold @ lambda-synthesis       15       26,801  250.5x     8.4         4         8               20,8,226,3,679  r1 prediction MISSED
++ fold @ synth, grounded        15       26,801  250.5x     8.5         4         8               20,8,226,3,679  r1 prediction MISSED
