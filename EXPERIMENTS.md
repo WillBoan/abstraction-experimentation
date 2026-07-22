@@ -623,7 +623,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-23 — RQ1's raw-cost estimator: the bracket holds in 2 of 10 cells
 
-- **Commit:** `PENDING`. Notebook: [experiments/2026-07-23-estimator-validation/](experiments/2026-07-23-estimator-validation/).
+- **Commit:** `72a6954`. Notebook: [experiments/2026-07-23-estimator-validation/](experiments/2026-07-23-estimator-validation/).
 - **Question:** every ladder's RQ1 headline rests on `report.py::_estimate_raw_cost`, which extrapolates raw cost from the rounds a stopped search completed and claims "the truth sits between" its two fits. Never checked. Does it?
 - **Ran:** the planned calibration ladder first — and **al2 cannot do the job**: its floor `{flip_h, transpose}` generates the 8-element D4 group, so its composed counts are FLAT (1,2,4,4,4,2,0) and the space is exhausted by depth 5. No growth regime, nothing for a growth fit to be right about. Replaced with a sweep: 4 floors x every depth gap, estimate-from-observed vs **measure the raw run outright**, pool freed to 200,000 with per-cell saturation reporting, guard 40M (censored cells excluded — not ground truth).
 - **Result:**
