@@ -1,0 +1,438 @@
+"""The rung probe: one candidate rung, driven through the real engine, at design time.
+
+Lint asks "is this a sound ladder on paper?"; the certificate asks "did the whole ladder behave
+that way?" — but the certificate's unit of feedback is a ladder, and its cost is a full climb plus
+the oracle chain. The probe puts the same questions to ONE rung cell, in process, in seconds,
+before a testbed or a run record exists. That is what makes ladder design an inner loop: edit the
+`.ladder` file, probe the rung, edit again.
+
+Four questions per rung ``r_i``, all against the real ``SearchEngine`` at the pinned budget:
+
+1. **Wake** — do ``r_i``'s demonstrations solve from ``L_{i-1}``, and is what search RETAINS the
+   intended program? A cheaper retained program is the collapse the depth sandwich cannot see;
+   a retained program that differs from the intended one *and* disagrees with it off the train
+   support is a **task collision** (design doc §6.4's check, which needs a search and therefore
+   never fit in ``lint()`` — this is its home).
+2. **Skip** — does anything one level up already solve from ``L_{i-1}``? (The certificate's
+   skip-path check, rung-locally.)
+3. **Sleep** — run the configured proposer/governance on what wake ACTUALLY retained (not on the
+   intended solutions): does it mint the intended abstraction, and at the intended arity? al14's
+   5-param mint is what this catches.
+4. **Forecast** — the static cost ceiling for the wake cell (``execution/estimate_cost``), so an
+   unaffordable cell is visible before it is paid for.
+
+Asymmetry worth stating: a clean probe does not guarantee the ladder certifies (the climb pays
+each jump under a library inflated by earlier mints, and cross-rung interactions are invisible
+here), but a dirty probe is proof it will not. The probe convicts; only the certificate acquits.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, replace
+
+from arc_lab.core.dataset import Corpus
+from arc_lab.core.grid import Grid
+from arc_lab.core.task import Task
+from arc_lab.program_search.analysis.behavioral import matches_target
+from arc_lab.program_search.analysis.compression import SolvedTask
+from arc_lab.program_search.analysis.depth import compositional_depth
+from arc_lab.program_search.execution.estimate_cost import estimate_cost
+from arc_lab.program_search.execution.model.run_spec import RunSpec
+from arc_lab.program_search.ladders._render import table
+from arc_lab.program_search.ladders.spec import LadderSpec
+from arc_lab.program_search.search.budget import Budget
+from arc_lab.program_search.search.search_result import SearchResult
+from arc_lab.program_search.substrate.abstraction import make_abstraction, unfold_program
+from arc_lab.program_search.substrate.library import Library
+from arc_lab.program_search.substrate.program import Program
+
+#: Wake verdicts, worst first — the order the summary reports them in.
+AS_INTENDED = "as-intended"
+COLLISION = "collision"
+COLLAPSED = "collapsed"
+ALTERNATIVE = "alternative"
+UNSOLVED = "unsolved"
+CENSORED = "censored"
+
+#: Skip verdicts.
+NO_SKIP = "no-skip"
+SKIP_PATH = "skip-path"
+INCONCLUSIVE = "inconclusive"
+
+_WAKE_FAILURES = frozenset({COLLISION, COLLAPSED, UNSOLVED, CENSORED})
+
+
+@dataclass(frozen=True, slots=True)
+class TaskProbe:
+    """One task searched under one library: what was found, and how it relates to the intent."""
+
+    task_id: str
+    verdict: str
+    considered: int
+    censored: bool
+    solve_generation: int | None = None
+    found: Program | None = None
+    found_depth: int | None = None
+    intended_depth: int | None = None
+
+    @property
+    def solved(self) -> bool:
+        return self.found is not None
+
+
+@dataclass(frozen=True, slots=True)
+class MintProbe:
+    """What sleep makes of the wake's RETAINED solutions — the mint the climb would really get."""
+
+    minted: tuple[str, ...]
+    recovered: bool
+    minted_arity: int | None
+    intended_arity: int
+
+    @property
+    def arity_matches(self) -> bool:
+        return self.minted_arity == self.intended_arity
+
+
+@dataclass(frozen=True, slots=True)
+class RungProbe:
+    """One rung's four probes + the verdict they add up to."""
+
+    level: int
+    name: str
+    library: str
+    wake: tuple[TaskProbe, ...]
+    skip: tuple[TaskProbe, ...]
+    mint: MintProbe | None
+    forecast_ceiling: int | None
+
+    @property
+    def wake_ok(self) -> bool:
+        return bool(self.wake) and all(p.verdict not in _WAKE_FAILURES for p in self.wake)
+
+    @property
+    def skip_ok(self) -> bool:
+        return all(p.verdict == NO_SKIP for p in self.skip)
+
+    @property
+    def mint_ok(self) -> bool:
+        return self.mint is None or (self.mint.recovered and self.mint.arity_matches)
+
+    @property
+    def ok(self) -> bool:
+        return self.wake_ok and self.skip_ok and self.mint_ok
+
+    def findings(self) -> tuple[str, ...]:
+        """One line per thing wrong — empty when the rung probes clean."""
+        lines: list[str] = []
+        for probe in self.wake:
+            if probe.verdict == COLLAPSED:
+                lines.append(
+                    f"wake {probe.task_id}: COLLAPSED — solves at depth {probe.found_depth}, "
+                    f"not {probe.intended_depth}: {probe.found}"
+                )
+            elif probe.verdict == COLLISION:
+                lines.append(
+                    f"wake {probe.task_id}: COLLISION — retained program differs off the train "
+                    f"support: {probe.found}"
+                )
+            elif probe.verdict in (UNSOLVED, CENSORED):
+                lines.append(
+                    f"wake {probe.task_id}: {probe.verdict.upper()} — the jump is not affordable "
+                    f"here ({probe.considered} considered)"
+                )
+        for probe in self.skip:
+            if probe.verdict == SKIP_PATH:
+                lines.append(
+                    f"skip {probe.task_id}: SKIP PATH — L_{self.level - 1} solves it: {probe.found}"
+                )
+            elif probe.verdict == INCONCLUSIVE:
+                lines.append(
+                    f"skip {probe.task_id}: INCONCLUSIVE — censored, so unsolved proves nothing"
+                )
+        if self.mint is not None and not self.mint.recovered:
+            lines.append(
+                f"sleep: the intended abstraction was NOT minted (got {list(self.mint.minted)})"
+            )
+        elif self.mint is not None and not self.mint.arity_matches:
+            lines.append(
+                f"sleep: minted at arity {self.mint.minted_arity}, intended {self.mint.intended_arity} "
+                "— every extra parameter multiplies its cost at every use site"
+            )
+        return tuple(lines)
+
+    def render(self) -> str:
+        rows = [["probe", "task", "verdict", "gen", "considered", "depth (found/intended)"]]
+        for kind, probes in (("wake", self.wake), ("skip", self.skip)):
+            for probe in probes:
+                depths = (
+                    f"{probe.found_depth}/{probe.intended_depth}"
+                    if probe.found_depth is not None
+                    else "-"
+                )
+                rows.append(
+                    [
+                        kind,
+                        probe.task_id,
+                        probe.verdict,
+                        "-" if probe.solve_generation is None else str(probe.solve_generation),
+                        str(probe.considered),
+                        depths,
+                    ]
+                )
+        header = (
+            f"r_{self.level} `{self.name}` over `{self.library}` — {'OK' if self.ok else 'FAILED'}"
+        )
+        lines = [header, "", *table(rows)]
+        if self.mint is not None:
+            grade = "recovered" if self.mint.recovered else "MISSED"
+            lines += [
+                "",
+                f"- sleep: {grade}; minted {list(self.mint.minted)} at arity "
+                f"{self.mint.minted_arity} (intended {self.mint.intended_arity})",
+            ]
+        if self.forecast_ceiling is not None:
+            lines.append(f"- forecast: <= {self.forecast_ceiling:,} considered (static ceiling)")
+        for finding in self.findings():
+            lines.append(f"  ! {finding}")
+        return "\n".join(lines)
+
+
+def probe_ladder(spec: LadderSpec, *, budget: Budget | None = None) -> tuple[RungProbe, ...]:
+    """Probe every bridging rung of ``spec``, bottom-up."""
+    return tuple(probe_rung(spec, level, budget=budget) for level in range(1, len(spec.rungs) + 1))
+
+
+def probe_rung(spec: LadderSpec, level: int, *, budget: Budget | None = None) -> RungProbe:
+    """Probe rung ``level``: wake + collision, skip, sleep, forecast — all under ``L_{level-1}``."""
+    rung = spec.rungs[level - 1]
+    below = spec.oracle_library(level - 1)
+    at = spec.oracle_library(level)
+    effective = budget if budget is not None else spec.reference_config.budget
+    by_id = {entry.task.task_id: entry for entry in spec.train_corpus.entries}
+
+    demos = [(d.task_id, d.solution) for d in rung.demonstrations if d.task_id in by_id]
+    probe_grids = _probe_grids(spec)
+
+    wake: list[TaskProbe] = []
+    solved: list[SolvedTask] = []
+    for task_id, stated in demos:
+        entry = by_id[task_id]
+        result = _search(spec, entry.task, below, effective)
+        # What the ladder CLAIMS this task costs from L_{level-1}: the stated solution with this
+        # rung's call sites expanded (the rung does not exist in the searched library).
+        intended = unfold_program(stated, at, expand=frozenset({rung.name}))
+        wake.append(_grade_wake(task_id, result, intended, below, probe_grids, entry.task))
+        if result.ranked_programs:
+            solved.append(SolvedTask(annotated=entry, program=result.ranked_programs[0]))
+
+    skip_ids = (
+        [d.task_id for d in spec.rungs[level].demonstrations]
+        if level < len(spec.rungs)
+        else list(spec.top.task_ids)
+    )
+    skip: list[TaskProbe] = []
+    for task_id in skip_ids:
+        above_entry = by_id.get(task_id)
+        if above_entry is None:
+            continue
+        result = _search(spec, above_entry.task, below, effective)
+        found = result.ranked_programs[0] if result.ranked_programs else None
+        verdict = (
+            SKIP_PATH if found is not None else (INCONCLUSIVE if result.stats.censored else NO_SKIP)
+        )
+        skip.append(
+            TaskProbe(
+                task_id=task_id,
+                verdict=verdict,
+                considered=result.stats.considered,
+                censored=result.stats.censored,
+                solve_generation=result.stats.solved_at_generation,
+                found=found,
+                found_depth=None if found is None else compositional_depth(found),
+            )
+        )
+
+    return RungProbe(
+        level=level,
+        name=rung.name,
+        library=below.name,
+        wake=tuple(wake),
+        skip=tuple(skip),
+        mint=_probe_sleep(spec, rung.name, rung.template, below, tuple(solved), probe_grids),
+        forecast_ceiling=_forecast(spec, [by_id[t].task for t, _ in demos], below, effective),
+    )
+
+
+def _search(spec: LadderSpec, task: Task, library: Library, budget: Budget) -> SearchResult:
+    config = spec.reference_config
+    return config.search_engine.run(
+        train_examples=task.train,
+        library=library,
+        constraints=config.constraints,
+        cost=config.cost,
+        budget=budget,
+    )
+
+
+def _grade_wake(
+    task_id: str,
+    result: SearchResult,
+    intended: Program,
+    library: Library,
+    probe_grids: tuple[Grid, ...],
+    task: Task,
+) -> TaskProbe:
+    """Classify what search retained against what the ladder intended."""
+    stats = result.stats
+    intended_depth = compositional_depth(intended)
+    if not result.ranked_programs:
+        return TaskProbe(
+            task_id=task_id,
+            verdict=CENSORED if stats.censored else UNSOLVED,
+            considered=stats.considered,
+            censored=stats.censored,
+            intended_depth=intended_depth,
+        )
+    found = result.ranked_programs[0]
+    found_depth = compositional_depth(found)
+    if found == intended:
+        verdict = AS_INTENDED
+    elif not _agrees_off_train(found, intended, library, probe_grids, task):
+        # Equal on this task's train examples (it solved) but not elsewhere: the retained program
+        # fits the train support only -- design doc §6.4's task collision, caught in the act.
+        verdict = COLLISION
+    elif found_depth < intended_depth:
+        verdict = COLLAPSED
+    else:
+        verdict = ALTERNATIVE
+    return TaskProbe(
+        task_id=task_id,
+        verdict=verdict,
+        considered=stats.considered,
+        censored=stats.censored,
+        solve_generation=stats.solved_at_generation,
+        found=found,
+        found_depth=found_depth,
+        intended_depth=intended_depth,
+    )
+
+
+def _agrees_off_train(
+    found: Program,
+    intended: Program,
+    library: Library,
+    probe_grids: tuple[Grid, ...],
+    task: Task,
+) -> bool:
+    """Do the two programs agree on grids BEYOND this task's own train inputs?
+
+    They already agree on the train support (that is what solving means), so only off-support
+    grids can separate them. Grids where the intended program itself errors are skipped; if
+    nothing is left to compare, the answer is "agrees" (no evidence of a collision).
+    """
+    own = {example.input for example in task.train}
+    for grid in probe_grids:
+        if grid in own:
+            continue
+        try:
+            expected = intended.evaluate(grid, library)
+        except Exception:
+            continue  # the intent itself is undefined here: no evidence either way
+        try:
+            actual = found.evaluate(grid, library)
+        except Exception:
+            return False
+        if actual != expected:
+            return False
+    return True
+
+
+def _probe_grids(spec: LadderSpec) -> tuple[Grid, ...]:
+    """The off-support evidence the collision check runs on: the ladder's own grids, PLUS
+    deterministic position-separating grids at each shape the ladder uses.
+
+    The ladder's own grids are not enough on their own, and al14 is the proof: its seed
+    construction makes ``read(g, 0, 2) == read(g, 2, 1)`` in ALL 16 of its grids, so a retained
+    program reading the wrong cell agrees with the intended one everywhere in the corpus —
+    including on heldout, since heldout comes from the same generator. Adding grids whose colours
+    vary with cell position under three different layouts turns "no evidence of a collision" into
+    actual evidence.
+    """
+    grids: dict[Grid, None] = {}
+    shapes: set[tuple[int, int]] = set()
+    for entry in (*spec.train_corpus.entries, *spec.heldout_corpus.entries):
+        for example in entry.task.train:
+            grids.setdefault(example.input, None)
+            shapes.add((example.input.height, example.input.width))
+    for grid in _discriminating_grids(shapes):
+        grids.setdefault(grid, None)
+    return tuple(grids)
+
+
+def _discriminating_grids(shapes: set[tuple[int, int]]) -> tuple[Grid, ...]:
+    """Three position-separating colour patterns per shape — deterministic, no RNG.
+
+    Shapes are taken from the corpus so the probes stay in the ladder's own input space: a program
+    that differs from the intent only on shapes the ladder never uses is not evidence of anything.
+    """
+    grids: list[Grid] = []
+    for height, width in sorted(shapes):
+        patterns = (
+            [[(r * width + c) % 10 for c in range(width)] for r in range(height)],
+            [[(c * height + r) % 10 for c in range(width)] for r in range(height)],
+            [[(r * 7 + c * 3) % 10 for c in range(width)] for r in range(height)],
+        )
+        grids.extend(Grid.from_list(rows) for rows in patterns)
+    return tuple(grids)
+
+
+def _probe_sleep(
+    spec: LadderSpec,
+    name: str,
+    template: Program,
+    below: Library,
+    solved: tuple[SolvedTask, ...],
+    probe_grids: tuple[Grid, ...],
+) -> MintProbe | None:
+    """Run the configured sleep on what wake RETAINED, and grade the mint against the intent.
+
+    Deliberately fed the retained programs, not the intended ones: if wake collapsed, sleep mints
+    from the collapsed form, which is exactly how al14 produced a 5-parameter abstraction.
+    """
+    learn = spec.reference_config.learn
+    if learn is None or not solved:
+        return None
+    target = make_abstraction(name, template, below)
+    outcome = learn.learn_engine.run(below, solved)
+    match = next((p for p in outcome.added if matches_target(p, target, probe_grids)), None)
+    minted_arity = (
+        match.arity if match is not None else (outcome.added[0].arity if outcome.added else None)
+    )
+    return MintProbe(
+        minted=tuple(p.name for p in outcome.added),
+        recovered=match is not None,
+        minted_arity=minted_arity,
+        intended_arity=target.arity,
+    )
+
+
+def _forecast(spec: LadderSpec, tasks: list[Task], library: Library, budget: Budget) -> int | None:
+    """The static worst-case ``considered`` ceiling for this wake cell (never a prediction).
+
+    A ceiling from the full cartesian product per round — loose by design (``estimate_cost``'s
+    own caveat), and the reason the AL plan's next instrument is a calibrated forecaster.
+    """
+    if not tasks:
+        return None
+    config = replace(spec.reference_config, library=library, budget=budget)
+    try:
+        estimate = estimate_cost(RunSpec(config=config, corpus=Corpus.of("probe", tasks)))
+    except NotImplementedError:
+        return None
+    return estimate.total_considered_ceiling
+
+
+def render_probes(probes: tuple[RungProbe, ...]) -> str:
+    """The whole ladder's probe report."""
+    return "\n\n".join(probe.render() for probe in probes)

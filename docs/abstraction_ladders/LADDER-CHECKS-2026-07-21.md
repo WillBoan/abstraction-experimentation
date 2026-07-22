@@ -8,7 +8,7 @@ The quality gates a ladder passes through, each strictly cheaper than the thing 
 
 1. **Author + load** — write the `.ladder` file; every load-time check fires with a line number (`arc-lab lint-ladder` runs this plus lint on a draft, no testbed needed — the loop is edit → lint → edit).
 2. **Lint** — the static + evaluation-backed checks below; seconds for the whole batch.
-3. **Rung probe** — PLANNED (AL-PLAN-2026-07-22.md, Phase 0): per-rung wake/skip/sleep probes driving the real engine at design time; the named home of the task-collision gap.
+3. **Rung probe** (`arc-lab probe-ladder`, `ladders/probe.py`) — per-rung wake/skip/sleep/forecast against the REAL engine at design time, in process, recording nothing. Seconds per rung on a sound ladder. This is where the task-collision check lives (it needs a search, so it could never live in `lint()`).
 4. **Oracle chain + certificate** — the admission gate, run WITHOUT the climb (a rejected ladder never pays for learning).
 5. **LEARN climb + reports** — the experiment proper, for admitted ladders only.
 
@@ -114,11 +114,24 @@ Admission requires every jump tractable and every skip verdict literally `True`.
 - the variation checks are asserted clean batch-wide; the new checks' batch posture is pinned separately (`if-condition-varies` fires nowhere; `constant-subterm` errors only on al4/al5/al6/al14; `rewrite-shallow` only on al3/al6/al7/al9/al10/al11; al8's warn tier pinned exactly);
 - every batch template survives `render` → `elaborate` unchanged.
 
-## The one gap
+## Layer 2b — The rung probe (design-time, real engine)
 
-**Task collision** — "no shallower program coincides with the intended solution on all train examples" (§6.4) — remains the only planned check not implemented in full generality. It cannot be decided statically: it means enumerating the cheap end of the program space over `L_{i-1}` with the task's own goal test, a real search. Its designated home is the **rung probe** (pipeline stage 3, planned — AL-PLAN-2026-07-22.md Phase 0), which drives the real engine per rung cell at design time.
+`ladders/probe.py`, driven by `arc-lab probe-ladder [--level N] [--considered-limit N]`. Four questions per rung `r_i`, all under `L_{i-1}` at the pinned budget, none of them recorded:
 
-The 2026-07-22 checks narrow the gap substantially without closing it: `constant-subterm` catches the collision's most common cause (a train-constant subterm beaten by a literal — it flags al14's `sub(n, 1)` arithmetic AND the train-constant `read(...)` colours adjacent to the known `-01` collision), and `rewrite-shallow` catches equational shortcuts. What stays uncaught is a shallow program agreeing with the intended one on the train support *without* any constant subterm or known equation — that is inherently the probe's job.
+| Probe | Asks | Verdicts |
+| --- | --- | --- |
+| **wake** | do `r_i`'s demonstrations solve from `L_{i-1}`, and is what search RETAINS the intended program? | `as-intended` · `collapsed` (same function, shallower spelling) · `collision` (different function, fits the train support only) · `alternative` · `unsolved` · `censored` |
+| **skip** | does anything one level up already solve from `L_{i-1}`? | `no-skip` · `skip-path` · `inconclusive` (censored) |
+| **sleep** | fed what wake ACTUALLY retained, does governance mint the intended abstraction, at the intended arity? | recovered/missed + minted arity vs intended |
+| **forecast** | what does this cell cost? | `estimate_cost`'s static ceiling (loose by construction — the calibrated forecaster is AL-PLAN Phase 0 item 3) |
+
+**This closes the task-collision gap** (§6.4's "no shallower program coincides with the intended solution on all train examples"): the wake probe compares the retained program against the intended one on grids beyond the task's own train support, so a program that merely *fits* is separated from one that is *right*.
+
+Its discriminating power needed one non-obvious ingredient. Comparing on the ladder's own grids is not enough — **al14's seed construction makes `read(g, 0, 2) == read(g, 2, 1)` in all 16 of its grids**, so its known `-01` collision agrees with the intended program everywhere in the corpus, heldout included (same generator). The probe therefore also compares on deterministic **position-separating grids** at each shape the ladder uses (three colour layouts per shape, no RNG). With them, al14's `-00` reads `collapsed` and `-01` reads `collision` — the two failures the 2026-07-21 notebook found by hand, now told apart automatically.
+
+**The probe convicts; only the certificate acquits.** A clean probe does not guarantee admission (the climb pays each jump under a library inflated by earlier mints, and cross-rung interactions are invisible rung-locally), but a dirty probe is proof the ladder will not certify. Remaining bounds, all deliberate: probe grids are at corpus shapes only; a censored probe is inconclusive, not a pass; sleep is graded per-rung, not against whole-corpus governance.
+
+**Read the three components separately** (`wake_ok` / `skip_ok` / `mint_ok`, not just `ok`): wake+skip are *structure*, mint is *learnability*, and the certificate deliberately separates them — al12-unlearnable is structurally sound (it certifies) while its single demonstration leaves `AntiunifyPairs` nothing to pair. The probe says exactly that, in 0.2s: clean wake, clean skip, `sleep: the intended abstraction was NOT minted`.
 
 ## What the checks currently find
 

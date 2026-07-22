@@ -1,0 +1,114 @@
+al1-mirror: OK [1s] rungs=2 findings=0
+al10-skippable: FAILED [0s] rungs=1 findings=1
+    r1:skip top-00: SKIP PATH — L_0 solves it: flip_h(transpose(flip_h(transpose(input))))
+al11-greedy-trap: FAILED [0s] rungs=5 findings=5
+    r3:skip tall4-00: SKIP PATH — L_2 solves it: stack2(stack2(input))
+    r3:skip tall4-01: SKIP PATH — L_2 solves it: stack2(stack2(input))
+    r4:skip wide8-00: SKIP PATH — L_3 solves it: stack2(wide4(input))
+    r4:skip wide8-01: SKIP PATH — L_3 solves it: stack2(wide4(input))
+    r5:skip top-00: SKIP PATH — L_4 solves it: stack2(tall4(input))
+al12-unlearnable: FAILED [0s] rungs=1 findings=1
+    r1:sleep: the intended abstraction was NOT minted (got [])
+al13-symmetry-repair: FAILED [10s] rungs=2 findings=5
+    r1:skip sym_both-00: SKIP PATH — L_0 solves it: overlay(0, flip_h(flip_v(input)), overlay(0, input, flip_h(input), flip_v(input)))
+    r1:skip sym_both-01: SKIP PATH — L_0 solves it: overlay(0, flip_h(flip_v(input)), overlay(0, input, flip_h(input), flip_v(input)))
+    r1:sleep: the intended abstraction was NOT minted (got ['abs0'])
+    r2:skip top-00: INCONCLUSIVE — censored, so unsolved proves nothing
+    r2:sleep: the intended abstraction was NOT minted (got ['abs0'])
+al14-cell-row-grid: FAILED [8s] rungs=3 findings=12
+    r1:wake move_cell_up-00: COLLAPSED — solves at depth 2, not 3: set_cell(set_cell(input, 1, 0, 0), 0, 0, read(input, 1, 0))
+    r1:wake move_cell_up-01: CENSORED — the jump is not affordable here (50000 considered)
+    r1:skip move_row_up-00: INCONCLUSIVE — censored, so unsolved proves nothing
+    r1:skip move_row_up-01: INCONCLUSIVE — censored, so unsolved proves nothing
+    r1:sleep: the intended abstraction was NOT minted (got [])
+    r2:wake move_row_up-00: CENSORED — the jump is not affordable here (50000 considered)
+    r2:wake move_row_up-01: CENSORED — the jump is not affordable here (50000 considered)
+    r2:skip move_grid_up-00: INCONCLUSIVE — censored, so unsolved proves nothing
+    r2:skip move_grid_up-01: INCONCLUSIVE — censored, so unsolved proves nothing
+    r3:wake move_grid_up-00: CENSORED — the jump is not affordable here (50000 considered)
+    r3:wake move_grid_up-01: CENSORED — the jump is not affordable here (50000 considered)
+    r3:skip top-00: INCONCLUSIVE — censored, so unsolved proves nothing
+al15-shift-frame: OK [1s] rungs=2 findings=0
+al16-layout-nest: OK [0s] rungs=2 findings=0
+al17-shift-frame-tall: OK [1s] rungs=3 findings=0
+al18-fanin-rotate: OK [0s] rungs=2 findings=0
+al19-fanin-recolor: OK [1s] rungs=2 findings=0
+al2-rot90-calibration: OK [0s] rungs=1 findings=0
+al20-recolor-telescope: OK [1s] rungs=2 findings=0
+al3-quad-symmetrize: FAILED [7s] rungs=3 findings=9
+    r1:skip band-00: INCONCLUSIVE — censored, so unsolved proves nothing
+    r1:skip band-01: INCONCLUSIVE — censored, so unsolved proves nothing
+    r2:wake band-00: COLLAPSED — solves at depth 2, not 3: concat_h(quad(input), quad(input))
+    r2:wake band-01: COLLAPSED — solves at depth 2, not 3: concat_h(quad(input), quad(input))
+    r2:skip tower-00: SKIP PATH — L_1 solves it: quad(quad(input))
+    r2:skip tower-01: SKIP PATH — L_1 solves it: quad(quad(input))
+    r3:wake tower-00: COLLAPSED — solves at depth 2, not 3: quad(quad(input))
+    r3:wake tower-01: COLLAPSED — solves at depth 2, not 3: quad(quad(input))
+    r3:skip top-00: SKIP PATH — L_2 solves it: quad(concat_v(quad(input), quad(input)))
+al4-mask-crop: FAILED [21s] rungs=3 findings=14
+    r1:wake nonbg_mask-00: COLLISION — retained program differs off the train support: crop_to_mask(input, mask_by_color(input, 2))
+    r1:wake nonbg_mask-01: COLLAPSED — solves at depth 3, not 4: crop_to_mask(input, mask_complement(mask_by_color(input, 0)))
+    r1:skip flatten_content-00: SKIP PATH — L_0 solves it: crop_to_mask(paint_through_mask(input, mask_by_color(input, 2), 3), mask_complement(m
+    r1:skip flatten_content-01: INCONCLUSIVE — censored, so unsolved proves nothing
+    r1:sleep: the intended abstraction was NOT minted (got [])
+    r2:wake flatten_content-00: COLLISION — retained program differs off the train support: crop_to_mask(paint_through_mask(input, mask_by_color
+    r2:wake flatten_content-01: CENSORED — the jump is not affordable here (50000 considered)
+    r2:skip stamp-00: INCONCLUSIVE — censored, so unsolved proves nothing
+    r2:skip stamp-01: INCONCLUSIVE — censored, so unsolved proves nothing
+    r2:sleep: the intended abstraction was NOT minted (got [])
+    r3:wake stamp-00: COLLISION — retained program differs off the train support: paint_through_mask(flip_h(flatten_content(input, 3)), mask_by_
+    r3:wake stamp-01: COLLISION — retained program differs off the train support: paint_through_mask(flip_h(flatten_content(input, 7)), mask_by_
+    r3:skip top-00: SKIP PATH — L_2 solves it: paint_through_mask(flip_h(flatten_content(input, 3)), mask_by_color(flatten_content(input, 0), 0)
+    r3:sleep: the intended abstraction was NOT minted (got ['abs0', 'abs1'])
+al5-perceiver-chain: FAILED [22s] rungs=3 findings=13
+    r1:wake swap_extremes-00: COLLISION — retained program differs off the train support: map_color(input, 2, most_common_color(input))
+    r1:wake swap_extremes-01: COLLAPSED — solves at depth 2, not 3: map_color(input, least_common_color(input), most_common_color(input))
+    r1:skip swap_mirror-00: SKIP PATH — L_0 solves it: map_color(flip_h(input), 1, 3)
+    r1:skip swap_mirror-01: SKIP PATH — L_0 solves it: map_color(map_color(flip_h(input), 1, 3), 3, 7)
+    r1:sleep: the intended abstraction was NOT minted (got ['abs0'])
+    r2:wake swap_mirror-00: COLLISION — retained program differs off the train support: map_color(flip_h(input), 1, 3)
+    r2:skip swap_stack-00: INCONCLUSIVE — censored, so unsolved proves nothing
+    r2:skip swap_stack-01: INCONCLUSIVE — censored, so unsolved proves nothing
+    r2:sleep: the intended abstraction was NOT minted (got ['abs0'])
+    r3:wake swap_stack-00: COLLISION — retained program differs off the train support: flip_v(swap_mirror(input, 3))
+    r3:wake swap_stack-01: COLLAPSED — solves at depth 2, not 3: flip_v(swap_mirror(input, 7))
+    r3:skip top-00: SKIP PATH — L_2 solves it: map_color(flip_v(swap_extremes(input)), most_common_color(input), 2)
+    r3:sleep: the intended abstraction was NOT minted (got ['abs0'])
+al6-mirror-tall: FAILED [31s] rungs=4 findings=15
+    r1:skip norm_mirror-00: SKIP PATH — L_0 solves it: flip_v(map_color(input, 1, 3))
+    r1:skip norm_mirror-01: SKIP PATH — L_0 solves it: map_color(flip_v(input), most_common_color(input), 7)
+    r2:wake norm_mirror-00: COLLISION — retained program differs off the train support: flip_v(map_color(input, 1, 3))
+    r2:wake norm_mirror-01: COLLAPSED — solves at depth 2, not 3: map_color(flip_v(input), most_common_color(input), 7)
+    r2:skip norm_stack-00: SKIP PATH — L_1 solves it: map_color(map_color(input, 1, 8), 2, 3)
+    r2:skip norm_stack-01: INCONCLUSIVE — censored, so unsolved proves nothing
+    r2:sleep: the intended abstraction was NOT minted (got [])
+    r3:wake norm_stack-00: COLLISION — retained program differs off the train support: map_color(map_color(input, 1, 8), 2, 3)
+    r3:skip norm_quad-00: INCONCLUSIVE — censored, so unsolved proves nothing
+    r3:skip norm_quad-01: SKIP PATH — L_2 solves it: map_color(rot180(norm_mirror(input, 7)), least_common_color(input), 9)
+    r3:sleep: the intended abstraction was NOT minted (got [])
+    r4:wake norm_quad-00: CENSORED — the jump is not affordable here (50000 considered)
+    r4:wake norm_quad-01: COLLAPSED — solves at depth 2, not 3: flip_h(norm_stack(input, 7, 9))
+    r4:skip top-00: INCONCLUSIVE — censored, so unsolved proves nothing
+    r4:sleep: the intended abstraction was NOT minted (got [])
+al7-fast-tower: FAILED [0s] rungs=5 findings=5
+    r3:skip tall4-00: SKIP PATH — L_2 solves it: stack2(stack2(input))
+    r3:skip tall4-01: SKIP PATH — L_2 solves it: stack2(stack2(input))
+    r4:skip wide8-00: SKIP PATH — L_3 solves it: stack2(wide4(input))
+    r4:skip wide8-01: SKIP PATH — L_3 solves it: stack2(wide4(input))
+    r5:skip top-00: SKIP PATH — L_4 solves it: stack2(tall4(input))
+al8-lean-perceiver: FAILED [0s] rungs=3 findings=9
+    r1:wake swap_ext-00: COLLAPSED — solves at depth 2, not 3: map_color(input, least_common_color(input), most_common_color(input))
+    r1:wake swap_ext-01: COLLAPSED — solves at depth 2, not 3: map_color(input, least_common_color(input), most_common_color(input))
+    r1:skip swap_mir-00: SKIP PATH — L_0 solves it: map_color(flip_h(input), most_common_color(input), least_common_color(input))
+    r1:skip swap_mir-01: SKIP PATH — L_0 solves it: map_color(flip_h(input), most_common_color(input), least_common_color(input))
+    r2:wake swap_mir-00: COLLAPSED — solves at depth 2, not 3: map_color(flip_h(input), most_common_color(input), least_common_color(input))
+    r2:wake swap_mir-01: COLLAPSED — solves at depth 2, not 3: map_color(flip_h(input), most_common_color(input), least_common_color(input))
+    r2:skip swap_stk-00: SKIP PATH — L_1 solves it: flip_h(flip_v(swap_ext(input)))
+    r2:skip swap_stk-01: SKIP PATH — L_1 solves it: flip_h(flip_v(swap_ext(input)))
+    r3:skip top-00: SKIP PATH — L_2 solves it: flip_v(swap_ext(input))
+al9-decoy: FAILED [0s] rungs=5 findings=5
+    r3:skip tall4-00: SKIP PATH — L_2 solves it: stack2(stack2(input))
+    r3:skip tall4-01: SKIP PATH — L_2 solves it: stack2(stack2(input))
+    r4:skip wide8-00: SKIP PATH — L_3 solves it: stack2(wide4(input))
+    r4:skip wide8-01: SKIP PATH — L_3 solves it: stack2(wide4(input))
+    r5:skip top-00: SKIP PATH — L_4 solves it: stack2(tall4(input))
