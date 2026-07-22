@@ -24,6 +24,17 @@ Three layers, drawn on a deliberate line:
 
 The load/lint split is why al4 and al13 still load and run despite failing lint: their rows in [LADDERS.md](LADDERS.md) stay meaningful and the defect is _reported_ rather than making the ladder unloadable. Lint remains **engine-search-free**, but is no longer evaluation-free: the 2026-07-22 checks evaluate stated solutions' subterms on the tasks' own train inputs (`constant-subterm`, `if-condition-varies`) and run bounded equational rewriting over templates (`rewrite-shallow`) — deterministic, capped, and still never a run.
 
+### What lint can and cannot catch (2026-07-22)
+
+Run against the batch, the static checks convict **exactly the retired ladders and the controls** — al3, al4, al5, al6, al7, al9, al11, al13, al14 plus al10/al12 — and touch none of the admitted set (al1, al2, al8 at warn tier, al15–al20). That is a strong result: `rewrite-shallow` and `constant-subterm` reproduce in seconds most of what the certificate previously established with an oracle-chain run, al14's literal collapse included. Those files are kept as **lint-lock fixtures** (a retired ladder is never fixed under its own ID — [LADDERS.md](LADDERS.md), AL-PLAN-2026-07-23 decision 2), so this set is a lock: a change to it is a new retirement or a check regression.
+
+**But lint is not a substitute for the run.** al8 passes lint and was rejected empirically. The difference is the collapse family:
+
+- **Family A — structural / equational collapse** (self-similar doubling, literal collapse, D4 group law). Caught statically: it is a fact about rewriting and about subterm constancy, both decidable without search.
+- **Family B — the perceiver collapse** (al5/al6/al8: cheap perception lets `L_0` solve the top outright). **Not** catchable statically: it is a fact about what SEARCH reaches, not about the templates. Only the probe and the certificate see it.
+
+So a lint-clean ladder is a ladder worth probing, never an admitted one.
+
 ## Layer 1 — Load time
 
 Enforced by `ladders/lang/`; every error carries its line number. Roughly forty distinct messages in six groups.
