@@ -43,6 +43,7 @@ from arc_lab.program_search.search.search_engine import (
 )
 from arc_lab.program_search.search.search_result import SearchStats
 from arc_lab.program_search.substrate.library import Library, Primitive
+from arc_lab.program_search.substrate.program import Program
 from arc_lab.program_search.substrate.types import Type, TypeVar
 
 from .model.config import Config
@@ -143,9 +144,19 @@ def forecast_cost(
 
     contexts = tuple(Context(example.input) for example in train_with_output(task.train))
     census: dict[Type, int] = {}
-    for _, leaf_type in seed_leaves(Scope(()), contexts, engine.constant_sources, library):
-        census[leaf_type] = census.get(leaf_type, 0) + 1
-    leaf_total = sum(census.values())
+    # DISTINCT leaves: two constant sources can mint the same literal (`finite-enumerate` covers
+    # INT 0..max-dim, and `harvest-from-instance` re-mints whichever of those the grids contain),
+    # and the pool's observational dedup collapses them to one. Counting the raw yield instead
+    # over-predicts every product it feeds -- measured on the micro-probes' constant battery, where
+    # `('finite-enumerate', 'harvest-from-instance')` read 28 against an actual 19.
+    seen: set[Program] = set()
+    leaf_total = 0
+    for leaf, leaf_type in seed_leaves(Scope(()), contexts, engine.constant_sources, library):
+        leaf_total += 1  # the engine CONSIDERS every leaf yielded, duplicates included
+        if leaf in seen:
+            continue
+        seen.add(leaf)
+        census[leaf_type] = census.get(leaf_type, 0) + 1  # ...but POOLS only the distinct ones
 
     rounds = [
         RoundForecast(
@@ -237,11 +248,17 @@ def _available(slot: Type, census: Mapping[Type, int]) -> int:
 
 
 def _branch_term(census: Mapping[Type, int], previous: Mapping[Type, int]) -> int:
-    """``If`` candidates: a BOOL condition x ordered same-typed branch pairs, new-layer restricted."""
+    """``If`` candidates: a BOOL condition x ordered same-typed branch pairs, new-layer restricted.
+
+    BOOL branches count too. ``if : (bool, a, a) -> a`` instantiates at ``a = bool`` like any other
+    type, and the engine composes those: excluding them under-predicted every ``if``-bearing floor
+    by exactly ``|bool| x |bool| x (|bool| - 1)`` (the micro-probes' if-tax battery read 3 against
+    an actual 7 on a floor whose only non-grid leaves were the two BOOL literals).
+    """
 
     def total(pool: Mapping[Type, int]) -> int:
         conditions = sum(n for t, n in pool.items() if _type_name(t) == "bool")
-        pairs = sum(n * (n - 1) for t, n in pool.items() if _type_name(t) != "bool")
+        pairs = sum(n * (n - 1) for n in pool.values())
         return conditions * pairs
 
     return max(total(census) - total(previous), 0)

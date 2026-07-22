@@ -7,7 +7,8 @@ from dataclasses import replace
 import pytest
 
 from arc_lab.core.dataset import Corpus
-from arc_lab.core.task import Task
+from arc_lab.core.grid import Grid
+from arc_lab.core.task import Example, Task
 from arc_lab.program_search.execution.estimate_cost import estimate_cost
 from arc_lab.program_search.execution.forecast_cost import (
     forecast_cost,
@@ -15,8 +16,13 @@ from arc_lab.program_search.execution.forecast_cost import (
 )
 from arc_lab.program_search.execution.model.config import Config
 from arc_lab.program_search.execution.model.run_spec import RunSpec
+from arc_lab.program_search.execution.presets import PRESETS
 from arc_lab.program_search.ladders.registry import make_ladder
+from arc_lab.program_search.search.leaves import ConstantSource
+from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.search.search_result import SearchResult
+from arc_lab.program_search.substrate.library import Library
+from arc_lab.program_search.substrate.registry import BASE_PRIMITIVES
 
 
 def _cell(ladder: str, level: int) -> tuple[Config, Task]:
@@ -136,3 +142,60 @@ def test_a_pool_that_does_not_bind_is_not_flagged_as_saturated() -> None:
     forecast = forecast_cost(freed, task, depth_limit=4)
     assert forecast.saturated_at is None
     assert not any("SATURATED" in flag for flag in forecast.flags)
+
+
+def _synthetic(names: tuple[str, ...], sources: tuple[ConstantSource, ...]) -> tuple[Config, Task]:
+    """A floor built from named base primitives, over one small grid — the micro-probe shape.
+
+    Deliberately not a ladder cell: these two tests pin arithmetic that no ladder in the batch
+    exercises (overlapping constant sources; BOOL-typed `if` branches), so the floor has to be
+    built to order rather than borrowed.
+    """
+    grid = Grid.from_list([[1, 2, 0], [0, 3, 0], [4, 0, 5]])
+    task = Task(
+        task_id="synthetic",
+        train=(Example(input=grid, output=Grid.from_list([[8, 8], [8, 8]])),),
+        test=(),
+    )
+    base = replace(PRESETS["synth"], learn=None)
+    engine = base.search_engine
+    assert isinstance(engine, BottomUpSearchEngine)  # the preset's engine, narrowed for `replace`
+    return (
+        replace(
+            base,
+            library=Library(name="floor", primitives=tuple(BASE_PRIMITIVES[n] for n in names)),
+            search_engine=replace(engine, constant_sources=sources),
+            budget=replace(base.budget, depth_limit=2, max_pool=20_000),
+        ),
+        task,
+    )
+
+
+def test_overlapping_constant_sources_are_counted_once() -> None:
+    # `finite-enumerate` mints INT 0..max-dim and `harvest-from-instance` re-mints whichever of
+    # those the grid contains, so `3` is yielded twice and the pool's dedup collapses it. Counting
+    # the raw yield over-predicted every product it feeds (28 vs an actual 19 on this exact floor).
+    # The two counts are genuinely different quantities and both must be right: the engine
+    # CONSIDERS all 6 leaves (round 0) and POOLS the 5 distinct ones, so round 1's product draws
+    # on 4 INTs, not 5.
+    config, task = _synthetic(
+        ("flip_h", "flip_v", "rot90", "translate"),
+        ("finite-enumerate", "harvest-from-instance"),
+    )
+    result = _run(config, task)
+    actual = [g["composed"] for g in result.stats.generations]
+    forecast = forecast_cost(config, task, survival=survival_from(result.stats))
+    assert actual[:2] == [6, 19]
+    assert [r.composed for r in forecast.rounds[:2]] == actual[:2]
+
+
+def test_bool_typed_if_branches_are_counted() -> None:
+    # `if : (bool, a, a) -> a` instantiates at a = bool like any other type, and the engine
+    # composes those. Excluding BOOL from the branch-pair sum under-read this floor -- whose only
+    # non-grid leaves ARE the two BOOL literals -- by exactly those candidates: 3 vs an actual 7.
+    config, task = _synthetic(("flip_h", "flip_v", "rot90", "if"), ("finite-enumerate",))
+    result = _run(config, task)
+    actual = [g["composed"] for g in result.stats.generations]
+    forecast = forecast_cost(config, task, survival=survival_from(result.stats))
+    assert actual[1] == 7  # 3 unary applications + 2 conditions x 2 ordered BOOL branch pairs
+    assert forecast.rounds[1].composed == actual[1]
