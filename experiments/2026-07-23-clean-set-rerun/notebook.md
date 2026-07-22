@@ -19,16 +19,28 @@ retired 78x–530x claim — are regenerated under the new report).
 
 ## The aggregate
 
-| ladder | RQ1 (decision 1) | kind | laddered | loop overhead | recovery | off-chain top |
-| --- | --- | --- | --- | --- | --- | --- |
-| al1-mirror | **3.59x** | measured | 53,711 | 3.7x | 2/2 | solvable |
-| al2-rot90-calibration | **0.48x** | measured | 27 | 2.2x | 1/1 | solvable |
-| al15-shift-frame | **>= 10x** | proven bound | 18,627 | 3.0x | 2/2 | needs chain |
-| al16-layout-nest | **>= 10x** | proven bound | 1,817 | 3.1x | 2/2 | solvable |
-| al17-shift-frame-tall | **>= 10x** | proven bound | 26,677 | 4.0x | 3/3 | solvable |
-| al18-fanin-rotate | **>= 10x** | proven bound | 2,161 | 3.1x | 2/2 | needs chain |
-| al19-fanin-recolor | **>= 10x** | proven bound | 47,807 | 3.0x | 2/2 | needs chain |
-| al20-recolor-telescope | **>= 10x** | proven bound | 36,279 | 3.0x | 2/2 | solvable |
+All climbs ran at wake schedule `full` (the default; the honest mode) -- the loop-overhead
+factors are unassisted full-wake measurements and no arm-label caveat applies to any cell.
+RQ1 is reported in BOTH accountings (design doc 4): the guard was sized from the *marginal*
+laddered cost (the ceiling), and the end-to-end column divides the same arm spend by the measured
+achieved cost.
+
+| ladder | RQ1 vs marginal | vs end-to-end | kind | marginal | end-to-end | loop | recovery | off-chain top |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| al1-mirror | **3.59x** | **0.96x** | measured | 53,711 | 200,280 | 3.7x | 2/2 | solvable |
+| al2-rot90-calibration | **0.48x** | 0.22x | measured | 27 | 60 | 2.2x | 1/1 | solvable |
+| al15-shift-frame | **>= 10x** | >= 3.30x | proven bound | 18,627 | 56,405 | 3.0x | 2/2 | needs chain |
+| al16-layout-nest | **>= 10x** | >= 3.21x | proven bound | 1,817 | 5,655 | 3.1x | 2/2 | solvable |
+| al17-shift-frame-tall | **>= 10x** | >= 2.48x | proven bound | 26,677 | 107,772 | 4.0x | 3/3 | solvable |
+| al18-fanin-rotate | **>= 10x** | >= 3.22x | proven bound | 2,161 | 6,705 | 3.1x | 2/2 | needs chain |
+| al19-fanin-recolor | **>= 10x** | >= 3.31x | proven bound | 47,807 | 144,465 | 3.0x | 2/2 | needs chain |
+| al20-recolor-telescope | **>= 10x** | >= 3.31x | proven bound | 36,279 | 109,595 | 3.0x | 2/2 | solvable |
+
+Both accountings share the remaining qualifiers: denominators are ORACLE-chain costs (climbs
+actually pay under `L^learned` -- the gap is Phase 2 item 6) and wake-side only (`w`
+uncalibrated), and the arm's numerator ran raw-friendly by design (depth = `d_raw`, pool 200k,
+cost-to-first) -- all of which bias the reported ratios upward, so they are ceilings on the
+achieved economics.
 
 Bound conditions (identical across the six): raw arm at `depth_limit = min_depth_limit(unfolded
 top)`, `max_pool` 200,000, guard = 10x the chain-measured laddered marginal per top task,
@@ -39,9 +51,11 @@ censored exactly at the guard (`immediate`), **no funnel saturated** — every b
 1. **The rebuild set's amortization is now PROVEN, not estimated: >= 10x on all six.** Their raw
    arms spent 10x the laddered cost without finding a solution at a freed pool. This is the claim
    shape the program wanted all along — strengthenable by raising K, wrong in no direction.
-2. **al1, the old headline ladder, is the WEAKEST admitted ladder** (3.59x measured). The ladder
-   whose estimated 78x–530x anchored the program's story is outperformed by every rebuild — the
-   estimate had the ranking upside down.
+2. **al1, the old headline ladder, is the WEAKEST admitted ladder** (3.59x measured) — and
+   against the END-TO-END accounting it reads **0.96x: al1 does not break even** under today's
+   loop mechanics. The ladder whose estimated 78x–530x anchored the program's story is
+   outperformed by every rebuild — the estimate had the ranking upside down. The rebuilds stay
+   provably positive in both accountings (>= 2.5–3.3x end-to-end).
 3. **al2 reads 0.48x** — the ladder costs ~2x what raw does. Correct behavior for the
    trivial-regime instrument, and the first time the pipeline can say it plainly.
 4. **Recovery is 16/16 rungs** across the set, at loop overheads 2.2x–4.0x (tracking the
