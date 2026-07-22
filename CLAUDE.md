@@ -87,7 +87,7 @@ A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed s
 - Preset registry: `src/arc_lab/program_search/execution/presets.py` · Study registry: `execution/studies.py` · Generator registry: `src/arc_lab/taskgen/generators.py`
 - Behavior locks: `tests/program_search/execution/test_locks.py` (old-tree locks: `tests/test_integration.py`, until the deletion pass)
 - Commands: `Makefile`
-- Experiment history & findings: `EXPERIMENTS.md` · Planned experiments: `EXPERIMENT_QUEUE.md`
+- Experiment history & findings: `EXPERIMENTS.md` · Planned experiments: `EXPERIMENT_QUEUE.md` · Cross-cutting TODO index (dated): `docs/TODO-2026-07-23.md`
 - Ladder file format (`.ladder` = a ladder's single source of truth: spec, testbed, artifacts): `docs/abstraction_ladders/LADDER-FORMAT.md` · Ladder sources: `program_search/ladders/registry/*.ladder` · Ladder register: `docs/abstraction_ladders/LADDERS.md`
 - Ladder checks (every load/lint/certificate check + current batch health; dated): `docs/abstraction_ladders/LADDER-CHECKS-2026-07-21.md`
 - AL plan of record (corrections, pipeline, phased build/measure order; dated): `docs/abstraction_ladders/AL-PLAN-2026-07-23.md` (superseded: `AL-PLAN-2026-07-22.md`)
