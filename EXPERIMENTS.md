@@ -678,7 +678,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-23 — Loop overhead decomposed: the flavor gap is zero; skip-solved buys 1.8-2.5x and mints junk
 
-- **Commit:** `PENDING`. Notebook: [experiments/2026-07-23-loop-overhead/](experiments/2026-07-23-loop-overhead/).
+- **Commit:** `6e069af`. Notebook: [experiments/2026-07-23-loop-overhead/](experiments/2026-07-23-loop-overhead/).
 - **Question:** what separates al1's 3.59x marginal ratio from its 0.96x achieved one — and how much does the new `wake_schedule` machinery recover?
 - **Ran:** (1) learned-vs-oracle flavor gap read off the fresh artifacts: wake iteration i under `L^learned_i` vs oracle column `L_i`, all 8 ladders; (2) al1 + al17 climbs re-run under `skip-solved` (fresh run_ids; arm-labeled), extra mints inspected.
 - **Result:**
