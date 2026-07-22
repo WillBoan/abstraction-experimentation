@@ -26,11 +26,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from arc_lab.program_search.execution.model.run_record import RunRecord
-from arc_lab.program_search.ladders.run import LadderResult
 from arc_lab.program_search.ladders.spec import LadderSpec
 from arc_lab.program_search.substrate.program import Apply, PrimRef, Program
+
+if TYPE_CHECKING:  # runtime import would cycle: run.py certifies between its two stages
+    from arc_lab.program_search.ladders.run import LadderChainResult
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,7 +54,9 @@ class LadderCertificate:
         )
 
 
-def certify(result: LadderResult) -> LadderCertificate:
+def certify(result: LadderChainResult) -> LadderCertificate:
+    """The admission verdict, read entirely off stage 1 (``spec`` + the oracle-chain runs) -- which
+    is what lets ``run_ladder`` gate the climb on it before any learning is paid for."""
     spec = result.spec
     solved_below = {level: _search_solved_ids(rec) for level, rec in result.oracle_chain.items()}
     censored_below = {level: search_censored_ids(rec) for level, rec in result.oracle_chain.items()}

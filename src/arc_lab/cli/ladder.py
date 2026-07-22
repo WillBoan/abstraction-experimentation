@@ -27,6 +27,12 @@ def run_ladder_command(
         help="Write the committed docs artifacts (spec.md, results.md, report.json) "
         "into this directory (the ladder's docs/abstraction_ladders/ladders/<name>/ folder).",
     ),
+    climb_rejected: bool = typer.Option(
+        False,
+        "--climb-rejected",
+        help="Run the climb stage even if the certificate rejects -- for control arms whose "
+        "measurement IS the climb under a rejected structure, never for ordinary ladders.",
+    ),
 ) -> None:
     try:
         spec = make_ladder(name)
@@ -35,8 +41,18 @@ def run_ladder_command(
     typer.echo(spec.render())
     if not spec.lint().ok:
         typer.echo("WARNING: ladder lint has errors (see the render above); running anyway.")
-    typer.echo(f"running ladder {name}...")
-    report = create_ladder_report(run_ladder(spec, runs_root=None))
+    typer.echo(f"running ladder {name} (chain + certificate first; climb only if admitted)...")
+    result = run_ladder(spec, runs_root=None, climb_rejected=climb_rejected)
+    if result.certificate.admitted:
+        typer.echo("certificate: ADMITTED -- climb executed.")
+    elif result.climbed:
+        typer.echo("certificate: NOT ADMITTED -- climb forced by --climb-rejected.")
+    else:
+        typer.echo(
+            "certificate: NOT ADMITTED -- climb skipped (no learning paid; "
+            "pass --climb-rejected to force)."
+        )
+    report = create_ladder_report(result)
     payload = json.dumps(report, indent=2, sort_keys=True)
     if out is not None:
         out.write_text(payload + "\n", encoding="utf-8")

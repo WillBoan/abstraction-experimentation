@@ -19,16 +19,21 @@ from typing import Any
 from arc_lab.program_search.analysis.behavioral import MAX_PROBE_COMBOS, matches_target
 from arc_lab.program_search.execution.model.run_record import RunRecord
 from arc_lab.program_search.ladders._render import table
-from arc_lab.program_search.ladders.certificate import certify, search_censored_ids
+from arc_lab.program_search.ladders.certificate import search_censored_ids
 from arc_lab.program_search.ladders.run import LadderResult
 from arc_lab.program_search.substrate.abstraction import make_abstraction
 
 
 def create_ladder_report(result: LadderResult) -> dict[str, object]:
     """The ladder report: shape, certificate, climb trace, rung recovery, the per-task cost matrix,
-    jump costs, amortization, and the comparison views."""
+    jump costs, amortization, and the comparison views.
+
+    For a rejected ladder that did not climb (``result.climbed`` is ``False``), the climb-derived
+    sections read as absent -- ``climb_executed: False``, empty trace/recovery, ``None`` end-to-end
+    figures -- while everything the chain measures (certificate, cost matrix, jump costs, raw arm)
+    is reported in full."""
     spec, shape = result.spec, result.shape
-    cert = certify(result)
+    cert = result.certificate
     k = len(spec.rungs)
     cells = {level: _per_task_cells(rec) for level, rec in result.oracle_chain.items()}
     considered: dict[int, dict[str, int]] = {
@@ -85,37 +90,46 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
         if top_ids and not raw_solved
         else {"available": False, "reason": "raw solved outright -- measured, not estimated"}
     )
-    off_solved = bool(top_ids) and all(
-        tid in _search_solved_ids(result.off_chain) for tid in top_ids
+    # Off-chain is a climb-stage run: ``None`` (not measured) when the climb was skipped.
+    off_solved: bool | None = (
+        bool(top_ids)
+        and all(tid in _search_solved_ids(result.off_chain) for tid in top_ids)
+        if result.off_chain is not None
+        else None
     )
 
     # Rung recovery: minted (learned) abstractions vs the intended rungs, graded behaviorally.
-    learned = result.learn.learn.learned_library()
-    floor_names = {p.name for p in spec.floor().primitives}
-    invented = [p for p in learned.primitives if p.name not in floor_names]
-    probes = tuple(
-        example.input for entry in spec.train_corpus.entries for example in entry.task.train
-    )
+    # Skipped wholesale (empty trace, no recovery rows, no end-to-end figure) when the certificate
+    # rejected and the climb never ran -- absent, not zero.
     recovery: list[dict[str, object]] = []
-    for i, rung in enumerate(spec.rungs, start=1):
-        target = make_abstraction(rung.name, rung.template, spec.oracle_library(i - 1))
-        matched = [p.name for p in invented if matches_target(p, target, probes)]
-        recovery.append(
-            {
-                "rung": rung.name,
-                "level": rung.level,
-                "recovered": bool(matched),
-                "matched_by": matched,
-            }
+    climb: list[dict[str, object]] = []
+    end_to_end: int | None = None
+    if result.learn is not None:
+        learned = result.learn.learn.learned_library()
+        floor_names = {p.name for p in spec.floor().primitives}
+        invented = [p for p in learned.primitives if p.name not in floor_names]
+        probes = tuple(
+            example.input for entry in spec.train_corpus.entries for example in entry.task.train
         )
+        for i, rung in enumerate(spec.rungs, start=1):
+            target = make_abstraction(rung.name, rung.template, spec.oracle_library(i - 1))
+            matched = [p.name for p in invented if matches_target(p, target, probes)]
+            recovery.append(
+                {
+                    "rung": rung.name,
+                    "level": rung.level,
+                    "recovered": bool(matched),
+                    "matched_by": matched,
+                }
+            )
 
-    climb = _climb_trace(result.learn.learn)
-    # End-to-end laddered cost: every wake re-searches every task, iteration after iteration.
-    end_to_end = 0
-    for entry in climb:
-        wake_considered = entry.get("wake_considered")
-        if isinstance(wake_considered, int):
-            end_to_end += wake_considered
+        climb = _climb_trace(result.learn.learn)
+        # End-to-end laddered cost: every wake re-searches every task, iteration after iteration.
+        end_to_end = 0
+        for entry in climb:
+            wake_considered = entry.get("wake_considered")
+            if isinstance(wake_considered, int):
+                end_to_end += wake_considered
 
     # The cost matrix (design doc 3.5): cost(task, library) over the oracle-chain columns, with
     # each cell's solve detail. The source for every comparison view below.
@@ -205,12 +219,17 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
             "no_skip_paths": cert.no_skip_paths,
             "demonstration_health": cert.demonstration_health,
         },
+        "climb_executed": result.climbed,
         "climb_trace": climb,
         "rung_recovery": recovery,
         "probe_cap": MAX_PROBE_COMBOS,
         "cost_matrix": cost_matrix,
         "comparisons": {
-            "loop_overhead_factor": (end_to_end / laddered_marginal) if laddered_marginal else None,
+            "loop_overhead_factor": (
+                (end_to_end / laddered_marginal)
+                if end_to_end is not None and laddered_marginal
+                else None
+            ),
             "marginal_rung_value": rung_value,
             "vocabulary_tax": vocabulary_tax,
             "enablement": enablement,
@@ -302,6 +321,17 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
             "(`Budget.considered_limit`), so it went unsolved without being searched to "
             "completion -- absence of a skip path was never established. Such a ladder is not "
             "admitted: re-run the oracle chain with a higher (or no) `considered_limit` to settle it.",
+        ]
+
+    if report.get("climb_executed") is False:
+        lines += [
+            "",
+            "## Climb: SKIPPED",
+            "",
+            "> The certificate rejected this ladder, so the climb stage (LEARN + off-chain) never "
+            "ran and no learning was paid for. The sections below reflect the oracle chain only; "
+            "climb trace and rung recovery are absent, not zero. To force a climb anyway (control "
+            "arms only): `arc-lab run-ladder <name> --climb-rejected`.",
         ]
 
     climb_rows = [["iter", "wake solved", "considered (all tasks)", "minted", "converged"]]
