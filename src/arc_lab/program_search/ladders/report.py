@@ -734,9 +734,29 @@ def _estimate_raw_cost(generations: list[Any], d_raw: int, depth_limit: int) -> 
       but growth *decays* as the dedup rate climbs toward function-space saturation, so this
       over-projects.
 
-    The truth sits between. Both assume a pool large enough not to bind: the estimate is of the
-    raw search's true cost, NOT of what a ``max_pool``-capped run would spend (such a run is
-    cheaper and simply fails to find the solution -- see the caveats).
+    .. warning::
+       **"The truth sits between" is FALSE, measured.** This docstring used to claim the bracket
+       contains the answer. Validated 2026-07-23 against measured raw cost across four floors and
+       ten (observed-depth, ``d_raw``) pairs (``experiments/2026-07-23-estimator-validation/``):
+       **the bracket contained the truth in 2 of 10 cells**, and the errors run both ways --
+
+       - on floors whose growth *accelerates* (binary primitives take products of a growing pool),
+         BOTH fits under-project, badly: the geometric floor at a 2-round gap read 3,616-11,821
+         against a measured **973,013** (82x-269x under);
+       - on a floor whose reachable space is a finite group, both fits over-project (up to 3.71x),
+         because there is exponential growth to fit only until the space is exhausted;
+       - error compounds with the number of rounds extrapolated, and is floor-dependent even at a
+         one-round gap (0.015x to 1.4x observed).
+
+       So an RQ1 ratio computed from this carries a multiplicative uncertainty of roughly three
+       orders of magnitude. Report it as an order-of-magnitude bracket of unknown sign, never as a
+       measurement. ``execution/forecast_cost`` is tighter overall on the same cells (median 1.00x,
+       range 0.04x-1.24x vs this fit's 0.004x-3.71x) but is itself 25x under on two of them, so it
+       is not a drop-in replacement either -- see the notebook before relying on either number.
+
+    Both assume a pool large enough not to bind: the estimate is of the raw search's true cost,
+    NOT of what a ``max_pool``-capped run would spend (such a run is cheaper and simply fails to
+    find the solution -- see the caveats).
 
     Rounds flagged ``incomplete`` are DROPPED before fitting. Such a round was cut short mid-way by
     an ``immediate`` stop limit, so its ``composed`` is an arbitrary fraction of the round's real
@@ -781,10 +801,14 @@ def _estimate_raw_cost(generations: list[Any], d_raw: int, depth_limit: int) -> 
         "growth_ratio_last": round(ratio_last, 2),
         "estimate_low": min(low, high),
         "estimate_high": max(low, high),
+        "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells",
         "caveats": [
+            "THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells",
+            "accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)",
+            "finite-space floors: both fits over-project (up to 3.71x) once the space is exhausted",
+            "error compounds per extrapolated round and is floor-dependent even at a 1-round gap",
             "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
-            "growth decays as dedup rises, so the high fit is an upper bracket, not a prediction",
-            "order-of-magnitude, not a measurement -- validate on a calibration ladder",
+            "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign",
         ],
     }
 

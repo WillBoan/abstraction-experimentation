@@ -1,0 +1,51 @@
+# Estimator validation — pool 200,000, guard 40,000,000
+
+
+## geometric — concat_h/concat_v/flip_h/flip_v -- binary, genuinely grows
+
+  measured depth 2:           61 considered (   0.0s)
+  measured depth 3:        2,521 considered (   0.0s)
+  measured depth 4:      973,013 considered (  14.4s)
+
+  observed d_raw     measured      est low     est high in bracket     forecast fc/actual
+         2     3        2,521          480          845         no        3,121     1.24x
+         2     4      973,013        3,616       11,821         no      320,801     0.33x
+         3     4      973,013       35,729      110,585         no      320,801     0.33x
+
+## layout+params — concat_v/translate/pad -- INT + COLOR params
+
+  measured depth 2:        3,587 considered (   0.1s)
+  measured depth 3:    3,712,560 considered (  62.8s)
+
+  observed d_raw     measured      est low     est high in bracket     forecast fc/actual
+         2     3    3,712,560       57,394      220,345         no      159,752     0.04x
+
+## colour — flip_h/flip_v/map_color -- the ladder whose RQ1 headline is cited
+
+  measured depth 2:        6,743 considered (   0.1s)
+  measured depth 3:      191,057 considered (  14.9s)
+
+  observed d_raw     measured      est low     est high in bracket     forecast fc/actual
+         2     3      191,057      169,512      437,693        YES        7,307     0.04x
+
+## d4-group — flip_h/transpose -- a FINITE group; trivial regime
+
+  measured depth 2:            7 considered (   0.0s)
+  measured depth 3:           11 considered (   0.0s)
+  measured depth 4:           15 considered (   0.0s)
+  measured depth 5:           17 considered (   0.0s)
+
+  observed d_raw     measured      est low     est high in bracket     forecast fc/actual
+         2     3           11           15           15         no           11     1.00x
+         2     4           15           31           31         no           15     1.00x
+         2     5           17           63           63         no           19     1.12x
+         3     4           15           15           17        YES           15     1.00x
+         3     5           17           19           27         no           19     1.12x
+
+## Summary (unsaturated cells only)
+
+  scorable cells: 10
+  measured inside the estimator's bracket: 2/10
+  est low/actual     median=      1.00x  min=      0.00x  max=      3.71x
+  est high/actual    median=      1.36x  min=      0.01x  max=      3.71x
+  forecast/actual    median=      1.00x  min=      0.04x  max=      1.24x

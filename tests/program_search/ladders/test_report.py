@@ -307,3 +307,22 @@ def test_ratio_renders_when_raw_is_uncensored() -> None:
     text = render_report_markdown({**_REPORT, "cost": cost})
     assert "Amortization considered-ratio (measured): 9.31" in text
     assert "a full-budget FAILURE" not in text  # raw actually solved, so no failure caveat
+
+
+def test_the_raw_estimate_carries_its_measured_unreliability() -> None:
+    """The bracket is NOT a containment claim, and the report has to say so.
+
+    Validated 2026-07-23 against measured raw cost (experiments/2026-07-23-estimator-validation/):
+    it held in 2 of 10 cells. On accelerating-growth floors both fits under-project by up to 269x;
+    on finite-space floors both over-project. A consumer reading `estimate_low`/`estimate_high` as
+    "the answer is in here" is reading it wrong, so the returned caveats carry the measurement.
+    """
+    estimate = _estimate_raw_cost(
+        [{"composed": 11}, {"composed": 102}, {"composed": 6630}], d_raw=4, depth_limit=2
+    )
+    caveats = estimate["caveats"]
+    assert isinstance(caveats, list)
+    assert any("2/10" in str(c) for c in caveats)
+    assert any("under-project" in str(c) for c in caveats)
+    assert any("over-project" in str(c) for c in caveats)
+    assert "2026-07-23" in str(estimate["validated"])
