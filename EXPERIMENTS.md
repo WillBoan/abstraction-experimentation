@@ -578,7 +578,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-22 — The calibrated cost forecaster: 21.6x geomean error down to 1.07x
 
-- **Commit:** `<pending>`. Notebook: [experiments/2026-07-22-rung-probe/](experiments/2026-07-22-rung-probe/) (second half). Machinery: `execution/forecast_cost.py`.
+- **Commit:** `93f0676`. Notebook: [experiments/2026-07-22-rung-probe/](experiments/2026-07-22-rung-probe/) (second half). Machinery: `execution/forecast_cost.py`.
 - **Question:** the probe's cost column was `estimate_cost`'s worst-case ceiling — honest but useless for planning (al14: 6.4e13). Can a *prediction* be built, and how wrong is it?
 - **Ran:** built `forecast_cost.py` (typed per-type census; the engine's new-layer restriction; survival measured off a real funnel), then backtested three predictors against the engine's own per-round funnels on every ladder rung cell — 336 completed rounds across 54 cells, censored rounds excluded since a cut-short round is not a measurement.
 - **Result:**
