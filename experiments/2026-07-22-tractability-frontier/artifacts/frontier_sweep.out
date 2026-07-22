@@ -1,0 +1,15 @@
+floor           d   considered  seconds    cand/s  censored  solved       forecast  fc/actual
+geometric       2           61      0.0    53,559     False    True             61       1.00
+geometric       3        2,521      0.0    70,273     False    True          1,985       0.79
+geometric       4      320,801      4.6    70,255     False    True        320,801       1.00
+geometric       5      491,997      7.1    69,519     False    True        320,801       0.65
+layout+params   2        3,587      0.1    47,563     False    True          2,256       0.63
+layout+params   3      170,627      3.3    51,978     False    True        156,865       0.92
+layout+params   4      170,627      3.9    43,472     False    True        160,835       0.94
+layout+params   5      170,627      4.6    36,984     False    True        160,835       0.94
+colour          2        6,743      0.1    46,765     False    True          4,805       0.71
+colour          3       29,591      0.9    33,775     False    True          5,307       0.18
+colour          4       36,017      1.3    27,881     False    True          5,310       0.15
+colour          5       36,017      1.6    22,622     False    True          5,310       0.15
+cell            2      143,467      1.9    74,773     False    True        625,424       4.36
+cell            3    5,000,000    268.7    18,611      True    True        625,424       0.13

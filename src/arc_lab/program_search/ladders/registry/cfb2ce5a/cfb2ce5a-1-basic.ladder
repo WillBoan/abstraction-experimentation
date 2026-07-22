@@ -1,0 +1,148 @@
+ladder cfb2ce5a-1-basic
+
+config {
+}
+
+floor cfb2ce5a-seeded-reflections-L0 {
+    # Existing generic grid transformations.
+    use flip_h:                  (Grid) -> Grid
+    use flip_v:                  (Grid) -> Grid
+    use map_color:               (Grid, Color, Color) -> Grid
+
+    # Proposed primitives that must be added to BASE_PRIMITIVES with exactly
+    # these signatures before this file can load.
+    #
+    # largest_filled_square:
+    #   Return a tight crop of the largest all-nonzero square in the grid.
+    #   Break ties by topmost, then leftmost source position.
+    use largest_filled_square:   (Grid) -> Grid
+
+    # relative_tile:
+    #   Locate the same source square, then crop the equal-sized tile at
+    #   (down * source_size, right * source_size) from its origin.
+    use relative_tile:           (Grid, Int, Int) -> Grid
+
+    # nth_seed_source_color:
+    #   Scan seeds row-major. For the nth nonzero seed, return the color at
+    #   the aligned position in pattern. Return color 0 if no nth seed exists.
+    use nth_seed_source_color:   (Grid, Grid, Int) -> Color
+
+    # nth_nonzero_color:
+    #   Return the nth nonzero color in row-major order, or color 0 if absent.
+    use nth_nonzero_color:       (Grid, Int) -> Color
+
+    # retain_colors:
+    #   Preserve only cells having either selected color; map all others to 0.
+    use retain_colors:           (Grid, Color, Color) -> Grid
+
+    # write_relative_tile:
+    #   Use anchor to locate the source-square frame. Write tile into base at
+    #   the corresponding whole-tile offset. Return the updated base grid.
+    use write_relative_tile:     (Grid, Grid, Grid, Int, Int) -> Grid
+}
+
+rung {
+    rot180(g: Grid) -> Grid = flip_h(flip_v(g))
+}
+
+rung {
+    source_tile(g: Grid) -> Grid = largest_filled_square(g)
+}
+
+rung {
+    right_pattern(g: Grid) -> Grid = flip_h(source_tile(g))
+}
+
+rung {
+    below_pattern(g: Grid) -> Grid = flip_v(source_tile(g))
+}
+
+rung {
+    diagonal_pattern(g: Grid) -> Grid = rot180(source_tile(g))
+}
+
+rung {
+    right_seeds(g: Grid) -> Grid = relative_tile(g, 0, 1)
+}
+
+rung {
+    below_seeds(g: Grid) -> Grid = relative_tile(g, 1, 0)
+}
+
+rung {
+    diagonal_seeds(g: Grid) -> Grid = relative_tile(g, 1, 1)
+}
+
+rung {
+    first_source_color(pattern: Grid, seeds: Grid) -> Color = nth_seed_source_color(pattern, seeds, 0)
+}
+
+rung {
+    first_target_color(seeds: Grid) -> Color = nth_nonzero_color(seeds, 0)
+}
+
+rung {
+    second_source_color(pattern: Grid, seeds: Grid) -> Color = nth_seed_source_color(pattern, seeds, 1)
+}
+
+rung {
+    second_target_color(seeds: Grid) -> Color = nth_nonzero_color(seeds, 1)
+}
+
+rung {
+    seeded_source_mask(pattern: Grid, seeds: Grid) -> Grid = retain_colors(pattern, first_source_color(pattern, seeds), second_source_color(pattern, seeds))
+}
+
+rung {
+    instantiate_first_binding(pattern: Grid, seeds: Grid) -> Grid = map_color(seeded_source_mask(pattern, seeds), first_source_color(pattern, seeds), first_target_color(seeds))
+}
+
+rung {
+    instantiate_seeded_tile(pattern: Grid, seeds: Grid) -> Grid = map_color(instantiate_first_binding(pattern, seeds), second_source_color(pattern, seeds), second_target_color(seeds))
+}
+
+rung {
+    completed_right_tile(g: Grid) -> Grid = instantiate_seeded_tile(right_pattern(g), right_seeds(g))
+}
+
+rung {
+    completed_below_tile(g: Grid) -> Grid = instantiate_seeded_tile(below_pattern(g), below_seeds(g))
+}
+
+rung {
+    completed_diagonal_tile(g: Grid) -> Grid = instantiate_seeded_tile(diagonal_pattern(g), diagonal_seeds(g))
+}
+
+rung {
+    place_right(base: Grid, anchor: Grid, tile: Grid) -> Grid = write_relative_tile(base, anchor, tile, 0, 1)
+}
+
+rung {
+    place_below(base: Grid, anchor: Grid, tile: Grid) -> Grid = write_relative_tile(base, anchor, tile, 1, 0)
+}
+
+rung {
+    place_diagonal(base: Grid, anchor: Grid, tile: Grid) -> Grid = write_relative_tile(base, anchor, tile, 1, 1)
+}
+
+rung {
+    add_right(g: Grid) -> Grid = place_right(g, g, completed_right_tile(g))
+}
+
+rung {
+    add_below(g: Grid) -> Grid = place_below(add_right(g), g, completed_below_tile(g))
+}
+
+rung {
+    solve_cfb2ce5a(g: Grid) -> Grid = place_diagonal(add_below(g), g, completed_diagonal_tile(g))
+}
+
+top {
+    task cfb2ce5a {
+        solution: solve_cfb2ce5a(input)
+        train [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 2, 1, 2, 1, 0, 0, 0, 8, 0], [0, 1, 1, 2, 1, 0, 0, 0, 0, 0], [0, 2, 2, 2, 1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 3, 0, 0, 0, 0], [0, 0, 0, 0, 7, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 4, 0, 0, 0, 0, 0, 0, 5, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 3, 3, 3, 3, 9, 0, 0, 0, 0], [0, 3, 3, 8, 8, 7, 0, 0, 0, 0], [0, 3, 8, 3, 8, 0, 0, 0, 0, 0], [0, 3, 8, 8, 3, 0, 0, 0, 0, 0], [0, 0, 0, 0, 4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 5, 2, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 8, 2, 8, 8, 0, 0, 0, 0, 0], [0, 2, 2, 2, 2, 6, 0, 0, 0, 0], [0, 8, 2, 8, 8, 0, 0, 0, 0, 0], [0, 8, 2, 8, 8, 0, 1, 0, 0, 0], [0, 0, 5, 4, 0, 3, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        test [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 4, 4, 1, 1, 8, 0, 0, 0, 0], [0, 4, 1, 1, 1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 4, 0, 0, 0, 0, 0], [0, 1, 1, 4, 4, 5, 0, 0, 0, 0], [0, 0, 0, 6, 0, 0, 0, 0, 0, 0], [0, 7, 0, 0, 0, 0, 3, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+    }
+}

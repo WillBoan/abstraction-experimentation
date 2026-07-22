@@ -1,0 +1,27 @@
+floor             pool  d   considered  seconds  final pool  saturated  censored
+geometric          400  2           61      0.0          35      False     False
+geometric          400  3        2,521      0.0         400      False     False
+geometric          400  4      320,801      4.8         400      False     False
+geometric          400  5      491,997      7.3         400      False     False
+geometric       20,000  2           61      0.0          35      False     False
+geometric       20,000  3        2,521      0.0         697      False     False
+geometric       20,000  4      973,013     14.3       20000      False     False
+geometric       20,000  5    5,000,000     78.7      710657      False      True
+layout+params      400  2        3,587      0.1         400      False     False
+layout+params      400  3      170,627      3.3         400      False     False
+layout+params      400  4      170,627      4.0         400       True     False
+layout+params      400  5      170,627      4.7         400       True     False
+layout+params   20,000  2        3,587      0.1        1913      False     False
+layout+params   20,000  3    3,712,560     62.5       20000      False     False
+layout+params   20,000  4    5,000,000     80.3      116832      False      True
+colour             400  2        6,743      0.1         400      False     False
+colour             400  3       39,791      1.3         400      False     False
+colour             400  4       46,217      2.0         400      False     False
+colour             400  5       46,217      2.5         400       True     False
+colour          20,000  2        6,743      0.1        1883      False     False
+colour          20,000  3      191,057     15.3       20000      False     False
+colour          20,000  4          ABORTED   >1200        n/a        n/a        n/a
+# The colour floor at pool 20,000 / depth 4 was stopped after 20 minutes without reaching the
+# 5,000,000 guard. Its `considered` would have been exactly the guard (censored), so the only
+# unmeasured quantity is wall-clock: > 20 min at ~4k candidates/s. Recorded as a frontier data
+# point rather than a gap -- that cell is beyond a 20-minute budget, which is the answer.
