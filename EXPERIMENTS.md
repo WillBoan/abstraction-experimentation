@@ -690,7 +690,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-23 — Sleep-side micro-probes: mint arity is determined by the demo value-patterns
 
-- **Commit:** `PENDING`. Notebook: [experiments/2026-07-23-sleep-probes/](experiments/2026-07-23-sleep-probes/).
+- **Commit:** `0bce5ca`. Notebook: [experiments/2026-07-23-sleep-probes/](experiments/2026-07-23-sleep-probes/).
 - **Question:** the learn half had no single-factor attribution. What actually determines what sleep mints?
 - **Ran:** six batteries, no search: demo count, param mix, governance break-even, stale input, proposer head-to-head (`GreedyMDLLearnEngine.run` on synthetic solved sets), and the `w` calibration on the clean set's recorded runs.
 - **Result:**
