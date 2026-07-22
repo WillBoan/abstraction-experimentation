@@ -1,0 +1,10 @@
+ladder                   wake cand/s sleep sec props+pairs        w
+al1-mirror                    44,665     0.000           2        4
+al15-shift-frame              42,036     0.000           2        3
+al16-layout-nest              46,259     0.000           2        3
+al17-shift-frame-tall         42,211     0.000           2        3
+al18-fanin-rotate             46,112     0.000           2        3
+al19-fanin-recolor            45,552     0.000           2        3
+al20-recolor-telescope        44,932     0.000           2        3
+
+batch w: median 3 considered-equivalents per sleep unit (range 3 - 4)

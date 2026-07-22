@@ -687,3 +687,18 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - **But the arm label earns its keep immediately:** both climbs mint EXTRAS from stale carried solutions — al1 a frozen specialization (`map_color(#0, 3, 4)`), al17 a reparameterized duplicate of frame1. Recovery still 100%, costs already include the junk's vocab tax, but the downstream library is dirtier — a transfer liability the e2e number does not price.
 - **Interpretation:** the loop-overhead story is now fully attributed: re-search (removable by scheduling, at a library-quality price), full-budget failures on unreachable tasks, and vocabulary tax. And the first witnessed sleep-side mechanism — specialization-from-stale-input — gives item 5's micro-probes a concrete target.
 - **Next:** sleep-side single-factor batteries (item 5): demonstration-mix vs mint arity, proposer choice, governance refusals, stale-input specialization; `w` calibration alongside.
+
+## 2026-07-23 — Sleep-side micro-probes: mint arity is determined by the demo value-patterns
+
+- **Commit:** `PENDING`. Notebook: [experiments/2026-07-23-sleep-probes/](experiments/2026-07-23-sleep-probes/).
+- **Question:** the learn half had no single-factor attribution. What actually determines what sleep mints?
+- **Ran:** six batteries, no search: demo count, param mix, governance break-even, stale input, proposer head-to-head (`GreedyMDLLearnEngine.run` on synthetic solved sets), and the `w` calibration on the clean set's recorded runs.
+- **Result:**
+  - **Pairing floor = exactly 2 demos** (al12's mechanism isolated); more bought nothing.
+  - **Mint arity = number of distinct value-patterns across demos**, mechanically: varied → intended arity; frozen → literals baked (al13, isolated); **equal-valued params fuse into one shared param** — a new, un-linted failure mode (param covariance).
+  - **The skip-solved junk mechanism is frozen-param specialization, not staleness**: plain stale spellings mint nothing; repeated frozen-param solutions mint exactly al1's witnessed junk. Full mode erases the pattern by re-expressing each wake; carrying preserves it.
+  - **Proposers surface different kinds**: AntiunifyPairs mints NOTHING on fragment-shared sets (structurally cannot); FrequentSubtree finds fragments but only the arity-1 inner motif on whole-similar sets. The register's real-ARC claim, isolated.
+  - **`w` measured: ~3 considered-equivalents per sleep unit; a whole clean-set sleep ≈ 6-8 equivalents vs 2k-50k wakes** — the wake-side-only RQ1 caveat is a rounding error at this scale.
+  - Governance refused nothing in the probed range (2-3 op motifs x 2-3 uses) — the break-even frontier sits below it.
+- **Interpretation:** the demonstration plan IS the mint's specification. With S-B's law, ladder generation can guarantee intended arities by construction, and two of the clean-set table's three caveats (flavor gap, sleep cost) are now measured no-ops — marginal-vs-end-to-end is the one that matters.
+- **Next:** param-covariance lint (small); grow the ladder set (needs interestingness steer); granularity family.

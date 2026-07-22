@@ -1,0 +1,29 @@
+## S-A. Demonstration count (motif = flip_h(flip_v(g)))
+  1 demo(s)                                    -> NOTHING
+  2 demo(s)                                    -> abs0/1: flip_h(flip_v(#0))
+  3 demo(s)                                    -> abs0/1: flip_h(flip_v(#0))
+  4 demo(s)                                    -> abs0/1: flip_h(flip_v(#0))
+
+## S-B. Parameter mix -> mint arity (intended: map_color(mirror(#0), #1, #2), arity 3)
+  params vary independently: (1,2) (3,4)       -> abs0/3: map_color(flip_h(flip_v(#0)), #1, #2)
+  params frozen: (1,2) (1,2)                   -> abs0/1: map_color(flip_h(flip_v(#0)), 1, 2)
+  one frozen: (1,2) (1,4)                      -> abs0/2: map_color(flip_h(flip_v(#0)), 1, #1)
+  params equal-valued: (2,2) (5,5)             -> abs0/2: map_color(flip_h(flip_v(#0)), #1, #1)
+
+## S-C. Governance break-even (motif size x use count; distinct remainders)
+  2-op motif x 2 uses (in distinct wrappers)   -> abs0/3: map_color(flip_h(flip_v(#0)), #1, #2)
+  2-op motif x 3 uses (in distinct wrappers)   -> abs0/3: map_color(flip_h(flip_v(#0)), #1, #2)
+  3-op motif x 2 uses (in distinct wrappers)   -> abs0/3: map_color(rot90(flip_h(flip_v(#0))), #1, #2)
+  3-op motif x 3 uses (in distinct wrappers)   -> abs0/3: map_color(rot90(flip_h(flip_v(#0))), #1, #2)
+
+## S-D. Stale input (library already holds abs0 = mirror; the skip-solved mechanism)
+  all fresh (re-expressed in abs0)             -> NOTHING
+  all stale (old unfolded spelling)            -> NOTHING
+  mixed fresh + stale                          -> NOTHING
+  stale specialized: recolor(3,4) x2 carried   -> abs1/1: map_color(flip_h(flip_v(#0)), 3, 4)
+
+## S-E. Proposer head-to-head (whole-similar vs fragment-shared sets)
+  AntiunifyPairs on whole-similar              -> abs0/3: map_color(flip_h(flip_v(#0)), #1, #2)
+  AntiunifyPairs on fragment-shared            -> NOTHING
+  FrequentSubtree on whole-similar             -> abs0/1: flip_h(flip_v(#0))
+  FrequentSubtree on fragment-shared           -> abs0/1: flip_h(flip_v(#0))
