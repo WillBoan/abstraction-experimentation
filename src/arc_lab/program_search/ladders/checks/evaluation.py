@@ -1,9 +1,11 @@
-"""Evaluation-backed lint checks over a ladder's STATED solutions.
+"""Evaluation-backed lint check CORES over a ladder's STATED solutions.
 
-These run inside ``LadderSpec.lint()`` but live apart from it (the spec passes plain data in, so
-there is no import cycle). They keep lint *search-free* while giving up evaluation-freeness: each
-check evaluates the stated solutions' subterms on the tasks' own train inputs — deterministic,
-cheap, no engine search, no run identity.
+These are the three expensive computations the lint's evaluation-backed checks are built on. They
+are deliberately plain functions taking plain data -- no ``LadderSpec``, no ``CheckContext`` -- so
+they stay independently unit-testable (``tests/.../test_checks.py``) and free of the check
+machinery; the ``LadderCheck`` subclasses that call them live alongside in this package. They keep
+lint *search-free* while giving up evaluation-freeness: each evaluates the stated solutions'
+subterms on the tasks' own train inputs — deterministic, cheap, no engine search, no run identity.
 
 The law behind ``constancy_findings``: the enumerator dedupes candidates by signature (behavior on
 the train examples) and keeps the cheapest representative of each class — so a COMPOSITE subterm

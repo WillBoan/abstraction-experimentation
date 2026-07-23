@@ -1,4 +1,4 @@
-"""The evaluation-backed lint checks (``ladders/checks.py``): constancy + conditionals."""
+"""The evaluation-backed lint check cores (``ladders/checks/evaluation.py``): constancy + conditionals."""
 
 from __future__ import annotations
 
