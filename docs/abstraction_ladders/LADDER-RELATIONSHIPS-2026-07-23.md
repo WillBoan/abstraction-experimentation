@@ -85,9 +85,22 @@ unfold-and-compare then equational normal forms — no bodies, no grids); differ
 observational diff over `analysis/grids.py::exact_grids`, which needs both sides implemented. It reports
 the verdict **and how it was reached**, with exit codes EQUAL=0 / DIFFERENT=1 / INCONCLUSIVE=2.
 
-The headline case works today with **zero primitive implementations**: cfb2ce5a `v1` vs `v3` (a same-floor
-refactor over an entirely assumed floor) is proved EQUAL by unfold-and-compare, while `v1` vs `v4` (a floor
-change) honestly reports INCONCLUSIVE rather than guessing.
+The headline case works with **zero primitive implementations**: cfb2ce5a `v1` vs `v3` (a same-floor
+refactor) is proved EQUAL by unfold-and-compare, while `v1` vs `v4` (a floor change) honestly reports
+INCONCLUSIVE rather than guessing.
+
+**Both layers have now been exercised for real (2026-07-23).** The cfb2ce5a floor was implemented
+(`substrate/primitives/tiles.py`), which lets the static proof be cashed out: `v1` and `v3` agree on the
+actual ARC grids, exactly as unfold-and-compare predicted before any body existed. The observational
+layer ran the *ablation* direction — a reference primitive against a lower-floor decomposition —
+and settled two cases: `retain_colors` **is** the mask algebra (2,400 cases, 0 splits, so it leaves the
+floor), while `largest_filled_square` is not decomposable at all, because nothing in the substrate
+produces a list of regions to select among. See EXPERIMENTS.md 2026-07-23 and TODO items 22-23.
+
+One caveat the work surfaced, worth keeping in view here: **"has assumed primitives" is not the same
+predicate as "is a draft".** Implementing a floor makes a sketch resolve like a real ladder while it
+still has no testbed; anything keying off `loaded.assumed` to mean "draft" is wrong (`cli/lint_ladder.py`
+was, and is fixed).
 
 Still a mental model: the `task:` metadata + a derived cohort-hash (add them when the second lowered-floor
 ladder exists, so they are tested against real cases), the rung-relationship classification
