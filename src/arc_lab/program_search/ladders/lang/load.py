@@ -207,6 +207,18 @@ def ladder_spec(loaded: LoadedLadder) -> LadderSpec:
     return _spec_with_corpora(loaded, *split_by_meta(load_testbed(loaded.name)))
 
 
+def structural_spec(loaded: LoadedLadder) -> LadderSpec:
+    """A :class:`LadderSpec` with EMPTY corpora -- for the STRUCTURAL lint tier only.
+
+    A draft over assumed primitives has no evaluable corpus (the primitives have no
+    implementation), but every structural check reads the templates, stated solutions,
+    demonstration kinds and config -- never the grids. This builds the spec those checks need; pair
+    it with ``LadderSpec.lint(corpus_backed=False)``, which skips (and names) the grid-backed ones.
+    """
+    empty = Corpus(name=loaded.name, entries=())
+    return _spec_with_corpora(loaded, empty, empty)
+
+
 def _spec_with_corpora(loaded: LoadedLadder, train: Corpus, heldout: Corpus) -> LadderSpec:
     rungs = tuple(
         Rung(

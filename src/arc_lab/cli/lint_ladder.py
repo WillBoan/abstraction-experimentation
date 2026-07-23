@@ -11,7 +11,9 @@ Takes a registered ladder name, a path to any `.ladder` file, or nothing (the wh
 not exist yet. Unknown floor primitives are taken at their declared signatures instead of failing,
 so all the signature-level machinery -- types, scopes, arity, the depth spine -- still runs, and
 the unknown names come back as a worklist. Nothing that *evaluates* a program can run in that
-state, so the corpus-dependent lint is skipped and said to be skipped.
+state, so the lint runs its STRUCTURAL tier (the depth sandwich, dead-rung/reachability,
+distinctness, proposer/free-param checks -- everything reading only templates, solutions and
+config) and skips the corpus- and evaluation-backed checks, naming exactly which.
 
 Exits non-zero when anything fails, so it works in a hook or a script.
 """
@@ -25,7 +27,12 @@ import typer
 
 from arc_lab.program_search.analysis.depth import compositional_depth, min_depth_limit
 from arc_lab.program_search.ladders.lang.errors import LadderFormatError
-from arc_lab.program_search.ladders.lang.load import LoadedLadder, draft_spec, resolve
+from arc_lab.program_search.ladders.lang.load import (
+    LoadedLadder,
+    draft_spec,
+    resolve,
+    structural_spec,
+)
 from arc_lab.program_search.ladders.lang.parse import LADDER_SUFFIX, parse_ladder_file
 from arc_lab.program_search.ladders.lang.type_syntax import render_primitive_signature
 from arc_lab.program_search.ladders.registry import ladder_paths, load_ladder
@@ -113,18 +120,40 @@ def _lint_one(target: str, *, quiet: bool, draft: bool) -> _Outcome:
 
 
 def _report_draft(label: str, loaded: LoadedLadder) -> _Outcome:
-    """What a draft CAN be told: it loaded, its spine, and the vocabulary it still needs."""
+    """A draft over assumed primitives: run the STRUCTURAL lint tier (templates, solutions,
+    demonstration kinds, config -- no grids) and name what was skipped.
+
+    A draft is always ``INCOMPLETE``, never ``CLEAN`` and never ``FAILED``: it is unverified by
+    construction, because the corpus-backed tier cannot run until the assumed primitives exist. The
+    structural findings ARE shown in full (that is the point -- the author wants to see what breaks
+    early), but they are advisory here; the definite pass/fail verdict is deferred to a real lint of
+    the finished ladder. Everything the structural tier could not cover is named, so a quiet draft
+    is never mistaken for a sound one."""
     document = loaded.document
+    shape = structural_spec(loaded).lint(corpus_backed=False)
+    errors = [f for f in shape.findings if not f.ok and f.severity == "error"]
+    warnings = [f for f in shape.findings if not f.ok and f.severity == "warn"]
+
+    summary = (
+        f"structural lint: {len(errors)} error(s), {len(warnings)} warning(s)"
+        if errors or warnings
+        else "structural lint clean"
+    )
     typer.echo(
         f"{label}: INCOMPLETE (draft) -- loaded and type-checked, {len(loaded.templates)} rungs; "
-        "soundness NOT verified"
+        f"{summary}; corpus-backed soundness NOT verified"
     )
+
     typer.echo(f"\n  Assumed primitives ({len(loaded.assumed)}) -- implement or decompose these:")
     declared = {entry.name: entry for entry in document.floor}
     for name in loaded.assumed:
         typer.echo(f"    {name}: {render_primitive_signature(declared[name].signature)}")
 
-    typer.echo("\n  Rung spine (d_i = generation, needs = smallest depth_limit that reaches it):")
+    topology = "chain" if shape.is_chain else "DAG"
+    typer.echo(
+        f"\n  Rung spine ({topology}; d_i = generation, needs = smallest depth_limit that reaches "
+        "it):"
+    )
     for level, (block, template) in enumerate(
         zip(document.rungs, loaded.templates, strict=True), start=1
     ):
@@ -132,10 +161,18 @@ def _report_draft(label: str, loaded: LoadedLadder) -> _Outcome:
             f"    r{level:<3} {block.name:<28} d_i={compositional_depth(template)} "
             f"needs={min_depth_limit(template)}"
         )
-    tasks = len(document.tasks())
+
     typer.echo(
-        f"\n  Skipped: everything that needs a corpus -- task generation, the demonstration-plan "
-        f"checks, the depth sandwich against a pinned budget. An assumed primitive has no "
-        f"implementation, so no task can be evaluated ({tasks} task(s) declared)."
+        f"\n  Structural lint: {len(shape.findings)} checks ran "
+        f"({len(errors)} errors, {len(warnings)} warnings)"
+    )
+    for finding in errors:
+        typer.echo(f"    ERROR {finding.check}: {finding.detail}")
+    for finding in warnings:
+        typer.echo(f"    warn  {finding.check}: {finding.detail}")
+
+    typer.echo(
+        "\n  Skipped -- these need the task grids, which an assumed primitive cannot produce (no "
+        f"implementation to evaluate): {', '.join(shape.skipped_checks)}."
     )
     return _Outcome.INCOMPLETE

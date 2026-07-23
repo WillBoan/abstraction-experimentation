@@ -123,6 +123,50 @@ def test_lint_catches_a_rung_the_one_above_never_calls() -> None:
     assert _failed(shape, "rung-referenced[rot180]")
 
 
+_CORPUS_BACKED_CHECKS = frozenset(
+    {
+        "tasks-exist",
+        "min-2-train-examples",
+        "rewrite-shallow",
+        "distinct-train-inputs",
+        "outputs-vary",
+        "not-identity",
+        "heldout-distinct",
+        "constant-subterm",
+        "if-condition-varies",
+        "mdl-break-even",
+    }
+)
+
+
+def test_structural_tier_skips_exactly_the_grid_backed_checks() -> None:
+    # `corpus_backed=False` is what lets a draft over assumed primitives (no evaluable corpus) be
+    # linted: it runs every check whose inputs are templates/solutions/config and skips only the
+    # ones that need the task grids -- naming them, never silently dropping them.
+    spec = make_ladder("al1-mirror")
+    full = spec.lint()
+    assert full.skipped_checks == ()
+    structural = spec.lint(corpus_backed=False)
+    assert set(structural.skipped_checks) == _CORPUS_BACKED_CHECKS
+    # No skipped family emitted a finding, and the structural checks still ran and passed.
+    families = {f.check.split("[")[0] for f in structural.findings}
+    assert families.isdisjoint(_CORPUS_BACKED_CHECKS)
+    assert "jump-affordable" in families and "rung-referenced" in families
+    assert structural.ok  # al1 is structurally clean
+
+
+def test_rung_referenced_is_reachability_not_chain_adjacency() -> None:
+    # A rung consumed by a HIGHER, non-adjacent rung (al17 is a real DAG in the batch) is
+    # reachable from the top and must NOT be flagged -- the old chain-only check ("the immediate
+    # next rung calls it") spuriously rejected exactly this. `is_chain` reports the shape; a DAG
+    # with no dead rung is clean.
+    dag = make_ladder("al17-shift-frame-tall").lint()
+    assert dag.is_chain is False
+    assert not any(f.check.startswith("rung-referenced") and not f.ok for f in dag.findings)
+    chain = make_ladder("al1-mirror").lint()
+    assert chain.is_chain is True
+
+
 def test_lint_catches_a_top_that_never_uses_the_top_rung() -> None:
     # A top that never calls r_k isn't standing on the ladder at all.
     spec = make_ladder("al1-mirror")

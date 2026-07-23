@@ -168,9 +168,19 @@ class LadderSpec:
 
     # -- lint (static, search-free) -------------------------------------------------
 
-    def lint(self) -> LadderShape:
-        """Derive the static :class:`LadderShape` and run every cheap well-formedness check."""
+    def lint(self, *, corpus_backed: bool = True) -> LadderShape:
+        """Derive the static :class:`LadderShape` and run every cheap well-formedness check.
+
+        ``corpus_backed=False`` runs only the STRUCTURAL tier -- the checks whose inputs are the
+        templates, stated solutions, demonstration kinds and config, none of which need the task
+        grids. It is what lets a *draft* over assumed primitives (which has no evaluable corpus) be
+        linted anyway: the grid- and evaluation-backed checks are skipped and named in
+        ``LadderShape.skipped_checks`` rather than silently dropped. Every block that reads the
+        train/heldout grids or evaluates a subterm sits behind this flag; the full run
+        (``corpus_backed=True``) is byte-for-byte the historical behaviour.
+        """
         findings: list[LintFinding] = []
+        skipped_families: list[str] = []
         rungs = self.rungs
         k = len(rungs)
         ref_limit = self.reference_config.budget.depth_limit
@@ -189,9 +199,6 @@ class LadderSpec:
             tuple(r.level for r in rungs) == tuple(range(1, k + 1)),
             f"levels {[r.level for r in rungs]} must be 1..{k}",
         )
-        missing = [d.task_id for r in rungs for d in r.demonstrations if d.task_id not in by_id]
-        missing += [t for t in self.top.task_ids if t not in by_id]
-        err("tasks-exist", not missing, f"unknown task ids in train_corpus: {missing}")
         err(
             "top-solutions-aligned",
             len(self.top.task_ids) == len(self.top.reference_solutions),
@@ -199,27 +206,47 @@ class LadderSpec:
         )
         thin = [r.name for r in rungs if len(r.demonstrations) < 2]
         err("min-2-demos", not thin, f"rungs with < 2 demonstrations: {thin}")
-        few_examples = sorted(
-            {
-                tid
-                for r in rungs
-                for d in r.demonstrations
-                if (tid := d.task_id) in by_id and len(by_id[tid].task.train) < 2
-            }
-        )
-        warn(
-            "min-2-train-examples",
-            not few_examples,
-            f"tasks with < 2 train examples: {few_examples}",
-        )
+        if corpus_backed:  # task ids + train-example counts are facts about the generated corpus
+            missing = [d.task_id for r in rungs for d in r.demonstrations if d.task_id not in by_id]
+            missing += [t for t in self.top.task_ids if t not in by_id]
+            err("tasks-exist", not missing, f"unknown task ids in train_corpus: {missing}")
+            few_examples = sorted(
+                {
+                    tid
+                    for r in rungs
+                    for d in r.demonstrations
+                    if (tid := d.task_id) in by_id and len(by_id[tid].task.train) < 2
+                }
+            )
+            warn(
+                "min-2-train-examples",
+                not few_examples,
+                f"tasks with < 2 train examples: {few_examples}",
+            )
+        else:
+            skipped_families += ["tasks-exist", "min-2-train-examples"]
 
         # (Type well-formedness is not re-checked here: loading the `.ladder` file already builds
         # every rung with `make_abstraction` over `L_{i-1}` -- with the declared signature, which a
         # signatureless lint call cannot recover for a polymorphic root -- so a `LadderSpec` cannot
         # exist with an ill-typed template. Load owns it.)
 
-        # Depth sandwich (D): the tractability claims, anchored at the reference budget. (Also
-        # Structure's rung-referenced / top-uses-top-rung, which need this loop's inlining.)
+        # Structure (S): no dead rung. References point only downward (load enforces it -- a rung
+        # elaborates over L_{i-1}), so a rung is reachable from the top iff some HIGHER rung or top
+        # solution calls it. This is the DAG-general form of the old chain-only "the next rung calls
+        # it"; `is_chain` records whether the edges happen to form the simple spine, reported (never
+        # declared) so a DAG is legible rather than rejected.
+        consumers = _consumer_graph(rungs, self.top)
+        is_chain = _is_chain(consumers, [rung.name for rung in rungs])
+        for rung in rungs:
+            err(
+                f"rung-referenced[{rung.name}]",
+                len(consumers[rung.name]) >= 1,
+                f"no higher rung or top solution calls {rung.name}: it is dead "
+                "(unreachable from the top at any depth_limit)",
+            )
+
+        # Depth sandwich (D): the tractability claims, anchored at the reference budget.
         rung_shapes: list[RungShape] = []
         for i, rung in enumerate(rungs):
             d_i = compositional_depth(rung.template)
@@ -241,14 +268,12 @@ class LadderSpec:
                 f"jump depth {d_i}: a rung must compose over L_{i}, not restate a bare primitive",
             )
             double_jump: int | None = None
-            if i + 1 < k:  # inlined next rung over L_{i-1} (skip this rung)
-                # Structural necessity: the rung above must actually CALL this one. Without a
-                # call site, expanding it is a no-op and the ladder telescopes vacuously here.
-                err(
-                    f"rung-referenced[{rung.name}]",
-                    _calls(rungs[i + 1].template, rung.name) >= 1,
-                    f"{rungs[i + 1].name} never calls {rung.name}: the rung below is unused",
-                )
+            # Chain-adjacency double-jump: inline THIS rung into its immediate successor and check
+            # the skip stays intractable. Guarded by the successor actually calling it -- true for a
+            # chain, so no change on the batch. The per-consumer generalisation for a DAG (a rung
+            # whose consumer is non-adjacent or plural) is deferred (TODO item 9); until then such a
+            # rung simply has no double-jump measured here.
+            if i + 1 < k and _calls(rungs[i + 1].template, rung.name) >= 1:
                 inlined = unfold_program(
                     rungs[i + 1].template, full_lib, expand=frozenset({rung.name})
                 )
@@ -333,28 +358,36 @@ class LadderSpec:
         # depth checks above measure the INTENDED template; this one asks whether a few known
         # equations re-express the layer above a skipped rung shallowly anyway (al7's
         # tall4 == stack2(stack2 g)). Capped and behaviorally confirmed; silent-pass on caps.
-        libraries = [self.oracle_library(level) for level in range(k + 1)]
-        probe_inputs: dict[str, tuple[Grid, ...]] = {
-            rung.name: tuple(
-                ex.input
-                for demo in rung.demonstrations
-                if demo.task_id in by_id
-                for ex in by_id[demo.task_id].task.train
+        # Corpus-backed: witnesses are confirmed by evaluating on the tasks' own train inputs.
+        if corpus_backed:
+            libraries = [self.oracle_library(level) for level in range(k + 1)]
+            probe_inputs: dict[str, tuple[Grid, ...]] = {
+                rung.name: tuple(
+                    ex.input
+                    for demo in rung.demonstrations
+                    if demo.task_id in by_id
+                    for ex in by_id[demo.task_id].task.train
+                )
+                for rung in rungs
+            }
+            for task_id in self.top.task_ids:
+                if task_id in by_id:
+                    probe_inputs[task_id] = tuple(ex.input for ex in by_id[task_id].task.train)
+            findings.extend(
+                rewrite_findings(
+                    list(zip((rung.name for rung in rungs), unfolded_templates, strict=True)),
+                    [
+                        (tid, unfolded_by_id[tid])
+                        for tid in self.top.task_ids
+                        if tid in unfolded_by_id
+                    ],
+                    libraries,
+                    ref_limit,
+                    probe_inputs,
+                )
             )
-            for rung in rungs
-        }
-        for task_id in self.top.task_ids:
-            if task_id in by_id:
-                probe_inputs[task_id] = tuple(ex.input for ex in by_id[task_id].task.train)
-        findings.extend(
-            rewrite_findings(
-                list(zip((rung.name for rung in rungs), unfolded_templates, strict=True)),
-                [(tid, unfolded_by_id[tid]) for tid in self.top.task_ids if tid in unfolded_by_id],
-                libraries,
-                ref_limit,
-                probe_inputs,
-            )
-        )
+        else:
+            skipped_families.append("rewrite-shallow")
 
         # Learnability (L): proposer compatibility.
         proposer = getattr(
@@ -378,39 +411,50 @@ class LadderSpec:
                     f"{sorted(k.value for k in kinds - provided)} unservable by {type(proposer).__name__}",
                 )
 
-        # Demonstration plan (P): what the tasks themselves show.
+        # Demonstration plan (P): what the tasks themselves show. Corpus-backed -- these read the
+        # generated train/heldout GRIDS.
         #
         # These used to hold by construction -- `taskgen`'s seed generator built varied grids and
         # `RungTasks.train_args` built the free-parameter sweep -- but a `.ladder` file states both
         # as literal data, so nothing enforces them any more except this block.
-        for entry in (*self.train_corpus.entries, *self.heldout_corpus.entries):
-            task_id, train = entry.task.task_id, entry.task.train
-            inputs = [ex.input for ex in train]
-            outputs = [ex.output for ex in train]
-            err(
-                f"distinct-train-inputs[{task_id}]",
-                len(set(inputs)) == len(inputs),
-                "repeated train inputs: the example set is smaller than it looks",
-            )
-            err(
-                f"outputs-vary[{task_id}]",
-                len(set(outputs)) > 1 or len(outputs) < 2,
-                "every train output is the same grid: a constant program fits the task",
-            )
-            err(
-                f"not-identity[{task_id}]",
-                any(a != b for a, b in zip(inputs, outputs, strict=True)),
-                "output == input on every train example: the identity fits the task",
-            )
-        # Heldout must be a genuinely different task, or it measures transfer to itself.
-        train_keys = {_task_key(entry): entry.task.task_id for entry in self.train_corpus.entries}
-        for entry in self.heldout_corpus.entries:
-            twin = train_keys.get(_task_key(entry))
-            err(
-                f"heldout-distinct[{entry.task.task_id}]",
-                twin is None,
-                f"identical train examples to the train task {twin!r}",
-            )
+        if corpus_backed:
+            for entry in (*self.train_corpus.entries, *self.heldout_corpus.entries):
+                task_id, train = entry.task.task_id, entry.task.train
+                inputs = [ex.input for ex in train]
+                outputs = [ex.output for ex in train]
+                err(
+                    f"distinct-train-inputs[{task_id}]",
+                    len(set(inputs)) == len(inputs),
+                    "repeated train inputs: the example set is smaller than it looks",
+                )
+                err(
+                    f"outputs-vary[{task_id}]",
+                    len(set(outputs)) > 1 or len(outputs) < 2,
+                    "every train output is the same grid: a constant program fits the task",
+                )
+                err(
+                    f"not-identity[{task_id}]",
+                    any(a != b for a, b in zip(inputs, outputs, strict=True)),
+                    "output == input on every train example: the identity fits the task",
+                )
+            # Heldout must be a genuinely different task, or it measures transfer to itself.
+            train_keys = {
+                _task_key(entry): entry.task.task_id for entry in self.train_corpus.entries
+            }
+            for entry in self.heldout_corpus.entries:
+                twin = train_keys.get(_task_key(entry))
+                err(
+                    f"heldout-distinct[{entry.task.task_id}]",
+                    twin is None,
+                    f"identical train examples to the train task {twin!r}",
+                )
+        else:
+            skipped_families += [
+                "distinct-train-inputs",
+                "outputs-vary",
+                "not-identity",
+                "heldout-distinct",
+            ]
 
         # Demonstration plan (P): background-within / target-across -- a rung's FREE parameters
         # must be demonstrated at more than one value, or antiunification has nothing to
@@ -447,14 +491,19 @@ class LadderSpec:
         # Demonstration plan (P): constancy + conditionals -- evaluation-backed checks over the
         # stated solutions, UNFOLDED to the floor (collapse lives in the floor's term space:
         # al14's `sub(1, 1)` only appears after unfolding; the shared cache above owns the
-        # unfolds).
-        train_inputs = {
-            entry.task.task_id: tuple(ex.input for ex in entry.task.train)
-            for entry in (*self.train_corpus.entries, *self.heldout_corpus.entries)
-        }
-        sources = tuple(getattr(self.reference_config.search_engine, "constant_sources", ()) or ())
-        findings.extend(constancy_findings(unfolded_stated, train_inputs, full_lib, sources))
-        findings.extend(conditional_findings(unfolded_stated, train_inputs, full_lib))
+        # unfolds). Corpus-backed: both EVALUATE subterms on the tasks' own train inputs.
+        if corpus_backed:
+            train_inputs = {
+                entry.task.task_id: tuple(ex.input for ex in entry.task.train)
+                for entry in (*self.train_corpus.entries, *self.heldout_corpus.entries)
+            }
+            sources = tuple(
+                getattr(self.reference_config.search_engine, "constant_sources", ()) or ()
+            )
+            findings.extend(constancy_findings(unfolded_stated, train_inputs, full_lib, sources))
+            findings.extend(conditional_findings(unfolded_stated, train_inputs, full_lib))
+        else:
+            skipped_families += ["constant-subterm", "if-condition-varies"]
 
         # Advisories (A): fan-in / telescope + lambda.
         warn(
@@ -535,30 +584,39 @@ class LadderSpec:
         # A per-rung-demonstrations PROXY for whole-corpus governance, conservative by design:
         # real governance scores every solution at the iteration plus the library term, so a rung
         # passing here can still be refused -- never the reverse claim.
-        metric = getattr(getattr(self.reference_config.learn, "learn_engine", None), "metric", None)
-        if metric is None:
-            metric = CompressionMetric()
-        for level, rung in enumerate(rungs, start=1):
-            entries = [
-                (by_id[d.task_id], d.solution) for d in rung.demonstrations if d.task_id in by_id
-            ]
-            if not entries:
-                continue
-            below, above = self.oracle_library(level - 1), self.oracle_library(level)
-            folded = [SolvedTask(annotated=a, program=p) for a, p in entries]
-            unminted = [
-                SolvedTask(
-                    annotated=a, program=unfold_program(p, above, expand=frozenset({rung.name}))
-                )
-                for a, p in entries
-            ]
-            gain = metric.describe(unminted, below).total - metric.describe(folded, above).total
-            err(
-                f"mdl-break-even[{rung.name}]",
-                gain > 0,
-                f"minting it costs {-gain:.1f} bits more than it saves on its own "
-                f"{len(entries)} demonstration(s), so governance will refuse it",
+        # Corpus-backed: the MDL score is taken over the demonstrating tasks resolved in the
+        # corpus (`by_id`), which a corpus-less draft does not have.
+        if corpus_backed:
+            metric = getattr(
+                getattr(self.reference_config.learn, "learn_engine", None), "metric", None
             )
+            if metric is None:
+                metric = CompressionMetric()
+            for level, rung in enumerate(rungs, start=1):
+                entries = [
+                    (by_id[d.task_id], d.solution)
+                    for d in rung.demonstrations
+                    if d.task_id in by_id
+                ]
+                if not entries:
+                    continue
+                below, above = self.oracle_library(level - 1), self.oracle_library(level)
+                folded = [SolvedTask(annotated=a, program=p) for a, p in entries]
+                unminted = [
+                    SolvedTask(
+                        annotated=a, program=unfold_program(p, above, expand=frozenset({rung.name}))
+                    )
+                    for a, p in entries
+                ]
+                gain = metric.describe(unminted, below).total - metric.describe(folded, above).total
+                err(
+                    f"mdl-break-even[{rung.name}]",
+                    gain > 0,
+                    f"minting it costs {-gain:.1f} bits more than it saves on its own "
+                    f"{len(entries)} demonstration(s), so governance will refuse it",
+                )
+        else:
+            skipped_families.append("mdl-break-even")
 
         # Derived output (not a check; physically last because it consumes the sandwich
         # quantities): the validity window — inclusive, in depth_limit units (a depth-d program is
@@ -575,7 +633,9 @@ class LadderSpec:
             raw_depth_profile=tuple(raw_profile),
             rungs=tuple(rung_shapes),
             validity_window=(lower, upper),
+            is_chain=is_chain,
             findings=tuple(findings),
+            skipped_checks=tuple(skipped_families),
         )
 
     # -- pretty-print ---------------------------------------------------------------
@@ -647,11 +707,21 @@ class LadderSpec:
             "oracle-chain runs"
         )
 
+        # Two orthogonal facts, both derived from the reference edges: chain vs DAG (does a rung
+        # ever feed more than its immediate successor?) and telescope vs recombination (does anything
+        # call a lower rung more than once?).
         max_fan_in = max([*(s.fan_in for s in shape.rungs), *top_fan_ins], default=0)
-        overall = (
-            "chain, pure telescope (no rung or top solution calls a lower rung more than once)"
+        max_fan_out = max((len(cs) for cs in _consumer_graph(self.rungs, self.top).values()), default=0)
+        recombination = (
+            "pure telescope (no rung or top solution calls a lower rung more than once)"
             if max_fan_in <= 1
-            else f"chain with recombination (max fan-in {max_fan_in})"
+            else f"recombination (max fan-in {max_fan_in})"
+        )
+        overall = (
+            f"chain, {recombination}"
+            if shape.is_chain
+            else f"DAG (a rung feeds several or non-adjacent consumers; max fan-out "
+            f"{max_fan_out}), {recombination}"
         )
         lines += [
             "",
@@ -932,6 +1002,44 @@ def _fan_in(template: Program, rung_names: set[str]) -> int:
 def _calls(program: Program, name: str) -> int:
     """How many times ``program`` calls the named abstraction — 0 means structurally unused."""
     return sum(1 for node in program.walk() if isinstance(node, Apply) and node.primitive == name)
+
+
+def _consumer_graph(
+    rungs: Sequence[Rung], top: TopRung
+) -> dict[str, list[str]]:
+    """For each rung, the higher rungs and top solutions that CALL it -- its consumers.
+
+    References point only downward (a rung elaborates over ``L_{i-1}``; enforced at load), so a
+    rung reachable from the top is exactly one with a consumer: an empty list is a dead rung,
+    unreachable however deep the budget. This is the DAG generalisation of "the next rung calls
+    it" -- correct for a chain and for a rung that feeds several, or non-adjacent, consumers.
+    """
+    names = [rung.name for rung in rungs]
+    consumers: dict[str, list[str]] = {name: [] for name in names}
+    for level, rung in enumerate(rungs):
+        for lower in names[:level]:  # only strictly-lower rungs can be called
+            if _calls(rung.template, lower):
+                consumers[lower].append(rung.name)
+    for task_id, solution in zip(top.task_ids, top.reference_solutions, strict=False):
+        for name in names:
+            if _calls(solution, name):
+                consumers[name].append(f"top:{task_id}")
+    return consumers
+
+
+def _is_chain(consumers: dict[str, list[str]], rung_names: Sequence[str]) -> bool:
+    """Do the rung->rung edges form the simple spine ``r_1 <- ... <- r_k``?
+
+    True iff each rung is consumed only by its immediate successor (top solutions ignored -- they
+    are the goal layer, free to reach past the spine). Any other shape -- a rung with two rung
+    consumers, or a non-adjacent one -- is a DAG.
+    """
+    for level, name in enumerate(rung_names):
+        rung_consumers = [c for c in consumers[name] if not c.startswith("top:")]
+        expected = [rung_names[level + 1]] if level + 1 < len(rung_names) else []
+        if rung_consumers != expected:
+            return False
+    return True
 
 
 def _corpus_provenance(corpus: Corpus) -> dict[str, object]:

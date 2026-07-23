@@ -60,7 +60,15 @@ class LadderShape:
     #: which every jump is affordable and no inlined double-jump (nor the raw top) is reachable.
     #: Empty as ``(lo, hi)`` with ``lo > hi`` when no budget satisfies both (a degenerate ladder).
     validity_window: tuple[int, int]
+    #: ``True`` iff the rung dependency edges form the simple spine ``r_1 <- ... <- r_k`` (each
+    #: rung consumed only by its immediate successor). ``False`` is a DAG: a rung feeds more than
+    #: one consumer, or a non-adjacent one. Derived, not declared -- a fact about the templates.
+    is_chain: bool
     findings: tuple[LintFinding, ...]
+    #: Check families NOT run because they need the task grids (``lint(corpus_backed=False)`` on a
+    #: draft over assumed primitives). Empty on a full run. Named, never silently dropped, so a
+    #: clean structural lint is never mistaken for a verified-sound ladder.
+    skipped_checks: tuple[str, ...] = ()
 
     @property
     def ok(self) -> bool:

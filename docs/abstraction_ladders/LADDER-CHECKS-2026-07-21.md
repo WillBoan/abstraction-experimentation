@@ -51,6 +51,8 @@ Enforced by `ladders/lang/`; every error carries its line number. Roughly forty 
 
 **29 checks: 24 error-class, 5 warnings** (`constant-subterm` is error-class with a warn tier — see its row). Most are parametrised per rung or per task, so a real ladder runs many more instances (al13 runs 59). Two checks left this layer on 2026-07-23: `well-typed` was dropped as redundant (loading already builds every rung with `make_abstraction` over `L_{i-1}` — with the declared signature a signatureless lint call cannot recover for a polymorphic root — so an ill-typed template cannot reach lint), and `branching-summoned` moved to load (see the Expressions bullet above). `free-params-covary` and `hof-holes-fillable` (added 2026-07-23) are dormant on the current batch — they guard failure modes only Phase 2/3 ladders will hit.
 
+**Two input tiers (2026-07-23).** A check is either *structural* — its inputs are the templates, stated solutions, demonstration kinds and config, never the grids — or *corpus-backed*: it reads the generated train/heldout grids, or evaluates a subterm on them. `lint(corpus_backed=False)` runs only the structural tier, which is what lets a *draft* over assumed primitives be linted without an evaluable corpus (`arc-lab lint-ladder --draft`, [cli/lint_ladder.py](../../src/arc_lab/cli/lint_ladder.py)). The ten corpus-backed families — `tasks-exist`, `min-2-train-examples`, `rewrite-shallow`, `distinct-train-inputs`, `outputs-vary`, `not-identity`, `heldout-distinct`, `constant-subterm`, `if-condition-varies`, `mdl-break-even` — are skipped and NAMED in `LadderShape.skipped_checks`, never silently dropped, so a quiet draft is never read as a sound ladder. The depth sandwich is structural (templates + `depth_limit`), so it runs against the resolved budget; only the grid-dependent checks wait for the corpus. A draft's CLI outcome is always `INCOMPLETE` (exit 2) — its structural findings are shown but advisory; the definite verdict is deferred to a real lint of the finished ladder.
+
 ### Structure
 
 | Check | Asserts |
@@ -59,9 +61,11 @@ Enforced by `ladders/lang/`; every error carries its line number. Roughly forty 
 | `tasks-exist` | every demonstration / top task id is in the train corpus |
 | `top-solutions-aligned` | one reference solution per top task id |
 | `min-2-demos` | each rung has >= 2 demonstrating tasks |
-| `rung-referenced` | the rung above actually calls this one |
+| `rung-referenced` | the rung is called by at least one HIGHER rung or a top solution — reachable from the top, no dead rung. Generalised 2026-07-23 from the old chain-only "the immediate next rung calls it", which spuriously rejected any DAG; references point only downward (load), so this local check is exactly transitive reachability |
 | `top-uses-top-rung` | each top solution calls `r_k` |
 | `rung-distinct` | no two rungs compute the same function (compared unfolded) |
+
+`LadderShape.is_chain` is derived alongside (never declared): `True` when the rung edges form the simple spine `r_1 <- ... <- r_k`, `False` for a DAG (a rung feeding several or non-adjacent consumers — al17 is one in the batch). Reported in `spec.md`'s Shape line and the draft lint; it changes no verdict. **Deferred (TODO item 9):** the double-jump / validity-window still inline the immediate successor (chain-adjacency); on a DAG a rung whose successor does not call it simply gets no double-jump measured until the per-consumer generalisation lands.
 
 ### The depth sandwich (anchored at the pinned `depth_limit`)
 
