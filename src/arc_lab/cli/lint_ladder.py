@@ -53,8 +53,14 @@ def lint_ladder_command(
     quiet: bool = typer.Option(
         False, "--quiet", "-q", help="Only report findings, not the full rendered spec."
     ),
+    json_output: bool = typer.Option(
+        False, "--json", help="Emit diagnostics as JSON (LSP-shaped ranges) instead of the report."
+    ),
 ) -> None:
     targets = sorted(ladder_paths()) if target is None else [target]
+    if json_output:
+        _emit_json(targets)
+        return
     outcomes = [_lint_one(one, quiet=quiet or target is None, draft=draft) for one in targets]
     if target is None:
         clean = sum(outcome is _Outcome.CLEAN for outcome in outcomes)
@@ -74,6 +80,38 @@ class _Outcome(enum.Enum):
     CLEAN = 0  # loaded and every lint check passed
     FAILED = 1  # loaded but a lint check failed, or the file could not load
     INCOMPLETE = 2  # a draft: loaded and type-checked, but soundness is unverified
+
+
+def _emit_json(targets: list[str]) -> None:
+    """Print each target's diagnostics as domain JSON; exit non-zero if any has an error.
+
+    Shares the exact producer the language server uses (``pipeline.lint_source``), so the CLI and
+    the editor never disagree about a `.ladder` file.
+    """
+    import json
+
+    from arc_lab.program_search.ladders.pipeline import diagnostics_to_json, lint_source
+
+    results = []
+    for one in targets:
+        path = _source_path(one)
+        results.append(diagnostics_to_json(lint_source(path.read_text()), path=str(path)))
+    typer.echo(json.dumps(results, indent=2))
+    if any(result["outcome"] == "failed" for result in results):
+        raise typer.Exit(code=1)
+
+
+def _source_path(target: str) -> Path:
+    """The `.ladder` path for a path-like target or a registered ladder name."""
+    path = Path(target)
+    if path.suffix == LADDER_SUFFIX or path.exists():
+        if not path.is_file():
+            raise typer.BadParameter(f"{target}: no such `.ladder` file")
+        return path
+    try:
+        return ladder_paths()[target]
+    except KeyError as exc:
+        raise typer.BadParameter(str(exc)) from exc
 
 
 def _resolve_target(target: str, *, draft: bool) -> LoadedLadder:

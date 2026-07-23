@@ -17,8 +17,8 @@ import logging
 from lsprotocol import types as lsp
 from pygls.lsp.server import LanguageServer
 
+from ..pipeline import lint_source
 from .convert import to_lsp
-from .shim import diagnose
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def create_server() -> LanguageServer:
 def _publish(server: LanguageServer, uri: str, *, run_lint: bool) -> None:
     """Re-analyse the document at ``uri`` and publish its diagnostics (version-stamped)."""
     document = server.workspace.get_text_document(uri)
-    diagnostics = [to_lsp(d, uri=uri) for d in diagnose(document.source, run_lint=run_lint)]
+    diagnostics = [to_lsp(d, uri=uri) for d in lint_source(document.source, run_lint=run_lint)]
     server.text_document_publish_diagnostics(
         lsp.PublishDiagnosticsParams(uri=uri, version=document.version, diagnostics=diagnostics)
     )

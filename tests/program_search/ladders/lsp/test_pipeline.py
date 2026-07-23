@@ -1,4 +1,4 @@
-"""The Phase-A diagnostic shim: strict pipeline -> LadderDiagnostic, and the LSP conversion.
+"""The shared diagnostics pipeline: strict pipeline -> LadderDiagnostic, and the LSP conversion.
 
 Also the latency baseline (parse+resolve+lint on the largest ladder) that informs the server's
 debounce / tier policy -- recorded, with only a generous backstop assertion (no flaky tight bound).
@@ -10,11 +10,11 @@ import time
 
 from arc_lab.program_search.ladders.diagnostics import LadderDiagnostic, Position, Range, Severity
 from arc_lab.program_search.ladders.lsp.convert import to_lsp
-from arc_lab.program_search.ladders.lsp.shim import (
+from arc_lab.program_search.ladders.pipeline import (
     _from_finding,
     _from_format_error,
     _line_range,
-    diagnose,
+    lint_source,
 )
 from arc_lab.program_search.ladders.registry import ladder_paths
 from arc_lab.program_search.ladders.shape import LintFinding
@@ -25,14 +25,14 @@ _LARGEST = "al14-cell-row-grid"  # the deepest committed ladder -- the latency w
 
 def test_clean_ladder_has_no_error_diagnostics() -> None:
     source = ladder_paths()[_CLEAN].read_text()
-    diags = diagnose(source)
+    diags = lint_source(source)
     assert not [d for d in diags if d.severity is Severity.ERROR], (
         f"the reference ladder should lint error-clean, got {[d.slug for d in diags]}"
     )
 
 
 def test_parse_error_yields_one_line_level_load_error() -> None:
-    diags = diagnose("this is not a ladder file\n")
+    diags = lint_source("this is not a ladder file\n")
     assert len(diags) == 1
     (only,) = diags
     assert only.code == "load-error"
@@ -92,9 +92,9 @@ def test_cheap_tier_stays_fast_on_largest_ladder() -> None:
     # (The full lint is seconds on al14 -- see the recorded baseline below -- which is exactly why the
     # server gates it behind open/save.)
     source = ladder_paths()[_LARGEST].read_text()
-    diagnose(source, run_lint=False)  # warm
+    lint_source(source, run_lint=False)  # warm
     start = time.perf_counter()
-    diagnose(source, run_lint=False)
+    lint_source(source, run_lint=False)
     elapsed = time.perf_counter() - start
     print(f"\n[latency] parse+resolve (cheap tier) of {_LARGEST}: {elapsed * 1000:.2f} ms")
     assert elapsed < 0.5
@@ -104,7 +104,7 @@ def test_full_lint_baseline_recorded() -> None:
     # Recorded, not gated: informs the debounce/tier policy. Generous backstop, not a target.
     source = ladder_paths()[_LARGEST].read_text()
     start = time.perf_counter()
-    diagnose(source, run_lint=True)
+    lint_source(source, run_lint=True)
     elapsed = time.perf_counter() - start
     print(f"\n[latency] full parse+resolve+lint of {_LARGEST}: {elapsed * 1000:.1f} ms")
     assert elapsed < 30.0
@@ -138,7 +138,7 @@ top {
 def test_type_error_in_a_solution_squiggles_the_expression_not_the_line() -> None:
     # `flip_h(1)` is a type error (int literal in a Grid slot). E1: it anchors to the solution
     # expression's exact span (mapped through solution_map), not the whole line and not line 0.
-    diags = [d for d in diagnose(_TYPE_ERROR_LADDER) if d.severity is Severity.ERROR]
+    diags = [d for d in lint_source(_TYPE_ERROR_LADDER) if d.severity is Severity.ERROR]
     assert len(diags) == 1
     diag = diags[0]
     assert diag.range.start.line == diag.range.end.line
@@ -146,3 +146,35 @@ def test_type_error_in_a_solution_squiggles_the_expression_not_the_line() -> Non
     lines = _TYPE_ERROR_LADDER.splitlines()
     token = lines[diag.range.start.line][diag.range.start.character : diag.range.end.character]
     assert token == "flip_h(1)", token
+
+
+def test_diagnostics_to_json_is_lsp_shaped() -> None:
+    from arc_lab.program_search.ladders.pipeline import diagnostics_to_json
+
+    diags = [
+        LadderDiagnostic(
+            code="rung-referenced",
+            range=Range(Position(3, 4), Position(3, 10)),
+            severity=Severity.ERROR,
+            message="dead rung",
+            occurrence="rot180",
+        )
+    ]
+    payload = diagnostics_to_json(diags, path="al1.ladder")
+    assert payload["path"] == "al1.ladder"
+    assert payload["outcome"] == "failed"  # an error present
+    entries = payload["diagnostics"]
+    assert isinstance(entries, list)
+    (entry,) = entries
+    assert entry == {
+        "code": "rung-referenced",
+        "severity": "error",
+        "message": "dead rung",
+        "occurrence": "rot180",
+        "range": {
+            "start": {"line": 3, "character": 4},
+            "end": {"line": 3, "character": 10},
+        },
+    }
+    # No diagnostics -> clean.
+    assert diagnostics_to_json([], path="x.ladder")["outcome"] == "clean"
