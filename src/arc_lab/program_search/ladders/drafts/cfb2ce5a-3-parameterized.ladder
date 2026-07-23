@@ -1,0 +1,111 @@
+ladder cfb2ce5a-3-parameterized
+
+# VARIANT v3 of the cfb2ce5a "seeded reflections" task (companion to
+# cfb2ce5a-1-basic). Same floor + same top task, so the raw arm cancels
+# against v1 -- what differs is the DECOMPOSITION.
+#
+# v1 spelled the climb as 23 rungs, 11 of them depth-1: pure aliases
+# (source_tile = largest_filled_square) and constant-specializations
+# (right_seeds = relative_tile(g, 0, 1)). Neither buys depth -- search reaches
+# them in one step -- so they are not learnable abstractions; they just name a
+# primitive or bake in a constant. lint flagged all 11 (proper-composition).
+#
+# v3 removes them by LIFTING the frozen constants into parameters and letting
+# the COMPOSITIONS carry the levels. The three directions (right/below/diagonal)
+# stop being three rungs each and become the (dr, dc) ARGUMENTS of one
+# parameterized rung, demonstrated three times. The one thing that genuinely
+# differs per direction and cannot be a numeric parameter -- the reflection
+# (flip_h / flip_v / rot180) -- is passed IN as the `pattern` argument, decided
+# at the call site. Result: 5 rungs, every one a proper composition.
+
+config {
+    # The composed rungs are genuinely deeper than v1's depth-1 stubs;
+    # `instantiated_tile` composes three lower-rung calls, so the budget must
+    # reach generation 3.
+    budget.depth_limit: 3
+}
+
+floor cfb2ce5a-seeded-reflections-L0 {
+    # Existing generic grid transformations.
+    use flip_h:                  (Grid) -> Grid
+    use flip_v:                  (Grid) -> Grid
+    use map_color:               (Grid, Color, Color) -> Grid
+
+    # Proposed primitives that must be added to BASE_PRIMITIVES with exactly
+    # these signatures before this file can load (identical to v1).
+    #
+    # largest_filled_square:
+    #   Return a tight crop of the largest all-nonzero square in the grid.
+    #   Break ties by topmost, then leftmost source position.
+    use largest_filled_square:   (Grid) -> Grid
+
+    # relative_tile:
+    #   Locate the same source square, then crop the equal-sized tile at
+    #   (down * source_size, right * source_size) from its origin.
+    use relative_tile:           (Grid, Int, Int) -> Grid
+
+    # nth_seed_source_color:
+    #   Scan seeds row-major. For the nth nonzero seed, return the color at
+    #   the aligned position in pattern. Return color 0 if no nth seed exists.
+    use nth_seed_source_color:   (Grid, Grid, Int) -> Color
+
+    # nth_nonzero_color:
+    #   Return the nth nonzero color in row-major order, or color 0 if absent.
+    use nth_nonzero_color:       (Grid, Int) -> Color
+
+    # retain_colors:
+    #   Preserve only cells having either selected color; map all others to 0.
+    use retain_colors:           (Grid, Color, Color) -> Grid
+
+    # write_relative_tile:
+    #   Use anchor to locate the source-square frame. Write tile into base at
+    #   the corresponding whole-tile offset. Return the updated base grid.
+    use write_relative_tile:     (Grid, Grid, Grid, Int, Int) -> Grid
+}
+
+# The mask of the two seed-bound source colors. The two binding indices 0 and 1
+# are STRUCTURAL constants (the mask is always about both bindings), not a frozen
+# free parameter -- unlike v1's per-direction specializations.
+rung {
+    tile_mask(pattern: Grid, seeds: Grid) -> Grid = retain_colors(pattern, nth_seed_source_color(pattern, seeds, 0), nth_seed_source_color(pattern, seeds, 1))
+}
+
+# Recolor one binding: map the nth seed-source color to the nth target color.
+# `n` is the parameter v1 froze into `first_*`/`second_*` (four depth-1 rungs).
+rung {
+    rebind(g: Grid, pattern: Grid, seeds: Grid, n: Int) -> Grid = map_color(g, nth_seed_source_color(pattern, seeds, n), nth_nonzero_color(seeds, n))
+}
+
+# Instantiate the whole tile: mask, then apply both bindings. This is where the
+# `n` parameter earns its keep -- one rung demonstrated at n = 0 and n = 1,
+# replacing v1's `instantiate_first_binding` + `instantiate_seeded_tile`.
+rung {
+    instantiated_tile(pattern: Grid, seeds: Grid) -> Grid = rebind(rebind(tile_mask(pattern, seeds), pattern, seeds, 0), pattern, seeds, 1)
+}
+
+# The completed tile for a direction: instantiate the reflected `pattern` against
+# the seeds cropped at (dr, dc). The direction is a PARAMETER now, not three
+# `completed_*_tile` rungs.
+rung {
+    completed_tile(g: Grid, pattern: Grid, dr: Int, dc: Int) -> Grid = instantiated_tile(pattern, relative_tile(g, dr, dc))
+}
+
+# Place the completed tile back at the (dr, dc) offset. Replaces v1's three
+# `place_*` specializations AND three `add_*` rungs: one parameterized rung,
+# applied once per direction in the top solution.
+rung {
+    place_reflected(base: Grid, g: Grid, pattern: Grid, dr: Int, dc: Int) -> Grid = write_relative_tile(base, g, completed_tile(g, pattern, dr, dc), dr, dc)
+}
+
+top {
+    task cfb2ce5a {
+        # Three applications of the one parameterized rung, differing only in the
+        # reflected pattern (flip_h / flip_v / rot180 of the source tile) and the
+        # (dr, dc) direction. rot180 is inlined as flip_h(flip_v(...)).
+        solution: place_reflected(place_reflected(place_reflected(input, input, flip_h(largest_filled_square(input)), 0, 1), input, flip_v(largest_filled_square(input)), 1, 0), input, flip_h(flip_v(largest_filled_square(input))), 1, 1)
+        train [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 2, 1, 2, 1, 0, 0, 0, 8, 0], [0, 1, 1, 2, 1, 0, 0, 0, 0, 0], [0, 2, 2, 2, 1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 3, 0, 0, 0, 0], [0, 0, 0, 0, 7, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 4, 0, 0, 0, 0, 0, 0, 5, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 3, 3, 3, 3, 9, 0, 0, 0, 0], [0, 3, 3, 8, 8, 7, 0, 0, 0, 0], [0, 3, 8, 3, 8, 0, 0, 0, 0, 0], [0, 3, 8, 8, 3, 0, 0, 0, 0, 0], [0, 0, 0, 0, 4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 5, 2, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 8, 2, 8, 8, 0, 0, 0, 0, 0], [0, 2, 2, 2, 2, 6, 0, 0, 0, 0], [0, 8, 2, 8, 8, 0, 0, 0, 0, 0], [0, 8, 2, 8, 8, 0, 1, 0, 0, 0], [0, 0, 5, 4, 0, 3, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        test [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 4, 4, 1, 1, 8, 0, 0, 0, 0], [0, 4, 1, 1, 1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 4, 0, 0, 0, 0, 0], [0, 1, 1, 4, 4, 5, 0, 0, 0, 0], [0, 0, 0, 6, 0, 0, 0, 0, 0, 0], [0, 7, 0, 0, 0, 0, 3, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+    }
+}
