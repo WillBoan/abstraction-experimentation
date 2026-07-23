@@ -103,3 +103,41 @@ def test_full_lint_baseline_recorded() -> None:
     elapsed = time.perf_counter() - start
     print(f"\n[latency] full parse+resolve+lint of {_LARGEST}: {elapsed * 1000:.1f} ms")
     assert elapsed < 30.0
+
+
+_TYPE_ERROR_LADDER = """ladder tmp-test
+config {
+    budget.depth_limit: 2
+}
+floor tmp-L0 {
+    use flip_h: (Grid) -> Grid
+}
+rung {
+    twice(g: Grid) -> Grid = flip_h(flip_h(g))
+    task t1 {
+        solution: twice(input)
+        train [[1, 2], [3, 4]]
+        test  [[5, 6], [7, 8]]
+    }
+}
+top {
+    task top1 {
+        solution: flip_h(1)
+        train [[1, 2], [3, 4]]
+        test  [[5, 6], [7, 8]]
+    }
+}
+"""
+
+
+def test_type_error_in_a_solution_squiggles_the_expression_not_the_line() -> None:
+    # `flip_h(1)` is a type error (int literal in a Grid slot). E1: it anchors to the solution
+    # expression's exact span (mapped through solution_map), not the whole line and not line 0.
+    diags = [d for d in diagnose(_TYPE_ERROR_LADDER) if d.severity is Severity.ERROR]
+    assert len(diags) == 1
+    diag = diags[0]
+    assert diag.range.start.line == diag.range.end.line
+    assert diag.range.start.character > 0  # precise: past the "solution: " prefix
+    lines = _TYPE_ERROR_LADDER.splitlines()
+    token = lines[diag.range.start.line][diag.range.start.character : diag.range.end.character]
+    assert token == "flip_h(1)", token

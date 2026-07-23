@@ -61,10 +61,16 @@ def diagnose(source: str, *, run_lint: bool = True) -> list[LadderDiagnostic]:
 
 
 def _from_format_error(exc: LadderFormatError, lines: Sequence[str]) -> LadderDiagnostic:
-    line0 = exc.line - 1 if exc.line is not None else 0
+    # A precise span (an elaboration error mapped through its fragment's source map) wins; otherwise
+    # fall back to the whole offending line.
+    if exc.span is not None:
+        source_range = exc.span
+    else:
+        line0 = exc.line - 1 if exc.line is not None else 0
+        source_range = _line_range(lines, line0)
     return LadderDiagnostic(
         code="load-error",
-        range=_line_range(lines, line0),
+        range=source_range,
         severity=Severity.ERROR,
         message=exc.detail,
     )

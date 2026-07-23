@@ -26,7 +26,11 @@ from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
 from arc_lab.program_search.execution.overrides import apply_overrides
 from arc_lab.program_search.execution.studies import split_by_meta
 from arc_lab.program_search.ladders.chain import oracle_libraries
-from arc_lab.program_search.ladders.lang.errors import LadderFormatError, at_line
+from arc_lab.program_search.ladders.lang.errors import (
+    FragmentError,
+    LadderFormatError,
+    at_line,
+)
 from arc_lab.program_search.ladders.lang.expr import elaborate_expression, elaborate_typed
 from arc_lab.program_search.ladders.lang.parse import LadderDocument, RungBlock, TaskBlock
 from arc_lab.program_search.ladders.lang.type_syntax import (
@@ -370,6 +374,9 @@ def _template(block: RungBlock, below: Library) -> Program:
         template, actual = elaborate_typed(
             block.body, library=below, params=declared.params, allow_input=False
         )
+    except FragmentError as exc:
+        span = block.body_map.range(exc.start, exc.end)
+        raise LadderFormatError(exc.detail, line=block.line, span=span) from None
     except LadderFormatError as exc:
         raise at_line(exc, block.line) from None
     if unify(actual, declared.return_type) is None:
@@ -440,6 +447,9 @@ def _solutions(document: LadderDocument, libraries: tuple[Library, ...]) -> dict
             solutions[block.task_id] = elaborate_expression(
                 block.solution, library=library, allow_input=True
             )
+        except FragmentError as exc:
+            span = block.solution_map.range(exc.start, exc.end)
+            raise LadderFormatError(exc.detail, line=block.line, span=span) from None
         except LadderFormatError as exc:
             raise at_line(exc, block.line) from None
     return solutions
