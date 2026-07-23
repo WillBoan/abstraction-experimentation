@@ -3,61 +3,139 @@
 The authoring loop. Unlike ``run-ladder`` (which lints and then executes the whole climb), this
 only reads: it parses and resolves the file -- every load-time check, with line numbers -- then
 generates the corpus **in memory** and reports the static lint. So a *draft* ladder can be checked
-before its testbed exists, and the loop is edit -> lint -> edit rather than edit -> taskgen -> run.
+before its testbed exists, and the loop is edit -> lint -> edit.
 
-Exits non-zero when the lint has errors, so it works in a pre-commit hook or a script.
+Takes a registered ladder name, a path to any `.ladder` file, or nothing (the whole registry).
+
+``--draft`` is for **exploratory** ladders: a decomposition sketched for a task whose primitives do
+not exist yet. Unknown floor primitives are taken at their declared signatures instead of failing,
+so all the signature-level machinery -- types, scopes, arity, the depth spine -- still runs, and
+the unknown names come back as a worklist. Nothing that *evaluates* a program can run in that
+state, so the corpus-dependent lint is skipped and said to be skipped.
+
+Exits non-zero when anything fails, so it works in a hook or a script.
 """
 
 from __future__ import annotations
 
+import enum
+from pathlib import Path
+
 import typer
 
+from arc_lab.program_search.analysis.depth import compositional_depth, min_depth_limit
 from arc_lab.program_search.ladders.lang.errors import LadderFormatError
-from arc_lab.program_search.ladders.lang.load import draft_spec
+from arc_lab.program_search.ladders.lang.load import LoadedLadder, draft_spec, resolve
+from arc_lab.program_search.ladders.lang.parse import LADDER_SUFFIX, parse_ladder_file
+from arc_lab.program_search.ladders.lang.type_syntax import render_primitive_signature
 from arc_lab.program_search.ladders.registry import ladder_paths, load_ladder
 
 
 def lint_ladder_command(
-    name: str = typer.Argument(
-        None, help="Ladder name (its `.ladder` filename stem); omit to lint every ladder."
+    target: str = typer.Argument(
+        None,
+        help="A registered ladder name, or a path to a `.ladder` file; omit to lint every "
+        "registered ladder.",
+    ),
+    draft: bool = typer.Option(
+        False,
+        "--draft",
+        help="Exploratory mode: take unknown floor primitives at their declared signatures and "
+        "report them as a worklist, instead of failing to load.",
     ),
     quiet: bool = typer.Option(
         False, "--quiet", "-q", help="Only report findings, not the full rendered spec."
     ),
 ) -> None:
-    names = sorted(ladder_paths()) if name is None else [name]
-    failures = 0
-    for ladder_name in names:
-        failures += _lint_one(ladder_name, quiet=quiet or name is None)
-    if name is None:
-        typer.echo(f"\n{len(names) - failures}/{len(names)} ladders lint clean")
-    if failures:
+    targets = sorted(ladder_paths()) if target is None else [target]
+    outcomes = [_lint_one(one, quiet=quiet or target is None, draft=draft) for one in targets]
+    if target is None:
+        clean = sum(outcome is _Outcome.CLEAN for outcome in outcomes)
+        typer.echo(f"\n{clean}/{len(targets)} ladders lint clean")
+    # Exit code carries the worst outcome: a failure outranks an unverified draft outranks clean,
+    # so `0` means "sound", never merely "loaded".
+    if any(outcome is _Outcome.FAILED for outcome in outcomes):
         raise typer.Exit(code=1)
+    if any(outcome is _Outcome.INCOMPLETE for outcome in outcomes):
+        raise typer.Exit(code=2)
 
 
-def _lint_one(name: str, *, quiet: bool) -> int:
-    """Lint one ladder; return 1 if it has errors (or could not be loaded), else 0."""
+class _Outcome(enum.Enum):
+    """One ladder's lint result. The exit code distinguishes all three, so a hook can tell a
+    verified-sound ladder (`CLEAN`) from one that merely loaded (`INCOMPLETE`)."""
+
+    CLEAN = 0  # loaded and every lint check passed
+    FAILED = 1  # loaded but a lint check failed, or the file could not load
+    INCOMPLETE = 2  # a draft: loaded and type-checked, but soundness is unverified
+
+
+def _resolve_target(target: str, *, draft: bool) -> LoadedLadder:
+    """Load ``target`` as a path if it looks like one, else as a registered name."""
+    path = Path(target)
+    if path.suffix == LADDER_SUFFIX or path.exists():
+        if not path.is_file():
+            raise typer.BadParameter(f"{target}: no such `.ladder` file")
+        return resolve(parse_ladder_file(path), assume_missing=draft)
+    if draft:  # a registered ladder can be linted in draft mode too
+        return resolve(parse_ladder_file(ladder_paths()[target]), assume_missing=True)
+    return load_ladder(target)
+
+
+def _lint_one(target: str, *, quiet: bool, draft: bool) -> _Outcome:
+    """Lint one ladder and report; return its :class:`_Outcome`."""
+    label = Path(target).stem if target.endswith(LADDER_SUFFIX) else target
     try:
-        spec = draft_spec(load_ladder(name))
+        loaded = _resolve_target(target, draft=draft)
     except KeyError as exc:
         raise typer.BadParameter(str(exc)) from exc
     except LadderFormatError as exc:  # a load error: the file cannot mean anything yet
-        typer.echo(f"{name}: LOAD FAILED -- {exc}")
-        return 1
+        typer.echo(f"{label}: LOAD FAILED -- {exc}")
+        return _Outcome.FAILED
 
-    shape = spec.lint()
+    if loaded.assumed:
+        return _report_draft(label, loaded)
+
+    shape = draft_spec(loaded).lint()
     errors = [f for f in shape.findings if not f.ok and f.severity == "error"]
     warnings = [f for f in shape.findings if not f.ok and f.severity == "warn"]
     if not quiet:
-        typer.echo(spec.render())
+        typer.echo(draft_spec(loaded).render())
         typer.echo("")
-    verdict = "OK" if shape.ok else "FAILED"
     typer.echo(
-        f"{name}: {verdict} -- {len(shape.findings)} checks "
+        f"{label}: {'OK' if shape.ok else 'FAILED'} -- {len(shape.findings)} checks "
         f"({len(errors)} errors, {len(warnings)} warnings)"
     )
     for finding in errors:
         typer.echo(f"  ERROR {finding.check}: {finding.detail}")
     for finding in warnings:
         typer.echo(f"  warn  {finding.check}: {finding.detail}")
-    return 0 if shape.ok else 1
+    return _Outcome.CLEAN if shape.ok else _Outcome.FAILED
+
+
+def _report_draft(label: str, loaded: LoadedLadder) -> _Outcome:
+    """What a draft CAN be told: it loaded, its spine, and the vocabulary it still needs."""
+    document = loaded.document
+    typer.echo(
+        f"{label}: INCOMPLETE (draft) -- loaded and type-checked, {len(loaded.templates)} rungs; "
+        "soundness NOT verified"
+    )
+    typer.echo(f"\n  Assumed primitives ({len(loaded.assumed)}) -- implement or decompose these:")
+    declared = {entry.name: entry for entry in document.floor}
+    for name in loaded.assumed:
+        typer.echo(f"    {name}: {render_primitive_signature(declared[name].signature)}")
+
+    typer.echo("\n  Rung spine (d_i = generation, needs = smallest depth_limit that reaches it):")
+    for level, (block, template) in enumerate(
+        zip(document.rungs, loaded.templates, strict=True), start=1
+    ):
+        typer.echo(
+            f"    r{level:<3} {block.name:<28} d_i={compositional_depth(template)} "
+            f"needs={min_depth_limit(template)}"
+        )
+    tasks = len(document.tasks())
+    typer.echo(
+        f"\n  Skipped: everything that needs a corpus -- task generation, the demonstration-plan "
+        f"checks, the depth sandwich against a pinned budget. An assumed primitive has no "
+        f"implementation, so no task can be evaluated ({tasks} task(s) declared)."
+    )
+    return _Outcome.INCOMPLETE

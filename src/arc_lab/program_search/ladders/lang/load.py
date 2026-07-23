@@ -47,7 +47,7 @@ from arc_lab.program_search.learn.engines import GreedyMDLLearnEngine
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.substrate.abstraction import make_abstraction
-from arc_lab.program_search.substrate.library import Library
+from arc_lab.program_search.substrate.library import Library, Primitive, Value
 from arc_lab.program_search.substrate.program import Apply, Param, Program
 from arc_lab.program_search.substrate.registry import BASE_PRIMITIVES
 from arc_lab.program_search.substrate.types import unify
@@ -98,19 +98,22 @@ class LoadedLadder:
     solutions: dict[str, Program]  # task id -> its solution program
     demonstrations: tuple[tuple[Demonstration, ...], ...]  # per rung, level order (derived)
     config: Config
+    #: Floor primitives taken on trust from their declared signatures (draft mode). Non-empty
+    #: means nothing that EVALUATES a program can run -- no tasks, no corpus, no lint.
+    assumed: tuple[str, ...] = ()
 
     @property
     def name(self) -> str:
         return self.document.name
 
 
-def resolve(document: LadderDocument) -> LoadedLadder:
+def resolve(document: LadderDocument, *, assume_missing: bool = False) -> LoadedLadder:
     """Resolve ``document`` against the substrate: floor, rung chain, config, solutions, kinds.
 
     Everything here depends on the file alone, so every spec violation surfaces as a load error
     (spec VAL-1) without needing the ladder's testbed to exist yet.
     """
-    floor = _floor(document)
+    floor, assumed = _floor(document, assume_missing=assume_missing)
     libraries, templates = _chain(document, floor)
     config = _config(document, floor)
     solutions = _solutions(document, libraries)
@@ -122,6 +125,7 @@ def resolve(document: LadderDocument) -> LoadedLadder:
         solutions=solutions,
         demonstrations=tuple(_demonstrations(block, solutions) for block in document.rungs),
         config=config,
+        assumed=assumed,
     )
 
 
@@ -239,34 +243,89 @@ def _spec_with_corpora(loaded: LoadedLadder, train: Corpus, heldout: Corpus) -> 
 # -- resolution steps ---------------------------------------------------------------
 
 
-def _floor(document: LadderDocument) -> Library:
-    """The Floor library: registry primitives, in declaration order, signatures asserted."""
+def assumed_primitive(name: str, signature: PrimitiveSignature) -> Primitive:
+    """A primitive that does not exist yet, taken at its declared word (draft mode only).
+
+    A `.ladder` floor states every primitive's signature (spec FLR-7), which normally serves to
+    ASSERT against the registry. For a primitive an exploratory ladder is *proposing*, that same
+    signature is all the loader needs to keep going: types, scopes, depths and rewriting are all
+    signature-level. Only evaluation needs a body, so this one raises if anything tries to run it.
+    """
+
+    def impl(*_args: Value) -> Value:
+        raise NotImplementedError(
+            f"{name!r} is an assumed primitive (draft mode): it has a declared signature but no "
+            "implementation, so nothing that evaluates a program can run"
+        )
+
+    return Primitive(
+        name=name,
+        param_types=signature.param_types,
+        return_type=signature.return_type,
+        impl=impl,
+        variadic_param=signature.variadic_param,
+    )
+
+
+def _floor(
+    document: LadderDocument, *, assume_missing: bool = False
+) -> tuple[Library, tuple[str, ...]]:
+    """The Floor library + the names taken on trust.
+
+    Unknown and mis-declared primitives are collected and reported TOGETHER rather than one per
+    load: for an exploratory ladder that list is the point -- it is the vocabulary the design would
+    need. ``assume_missing`` (draft mode) builds the unknown ones from their declared signatures
+    instead of failing, so everything downstream still gets checked.
+    """
     if not document.floor:
         raise LadderFormatError("the floor needs at least one primitive (spec FLR-3)")
     seen: set[str] = set()
-    primitives = []
+    primitives: list[Primitive] = []
+    assumed: list[str] = []
+    missing: list[tuple[str, int]] = []
+    mismatched: list[tuple[str, int]] = []
     for entry in document.floor:
         if entry.name in seen:
             raise LadderFormatError(f"duplicate floor primitive {entry.name!r}", line=entry.line)
         seen.add(entry.name)
         primitive = BASE_PRIMITIVES.get(entry.name)
         if primitive is None:
-            raise LadderFormatError(
-                f"unknown primitive {entry.name!r}: not in the substrate registry", line=entry.line
-            )
+            if not assume_missing:
+                missing.append((entry.name, entry.line))
+                continue
+            assumed.append(entry.name)
+            primitives.append(assumed_primitive(entry.name, entry.signature))
+            continue
         actual = PrimitiveSignature(
             param_types=primitive.param_types,
             return_type=primitive.return_type,
             variadic_param=primitive.variadic_param,
         )
         if entry.signature != actual:  # spec FLR-7
-            raise LadderFormatError(
-                f"{entry.name!r} is declared `{render_primitive_signature(entry.signature)}` but "
-                f"the registry says `{render_primitive_signature(actual)}`",
-                line=entry.line,
+            mismatched.append(
+                (
+                    f"{entry.name!r} is declared `{render_primitive_signature(entry.signature)}` "
+                    f"but the registry says `{render_primitive_signature(actual)}`",
+                    entry.line,
+                )
             )
+            continue
         primitives.append(primitive)
-    return Library(name=document.floor_name, primitives=tuple(primitives))
+    if missing or mismatched:
+        # Every problem, each keyed to its OWN line -- an exploratory ladder's whole point is the
+        # full list, but a one-primitive typo must still point at the right line.
+        problems = [
+            (f"line {line}: unknown primitive {name!r}, not in the substrate registry", line)
+            for name, line in missing
+        ] + [(f"line {line}: {detail}", line) for detail, line in mismatched]
+        problems.sort(key=lambda item: item[1])
+        hint = "\n  (use --draft to take the declared signatures on trust)" if missing else ""
+        detail = "\n  ".join(text for text, _ in problems)
+        raise LadderFormatError(
+            f"the floor has {len(problems)} unresolved primitive(s):\n  {detail}{hint}",
+            line=problems[0][1],
+        )
+    return Library(name=document.floor_name, primitives=tuple(primitives)), tuple(assumed)
 
 
 def _chain(
