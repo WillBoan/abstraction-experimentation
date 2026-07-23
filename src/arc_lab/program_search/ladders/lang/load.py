@@ -206,6 +206,24 @@ def draft_spec(loaded: LoadedLadder) -> LadderSpec:
     return _spec_with_corpora(loaded, *split_by_meta(corpus))
 
 
+def lintable_spec(loaded: LoadedLadder) -> LadderSpec | None:
+    """:func:`draft_spec`, or ``None`` when the document yields no train/heldout corpus.
+
+    A `.ladder` with no ``heldout`` demonstration cannot be split into a testbed, so the
+    corpus-backed lint tier has nothing to run against and the caller must fall back to the
+    structural tier (or stay quiet) rather than crash.
+
+    **This is independent of whether the floor is implemented, and neither is a proxy for the
+    other** -- the cfb2ce5a cohort acquired a fully implemented floor while still having no
+    ``heldout`` task. Using ``loaded.assumed`` to mean "is a draft" is the bug this exists to stop
+    recurring; it had already been written twice (``cli/lint_ladder.py``, ``ladders/pipeline.py``).
+    """
+    try:
+        return draft_spec(loaded)
+    except ValueError:  # `split_by_meta`: no train/heldout split to lint against
+        return None
+
+
 def ladder_spec(loaded: LoadedLadder) -> LadderSpec:
     """Build the :class:`LadderSpec`, reading the ladder's committed testbed as its corpus."""
     return _spec_with_corpora(loaded, *split_by_meta(load_testbed(loaded.name)))

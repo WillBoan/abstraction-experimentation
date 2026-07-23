@@ -48,7 +48,9 @@ _PROVEN_BY = {"syntactic": "unfold-and-compare", "equational": "equational norma
 
 
 def diff_ladder_command(
-    ladder_a: str = typer.Argument(..., help="A registered ladder name or a path to a `.ladder` file."),
+    ladder_a: str = typer.Argument(
+        ..., help="A registered ladder name or a path to a `.ladder` file."
+    ),
     ladder_b: str = typer.Argument(..., help="The ladder to compare it against (name or path)."),
 ) -> None:
     """Report whether ``ladder_a`` and ``ladder_b`` compute the same thing, and how it was decided."""
@@ -104,7 +106,9 @@ def _compare_top(task_id: str, a: LoadedLadder, b: LoadedLadder, *, same_floor: 
                 "block the observational check (implement them to decide)"
             )
             return _Outcome.INCONCLUSIVE
-        return _observe(task_id, a, sol_a, lib_a, sol_b, lib_b, static_note="static could not prove")
+        return _observe(
+            task_id, a, sol_a, lib_a, sol_b, lib_b, static_note="static could not prove"
+        )
 
     # Different floor: no static bridge. Observe if both sides have bodies, else inconclusive.
     if not has_bodies:
@@ -127,9 +131,7 @@ def _observe(
     static_note: str,
 ) -> _Outcome:
     """Run the EXACT observational diff over an edge-grid battery at the top task's shapes."""
-    shapes = {
-        (grid.height, grid.width) for task in a.document.top for grid in task.train_inputs
-    }
+    shapes = {(grid.height, grid.width) for task in a.document.top for grid in task.train_inputs}
     grids = exact_grids(shapes)
     verdict = observationally_equivalent_programs(sol_a, lib_a, sol_b, lib_b, grids)
     if verdict.equivalent:

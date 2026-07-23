@@ -35,7 +35,7 @@ from arc_lab.program_search.analysis.depth import compositional_depth, min_depth
 from arc_lab.program_search.ladders.lang.errors import LadderFormatError
 from arc_lab.program_search.ladders.lang.load import (
     LoadedLadder,
-    draft_spec,
+    lintable_spec,
     resolve,
     structural_spec,
 )
@@ -145,10 +145,9 @@ def _lint_one(target: str, *, quiet: bool, draft: bool) -> _Outcome:
 
     if loaded.assumed:
         return _report_draft(label, loaded, reason=f"{len(loaded.assumed)} assumed primitive(s)")
-    try:
-        spec = draft_spec(loaded)
-    except ValueError as exc:  # loads and type-checks, but yields no train/heldout corpus
-        return _report_draft(label, loaded, reason=str(exc))
+    spec = lintable_spec(loaded)
+    if spec is None:  # loads and type-checks, but yields no train/heldout corpus to lint against
+        return _report_draft(label, loaded, reason="no train/heldout corpus (add a `heldout` task)")
 
     shape = spec.lint()
     errors = [f for f in shape.findings if not f.ok and f.severity == "error"]

@@ -36,7 +36,7 @@ def lint_source(source: str, *, run_lint: bool = True) -> list[LadderDiagnostic]
     """
     from .anchors import AnchorIndex
     from .lang.errors import LadderFormatError
-    from .lang.load import draft_spec, resolve
+    from .lang.load import lintable_spec, resolve
     from .lang.parse import parse_document
 
     lines = source.splitlines()
@@ -45,14 +45,18 @@ def lint_source(source: str, *, run_lint: bool = True) -> list[LadderDiagnostic]
     except LadderFormatError as exc:
         return [_from_format_error(exc, lines)]
 
-    # A draft over assumed primitives cannot run the corpus lint (nothing to evaluate); stay quiet
-    # rather than half-reporting. `arc-lab lint-ladder --draft` covers that case.
+    # A draft cannot run the corpus lint -- either because its floor is assumed (nothing to
+    # evaluate) or because it has no train/heldout corpus to evaluate against. The two are
+    # independent; stay quiet for both rather than half-reporting, and never raise (an editor calls
+    # this on every keystroke). `arc-lab lint-ladder --draft` reports the structural tier instead.
     if not run_lint or loaded.assumed:
+        return []
+    spec = lintable_spec(loaded)
+    if spec is None:
         return []
 
     anchors = AnchorIndex.from_document(loaded.document)
-    shape = draft_spec(loaded).lint()
-    return [_from_finding(finding, anchors) for finding in shape.findings if not finding.ok]
+    return [_from_finding(finding, anchors) for finding in spec.lint().findings if not finding.ok]
 
 
 def diagnostics_to_json(diagnostics: Sequence[LadderDiagnostic], *, path: str) -> dict[str, object]:

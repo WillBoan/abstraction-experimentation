@@ -46,3 +46,15 @@ def test_an_implemented_draft_with_no_heldout_is_incomplete_rather_than_failing(
     lints structurally, and reports INCOMPLETE. It must not crash, and must not read as CLEAN."""
     draft = _DRAFTS / "cfb2ce5a-1-basic.ladder"
     assert _lint_one(str(draft), quiet=True, draft=False) is _Outcome.INCOMPLETE
+
+
+def test_the_json_and_language_server_path_survives_a_corpusless_draft() -> None:
+    """The same defect as above, at the OTHER entry point. `lint_source` is what `--json` and the
+    language server call on every keystroke, and it had its own copy of the "assumed == draft"
+    proxy -- so an implemented-floor draft with no `heldout` task crashed it with a raw ValueError.
+    It must return quietly instead; `--draft` is where the structural report lives."""
+    from arc_lab.program_search.ladders.pipeline import lint_source
+
+    source = (_DRAFTS / "cfb2ce5a-1-basic.ladder").read_text()
+    assert lint_source(source) == []  # no corpus to lint against: quiet, not a crash
+    assert lint_source(source, run_lint=False) == []  # and it parses + resolves cleanly

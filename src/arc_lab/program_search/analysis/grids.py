@@ -46,7 +46,9 @@ def edge_grids(shapes: set[tuple[int, int]]) -> tuple[Grid, ...]:
             seen.setdefault(Grid.from_list([[color] * width for _ in range(height)]), None)
         # colours 1..9 only, so colour 0 (the usual background) is entirely absent
         seen.setdefault(
-            Grid.from_list([[((r * width + c) % 9) + 1 for c in range(width)] for r in range(height)]),
+            Grid.from_list(
+                [[((r * width + c) % 9) + 1 for c in range(width)] for r in range(height)]
+            ),
             None,
         )
         # every colour 0..9 present wherever the shape is large enough to hold them

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from arc_lab.core.grid import Grid
-from arc_lab.program_search.ladders.checks import conditional_findings, constancy_findings
-from arc_lab.program_search.ladders.shape import LintFinding
+from arc_lab.program_search.ladders.checks import conditional_verdicts, constancy_verdicts
+from arc_lab.program_search.ladders.checks.base import Verdict
 from arc_lab.program_search.substrate.library import Library, Primitive
 from arc_lab.program_search.substrate.program import Apply, Const, If, Input, Program
 from arc_lab.program_search.substrate.types import BOOL, GRID, INT
@@ -45,54 +45,54 @@ _INPUTS = {"t": (_G1, _G2)}
 _CONSTANT_INDEX: Program = Apply("shift", (Input(), Apply("sub", (Const(2, INT), Const(1, INT)))))
 
 
-def _one(findings: tuple[LintFinding, ...]) -> LintFinding:
-    assert len(findings) == 1
-    return findings[0]
+def _one(verdicts: tuple[Verdict, ...]) -> Verdict:
+    assert len(verdicts) == 1
+    return verdicts[0]
 
 
 def test_constancy_errors_when_the_beating_literal_is_enumerated() -> None:
     finding = _one(
-        constancy_findings([("t", _CONSTANT_INDEX)], _INPUTS, _LIB, ("finite-enumerate",))
+        constancy_verdicts([("t", _CONSTANT_INDEX)], _INPUTS, _LIB, ("finite-enumerate",))
     )
-    assert not finding.ok and finding.severity == "error"
+    assert not finding.ok and finding.severity is None  # None == the check's default: error
     assert "sub(2, 1)=1" in finding.detail
 
 
 def test_constancy_warns_when_no_constant_source_mints_the_value() -> None:
-    finding = _one(constancy_findings([("t", _CONSTANT_INDEX)], _INPUTS, _LIB, ()))
+    finding = _one(constancy_verdicts([("t", _CONSTANT_INDEX)], _INPUTS, _LIB, ()))
     assert not finding.ok and finding.severity == "warn"
 
 
 def test_constancy_skips_erroring_subterms_and_short_tasks() -> None:
     # A partial primitive erroring on a train input is skipped, never flagged.
     erroring: Program = Apply("shift", (Input(), Apply("boom", (Input(),))))
-    finding = _one(constancy_findings([("t", erroring)], _INPUTS, _LIB, ("finite-enumerate",)))
+    finding = _one(constancy_verdicts([("t", erroring)], _INPUTS, _LIB, ("finite-enumerate",)))
     assert finding.ok
     # One train example: everything is trivially constant, so the task is skipped outright
     # (min-2-train-examples owns that defect).
     single = {"t": (_G1,)}
-    assert constancy_findings([("t", _CONSTANT_INDEX)], single, _LIB, ("finite-enumerate",)) == ()
+    assert constancy_verdicts([("t", _CONSTANT_INDEX)], single, _LIB, ("finite-enumerate",)) == ()
 
 
 def test_a_bare_literal_is_never_flagged() -> None:
     # A Const is depth 0 -- nothing shallower beats it; only COMPOSITE subterms carry the law.
     literal_only: Program = Apply("shift", (Input(), Const(1, INT)))
-    finding = _one(constancy_findings([("t", literal_only)], _INPUTS, _LIB, ("finite-enumerate",)))
+    finding = _one(constancy_verdicts([("t", literal_only)], _INPUTS, _LIB, ("finite-enumerate",)))
     assert finding.ok
 
 
 def test_conditional_flags_a_condition_constant_across_train_examples() -> None:
     degenerate: Program = If(cond=Const(True, BOOL), then=Input(), orelse=Input())
-    finding = _one(conditional_findings([("t", degenerate)], _INPUTS, _LIB))
-    assert not finding.ok and finding.severity == "error"
+    finding = _one(conditional_verdicts([("t", degenerate)], _INPUTS, _LIB))
+    assert not finding.ok and finding.severity is None  # None == the check's default: error
 
 
 def test_conditional_passes_when_both_branches_are_exercised() -> None:
     # wide(input) is False on the 2x2 grid and True on the 1x3 -- both truth values observed.
     varying: Program = If(cond=Apply("wide", (Input(),)), then=Input(), orelse=Input())
-    finding = _one(conditional_findings([("t", varying)], _INPUTS, _LIB))
+    finding = _one(conditional_verdicts([("t", varying)], _INPUTS, _LIB))
     assert finding.ok
 
 
 def test_conditional_emits_nothing_without_branching() -> None:
-    assert conditional_findings([("t", _CONSTANT_INDEX)], _INPUTS, _LIB) == ()
+    assert conditional_verdicts([("t", _CONSTANT_INDEX)], _INPUTS, _LIB) == ()

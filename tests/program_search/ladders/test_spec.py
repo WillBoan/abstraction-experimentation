@@ -5,14 +5,11 @@ from __future__ import annotations
 import dataclasses
 
 from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
+from arc_lab.program_search.ladders.checks.demonstrations import rung_argument_columns
+from arc_lab.program_search.ladders.graph import consumer_programs
 from arc_lab.program_search.ladders.registry import make_ladder
 from arc_lab.program_search.ladders.shape import LadderShape, LintFinding
-from arc_lab.program_search.ladders.spec import (
-    Demonstration,
-    DemonstrationKind,
-    _consumer_programs,
-    _rung_argument_columns,
-)
+from arc_lab.program_search.ladders.spec import Demonstration, DemonstrationKind
 from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.substrate.primitives.control import IF
 from arc_lab.program_search.substrate.program import Apply, Const, If, Input, Param
@@ -163,7 +160,7 @@ def test_double_jump_is_measured_over_all_consumers_not_just_the_successor() -> 
     # numbers are unchanged on this batch (all consumers are equally deep), but the check now spans
     # the whole consumer set, which is the point.
     spec = make_ladder("al17-shift-frame-tall")
-    consumers = {cid for cid, _ in _consumer_programs(spec.rungs, spec.top)["shift1"]}
+    consumers = {cid for cid, _ in consumer_programs(spec.rungs, spec.top)["shift1"]}
     assert consumers == {"frame1", "shift2"}  # plural, non-adjacent -- a real DAG fan-out
     shape = spec.lint()
     checks = [f for f in shape.findings if f.check == "double-jump-intractable[shift1]"]
@@ -278,7 +275,7 @@ def test_free_param_variation_counts_every_call_site() -> None:
             solution=Apply("r", (inner, Const(1, COLOR))),
         )
 
-    columns = _rung_argument_columns((demo("a", 2), demo("b", 3)), "r")
+    columns = rung_argument_columns((demo("a", 2), demo("b", 3)), "r")
     # Column 1 is the grid slot (computed in the outer call, `input` in the inner) -- derived,
     # kept; column 2 is the colour, aggregating all four call sites: distinct {1, 2, 3}. The
     # column now keeps ORDER (a tuple, for the covariance check), so ask set for distinctness.
@@ -339,7 +336,7 @@ def test_hof_holes_fillable_flags_a_floor_the_config_cannot_synthesize() -> None
     # map's hole result `b` is pinned by no sibling, so synthesis is skipped and the primitive is
     # silently point-free-only -- exactly battery E's finding. filter/fold (pinned hole results)
     # do not fire.
-    from arc_lab.program_search.ladders.spec import unfillable_function_holes
+    from arc_lab.program_search.ladders.checks.vocabulary import unfillable_function_holes
     from arc_lab.program_search.substrate.library import Library
     from arc_lab.program_search.substrate.registry import BASE_PRIMITIVES
 
