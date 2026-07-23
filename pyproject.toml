@@ -18,6 +18,7 @@ dependencies = [
 
 [project.optional-dependencies]
 stitch = ["stitch_core>=0.1"]  # library-learning engine; the loop runs without it (lazy-imported)
+lsp = ["pygls>=2.0,<3"]  # `.ladder` language server (arc-lab lsp); lazy-imported, editor-only
 
 [project.scripts]
 arc-lab = "arc_lab.cli.main:app"
@@ -29,6 +30,7 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "pytest-xdist>=3.6",
+    "pygls>=2.0,<3",  # in dev too, so mypy --strict + the gate cover the language server
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -40,7 +42,8 @@ src = ["src", "tests"]
 target-version = "py311"
 # `experiments/` holds lab-notebook artifacts — throwaway probe scripts kept for the record,
 # not production code; don't hold them to the linter (mypy already scopes to src/tests only).
-extend-exclude = ["experiments"]
+# `editors/` is the VS Code extension (TypeScript/JSON) — outside the Python toolchain entirely.
+extend-exclude = ["experiments", "editors"]
 
 [tool.ruff.lint]
 # A sensible, strict-ish default. E/F pyflakes+pycodestyle, I isort, UP pyupgrade,
