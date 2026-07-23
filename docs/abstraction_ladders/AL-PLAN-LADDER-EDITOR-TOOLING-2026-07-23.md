@@ -42,6 +42,26 @@ Goal: TextMate + semantic-token highlighting, live error/warning squiggles with 
 
 Phase headers below are tagged `[LIGHT]` / `[DEFERRED]` accordingly.
 
+## Phase A build status (2026-07-23)
+
+**Shipped** in two commits (`98d0ddf` Python slice, `5b88e0f` VS Code extension), `make check` green:
+`diagnostics/` value types (Position, half-open Range, Severity, `LadderDiagnostic`), a pygls-free
+`lsp/shim.py`, an `lsp/convert.py`, a thin `lsp/server.py`, and `arc-lab lsp` (stdio, stdout-clean).
+Extension under `editors/vscode-ladder/` (TextMate grammar + `vscode-languageclient`, esbuild bundle,
+tsc-strict). Validated end-to-end by driving the server over stdio (initialize -> didOpen -> real
+`publishDiagnostics`); only the *visual* highlighting still needs a human F5.
+
+**Measured latency finding (corrects the plan's risk #5).** Full lint of al14 is ~4.6s, and it is
+**not** the corpus/evaluation checks -- `lint(corpus_backed=False)` is no faster. The cost is the
+**structural unfold-based depth checks** (`raw-intractable`, double-jump, etc., which `unfold_program`
+al14's deep telescope). Parse+resolve alone is ~2ms. Two consequences carried forward:
+
+1. The cheap on-change tier is **parse+resolve only** (not "structural-cheap, corpus-expensive" as
+   assumed). The shim already gates on this; Phase G/H's `LintTier` boundary should too.
+2. Phase F's laziness/caching is load-bearing on the *structural* checks specifically -- and this same
+   ~4.6s is paid today by `arc-lab lint-ladder al14` and every `run-ladder` stage-1 lint, so it is a
+   standing lint-performance issue worth its own item independent of the editor work.
+
 ## Diagnostic production model (the emitted-vs-rule principle)
 
 The pipeline is a tower of passes, each `model_n -> (model_{n+1}, diagnostics)`:
