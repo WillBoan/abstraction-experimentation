@@ -1,0 +1,123 @@
+ladder cfb2ce5a-4-fold
+
+# VARIANT v4 of the cfb2ce5a "seeded reflections" task -- the fold-based answer
+# to v3's negative result.
+#
+# v3 collapsed the direction specializations into a parameterized `place_reflected`
+# rung, but the three-fold application had to live SOMEWHERE: v3 nested it in the
+# top solution, making the top depth-5 while the rungs sat at 2-3, so no budget
+# bracketed both. v1 put it in direction-specific chaining rungs (shallow top,
+# trivial rungs). Both horns are bad.
+#
+# v4 absorbs the iteration into `fold` and the direction list into a
+# `reflected_specs` rung, so the top is a single shallow call. The per-direction
+# op stays parameterized.
+#
+# WHAT A FOLD DECOMPOSITION NEEDS (three gaps this file surfaced):
+#   1. Floor: a list CONSTRUCTOR. The substrate can consume/transform lists
+#      (map/filter/fold/zip) but cannot BUILD one -- no cons/nil/list. Declared
+#      here as the assumed `list: (a, a...) -> List[a]`. fold/pair/fst/snd are
+#      already real.
+#   2. Config: `function_hole_fill_mode = lambda-synthesis`. fold is higher-order;
+#      under the default `none` its hole is never filled and the engine silently
+#      skips it (micro-probes battery E) -- lint's `hof-holes-fillable` caught it.
+#   3. Elaborator: a bare literal in a POLYMORPHIC slot cannot be typed, because
+#      the expected type is not pushed into an application before its args
+#      (EXP-5). `pair(0, 1)` fails; the `abs(...)` wrappers are the crutch.
+#
+# AND THE DEEPER RESULT: even with all three, the sandwich does NOT close. The
+# top depth is fixed, but `tile_mask` stays a flat (non-necessary) composition
+# and `apply_reflections` is a thin wrapper around one fold call -- skipping
+# either costs no depth. The task's difficulty lives in the assumed PERCEPTION
+# primitives, not in composition depth, so no amount of composition-restructuring
+# manufactures a tractability gap. This is the "cheap perception erases gaps"
+# tension (TODO real-ARC anchoring) made concrete: to ladder this task, the
+# PERCEPTION has to be laddered -- largest_filled_square / relative_tile / etc.
+# built from smaller pieces -- not the composition over it.
+
+config {
+    # Deeper than v3: building the 3-element plan (`reflected_specs`) and the
+    # fold's lambda body both need generation 4.
+    budget.depth_limit: 4
+    # fold is higher-order: its function hole must be FILLABLE, or the engine
+    # silently skips it (micro-probes battery E). The default `none` fills no
+    # hole; lambda-synthesis lets the search build the step function.
+    search_engine.function_hole_fill_mode: 'lambda-synthesis'
+}
+
+floor cfb2ce5a-seeded-reflections-L0 {
+    # Generic grid transforms (real).
+    use flip_h:                  (Grid) -> Grid
+    use flip_v:                  (Grid) -> Grid
+    use rot180:                  (Grid) -> Grid
+    use map_color:               (Grid, Color, Color) -> Grid
+
+    # NOTE: `abs` is here only as a validation crutch. The direction constants are
+    # written `abs(0)`/`abs(1)` instead of bare `0`/`1` because a bare literal in
+    # `pair`'s polymorphic slot cannot be typed -- the elaborator does not push the
+    # outer expected type into an application before typing its args (spec EXP-5).
+    # `abs: (Int) -> Int` pins them. This is the SECOND thing a fold decomposition
+    # needs (see the file's tail comment); remove it once the elaborator propagates.
+    use abs:                     (Int) -> Int
+
+    # Higher-order + tuple machinery (all real, already in BASE_PRIMITIVES).
+    use fold:                    ((acc) -> (a) -> acc, acc, List[a]) -> acc
+    use pair:                    (a, b) -> Pair[a, b]
+    use fst:                     (Pair[a, b]) -> a
+    use snd:                     (Pair[a, b]) -> b
+
+    # THE ONE MISSING PRIMITIVE: a variadic list constructor. The substrate can
+    # consume and transform lists (map/filter/fold/zip) but cannot BUILD one from
+    # elements -- there is no cons/nil/list. This is the whole floor delta from a
+    # fold-based decomposition.
+    #   list: return the list of its arguments, in order.
+    use list:                    (a, a...) -> List[a]
+
+    # Domain perception/action primitives (assumed -- identical to v1/v3).
+    use largest_filled_square:   (Grid) -> Grid
+    use relative_tile:           (Grid, Int, Int) -> Grid
+    use nth_seed_source_color:   (Grid, Grid, Int) -> Color
+    use nth_nonzero_color:       (Grid, Int) -> Color
+    use retain_colors:           (Grid, Color, Color) -> Grid
+    use write_relative_tile:     (Grid, Grid, Grid, Int, Int) -> Grid
+}
+
+# The mask of the two seed-bound source colors (both binding indices).
+rung {
+    tile_mask(pattern: Grid, seeds: Grid) -> Grid = retain_colors(pattern, nth_seed_source_color(pattern, seeds, 0), nth_seed_source_color(pattern, seeds, 1))
+}
+
+# Instantiate the whole tile: mask, then apply both bindings inline (v3's `rebind`
+# folded in -- it was a proper composition but not a necessary rung).
+rung {
+    instantiated_tile(pattern: Grid, seeds: Grid) -> Grid = map_color(map_color(tile_mask(pattern, seeds), nth_seed_source_color(pattern, seeds, 0), nth_nonzero_color(seeds, 0)), nth_seed_source_color(pattern, seeds, 1), nth_nonzero_color(seeds, 1))
+}
+
+# One direction's contribution: instantiate the reflected pattern against the
+# seeds at (dr, dc), and write it back at that offset. Direction is a parameter.
+rung {
+    place_reflected(base: Grid, g: Grid, pattern: Grid, dr: Int, dc: Int) -> Grid = write_relative_tile(base, g, instantiated_tile(pattern, relative_tile(g, dr, dc)), dr, dc)
+}
+
+# The plan: the list of (reflected pattern, (dr, dc)) specs for the three
+# directions. This is where the constructor is needed.
+rung {
+    reflected_specs(g: Grid) -> List[Pair[Grid, Pair[Int, Int]]] = list(pair(flip_h(largest_filled_square(g)), pair(abs(0), abs(1))), pair(flip_v(largest_filled_square(g)), pair(abs(1), abs(0))), pair(rot180(largest_filled_square(g)), pair(abs(1), abs(1))))
+}
+
+# Fold the per-direction op over the plan, threading the grid. This is the rung
+# that absorbs the iteration -- skipping it forces the three applications to be
+# nested by hand (v3's deep top).
+rung {
+    apply_reflections(g: Grid, specs: List[Pair[Grid, Pair[Int, Int]]]) -> Grid = fold(lambda acc, e: place_reflected(acc, g, fst(e), fst(snd(e)), snd(snd(e))), g, specs)
+}
+
+top {
+    task cfb2ce5a {
+        # One shallow call: build the plan, fold the placement over it.
+        solution: apply_reflections(input, reflected_specs(input))
+        train [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 2, 1, 2, 1, 0, 0, 0, 8, 0], [0, 1, 1, 2, 1, 0, 0, 0, 0, 0], [0, 2, 2, 2, 1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 3, 0, 0, 0, 0], [0, 0, 0, 0, 7, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 4, 0, 0, 0, 0, 0, 0, 5, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        train [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 3, 3, 3, 3, 9, 0, 0, 0, 0], [0, 3, 3, 8, 8, 7, 0, 0, 0, 0], [0, 3, 8, 3, 8, 0, 0, 0, 0, 0], [0, 3, 8, 8, 3, 0, 0, 0, 0, 0], [0, 0, 0, 0, 4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 5, 2, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        test [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 4, 4, 1, 1, 8, 0, 0, 0, 0], [0, 4, 1, 1, 1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 4, 0, 0, 0, 0, 0], [0, 1, 1, 4, 4, 5, 0, 0, 0, 0], [0, 0, 0, 6, 0, 0, 0, 0, 0, 0], [0, 7, 0, 0, 0, 0, 3, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+    }
+}
