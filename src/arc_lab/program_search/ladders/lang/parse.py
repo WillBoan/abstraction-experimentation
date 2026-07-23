@@ -17,7 +17,11 @@ from pathlib import Path
 
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.ladders.lang.errors import LadderFormatError, at_line
-from arc_lab.program_search.ladders.lang.names import check_identifier, check_task_id
+from arc_lab.program_search.ladders.lang.names import (
+    FLOOR_SUMMONERS,
+    check_identifier,
+    check_task_id,
+)
 from arc_lab.program_search.ladders.lang.type_syntax import (
     DefinitionHeader,
     PrimitiveSignature,
@@ -249,7 +253,7 @@ def _floor_entry(node: _Node) -> FloorEntry:
         )
     try:
         return FloorEntry(
-            name=check_identifier(name.strip(), "primitive name"),
+            name=check_identifier(name.strip(), "primitive name", allow=FLOOR_SUMMONERS),
             signature=parse_primitive_signature(signature.strip()),
             line=node.line,
         )

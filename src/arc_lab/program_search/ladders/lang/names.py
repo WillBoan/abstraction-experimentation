@@ -12,6 +12,14 @@ import keyword
 import re
 
 from arc_lab.program_search.ladders.lang.errors import LadderFormatError
+from arc_lab.program_search.search.search_engine import BRANCHING_ENTRY
+
+#: Names allowed as FLOOR primitives despite being Python keywords: the branching summoner, whose
+#: canonical registered name IS a keyword (``if``). It is summoned by the ``a if c else b`` syntax
+#: and never spelled as a call, so it never needs to parse as an identifier in an expression -- but
+#: a conditional ladder must be able to DECLARE it in the floor (the ``branching-summoned`` load
+#: check requires it). Only the floor whitelists it; rung and parameter names still may not be `if`.
+FLOOR_SUMMONERS: frozenset[str] = frozenset({BRANCHING_ENTRY})
 
 #: The format's structural keywords (spec LEX-6) -- never a code identifier or a task id.
 RESERVED_WORDS: frozenset[str] = frozenset(
@@ -37,13 +45,19 @@ _IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z_0-9]*\Z")
 _TASK_ID_RE = re.compile(r"[a-z0-9][a-z0-9_-]*\Z")
 
 
-def check_identifier(name: str, what: str) -> str:
-    """``name`` if it is a legal code identifier (spec NAM-1); raise otherwise."""
+def check_identifier(name: str, what: str, *, allow: frozenset[str] = frozenset()) -> str:
+    """``name`` if it is a legal code identifier (spec NAM-1); raise otherwise.
+
+    ``allow`` whitelists names that would otherwise be rejected as keywords or reserved words -- the
+    floor passes :data:`FLOOR_SUMMONERS` so the branching summoner ``if`` can be declared there.
+    """
     if not _IDENTIFIER_RE.match(name):
         raise LadderFormatError(
             f"{what} {name!r} is not a valid identifier (letters, digits and `_`, not starting "
             "with a digit)"
         )
+    if name in allow:
+        return name
     if keyword.iskeyword(name) or keyword.issoftkeyword(name):
         raise LadderFormatError(f"{what} {name!r} is a Python keyword; choose another name")
     if name in RESERVED_WORDS:

@@ -18,6 +18,7 @@ from arc_lab.program_search.ladders.lang.parse import parse_document
 from arc_lab.program_search.ladders.registry import ladder_paths, load_ladder, make_ladder
 from arc_lab.program_search.ladders.shape import LintFinding
 from arc_lab.program_search.ladders.spec import DemonstrationKind
+from arc_lab.program_search.substrate.program import If
 
 REPO = Path(__file__).resolve().parents[4]
 
@@ -297,6 +298,62 @@ def test_minimal_document_loads() -> None:
     assert [task.task_id for task in document.tasks()] == ["a", "b", "c"]
     loaded = resolve(document)
     assert [library.name for library in loaded.libraries] == ["t1-L0", "t1-L0+rot180"]
+
+
+_CONDITIONAL = """
+ladder cond
+
+config {
+    budget.depth_limit: 2
+}
+
+floor cond-L0 {
+    use flip_h: (Grid) -> Grid
+    use most_common_color: (Grid) -> Color
+    use eq: (a, a) -> Bool
+    use if: (Bool, a, a) -> a
+}
+
+rung {
+    maybe_flip(g: Grid, c: Color) -> Grid = flip_h(g) if eq(most_common_color(g), c) else g
+
+    task cond-00 {
+        solution: maybe_flip(input, 1)
+        train [[1, 2], [3, 4]]
+        test  [[5, 6], [7, 8]]
+    }
+    task cond-01 {
+        solution: maybe_flip(input, 9)
+        train [[5, 6], [7, 8]]
+        test  [[3, 4], [5, 6]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: flip_h(maybe_flip(input, 1))
+        train [[1, 2], [3, 4]]
+        test  [[9, 8], [7, 6]]
+    }
+}
+"""
+
+
+def test_the_branching_summoner_if_can_be_declared_in_the_floor() -> None:
+    # The `if` summoner's registered name IS a Python keyword, but a conditional ladder must be able
+    # to declare it in the floor -- otherwise the `branching-summoned` load check can never be
+    # satisfied and no conditional ladder can load. The floor whitelists exactly this name.
+    loaded = resolve(parse_document(_CONDITIONAL))
+    assert "if" in loaded.floor
+    assert isinstance(loaded.templates[0], If)  # the conditional elaborated to an `If` node
+
+
+def test_the_if_whitelist_is_floor_only_a_rung_may_not_be_named_if() -> None:
+    naming_a_rung_if = _CONDITIONAL.replace(
+        "maybe_flip(g: Grid, c: Color)", "if(g: Grid, c: Color)"
+    )
+    with pytest.raises(LadderFormatError, match="Python keyword"):
+        parse_document(naming_a_rung_if)
 
 
 def test_comments_and_continued_grid_literals_are_ignored_and_joined() -> None:

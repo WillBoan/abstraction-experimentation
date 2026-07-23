@@ -43,7 +43,7 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 
 ### NAM — naming & scoping
 
-- **NAM-1** Code identifiers (primitive, abstraction, param names) must be valid Python identifiers, not Python keywords, and not reserved words (LEX-6).
+- **NAM-1** Code identifiers (primitive, abstraction, param names) must be valid Python identifiers, not Python keywords, and not reserved words (LEX-6). The one exception is the branching summoner `if`, whose registered name is a keyword: it may be declared as a **floor** primitive (`use if: (Bool, a, a) -> a`) so a conditional ladder can summon it, since it is only ever reached through the `a if c else b` syntax, never spelled as a call. A rung or parameter still may not be named `if`.
 - **NAM-2** Task ids match `[a-z0-9][a-z0-9_-]*` and are unique across the whole ladder.
 - **NAM-3** A rung's name must be unique among rungs and must not shadow a floor primitive.
 - **NAM-4** Template body scope: own params + floor primitives + _strictly earlier_ rungs. No self-reference, no forward reference, no `input`.
