@@ -15,6 +15,12 @@ state, so the lint runs its STRUCTURAL tier (the depth sandwich, dead-rung/reach
 distinctness, proposer/free-param checks -- everything reading only templates, solutions and
 config) and skips the corpus- and evaluation-backed checks, naming exactly which.
 
+A draft can be incomplete in **two independent ways**, and either one routes to that structural
+tier: its floor may be *assumed* (no implementations to evaluate), or it may have *no corpus* (a
+`.ladder` with no ``heldout`` demonstration cannot be split into a testbed). They are not the same
+condition and one does not imply the other -- the cfb2ce5a cohort became fully implemented while
+still having no heldout task -- so neither is used as a proxy for the other.
+
 Exits non-zero when anything fails, so it works in a hook or a script.
 """
 
@@ -138,13 +144,17 @@ def _lint_one(target: str, *, quiet: bool, draft: bool) -> _Outcome:
         return _Outcome.FAILED
 
     if loaded.assumed:
-        return _report_draft(label, loaded)
+        return _report_draft(label, loaded, reason=f"{len(loaded.assumed)} assumed primitive(s)")
+    try:
+        spec = draft_spec(loaded)
+    except ValueError as exc:  # loads and type-checks, but yields no train/heldout corpus
+        return _report_draft(label, loaded, reason=str(exc))
 
-    shape = draft_spec(loaded).lint()
+    shape = spec.lint()
     errors = [f for f in shape.findings if not f.ok and f.severity == "error"]
     warnings = [f for f in shape.findings if not f.ok and f.severity == "warn"]
     if not quiet:
-        typer.echo(draft_spec(loaded).render())
+        typer.echo(spec.render())
         typer.echo("")
     typer.echo(
         f"{label}: {'OK' if shape.ok else 'FAILED'} -- {len(shape.findings)} checks "
@@ -157,16 +167,18 @@ def _lint_one(target: str, *, quiet: bool, draft: bool) -> _Outcome:
     return _Outcome.CLEAN if shape.ok else _Outcome.FAILED
 
 
-def _report_draft(label: str, loaded: LoadedLadder) -> _Outcome:
-    """A draft over assumed primitives: run the STRUCTURAL lint tier (templates, solutions,
-    demonstration kinds, config -- no grids) and name what was skipped.
+def _report_draft(label: str, loaded: LoadedLadder, *, reason: str) -> _Outcome:
+    """A draft the corpus-backed tier cannot reach: run the STRUCTURAL lint tier (templates,
+    solutions, demonstration kinds, config -- no grids) and name what was skipped.
+
+    ``reason`` is why the corpus-backed tier is out of reach -- an assumed floor, or a document that
+    yields no train/heldout corpus. Both land here; neither implies the other.
 
     A draft is always ``INCOMPLETE``, never ``CLEAN`` and never ``FAILED``: it is unverified by
-    construction, because the corpus-backed tier cannot run until the assumed primitives exist. The
-    structural findings ARE shown in full (that is the point -- the author wants to see what breaks
-    early), but they are advisory here; the definite pass/fail verdict is deferred to a real lint of
-    the finished ladder. Everything the structural tier could not cover is named, so a quiet draft
-    is never mistaken for a sound one."""
+    construction. The structural findings ARE shown in full (that is the point -- the author wants to
+    see what breaks early), but they are advisory here; the definite pass/fail verdict is deferred to
+    a real lint of the finished ladder. Everything the structural tier could not cover is named, so a
+    quiet draft is never mistaken for a sound one."""
     document = loaded.document
     shape = structural_spec(loaded).lint(corpus_backed=False)
     errors = [f for f in shape.findings if not f.ok and f.severity == "error"]
@@ -178,14 +190,17 @@ def _report_draft(label: str, loaded: LoadedLadder) -> _Outcome:
         else "structural lint clean"
     )
     typer.echo(
-        f"{label}: INCOMPLETE (draft) -- loaded and type-checked, {len(loaded.templates)} rungs; "
-        f"{summary}; corpus-backed soundness NOT verified"
+        f"{label}: INCOMPLETE (draft: {reason}) -- loaded and type-checked, "
+        f"{len(loaded.templates)} rungs; {summary}; corpus-backed soundness NOT verified"
     )
 
-    typer.echo(f"\n  Assumed primitives ({len(loaded.assumed)}) -- implement or decompose these:")
-    declared = {entry.name: entry for entry in document.floor}
-    for name in loaded.assumed:
-        typer.echo(f"    {name}: {render_primitive_signature(declared[name].signature)}")
+    if loaded.assumed:
+        typer.echo(
+            f"\n  Assumed primitives ({len(loaded.assumed)}) -- implement or decompose these:"
+        )
+        declared = {entry.name: entry for entry in document.floor}
+        for name in loaded.assumed:
+            typer.echo(f"    {name}: {render_primitive_signature(declared[name].signature)}")
 
     topology = "chain" if shape.is_chain else "DAG"
     typer.echo(
@@ -210,7 +225,7 @@ def _report_draft(label: str, loaded: LoadedLadder) -> _Outcome:
         typer.echo(f"    warn  {finding.check}: {finding.detail}")
 
     typer.echo(
-        "\n  Skipped -- these need the task grids, which an assumed primitive cannot produce (no "
-        f"implementation to evaluate): {', '.join(shape.skipped_checks)}."
+        f"\n  Skipped -- these need evaluated task grids, which this draft cannot supply ({reason}): "
+        f"{', '.join(shape.skipped_checks)}."
     )
     return _Outcome.INCOMPLETE

@@ -43,6 +43,9 @@ def test_a_registered_ladder_compares_equal_to_itself() -> None:
 
 def test_resolve_accepts_both_a_registered_name_and_a_path() -> None:
     by_name = _resolve("al1-mirror")
-    by_path = _resolve(_draft("cfb2ce5a-1-basic"))
+    by_path = _resolve(_draft("cfb2ce5a-4-fold"))
     assert not by_name.assumed  # a real ladder resolves with every primitive implemented
     assert by_path.assumed  # a draft reports its assumed vocabulary instead of failing
+    # v1's floor is implemented now (`substrate/primitives/tiles.py`), so it resolves like a real
+    # ladder -- being a *draft* is about lacking a testbed, not about assumed primitives.
+    assert not _resolve(_draft("cfb2ce5a-1-basic")).assumed
