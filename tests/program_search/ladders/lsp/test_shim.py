@@ -48,13 +48,18 @@ def test_line_range_spans_the_whole_line() -> None:
 
 
 def test_finding_becomes_a_diagnostic() -> None:
+    from arc_lab.program_search.ladders.anchors import AnchorIndex
+
+    header = Range(Position(0, 0), Position(0, 5))
+    anchors = AnchorIndex(rungs={}, tasks={}, floor={}, file=header)
     finding = LintFinding(
         check="min-2-demos", ok=False, detail="rung r has 1 demo", severity="warn"
     )
-    diag = _from_finding(finding)
+    diag = _from_finding(finding, anchors)
     assert diag.code == "min-2-demos"
     assert diag.severity is Severity.WARNING
     assert diag.message == "rung r has 1 demo"
+    assert diag.range == header  # a file-level slug anchors to the ladder header
 
 
 def test_format_error_maps_line_and_detail() -> None:

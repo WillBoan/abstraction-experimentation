@@ -31,6 +31,7 @@ from ..diagnostics import LadderDiagnostic, Position, Range, Severity, severity_
 from ..shape import LintFinding
 
 if TYPE_CHECKING:
+    from ..anchors import AnchorIndex
     from ..lang.errors import LadderFormatError
 
 
@@ -56,8 +57,11 @@ def diagnose(source: str, *, run_lint: bool = True) -> list[LadderDiagnostic]:
     if not run_lint or loaded.assumed:
         return []
 
+    from ..anchors import AnchorIndex
+
+    anchors = AnchorIndex.from_document(loaded.document)
     shape = draft_spec(loaded).lint()
-    return [_from_finding(finding) for finding in shape.findings if not finding.ok]
+    return [_from_finding(finding, anchors) for finding in shape.findings if not finding.ok]
 
 
 def _from_format_error(exc: LadderFormatError, lines: Sequence[str]) -> LadderDiagnostic:
@@ -76,12 +80,12 @@ def _from_format_error(exc: LadderFormatError, lines: Sequence[str]) -> LadderDi
     )
 
 
-def _from_finding(finding: LintFinding) -> LadderDiagnostic:
-    # `finding.check` is the legacy slug (may embed `[occurrence]`); kept whole as the code until
-    # Phase F splits code/occurrence and supplies a real anchor. Positionless -> line 0.
+def _from_finding(finding: LintFinding, anchors: AnchorIndex) -> LadderDiagnostic:
+    # `finding.check` is the legacy slug (may embed `[occurrence]`); the AnchorIndex maps it to the
+    # exact source span of its subject (rung / task / floor entry), or the ladder header.
     return LadderDiagnostic(
         code=finding.check,
-        range=_line_range((), 0),
+        range=anchors.resolve(finding.check),
         severity=severity_from_legacy(finding.severity),
         message=finding.detail,
     )
