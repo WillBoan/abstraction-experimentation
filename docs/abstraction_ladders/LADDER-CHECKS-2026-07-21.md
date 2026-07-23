@@ -65,7 +65,7 @@ Enforced by `ladders/lang/`; every error carries its line number. Roughly forty 
 | `top-uses-top-rung` | each top solution calls `r_k` |
 | `rung-distinct` | no two rungs compute the same function (compared unfolded) |
 
-`LadderShape.is_chain` is derived alongside (never declared): `True` when the rung edges form the simple spine `r_1 <- ... <- r_k`, `False` for a DAG (a rung feeding several or non-adjacent consumers — al17 is one in the batch). Reported in `spec.md`'s Shape line and the draft lint; it changes no verdict. **Deferred (TODO item 9):** the double-jump / validity-window still inline the immediate successor (chain-adjacency); on a DAG a rung whose successor does not call it simply gets no double-jump measured until the per-consumer generalisation lands.
+`LadderShape.is_chain` is derived alongside (never declared): `True` when the rung edges form the simple spine `r_1 <- ... <- r_k`, `False` for a DAG (a rung feeding several or non-adjacent consumers — al17 is one in the batch). Reported in `spec.md`'s Shape line and the draft lint; it changes no verdict. The double-jump and the reported `double_jump_depth` are now **per-consumer** (TODO item 9, landed 2026-07-23): a rung's double-jump is its inline into the shallowest of ALL its consumers, which absorbed the old last-rung special case (for `r_k`, consumers = the top solutions, so `double_jump_depth` is their shallowest skip — the former `min(top_skips)`). Byte-identical on every batch ladder, al17 included. One deliberate bound remains: a top solution that calls an *interior* rung directly is not separately necessity-checked (no batch ladder has such an edge; `top-double-jump-intractable` covers `r_k`, the only case that occurs).
 
 ### The depth sandwich (anchored at the pinned `depth_limit`)
 
@@ -73,7 +73,7 @@ Enforced by `ladders/lang/`; every error carries its line number. Roughly forty 
 | --- | --- |
 | `jump-affordable` | `d_i <= depth_limit` |
 | `proper-composition` | `d_i >= 2` — a rung composes, it does not restate a primitive |
-| `double-jump-intractable` | the inlined rung-above exceeds `depth_limit` |
+| `double-jump-intractable` | inlining this rung into its SHALLOWEST consumer (every higher rung that calls it, `min` over them) still exceeds `depth_limit` — the rung is necessary. Per-consumer since 2026-07-23 (was chain-adjacency `rungs[i+1]`); byte-identical on a chain, and on a DAG it spans a non-adjacent or plural consumer the successor-only form missed. The top layer's necessity relative to `r_k` is the finer-grained `top-double-jump-intractable` |
 | `top-affordable-with-ladder` | each top solution is affordable over `L_k` |
 | `raw-intractable` | `d_raw` exceeds `depth_limit` |
 | `top-double-jump-intractable` | the top over `L_{k-1}` exceeds `depth_limit` |

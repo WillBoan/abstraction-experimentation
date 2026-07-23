@@ -10,6 +10,7 @@ from arc_lab.program_search.ladders.shape import LadderShape, LintFinding
 from arc_lab.program_search.ladders.spec import (
     Demonstration,
     DemonstrationKind,
+    _consumer_programs,
     _rung_argument_columns,
 )
 from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
@@ -153,6 +154,20 @@ def test_structural_tier_skips_exactly_the_grid_backed_checks() -> None:
     assert families.isdisjoint(_CORPUS_BACKED_CHECKS)
     assert "jump-affordable" in families and "rung-referenced" in families
     assert structural.ok  # al1 is structurally clean
+
+
+def test_double_jump_is_measured_over_all_consumers_not_just_the_successor() -> None:
+    # al17 is a DAG: `shift1` is consumed by BOTH `frame1` (its immediate successor) and `shift2`
+    # (higher, non-adjacent). The per-consumer double-jump inlines `shift1` into every consumer and
+    # takes the shallowest -- the old successor-only form ignored `shift2` entirely. Verdict and
+    # numbers are unchanged on this batch (all consumers are equally deep), but the check now spans
+    # the whole consumer set, which is the point.
+    spec = make_ladder("al17-shift-frame-tall")
+    consumers = {cid for cid, _ in _consumer_programs(spec.rungs, spec.top)["shift1"]}
+    assert consumers == {"frame1", "shift2"}  # plural, non-adjacent -- a real DAG fan-out
+    shape = spec.lint()
+    checks = [f for f in shape.findings if f.check == "double-jump-intractable[shift1]"]
+    assert len(checks) == 1 and checks[0].ok  # runs for the DAG rung, and passes
 
 
 def test_rung_referenced_is_reachability_not_chain_adjacency() -> None:

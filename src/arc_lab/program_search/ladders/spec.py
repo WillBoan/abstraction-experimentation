@@ -14,7 +14,7 @@ from __future__ import annotations
 import enum
 from collections import Counter
 from collections.abc import Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from itertools import combinations
 
 from arc_lab.core.annotation import AnnotatedTask
@@ -236,7 +236,8 @@ class LadderSpec:
         # solution calls it. This is the DAG-general form of the old chain-only "the next rung calls
         # it"; `is_chain` records whether the edges happen to form the simple spine, reported (never
         # declared) so a DAG is legible rather than rejected.
-        consumers = _consumer_graph(rungs, self.top)
+        consumer_progs = _consumer_programs(rungs, self.top)
+        consumers = {name: [cid for cid, _ in progs] for name, progs in consumer_progs.items()}
         is_chain = _is_chain(consumers, [rung.name for rung in rungs])
         for rung in rungs:
             err(
@@ -267,22 +268,32 @@ class LadderSpec:
                 d_i >= 2,
                 f"jump depth {d_i}: a rung must compose over L_{i}, not restate a bare primitive",
             )
-            double_jump: int | None = None
-            # Chain-adjacency double-jump: inline THIS rung into its immediate successor and check
-            # the skip stays intractable. Guarded by the successor actually calling it -- true for a
-            # chain, so no change on the batch. The per-consumer generalisation for a DAG (a rung
-            # whose consumer is non-adjacent or plural) is deferred (TODO item 9); until then such a
-            # rung simply has no double-jump measured here.
-            if i + 1 < k and _calls(rungs[i + 1].template, rung.name) >= 1:
-                inlined = unfold_program(
-                    rungs[i + 1].template, full_lib, expand=frozenset({rung.name})
-                )
-                double_jump = compositional_depth(inlined)
+            # Per-consumer double-jump: skipping this rung inlines it into EVERY program that calls
+            # it -- each higher rung and each top solution (the DAG generalisation of "the immediate
+            # successor"). The rung earns its place iff the SHALLOWEST consumer stays intractable
+            # (`min` over consumers: if the shallowest exceeds `depth_limit`, all do). For a chain
+            # the only consumer is the next rung, so this is byte-identical to the old adjacency
+            # check; for a DAG it catches a non-adjacent or plural consumer the successor-only form
+            # missed. The reported `double_jump_depth` is that shallowest inlined depth over all
+            # consumers -- which, for the last rung (consumers = top solutions), is exactly the old
+            # `min(top_skips)` special case, now absorbed. The top layer's own necessity relative to
+            # r_k is `top-double-jump-intractable` below (per top solution, finer-grained).
+            inlined = [
+                (cid, unfold_program(prog, full_lib, expand=frozenset({rung.name})))
+                for cid, prog in consumer_progs[rung.name]
+            ]
+            double_jump: int | None = (
+                min(compositional_depth(prog) for _, prog in inlined) if inlined else None
+            )
+            rung_inlined = [(cid, prog) for cid, prog in inlined if not cid.startswith("top:")]
+            if rung_inlined:  # necessity vs the BRIDGING rungs above; the top layer is checked below
+                cid, shallow = min(rung_inlined, key=lambda item: min_depth_limit(item[1]))
+                need = min_depth_limit(shallow)
                 err(
                     f"double-jump-intractable[{rung.name}]",
-                    min_depth_limit(inlined) > ref_limit,
-                    f"inlined depth {double_jump} needs depth_limit "
-                    f"{min_depth_limit(inlined)}, must exceed {ref_limit}",
+                    need > ref_limit,
+                    f"skipping it reaches `{cid}` at depth_limit {need} "
+                    f"(inlined depth {compositional_depth(shallow)}), must exceed {ref_limit}",
                 )
             rung_shapes.append(
                 RungShape(
@@ -300,7 +311,6 @@ class LadderSpec:
         # top: d_raw (unfold to floor) intractable; top over L_{k-1} (skip r_k) intractable.
         raw_profile: list[int] = []
         top_depths: list[int] = []
-        top_skips: list[int] = []
         for sol in self.top.reference_solutions:
             d_top = compositional_depth(sol)
             top_depths.append(d_top)
@@ -328,17 +338,12 @@ class LadderSpec:
             )
             skipped = unfold_program(sol, full_lib, expand=frozenset({rungs[-1].name}))
             skip_top = compositional_depth(skipped)
-            top_skips.append(skip_top)
             err(
                 "top-double-jump-intractable",
                 min_depth_limit(skipped) > ref_limit,
                 f"top over L_{k - 1} depth {skip_top} needs depth_limit "
                 f"{min_depth_limit(skipped)}, must exceed {ref_limit}",
             )
-        # The last bridging rung's double jump is the layer above it -- the Top: the shallowest
-        # top solution inlined over L_{k-1} (what skipping r_k would cost in depth).
-        if rung_shapes and top_skips:
-            rung_shapes[-1] = replace(rung_shapes[-1], double_jump_depth=min(top_skips))
 
         # The shared unfold cache: every stated program's floor form, computed ONCE. al14's top
         # unfolds to millions of node occurrences; the rewrite, constancy, conditional and
@@ -1004,27 +1009,36 @@ def _calls(program: Program, name: str) -> int:
     return sum(1 for node in program.walk() if isinstance(node, Apply) and node.primitive == name)
 
 
-def _consumer_graph(
+def _consumer_programs(
     rungs: Sequence[Rung], top: TopRung
-) -> dict[str, list[str]]:
-    """For each rung, the higher rungs and top solutions that CALL it -- its consumers.
+) -> dict[str, list[tuple[str, Program]]]:
+    """For each rung, the CONSUMER programs that call it: every higher rung's template and every
+    top solution that references it, each tagged by a consumer id (the higher rung's name, or
+    ``top:<task_id>``).
 
     References point only downward (a rung elaborates over ``L_{i-1}``; enforced at load), so a
-    rung reachable from the top is exactly one with a consumer: an empty list is a dead rung,
-    unreachable however deep the budget. This is the DAG generalisation of "the next rung calls
-    it" -- correct for a chain and for a rung that feeds several, or non-adjacent, consumers.
+    rung reachable from the top is exactly one with a consumer -- an empty list is a dead rung. The
+    program is what the double-jump inlines this rung INTO: the DAG generalisation of "the next
+    rung", correct for a chain and for a rung that feeds several, or non-adjacent, consumers.
     """
     names = [rung.name for rung in rungs]
-    consumers: dict[str, list[str]] = {name: [] for name in names}
+    out: dict[str, list[tuple[str, Program]]] = {name: [] for name in names}
     for level, rung in enumerate(rungs):
         for lower in names[:level]:  # only strictly-lower rungs can be called
             if _calls(rung.template, lower):
-                consumers[lower].append(rung.name)
+                out[lower].append((rung.name, rung.template))
     for task_id, solution in zip(top.task_ids, top.reference_solutions, strict=False):
         for name in names:
             if _calls(solution, name):
-                consumers[name].append(f"top:{task_id}")
-    return consumers
+                out[name].append((f"top:{task_id}", solution))
+    return out
+
+
+def _consumer_graph(rungs: Sequence[Rung], top: TopRung) -> dict[str, list[str]]:
+    """The consumer ids per rung (names only) -- :func:`_consumer_programs` without the programs."""
+    return {
+        name: [cid for cid, _ in progs] for name, progs in _consumer_programs(rungs, top).items()
+    }
 
 
 def _is_chain(consumers: dict[str, list[str]], rung_names: Sequence[str]) -> bool:
