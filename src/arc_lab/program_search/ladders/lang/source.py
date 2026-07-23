@@ -70,6 +70,29 @@ class SourceMap:
         """The half-open physical range covering joined offsets ``[start, end)``."""
         return Range(self.position(start), self.position(end))
 
+    def slice(self, start: int, end: int | None = None) -> SourceMap:
+        """A sub-map whose offset 0 is ``start`` in this map (for a fragment like a rung body).
+
+        ``end`` defaults to the end of the last segment. Segments are clipped to ``[start, end)``.
+        """
+        if end is None:
+            end = max((s.logical_start + s.length for s in self.segments), default=start)
+        clipped: list[Segment] = []
+        for segment in self.segments:
+            lo = max(segment.logical_start, start)
+            hi = min(segment.logical_start + segment.length, end)
+            if lo >= hi:
+                continue
+            clipped.append(
+                Segment(
+                    logical_start=lo - start,
+                    length=hi - lo,
+                    line=segment.line,
+                    column=segment.column + (lo - segment.logical_start),
+                )
+            )
+        return SourceMap(tuple(clipped))
+
 
 @dataclass(frozen=True, slots=True)
 class Statement:

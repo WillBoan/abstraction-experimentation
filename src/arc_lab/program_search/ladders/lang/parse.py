@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from arc_lab.core.grid import Grid
-from arc_lab.program_search.ladders.diagnostics import Range
+from arc_lab.program_search.ladders.diagnostics import Position, Range
 from arc_lab.program_search.ladders.lang.errors import LadderFormatError, at_line
 from arc_lab.program_search.ladders.lang.names import (
     FLOOR_SUMMONERS,
@@ -36,6 +36,12 @@ LADDER_SUFFIX = ".ladder"
 
 _LADDER_NAME_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789-"
 
+# Source spans are carried on every model entity but are `compare=False`: they never affect equality
+# (identity is name/signature/text, unchanged), so two documents parsed from byte-identical sources
+# are equal regardless of position bookkeeping. A benign default keeps every constructor optional.
+_NO_RANGE = Range(Position(0, 0), Position(0, 0))
+_NO_MAP = SourceMap(())
+
 
 @dataclass(frozen=True, slots=True)
 class FloorEntry:
@@ -44,6 +50,9 @@ class FloorEntry:
     name: str
     signature: PrimitiveSignature
     line: int
+    span: Range = field(default=_NO_RANGE, compare=False)
+    name_span: Range = field(default=_NO_RANGE, compare=False)
+    signature_span: Range = field(default=_NO_RANGE, compare=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,6 +62,9 @@ class ConfigEntry:
     path: str
     value: object
     line: int
+    span: Range = field(default=_NO_RANGE, compare=False)
+    path_span: Range = field(default=_NO_RANGE, compare=False)
+    value_span: Range = field(default=_NO_RANGE, compare=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,6 +77,14 @@ class TaskBlock:
     train_inputs: tuple[Grid, ...]
     test_inputs: tuple[Grid, ...]
     line: int
+    span: Range = field(default=_NO_RANGE, compare=False)
+    header_span: Range = field(default=_NO_RANGE, compare=False)
+    id_span: Range = field(default=_NO_RANGE, compare=False)
+    solution_span: Range = field(default=_NO_RANGE, compare=False)
+    #: Offset->position map of just the solution expression text, for anchoring elaboration errors.
+    solution_map: SourceMap = field(default=_NO_MAP, compare=False)
+    #: Spans of the grid literals, train grids then test grids (index-aligned with the inputs).
+    grid_spans: tuple[Range, ...] = field(default=(), compare=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +95,12 @@ class RungBlock:
     body: str
     tasks: tuple[TaskBlock, ...]
     line: int
+    span: Range = field(default=_NO_RANGE, compare=False)
+    name_span: Range = field(default=_NO_RANGE, compare=False)
+    header_span: Range = field(default=_NO_RANGE, compare=False)
+    body_span: Range = field(default=_NO_RANGE, compare=False)
+    #: Offset->position map of just the body expression text, for anchoring elaboration errors.
+    body_map: SourceMap = field(default=_NO_MAP, compare=False)
 
     @property
     def name(self) -> str:
@@ -93,6 +119,8 @@ class DistractorBlock:
     label: str
     tasks: tuple[TaskBlock, ...]
     line: int
+    span: Range = field(default=_NO_RANGE, compare=False)
+    label_span: Range = field(default=_NO_RANGE, compare=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +137,8 @@ class LadderDocument:
     rungs: tuple[RungBlock, ...]
     distractors: tuple[DistractorBlock, ...]
     top: tuple[TaskBlock, ...]
+    header_span: Range = field(default=_NO_RANGE, compare=False)
+    name_span: Range = field(default=_NO_RANGE, compare=False)
 
     def tasks(self) -> tuple[TaskBlock, ...]:
         """Every task in the file, in emission order: rungs, distractors, then the goal layer."""
@@ -136,7 +166,8 @@ def parse_document(text: str) -> LadderDocument:
     nodes = _build_tree(scan_source(text))
     if not nodes:
         raise LadderFormatError("empty ladder file")
-    name = _ladder_header(nodes[0])
+    header_node = nodes[0]
+    name = _ladder_header(header_node)
     sections = nodes[1:]
     if len(sections) < 3:
         raise LadderFormatError(
@@ -181,10 +212,27 @@ def parse_document(text: str) -> LadderDocument:
         rungs=tuple(rungs),
         distractors=tuple(distractors),
         top=tuple(_task_block(child) for child in _block(last)),
+        header_span=_whole(header_node),
+        name_span=_span(header_node, name, len("ladder")),
     )
 
 
 # -- sections -----------------------------------------------------------------------
+
+
+def _span(node: _Node, sub: str, start: int = 0) -> Range:
+    """The physical range of substring ``sub`` in ``node``'s header text (searched from ``start``).
+
+    ``node.header`` is a prefix of its statement (a block node drops only the trailing ``{``), so its
+    offsets align with ``node.map``.
+    """
+    index = node.header.index(sub, start)
+    return node.map.range(index, index + len(sub))
+
+
+def _whole(node: _Node) -> Range:
+    """The physical range of a node's whole header line."""
+    return node.map.range(0, len(node.header))
 
 
 def _ladder_header(node: _Node) -> str:
@@ -234,7 +282,14 @@ def _config_entry(node: _Node) -> ConfigEntry:
             f"got {raw.strip()!r}",
             line=node.line,
         ) from None
-    return ConfigEntry(path=path, value=value, line=node.line)
+    return ConfigEntry(
+        path=path,
+        value=value,
+        line=node.line,
+        span=_whole(node),
+        path_span=_span(node, path, 0),
+        value_span=_span(node, raw.strip(), node.header.index(":")),
+    )
 
 
 def _floor_entry(node: _Node) -> FloorEntry:
@@ -253,11 +308,15 @@ def _floor_entry(node: _Node) -> FloorEntry:
             f"floor primitive {name.strip()!r} needs a `: <signature>` (spec FLR-6)",
             line=node.line,
         )
+    primitive, signature_text = name.strip(), signature.strip()
     try:
         return FloorEntry(
-            name=check_identifier(name.strip(), "primitive name", allow=FLOOR_SUMMONERS),
-            signature=parse_primitive_signature(signature.strip()),
+            name=check_identifier(primitive, "primitive name", allow=FLOOR_SUMMONERS),
+            signature=parse_primitive_signature(signature_text),
             line=node.line,
+            span=_whole(node),
+            name_span=_span(node, primitive, len("use")),
+            signature_span=_span(node, signature_text, node.header.index(":")),
         )
     except LadderFormatError as exc:
         raise at_line(exc, node.line) from None
@@ -280,11 +339,19 @@ def _rung_block(node: _Node) -> RungBlock:
         header = parse_definition_header(left.strip())
     except LadderFormatError as exc:
         raise at_line(exc, definition.line) from None
+    body_text = body.strip()
+    body_start = definition.header.index(body_text, definition.header.index("=") + 1)
+    body_end = body_start + len(body_text)
     return RungBlock(
         header=header,
-        body=body.strip(),
+        body=body_text,
         tasks=tuple(_task_block(child) for child in tasks),
         line=node.line,
+        span=_whole(definition),
+        name_span=_span(definition, header.name, 0),
+        header_span=_span(definition, left.strip(), 0),
+        body_span=definition.map.range(body_start, body_end),
+        body_map=definition.map.slice(body_start, body_end),
     )
 
 
@@ -302,7 +369,13 @@ def _distractor_block(node: _Node) -> DistractorBlock:
     tasks = tuple(_task_block(child) for child in _block(node))
     if not tasks:
         raise LadderFormatError(f"distractor {label!r} has no tasks", line=node.line)
-    return DistractorBlock(label=label, tasks=tasks, line=node.line)
+    return DistractorBlock(
+        label=label,
+        tasks=tasks,
+        line=node.line,
+        span=_whole(node),
+        label_span=_span(node, label, len("distractor")),
+    )
 
 
 def _task_block(node: _Node) -> TaskBlock:
@@ -325,8 +398,12 @@ def _task_block(node: _Node) -> TaskBlock:
         raise at_line(exc, node.line) from None
 
     solution: str | None = None
+    solution_span = _NO_RANGE
+    solution_map = _NO_MAP
     train: list[Grid] = []
     test: list[Grid] = []
+    train_spans: list[Range] = []
+    test_spans: list[Range] = []
     for child in node.children:
         if child.children is not None:
             raise LadderFormatError(f"unexpected block inside task {task_id!r}", line=child.line)
@@ -342,6 +419,9 @@ def _task_block(node: _Node) -> TaskBlock:
             solution = rest.removeprefix(":").strip()
             if not solution:
                 raise LadderFormatError(f"task {task_id!r} has an empty solution", line=child.line)
+            offset = child.header.index(solution, child.header.index(":") + 1)
+            solution_span = child.map.range(offset, offset + len(solution))
+            solution_map = child.map.slice(offset, offset + len(solution))
         elif keyword in ("train", "test"):
             if solution is None:
                 raise LadderFormatError(
@@ -352,7 +432,15 @@ def _task_block(node: _Node) -> TaskBlock:
                     f"task {task_id!r}: `train` grids come before `test` grids (spec TSK-2)",
                     line=child.line,
                 )
-            (train if keyword == "train" else test).append(_grid(rest, task_id, child.line))
+            grid_text = rest.strip()
+            grid_offset = child.header.index(grid_text, len(keyword))
+            grid_span = child.map.range(grid_offset, grid_offset + len(grid_text))
+            if keyword == "train":
+                train.append(_grid(rest, task_id, child.line))
+                train_spans.append(grid_span)
+            else:
+                test.append(_grid(rest, task_id, child.line))
+                test_spans.append(grid_span)
         else:
             raise LadderFormatError(
                 f"unknown field {child.header!r} in task {task_id!r} "
@@ -373,6 +461,12 @@ def _task_block(node: _Node) -> TaskBlock:
         train_inputs=tuple(train),
         test_inputs=tuple(test),
         line=node.line,
+        span=_whole(node),
+        header_span=_whole(node),
+        id_span=_span(node, task_id, node.header.index("task")),
+        solution_span=solution_span,
+        solution_map=solution_map,
+        grid_spans=tuple(train_spans + test_spans),
     )
 
 

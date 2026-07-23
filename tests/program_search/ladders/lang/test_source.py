@@ -3,8 +3,20 @@
 from __future__ import annotations
 
 from arc_lab.program_search.ladders.diagnostics import Position, Range
+from arc_lab.program_search.ladders.lang.parse import parse_document
 from arc_lab.program_search.ladders.lang.source import scan_source
 from arc_lab.program_search.ladders.registry import ladder_paths
+
+
+def _text_at(source: str, span: Range) -> str:
+    """The source substring under a (possibly multi-line) half-open range."""
+    lines = source.splitlines()
+    if span.start.line == span.end.line:
+        return lines[span.start.line][span.start.character : span.end.character]
+    parts = [lines[span.start.line][span.start.character :]]
+    parts += lines[span.start.line + 1 : span.end.line]
+    parts.append(lines[span.end.line][: span.end.character])
+    return "\n".join(parts)
 
 
 def test_every_registry_ladder_maps_segments_to_their_source() -> None:
@@ -60,3 +72,31 @@ def test_comment_and_leading_whitespace_do_not_shift_columns() -> None:
     # Column 4 = the four leading spaces; the comment tail is gone but never shifts what precedes it.
     assert statement.map.position(0) == Position(1, 4)
     assert statement.map.position(len("depth: 2")) == Position(1, 12)
+
+
+def test_model_spans_point_at_their_source_tokens() -> None:
+    # Across every committed ladder: each single-token span extracts exactly the token it names, and
+    # solution/grid spans start at the right character. This is what lets Phase F anchor findings.
+    for name, path in ladder_paths().items():
+        source = path.read_text()
+        document = parse_document(source)
+        assert _text_at(source, document.name_span) == document.name, name
+
+        for entry in document.floor:
+            assert _text_at(source, entry.name_span) == entry.name, (name, entry.name)
+        for config in document.config:
+            assert _text_at(source, config.path_span) == config.path, (name, config.path)
+        for rung in document.rungs:
+            assert _text_at(source, rung.name_span) == rung.name, (name, rung.name)
+        for block in document.distractors:
+            assert _text_at(source, block.label_span) == block.label, (name, block.label)
+
+        for task in document.tasks():
+            assert _text_at(source, task.id_span) == task.task_id, (name, task.task_id)
+            # The solution may be continuation-joined; check its first character lands correctly.
+            first = source.splitlines()[task.solution_span.start.line][
+                task.solution_span.start.character
+            ]
+            assert first == task.solution[0], (name, task.task_id, first, task.solution[0])
+            if task.solution_span.start.line == task.solution_span.end.line:
+                assert _text_at(source, task.solution_span) == task.solution, (name, task.task_id)
