@@ -1,0 +1,95 @@
+{
+  "name": "vscode-ladder",
+  "displayName": "Ladder (.ladder)",
+  "description": "Syntax highlighting and diagnostics for arc-lab `.ladder` files.",
+  "version": "0.1.0",
+  "publisher": "arc-lab",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "activationEvents": [
+    "onLanguage:ladder"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "ladder",
+        "aliases": [
+          "Ladder",
+          "ladder"
+        ],
+        "extensions": [
+          ".ladder"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ladder",
+        "scopeName": "source.ladder",
+        "path": "./syntaxes/ladder.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Ladder",
+      "properties": {
+        "ladder.server.command": {
+          "type": "string",
+          "default": "uv",
+          "description": "Executable that launches the .ladder language server."
+        },
+        "ladder.server.args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "run",
+            "arc-lab",
+            "lsp"
+          ],
+          "description": "Arguments passed to the language-server command."
+        },
+        "ladder.server.cwd": {
+          "type": "string",
+          "default": "",
+          "description": "Working directory for the language server (defaults to the first workspace folder)."
+        },
+        "ladder.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace the communication between VS Code and the language server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "typecheck": "tsc --noEmit",
+    "vscode:prepublish": "node esbuild.js --production",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.75.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.4.0"
+  }
+}

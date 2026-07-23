@@ -1,0 +1,91 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Ladder",
+  "scopeName": "source.ladder",
+  "patterns": [
+    {
+      "name": "comment.line.number-sign.ladder",
+      "match": "#.*$"
+    },
+    {
+      "comment": "ladder <name> header",
+      "match": "^\\s*(ladder)\\s+([a-z0-9][a-z0-9-]*)",
+      "captures": {
+        "1": { "name": "keyword.control.ladder" },
+        "2": { "name": "entity.name.namespace.ladder" }
+      }
+    },
+    {
+      "comment": "floor <library-name>",
+      "match": "^\\s*(floor)\\s+([A-Za-z0-9_-]+)",
+      "captures": {
+        "1": { "name": "keyword.control.ladder" },
+        "2": { "name": "entity.name.namespace.ladder" }
+      }
+    },
+    {
+      "comment": "distractor <label>",
+      "match": "^\\s*(distractor)\\s+([A-Za-z0-9_-]+)",
+      "captures": {
+        "1": { "name": "keyword.control.ladder" },
+        "2": { "name": "entity.name.tag.ladder" }
+      }
+    },
+    {
+      "comment": "[heldout] task <id>",
+      "match": "^\\s*(heldout\\s+)?(task)\\s+([a-z0-9][a-z0-9_-]*)",
+      "captures": {
+        "1": { "name": "keyword.other.ladder" },
+        "2": { "name": "keyword.control.ladder" },
+        "3": { "name": "entity.name.tag.ladder" }
+      }
+    },
+    {
+      "comment": "section keywords with no trailing identifier",
+      "match": "^\\s*(config|rung|top)\\b",
+      "captures": {
+        "1": { "name": "keyword.control.ladder" }
+      }
+    },
+    {
+      "comment": "use <primitive>: <signature>",
+      "match": "\\b(use)\\s+([a-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.other.ladder" },
+        "2": { "name": "entity.name.function.ladder" }
+      }
+    },
+    {
+      "name": "keyword.other.ladder",
+      "match": "\\b(solution|train|test)\\b"
+    },
+    {
+      "comment": "rung definition: name(...) -> T = body",
+      "match": "^\\s*([a-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+      "captures": {
+        "1": { "name": "entity.name.function.ladder" }
+      }
+    },
+    {
+      "name": "variable.language.ladder",
+      "match": "\\binput\\b"
+    },
+    {
+      "name": "constant.language.ladder",
+      "match": "\\b(true|false)\\b"
+    },
+    {
+      "comment": "capitalised = a type or type constructor (Grid, Color, List, Pair, ...)",
+      "name": "entity.name.type.ladder",
+      "match": "\\b[A-Z][A-Za-z0-9]*\\b"
+    },
+    {
+      "name": "constant.numeric.ladder",
+      "match": "(?<![A-Za-z0-9_])-?\\d+"
+    },
+    {
+      "name": "keyword.operator.ladder",
+      "match": "->|="
+    }
+  ]
+}
