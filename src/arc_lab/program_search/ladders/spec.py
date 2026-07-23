@@ -35,7 +35,7 @@ from arc_lab.program_search.ladders.checks import (
 from arc_lab.program_search.ladders.shape import LadderShape, LintFinding, RungShape
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.search_engine import BRANCHING_ENTRY
-from arc_lab.program_search.substrate.abstraction import make_abstraction, unfold_program
+from arc_lab.program_search.substrate.abstraction import unfold_program
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.program import Apply, If, Input, Lam, PrimRef, Program
 from arc_lab.program_search.substrate.types import ArrowType, Type, TypeVar
@@ -213,14 +213,10 @@ class LadderSpec:
             f"tasks with < 2 train examples: {few_examples}",
         )
 
-        # Structure (S): type well-formedness (attempt make_abstraction over L_{i-1}; reuse its
-        # validation).
-        for i, rung in enumerate(rungs):
-            try:
-                make_abstraction(rung.name, rung.template, self.oracle_library(i))
-                err(f"well-typed[{rung.name}]", True, "")
-            except (ValueError, KeyError) as exc:
-                err(f"well-typed[{rung.name}]", False, f"{rung.name} ill-typed over L_{i}: {exc}")
+        # (Type well-formedness is not re-checked here: loading the `.ladder` file already builds
+        # every rung with `make_abstraction` over `L_{i-1}` -- with the declared signature, which a
+        # signatureless lint call cannot recover for a polymorphic root -- so a `LadderSpec` cannot
+        # exist with an ill-typed template. Load owns it.)
 
         # Depth sandwich (D): the tractability claims, anchored at the reference budget. (Also
         # Structure's rung-referenced / top-uses-top-rung, which need this loop's inlining.)
@@ -508,23 +504,16 @@ class LadderSpec:
             f"floor primitives no rung, demonstration, distractor or top solution uses: {idle}",
         )
 
-        # Vocabulary (V), the complement: an `If` is a NODE, not an `Apply`, so a template can
-        # branch without naming any primitive -- but the engine only enumerates branches when the
-        # `if` summoner is in the library (`_branch_candidates`). Without it the ladder is
-        # writable and unreachable, which is the one way branching syntax can silently lie.
-        # Vocabulary (V): the same coherence question for FUNCTION holes. A higher-order floor
+        # Vocabulary (V): a config-coherence question for FUNCTION holes. A higher-order floor
         # primitive whose holes this config can never fill is not rejected by the engine -- it is
         # silently skipped, costing exactly nothing, so the ladder runs clean and never exercises
-        # the capability it declares (micro-probes battery E).
+        # the capability it declares (micro-probes battery E). (The sibling coherence question for
+        # BRANCHING -- a template that branches over a floor lacking the `if` summoner -- is a load
+        # error, raised at the conditional in `ladders/lang/expr.py`, so a branch is unreachable
+        # only if the ladder does not load. `exercised` still credits `if` to `floor-fully-exercised`
+        # above.)
         for detail in unfillable_function_holes(self.floor(), self.reference_config.search_engine):
             warn("hof-holes-fillable", False, f"declared but unfillable: {detail}")
-
-        err(
-            "branching-summoned",
-            BRANCHING_ENTRY not in exercised or BRANCHING_ENTRY in self.floor(),
-            f"a template or solution branches, but the floor does not declare "
-            f"`{BRANCHING_ENTRY}`: search can never reach it",
-        )
 
         # Structure (S): rung distinctness -- two rungs with identical unfolded templates are one
         # rung with two names: the second buys no depth and splits its own demonstrations. (A

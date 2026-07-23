@@ -36,6 +36,7 @@ from collections.abc import Sequence
 from arc_lab.program_search.ladders.lang.errors import LadderFormatError
 from arc_lab.program_search.ladders.lang.names import check_identifier
 from arc_lab.program_search.ladders.lang.type_syntax import render_type
+from arc_lab.program_search.search.search_engine import BRANCHING_ENTRY
 from arc_lab.program_search.substrate.library import Library, Primitive
 from arc_lab.program_search.substrate.program import (
     AppFn,
@@ -313,7 +314,21 @@ class _Elaborator:
         return AppFn(fn, tuple(args)), apply_subst(self.subst, resolved.result)
 
     def _conditional(self, node: ast.IfExp, expected: Type | None) -> tuple[Program, Type]:
-        """``a if c else b`` -> :class:`If` -- short-circuit in Python and in the substrate."""
+        """``a if c else b`` -> :class:`If` -- short-circuit in Python and in the substrate.
+
+        Branching is the one node kind with no ``Apply`` to name a primitive, yet the engine only
+        enumerates branches when the ``if`` summoner is in the library (``_branch_candidates``); a
+        branch written over a floor that omits it is writable but unreachable at any budget. That is
+        a coherence failure, not an unsoundness -- the ladder cannot mean anything for search -- so
+        it is a load error here, beside every other "unknown vocabulary" one, rather than a lint
+        finding. The floor is a subset of every ``L_i``, and only the floor can carry ``if``, so
+        checking the elaboration scope is exactly checking the floor.
+        """
+        if BRANCHING_ENTRY not in self.library:
+            raise LadderFormatError(
+                f"a conditional needs the `{BRANCHING_ENTRY}` summoner in the floor, which this "
+                "scope does not declare: search could never reach the branch"
+            )
         cond = self._argument(node.test, BOOL, "an `if` condition")
         then, then_type = self.elaborate(node.body, expected)
         orelse = self._argument(node.orelse, then_type, "the `else` branch")

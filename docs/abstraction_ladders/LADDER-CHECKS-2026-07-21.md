@@ -1,4 +1,4 @@
-# Ladder checks — what is verified, and where (2026-07-21; updated 2026-07-22)
+# Ladder checks — what is verified, and where (2026-07-21; updated 2026-07-22, 2026-07-23)
 
 A dated snapshot of every check a Ladder passes through, taken after the `.ladder` migration and the demonstration-plan checks landed; updated 2026-07-22 when the evaluation-backed checks (`constant-subterm`, `if-condition-varies`) and the equational `rewrite-shallow` check landed. Point-in-time: the living sources are [LADDER-FORMAT.md](LADDER-FORMAT.md) (the format's normative rules) and the code itself (`ladders/lang/`, `ladders/spec.py::LadderSpec.lint`, `ladders/checks.py`, `analysis/equations.py` + `analysis/rewrite.py`, `ladders/certificate.py`). The planned-checks list this is measured against is [ABSTRACTION-LADDERS-2026-07-16.md](ABSTRACTION-LADDERS-2026-07-16.md) §6.4.
 
@@ -37,18 +37,19 @@ So a lint-clean ladder is a ladder worth probing, never an admitted one.
 
 ## Layer 1 — Load time
 
-Enforced by `ladders/lang/`; every error carries its line number. Roughly forty distinct messages in six groups.
+Enforced by `ladders/lang/`; every error carries its line number. Roughly forty distinct messages in seven groups.
 
 - **Structure** — filename matches the `ladder` header; kebab-case name; fixed section order (`ladder` → `config` → `floor` → rungs → distractors → `top`); rungs precede distractors; blocks open and close per the brace rule; no unbalanced brackets.
 - **Names** — identifiers are valid Python identifiers, not keywords (hard or soft), not reserved words; task ids match their shape and are unique ladder-wide; a rung name cannot shadow a floor primitive or an earlier rung.
 - **Floor** — every primitive resolves in `BASE_PRIMITIVES`; its declared signature must match the registry's exactly; no duplicates; at least one primitive.
 - **Config** — dotted paths and semantics are exactly `overrides.py`'s; values are Python literals; duplicate and unknown paths rejected; `library` unsettable; `learn` cannot be unset.
-- **Expressions** — a closed grammar (positional application, identifiers, int literals — no operators, lambdas, keyword args, negative literals, list literals); scope rules for `input`, params and rungs; full type- and arity-checking with unification; an int literal must land in a `Color` or `Int` position; a rung body must match its declared signature (unused params and wrong return types rejected).
+- **Expressions** — a closed grammar (positional application, identifiers, int literals — no operators, lambdas, keyword args, negative literals, list literals); scope rules for `input`, params and rungs; full type- and arity-checking with unification; an int literal must land in a `Color` or `Int` position; a rung body must match its declared signature (unused params and wrong return types rejected); a conditional requires the `if` summoner in the floor (a branch over a floor lacking it is writable but unreachable at any budget — the `branching-summoned` coherence check, relocated from lint to here 2026-07-23).
+- **Scope (references point only downward)** — a rung template elaborates over `L_{i-1}` and a task solution over the library its block sits in, so a template or solution can name only floor primitives and _strictly lower_ rungs; a forward or self reference is an "unknown function" load error. Load owns this property in full — there is no separate lint check for "references only floor + lower rungs" because none can fail (a DAG's edges are downward by construction). This is what makes the `rung-referenced` question purely one of _reachability from above_ (no dead rungs), not of direction.
 - **Semantics** — every task's solution must evaluate on every declared input; a demonstrating task must actually _call_ its rung; a distractor may not reference any rung.
 
 ## Layer 2 — Static lint
 
-**30 checks: 25 error-class, 5 warnings** (`constant-subterm` is error-class with a warn tier — see its row). Most are parametrised per rung or per task, so a real ladder runs many more instances (al13 runs 61). The two added 2026-07-23 (`free-params-covary`, `hof-holes-fillable`) are dormant on the current batch — they guard failure modes only Phase 2/3 ladders will hit.
+**29 checks: 24 error-class, 5 warnings** (`constant-subterm` is error-class with a warn tier — see its row). Most are parametrised per rung or per task, so a real ladder runs many more instances (al13 runs 59). Two checks left this layer on 2026-07-23: `well-typed` was dropped as redundant (loading already builds every rung with `make_abstraction` over `L_{i-1}` — with the declared signature a signatureless lint call cannot recover for a polymorphic root — so an ill-typed template cannot reach lint), and `branching-summoned` moved to load (see the Expressions bullet above). `free-params-covary` and `hof-holes-fillable` (added 2026-07-23) are dormant on the current batch — they guard failure modes only Phase 2/3 ladders will hit.
 
 ### Structure
 
@@ -58,7 +59,6 @@ Enforced by `ladders/lang/`; every error carries its line number. Roughly forty 
 | `tasks-exist` | every demonstration / top task id is in the train corpus |
 | `top-solutions-aligned` | one reference solution per top task id |
 | `min-2-demos` | each rung has >= 2 demonstrating tasks |
-| `well-typed` | each template builds as an abstraction over `L_{i-1}` |
 | `rung-referenced` | the rung above actually calls this one |
 | `top-uses-top-rung` | each top solution calls `r_k` |
 | `rung-distinct` | no two rungs compute the same function (compared unfolded) |

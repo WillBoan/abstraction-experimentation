@@ -88,6 +88,19 @@ def test_conditional_becomes_a_short_circuiting_if_node() -> None:
     )
 
 
+def test_conditional_over_a_floor_without_the_if_summoner_is_a_load_error() -> None:
+    """Branching needs the `if` summoner in the floor or the engine never enumerates the branch.
+    That coherence check lives at load (raised here), not in `lint()` -- so a branch is unreachable
+    only if the ladder does not load at all."""
+    no_if = Library(name="no-if", primitives=tuple(p for p in _LIB.primitives if p.name != "if"))
+    with pytest.raises(LadderFormatError, match=r"needs the `if` summoner"):
+        elaborate_expression(
+            "flip_h(input) if true else input", library=no_if, allow_input=True
+        )
+    # ... and it is exactly the summoner that is missing: with `if` present the same text loads.
+    assert isinstance(_elab("flip_h(input) if true else input"), If)
+
+
 def test_bare_primitive_in_a_function_position_is_a_primref() -> None:
     assert _elab("map(flip_h, gs)", (("gs", _GRIDS),)) == Apply(
         "map", (PrimRef("flip_h"), Param(0, _GRIDS))
