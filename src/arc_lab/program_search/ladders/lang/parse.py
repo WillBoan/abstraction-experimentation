@@ -16,12 +16,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from arc_lab.core.grid import Grid
+from arc_lab.program_search.ladders.diagnostics import Range
 from arc_lab.program_search.ladders.lang.errors import LadderFormatError, at_line
 from arc_lab.program_search.ladders.lang.names import (
     FLOOR_SUMMONERS,
     check_identifier,
     check_task_id,
 )
+from arc_lab.program_search.ladders.lang.source import SourceMap, Statement, scan_source
 from arc_lab.program_search.ladders.lang.type_syntax import (
     DefinitionHeader,
     PrimitiveSignature,
@@ -131,7 +133,7 @@ def parse_ladder_file(path: Path) -> LadderDocument:
 
 def parse_document(text: str) -> LadderDocument:
     """Parse `.ladder` source text into a :class:`LadderDocument`."""
-    nodes = _build_tree(_logical_lines(text))
+    nodes = _build_tree(scan_source(text))
     if not nodes:
         raise LadderFormatError("empty ladder file")
     name = _ladder_header(nodes[0])
@@ -396,10 +398,18 @@ def _grid(text: str, task_id: str, line: int) -> Grid:
 
 @dataclass(slots=True)
 class _Node:
-    """A statement (``children is None``) or a block and its contents."""
+    """A statement (``children is None``) or a block and its contents.
+
+    ``header`` is the statement text (block nodes drop the trailing ``{``); ``line`` is its 1-based
+    start line. ``range``/``map`` carry the full physical span and the offset->position map of the
+    underlying statement, so a later pass can anchor sub-spans (a rung name, a solution expression)
+    without re-lexing.
+    """
 
     header: str
     line: int
+    range: Range
+    map: SourceMap
     children: list[_Node] | None = field(default=None)
 
 
@@ -408,19 +418,27 @@ def _block(node: _Node) -> list[_Node]:
     return node.children
 
 
-def _build_tree(statements: list[tuple[str, int]]) -> list[_Node]:
+def _build_tree(statements: list[Statement]) -> list[_Node]:
     """Nest the statements by their braces (spec LEX-5)."""
     root: list[_Node] = []
     stack: list[list[_Node]] = [root]
     open_lines: list[int] = []
-    for text, line in statements:
+    for statement in statements:
+        text = statement.text
+        line = statement.range.start.line + 1
         if text == "}":
             if not open_lines:
                 raise LadderFormatError("unexpected `}`", line=line)
             stack.pop()
             open_lines.pop()
         elif text.endswith("{"):
-            node = _Node(header=text[:-1].strip(), line=line, children=[])
+            node = _Node(
+                header=text[:-1].strip(),
+                line=line,
+                range=statement.range,
+                map=statement.map,
+                children=[],
+            )
             stack[-1].append(node)
             stack.append(node.children if node.children is not None else [])
             open_lines.append(line)
@@ -431,66 +449,9 @@ def _build_tree(statements: list[tuple[str, int]]) -> list[_Node]:
                 line=line,
             )
         else:
-            stack[-1].append(_Node(header=text, line=line))
+            stack[-1].append(
+                _Node(header=text, line=line, range=statement.range, map=statement.map)
+            )
     if open_lines:
         raise LadderFormatError("unclosed block", line=open_lines[-1])
     return root
-
-
-def _logical_lines(text: str) -> list[tuple[str, int]]:
-    """Comment-stripped statements with their starting line, joined across bracket continuations."""
-    statements: list[tuple[str, int]] = []
-    buffer: list[str] = []
-    depth = 0
-    start = 0
-    for number, raw in enumerate(text.splitlines(), start=1):
-        stripped, delta = _scan(raw)
-        if not stripped and not buffer:
-            continue
-        if not buffer:
-            start = number
-        buffer.append(stripped)
-        depth += delta
-        if depth <= 0:
-            joined = " ".join(part for part in buffer if part)
-            if joined:
-                statements.append((joined, start))
-            buffer = []
-            depth = 0
-    if buffer:
-        raise LadderFormatError("unbalanced `(` or `[` at end of file", line=start)
-    return statements
-
-
-def _scan(raw: str) -> tuple[str, int]:
-    """One physical line, comment removed, plus its net ``(``/``[`` depth change.
-
-    Quotes are respected, so a ``#`` or a bracket inside a string value stays literal.
-    """
-    out: list[str] = []
-    depth = 0
-    quote: str | None = None
-    index = 0
-    while index < len(raw):
-        char = raw[index]
-        if quote is not None:
-            out.append(char)
-            if char == "\\" and index + 1 < len(raw):
-                out.append(raw[index + 1])
-                index += 2
-                continue
-            if char == quote:
-                quote = None
-        elif char == "#":  # spec LEX-2
-            break
-        elif char in "\"'":
-            quote = char
-            out.append(char)
-        else:
-            if char in "([":
-                depth += 1
-            elif char in ")]":
-                depth -= 1
-            out.append(char)
-        index += 1
-    return "".join(out).strip(), depth
