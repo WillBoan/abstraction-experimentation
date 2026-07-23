@@ -79,6 +79,16 @@ given pair's comparison supports.
 
 ## Status
 
-Taxonomy only — nothing wired yet. When the second lowered-floor ladder is built, add the `task:`
-metadata + a derived cohort-hash so the notions are tested against real cases. Until a task actually
-needs it, the lattice stays a mental model.
+**Partly wired (2026-07-23).** `arc-lab diff-ladder A B` derives the floor relationship and picks the
+validator this table licenses: same floor → the static layer (`analysis/equivalence.py::static_equivalent`,
+unfold-and-compare then equational normal forms — no bodies, no grids); different floor → an EXACT
+observational diff over `analysis/grids.py::exact_grids`, which needs both sides implemented. It reports
+the verdict **and how it was reached**, with exit codes EQUAL=0 / DIFFERENT=1 / INCONCLUSIVE=2.
+
+The headline case works today with **zero primitive implementations**: cfb2ce5a `v1` vs `v3` (a same-floor
+refactor over an entirely assumed floor) is proved EQUAL by unfold-and-compare, while `v1` vs `v4` (a floor
+change) honestly reports INCONCLUSIVE rather than guessing.
+
+Still a mental model: the `task:` metadata + a derived cohort-hash (add them when the second lowered-floor
+ladder exists, so they are tested against real cases), the rung-relationship classification
+(sub-ladder / refinement / sibling), and the sub-ladder lattice itself.
