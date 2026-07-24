@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from arc_lab.core.geometry import Coord, Offset
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.search.context import Context
 from arc_lab.program_search.search.leaves import policy_constants, seed_leaves
 from arc_lab.program_search.search.scope import Scope
 from arc_lab.program_search.substrate.library import Library, Primitive
 from arc_lab.program_search.substrate.program import Const, Input, Var
-from arc_lab.program_search.substrate.types import BOOL, COLOR, GRID, INT, Type
+from arc_lab.program_search.substrate.types import BOOL, COLOR, COORD, GRID, INT, OFFSET, Type
 
 # A 2x3 grid, so the max dimension is 3.
 _G = Grid.from_list([[1, 2, 3], [4, 5, 6]])
@@ -118,3 +119,41 @@ def test_policy_constants_accepts_a_generator_of_grids() -> None:
     )
     assert (Const(value=3, value_type=INT), INT) in leaves  # finite-enumerate: max dimension
     assert (Const(value=6, value_type=COLOR), COLOR) in leaves  # harvest: a color in the grid
+
+
+# -- the addressing constants and the scalars-only policy -------------------------------------------
+
+_ADDRESSING = _library_using(INT, COLOR, COORD, OFFSET)
+
+
+def test_finite_enumerate_mints_the_quadratic_addressing_square() -> None:
+    # A library using COORD/OFFSET pays the (d+1)^2 battery under `finite-enumerate` -- the cost the
+    # scalars policy exists to avoid. Max dimension 3 -> the 4x4 square, 16 of each.
+    minted = list(policy_constants([_G], ("finite-enumerate",), _ADDRESSING))
+    coords = {p.value for p, t in minted if t == COORD and isinstance(p, Const)}
+    offsets = {p.value for p, t in minted if t == OFFSET and isinstance(p, Const)}
+    assert coords == {Coord(r, c) for r in range(4) for c in range(4)}
+    assert offsets == {Offset(r, c) for r in range(4) for c in range(4)}
+
+
+def test_finite_enumerate_scalars_drops_the_addressing_battery_but_keeps_scalars() -> None:
+    # The whole point: for an addressing-floor ladder whose coordinates come from PERCEPTION, the
+    # quadratic coord/offset leaves are dead weight (measured: 128 of 146 on a 7x7 grid). This policy
+    # mints INT/COLOR/BOOL exactly as `finite-enumerate` does, and NONE of the addressing square.
+    full = policy_constants([_G], ("finite-enumerate",), _ADDRESSING)
+    scalars = list(policy_constants([_G], ("finite-enumerate-scalars",), _ADDRESSING))
+    scalar_types = {t for _, t in scalars}
+    assert COORD not in scalar_types and OFFSET not in scalar_types
+    # The scalar leaves are identical to finite-enumerate's -- only the addressing ones are dropped.
+    assert [(p, t) for p, t in scalars] == [(p, t) for p, t in full if t in (INT, COLOR, BOOL)]
+
+
+def test_finite_enumerate_scalars_still_builds_an_addressing_value_one_level_deeper() -> None:
+    # It doesn't remove reachability, only shifts it: `offset(0, 1)` is still expressible, just as a
+    # depth-1 application of two INT leaves rather than a round-0 leaf -- linear cost, not quadratic.
+    scalar_ints = {
+        p.value
+        for p, t in policy_constants([_G], ("finite-enumerate-scalars",), _ADDRESSING)
+        if t == INT and isinstance(p, Const)
+    }
+    assert {0, 1} <= scalar_ints  # the direction literals an `offset(int, int)` needs are present

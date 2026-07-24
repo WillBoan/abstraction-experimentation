@@ -3,7 +3,8 @@
 - the input grid
 - the bound variables in scope (the open-term leaves)
 - literal constants (derived from the **input grids in the contexts**, never the task outputs)
-  - `finite-enumerate` (a bounded typed set)
+  - `finite-enumerate` (a bounded typed set, addressing types included)
+  - `finite-enumerate-scalars` (the same, but scalars only — no quadratic coord/offset battery)
   - `harvest-from-instance` (the literals present in the instance)
 """
 
@@ -33,8 +34,16 @@ from .scope import Scope
 
 #: Policies for how to source constants:
 ConstantSource: TypeAlias = Literal[
-    # finite-enumerate: Mint a fixed, typed, bounded set of constants: INT 0..max-dim, COLOR 0..9, BOOL {False, True}.
+    # finite-enumerate: Mint a fixed, typed, bounded set of constants: INT 0..max-dim, COLOR 0..9,
+    # BOOL {False, True}, and the COORD/OFFSET 0..max-dim SQUARE (quadratic in max-dim).
     "finite-enumerate",
+    # finite-enumerate-scalars: finite-enumerate restricted to the SCALAR types (INT/COLOR/BOOL) --
+    # it skips the coord/offset square. For a ladder over the addressing floor: the coordinates come
+    # from PERCEPTION (`rect_origin`, `content_coords`, ...), and only small-int direction literals
+    # need enumerating, so the quadratic addressing battery is pure dead weight (measured: 128 of 146
+    # leaves on a 7x7 grid). An addressing value that IS wanted as a constant is built one level
+    # deeper from cheap INT leaves (`offset(0, 1)`), which is linear rather than quadratic.
+    "finite-enumerate-scalars",
     # harvest-from-instance: Mint the literals present in the instance: the colors used and the grid dimensions.
     "harvest-from-instance",
     # parameterize: Mints nothing in SEARCH (used in LEARN, not SEARCH).
@@ -49,6 +58,7 @@ ConstantSource: TypeAlias = Literal[
 #: mints, and a bundle using `translate` read as structurally dead.
 CONSTANT_SOURCE_TYPES: dict[str, frozenset[str]] = {
     "finite-enumerate": frozenset({INT.name, COLOR.name, BOOL.name, COORD.name, OFFSET.name}),
+    "finite-enumerate-scalars": frozenset({INT.name, COLOR.name, BOOL.name}),
     "harvest-from-instance": frozenset({INT.name, COLOR.name, COORD.name, OFFSET.name}),
     "parameterize": frozenset(),  # mints nothing in SEARCH
 }
@@ -89,7 +99,9 @@ def policy_constants(
     materialized = list(grids)
     for source in constant_sources:
         if source == "finite-enumerate":
-            yield from _finite_enumerate(materialized, library)
+            yield from _finite_enumerate(materialized, library, addressing=True)
+        elif source == "finite-enumerate-scalars":
+            yield from _finite_enumerate(materialized, library, addressing=False)
         elif source == "harvest-from-instance":
             yield from _harvest_from_instance(materialized, library)
         elif source == "parameterize":
@@ -117,17 +129,21 @@ def _type_in_use(vtype: Type, library: Library) -> bool:
     )
 
 
-def _finite_enumerate(grids: Iterable[Grid], library: Library) -> Iterator[tuple[Program, Type]]:
-    """A fixed, typed, bounded set: ``INT`` 0..max-dim, ``COLOR`` 0..9, ``BOOL`` {False, True},
-    ``COORD``/``OFFSET`` the 0..max-dim square — only for whichever of these base types ``library``
-    actually uses somewhere.
+def _finite_enumerate(
+    grids: Iterable[Grid], library: Library, *, addressing: bool
+) -> Iterator[tuple[Program, Type]]:
+    """A fixed, typed, bounded set: ``INT`` 0..max-dim, ``COLOR`` 0..9, ``BOOL`` {False, True}, and
+    (when ``addressing``) ``COORD``/``OFFSET`` the 0..max-dim square — only for whichever of these
+    base types ``library`` actually uses somewhere.
 
     **The addressing types are quadratic in max-dim** ((d+1)^2 leaves), which is the honest mirror of
     the INT range rather than an arbitrary cap: bounding them smaller would silently put some
     programs out of reach. It moves work that the old two-INT-argument spelling paid at
     *composition* time to *leaf* time, so the reachable set is unchanged — but the round-0 pool is
     much larger, and a library using these on full-size ARC grids wants a ``max_pool`` to match.
-    ``constant_sources`` is already opt-in for exactly this reason (``ladder_default_config``).
+    ``constant_sources`` is already opt-in for exactly this reason (``ladder_default_config``);
+    ``addressing=False`` (the ``finite-enumerate-scalars`` policy) drops the quadratic battery for a
+    ladder whose coordinates come from perception rather than from a constant.
     """
     max_dimension = max((max(grid.height, grid.width) for grid in grids), default=0)
     if _type_in_use(INT, library):
@@ -139,6 +155,8 @@ def _finite_enumerate(grids: Iterable[Grid], library: Library) -> Iterator[tuple
     if _type_in_use(BOOL, library):
         for flag in (False, True):
             yield Const(value=flag, value_type=BOOL), BOOL
+    if not addressing:
+        return
     if _type_in_use(COORD, library):
         for row in range(max_dimension + 1):
             for col in range(max_dimension + 1):
