@@ -221,12 +221,22 @@ def test_relative_tile_decomposes_into_the_addressing_algebra() -> None:
 
 
 def test_nth_nonzero_color_is_not_a_clean_composition_because_it_totalizes() -> None:
-    """A refusal that is a finding, not a failure. The core of ``nth_nonzero_color(g, i)`` is
+    """This tests a decomposition of ``nth_nonzero_color`` that is *almost* correct, but not quite.
+
+    The decomposition's program is:
+
+    ```
+    nth_nonzero_color(g: Grid, i: Int) -> Color
+    = read(g, coord_row(nth(content_coords(g, 0), i)), coord_col(nth(content_coords(g, 0), i)))
+    ```
+
+    A refusal that is a finding, not a failure. The core of ``nth_nonzero_color(g, i)`` is
     ``read`` at the i-th ``content_coords`` position -- but the reference returns color 0 when i is
     out of range (it TOTALIZES), while ``nth`` raises. So exact equivalence correctly splits, and
     names the witness: an index past the last nonzero cell. Retiring this atom needs the guard made
     explicit (an ``if`` over ``length``), not just the read -- which is exactly what the loop tells us.
     """
+
     grid, index = Param(0, GRID), Param(1, INT)
     coords = Apply("content_coords", (grid, Const(0, COLOR)))
     at = Apply("nth", (coords, index))
