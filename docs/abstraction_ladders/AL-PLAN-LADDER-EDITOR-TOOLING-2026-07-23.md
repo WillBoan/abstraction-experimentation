@@ -62,6 +62,39 @@ al14's deep telescope). Parse+resolve alone is ~2ms. Two consequences carried fo
    ~4.6s is paid today by `arc-lab lint-ladder al14` and every `run-ladder` stage-1 lint, so it is a
    standing lint-performance issue worth its own item independent of the editor work.
 
+## Phase F build status (2026-07-23)
+
+**Shipped** in three commits (`a30a1c7` package skeleton, `36aa213` the ABC + context + plan,
+`824aaf0` structured occurrences), `make check` green at each.
+
+- `checks/base.py` -- `LadderCheck(ABC)`: `code` / `category` / `stage` / `default_severity` /
+  `summary` as `ClassVar`s in the class body, logic in the single abstract `run(ctx)`. `finding()`
+  stamps code and severity, so a code is declared once and cannot drift from its check. `Verdict`
+  keeps the three evaluation cores plain functions that report an outcome without knowing a code.
+- `checks/context.py` -- `CheckContext`, every derivation a `cached_property`.
+- `checks/plan.py` -- `CHECK_PLAN`, an explicit ordered tuple of instances; `skipped_checks` is
+  now DERIVED from its `stage=CORPUS` entries rather than hand-listed beside each gated block.
+- `checks/{structure,depth,learnability,demonstrations,advisories,vocabulary}.py` -- the 29 checks.
+- `ladders/graph.py` -- the rung dependency graph, shared by the checks and `render()`.
+- `shape.py` -- `LintFinding(code, ok, detail, severity, occurrence)` with
+  `Occurrence(subject, params)` and a `.slug` property. `AnchorIndex.resolve` is now a pure lookup;
+  the last slug-parsing in the anchor path is gone.
+
+**Verified behavior-preserving** by dumping every finding for all 20 registry ladders before and
+after: multisets identical (full and structural tiers), `skipped_checks` byte-identical, derived
+shapes identical. One deliberate presentation change: findings group by check rather than
+interleaving by subject (no test locked that order -- the posture locks sort).
+
+**Latency, revisited.** The lazy context also removed a duplicate unfold of every top solution:
+al14's full lint drops **4.6s -> 3.0s**. The structural tier is still ~2.9s of that, so finding #1
+above stands unchanged -- the server's cheap tier remains parse+resolve only.
+
+**Not done, deliberately** (both now cheap, neither needed for the ABC):
+- The `stage=SYNTAX` rules -- moving the rule-shaped load errors out of `lang/` into `LadderCheck`s
+  -- still belong with Phase D/E2, since without a tolerant parser they must raise, not report.
+- `LINT-CHECKS.md` generated from the class-body metadata: now trivial (every check carries
+  `code`/`category`/`stage`/`default_severity`/`summary`), but it is Phase G's docs item.
+
 ## Diagnostic production model (the emitted-vs-rule principle)
 
 The pipeline is a tower of passes, each `model_n -> (model_{n+1}, diagnostics)`:
