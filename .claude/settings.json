@@ -14,7 +14,8 @@
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(ARC_LAB_LOG=DEBUG uv run pytest:*)",
-      "Bash(gh run watch:*)"
+      "Bash(gh run watch:*)",
+      "Bash(grep -rn '\"int\", \"color\", \"bool\"\\\\|{\"int\", \"color\", \"bool\"}\\\\|_CONSTANT_TYPES\\\\|int.*color.*bool' src/arc_lab/program_search/execution/check_coherence.py src/arc_lab/program_search/execution/forecast_cost.py)"
     ],
     "deny": [
       "Read(./_notes/**)",
