@@ -1,6 +1,6 @@
 # Ladder editor tooling plan — highlighting, diagnostics, LSP, formatter (2026-07-23)
 
-**Status: planned, not started. Chosen starting scope = the Light path (see below): full foundations, deferred features.** This is the implementation plan for `.ladder` editor tooling, agreed 2026-07-23 after an external design review (rev 2 incorporates that review; the adjudication further down records what was adopted vs declined and why). The full 10-phase catalog (Phases A–J) is the reference superset; the **Light path** section names the subset we build first and the seams that keep the deferrals debt-free. Companion to the format spec `LADDER-FORMAT.md`; independent of the experimental program in `AL-PLAN-2026-07-23.md`.
+**Status (2026-07-23): the Light path is SHIPPED and closed — Phases A, B, C, E1, F, G, plus both follow-ups (the generated check register and the `stage=SYNTAX` checks). Build status per phase is recorded inline below. Remaining phases (C3, D, E2, H, I, J) stay deferred by decision, not by omission; work on this plan is stopped deliberately so the experimental program is the priority.** This is the implementation plan for `.ladder` editor tooling, agreed 2026-07-23 after an external design review (rev 2 incorporates that review; the adjudication further down records what was adopted vs declined and why). The full 10-phase catalog (Phases A–J) is the reference superset; the **Light path** section names the subset we build first and the seams that keep the deferrals debt-free. Companion to the format spec `LADDER-FORMAT.md`; independent of the experimental program in `AL-PLAN-2026-07-23.md`.
 
 ## Context
 
@@ -89,11 +89,24 @@ interleaving by subject (no test locked that order -- the posture locks sort).
 al14's full lint drops **4.6s -> 3.0s**. The structural tier is still ~2.9s of that, so finding #1
 above stands unchanged -- the server's cheap tier remains parse+resolve only.
 
-**Not done, deliberately** (both now cheap, neither needed for the ABC):
-- The `stage=SYNTAX` rules -- moving the rule-shaped load errors out of `lang/` into `LadderCheck`s
-  -- still belong with Phase D/E2, since without a tolerant parser they must raise, not report.
-- `LINT-CHECKS.md` generated from the class-body metadata: now trivial (every check carries
-  `code`/`category`/`stage`/`default_severity`/`summary`), but it is Phase G's docs item.
+**Both follow-ups then closed** (commits `9b9d5ed`, `7f1d2a8`):
+
+- **`LINT-CHECKS.md` is generated** from the class-body metadata by `arc-lab lint-checks`, with a
+  test pinning the committed copy, so a check that never reaches the register fails the gate.
+- **The `stage=SYNTAX` rules landed, scoped to what actually qualifies.** Exactly four load-time
+  rules are pure predicates over the parsed document (empty floor; duplicate floor primitive,
+  config path, task id); they are `DocumentCheck`s sharing the new `Check` parent with
+  `LadderCheck`. `resolve()` raises the first, unchanged; the editor reports all four at once, each
+  on its own token. `LintFinding` gained an optional exact `anchor` to carry that span.
+
+  The **other ~76 load-time raise sites are not movable and are not moved**: they fire while
+  *constructing* a library, elaborating a template or applying config, so there is no completed
+  model to run a predicate over. This is the part that genuinely waits for Phase D/E2 -- the
+  tolerant resolver is what gives them a model. The `SYNTAX` slot now exists and is populated, so
+  that work extends this rather than reworking it.
+
+**Remaining deferrals are unchanged**: C3 (per-parameter spans -- which is also what would let a
+`free-param-varies` finding narrow from its rung to the offending parameter), D, E2, H, I, J.
 
 ## Diagnostic production model (the emitted-vs-rule principle)
 
