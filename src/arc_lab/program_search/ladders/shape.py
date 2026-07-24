@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from arc_lab.program_search.ladders.diagnostics import Range
+
 
 @dataclass(frozen=True, slots=True)
 class Occurrence:
@@ -42,6 +44,10 @@ class LintFinding:
     severity: str = "error"
     #: The subject, when the check speaks about one; ``None`` for a whole-file finding.
     occurrence: Occurrence | None = None
+    #: An EXACT source range, when the check knew one outright (the ``SYNTAX`` checks hold the
+    #: parsed document, so they do). ``None`` means "anchor me by subject", which is what every
+    #: spec-level check does -- it has no spans, only names.
+    anchor: Range | None = None
 
     @property
     def slug(self) -> str:

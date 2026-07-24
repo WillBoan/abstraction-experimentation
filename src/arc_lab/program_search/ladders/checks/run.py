@@ -12,11 +12,21 @@ from typing import TYPE_CHECKING
 
 from arc_lab.program_search.ladders.checks.base import CheckStage
 from arc_lab.program_search.ladders.checks.context import CheckContext
-from arc_lab.program_search.ladders.checks.plan import CHECK_PLAN
+from arc_lab.program_search.ladders.checks.plan import CHECK_PLAN, DOCUMENT_PLAN
 from arc_lab.program_search.ladders.shape import LadderShape, LintFinding
 
 if TYPE_CHECKING:
+    from arc_lab.program_search.ladders.lang.parse import LadderDocument
     from arc_lab.program_search.ladders.spec import LadderSpec
+
+
+def check_document(document: LadderDocument) -> list[LintFinding]:
+    """Run every ``stage=SYNTAX`` rule over a parsed document, in :data:`DOCUMENT_PLAN` order.
+
+    Findings only -- these checks stay silent when they pass. The strict loader raises the first;
+    the editor shows them all, each already carrying its exact source span.
+    """
+    return [finding for check in DOCUMENT_PLAN for finding in check.run(document)]
 
 
 def lint_spec(spec: LadderSpec, *, corpus_backed: bool = True) -> LadderShape:

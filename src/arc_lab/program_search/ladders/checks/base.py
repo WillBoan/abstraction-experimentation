@@ -10,10 +10,14 @@ Checks are *instances* held in an explicit ordered tuple (``checks/plan.py::CHEC
 same machinery-as-data shape as ``PRESETS`` and ``STUDIES``: no decorator registry, no
 subclass-discovery, no import-order dependence. Order is a value you can read.
 
-A check reads one thing -- the :class:`~.context.CheckContext` -- and yields
-:class:`~..shape.LintFinding`\\ s through :meth:`LadderCheck.finding`, which stamps the code and
-default severity from the class body. Yielding *nothing* is a legitimate result for the advisory
-checks that speak only when they have something to say.
+A check yields :class:`~..shape.LintFinding`\\ s through :meth:`Check.finding`, which stamps the
+code and default severity from the class body. Yielding *nothing* is a legitimate result for the
+advisory checks that speak only when they have something to say.
+
+Two families, split by what they read: :class:`DocumentCheck` is a pure predicate over the parsed
+document (``stage=SYNTAX``, runs before resolution, so it can speak about a file that will never
+load), and :class:`LadderCheck` reads a resolved spec through the :class:`~.context.CheckContext`.
+:class:`Check` is what they share.
 """
 
 from __future__ import annotations
@@ -24,10 +28,12 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
+from arc_lab.program_search.ladders.diagnostics import Range
 from arc_lab.program_search.ladders.shape import LintFinding, Occurrence
 
 if TYPE_CHECKING:
     from arc_lab.program_search.ladders.checks.context import CheckContext
+    from arc_lab.program_search.ladders.lang.parse import LadderDocument
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,12 +57,15 @@ class Verdict:
 class CheckStage(enum.Enum):
     """Which model a check reads -- and therefore when it can run at all.
 
-    ``STRUCTURAL`` checks read only templates, stated solutions, demonstration kinds and config:
-    everything a *draft* over assumed primitives has. ``CORPUS`` checks read the generated task
-    grids or evaluate a subterm on them, so they cannot run before the primitives exist; they are
-    skipped and named (``LadderShape.skipped_checks``) rather than silently dropped.
+    ``SYNTAX`` checks read the parsed ``LadderDocument`` alone, before anything is resolved against
+    the substrate: they are pure predicates over what the file says. ``STRUCTURAL`` checks read the
+    resolved templates, stated solutions, demonstration kinds and config -- everything a *draft*
+    over assumed primitives has. ``CORPUS`` checks read the generated task grids or evaluate a
+    subterm on them, so they cannot run before the primitives exist; they are skipped and named
+    (``LadderShape.skipped_checks``) rather than silently dropped.
     """
 
+    SYNTAX = "syntax"
     STRUCTURAL = "structural"
     CORPUS = "corpus"
 
@@ -72,11 +81,13 @@ class Category(enum.Enum):
     VOCABULARY = "V"  # config coherence: is the declared floor reachable by this machinery?
 
 
-class LadderCheck(ABC):
-    """One static check over a :class:`~..spec.LadderSpec`.
+class Check(ABC):
+    """The shared parent of every ladder check: its identity, and how it states a finding.
 
-    Subclasses set the ``ClassVar``s and implement :meth:`run`. Instances are stateless and
-    shared -- all per-run state lives in the :class:`~.context.CheckContext` passed to ``run``.
+    Two families descend from it, split by *what they read* -- :class:`DocumentCheck` over the
+    parsed document, :class:`LadderCheck` over a resolved spec. Everything else about a check --
+    the code it reports under, the family it belongs to, the severity it defaults to, how a finding
+    is stamped -- is shared, and lives here.
     """
 
     #: The stable slug this check reports under. Per-subject findings append ``[occurrence]``.
@@ -91,10 +102,6 @@ class LadderCheck(ABC):
     #: One line, for the generated check register and editor hovers.
     summary: ClassVar[str]
 
-    @abstractmethod
-    def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
-        """Yield this check's findings -- passing and failing alike, zero or more."""
-
     def finding(
         self,
         ok: bool,
@@ -103,6 +110,7 @@ class LadderCheck(ABC):
         subject: str | None = None,
         params: tuple[int, ...] = (),
         severity: str | None = None,
+        anchor: Range | None = None,
     ) -> LintFinding:
         """One finding stamped with this check's code and default severity.
 
@@ -114,6 +122,10 @@ class LadderCheck(ABC):
         *verdict* rather than a property of the check: ``constant-subterm`` (does the beating
         literal exist in this ladder's own search?) and ``proposer-compat`` (is the proposer's
         capability statically known?).
+
+        ``anchor`` pins the finding to an exact source range. Only the ``SYNTAX`` checks set it
+        (they hold the parsed document, so they know the span outright); a spec-level finding
+        leaves it ``None`` and is anchored by subject lookup through the ``AnchorIndex`` instead.
         """
         return LintFinding(
             code=self.code,
@@ -121,6 +133,7 @@ class LadderCheck(ABC):
             detail=detail,
             severity=severity if severity is not None else self.default_severity,
             occurrence=None if subject is None else Occurrence(subject, params),
+            anchor=anchor,
         )
 
     def stamp(self, verdicts: Iterable[Verdict]) -> Iterator[LintFinding]:
@@ -132,3 +145,35 @@ class LadderCheck(ABC):
                 subject=verdict.subject,
                 severity=verdict.severity,
             )
+
+
+class DocumentCheck(Check):
+    """A check that is a pure predicate over the parsed document -- ``stage=SYNTAX``.
+
+    These run BEFORE resolution, so they can speak about a file that will never load: duplicate
+    names, an empty floor. That is exactly why they are worth separating -- the editor can report
+    all of them at once with precise spans, where the strict loader can only raise the first.
+
+    A rule belongs here only if it needs nothing but the document. Most load-time errors do not
+    qualify: they are raised *while constructing* the library, elaborating a template or applying
+    config, so there is no completed model to run a predicate over. Those become checks when the
+    tolerant resolver (plan Phase E2) gives them one, not before.
+    """
+
+    stage: ClassVar[CheckStage] = CheckStage.SYNTAX
+
+    @abstractmethod
+    def run(self, document: LadderDocument) -> Iterator[LintFinding]:
+        """Yield this check's findings about ``document`` -- zero or more, failures only."""
+
+
+class LadderCheck(Check):
+    """A check over a resolved :class:`~..spec.LadderSpec` -- ``stage=STRUCTURAL`` or ``CORPUS``.
+
+    Subclasses set the ``ClassVar``s and implement :meth:`run`. Instances are stateless and
+    shared -- all per-run state lives in the :class:`~.context.CheckContext` passed to ``run``.
+    """
+
+    @abstractmethod
+    def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
+        """Yield this check's findings -- passing and failing alike, zero or more."""

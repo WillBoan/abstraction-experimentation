@@ -11,7 +11,8 @@ from __future__ import annotations
 import pytest
 
 from arc_lab.program_search.ladders.checks import CHECK_PLAN, CORPUS_CODES, LadderCheck
-from arc_lab.program_search.ladders.checks.base import Category, CheckStage
+from arc_lab.program_search.ladders.checks.base import Category, Check, CheckStage
+from arc_lab.program_search.ladders.checks.plan import DOCUMENT_PLAN
 from arc_lab.program_search.ladders.registry import make_ladder
 
 #: The corpus-gated families, in the order the pre-registry ``lint()`` appended them by hand.
@@ -31,8 +32,8 @@ _HISTORICAL_SKIPPED = (
 
 
 def test_every_check_declares_its_metadata() -> None:
-    for check in CHECK_PLAN:
-        assert isinstance(check, LadderCheck)
+    for check in (*DOCUMENT_PLAN, *CHECK_PLAN):
+        assert isinstance(check, Check)
         assert check.code and check.code == check.code.strip()
         assert isinstance(check.category, Category)
         assert isinstance(check.stage, CheckStage)
@@ -40,9 +41,17 @@ def test_every_check_declares_its_metadata() -> None:
         assert check.summary.endswith("."), f"{check.code}: summary should be a sentence"
 
 
-def test_codes_are_unique() -> None:
-    codes = [check.code for check in CHECK_PLAN]
+def test_codes_are_unique_across_both_plans() -> None:
+    # One code, one check -- a syntax rule and a lint rule may not share one either, or a
+    # diagnostic would be ambiguous about which check produced it.
+    codes = [check.code for check in (*DOCUMENT_PLAN, *CHECK_PLAN)]
     assert len(codes) == len(set(codes)), f"duplicate check codes: {sorted(codes)}"
+
+
+def test_the_lint_plan_holds_only_spec_checks() -> None:
+    for check in CHECK_PLAN:
+        assert isinstance(check, LadderCheck)
+        assert check.stage is not CheckStage.SYNTAX  # a syntax rule belongs in DOCUMENT_PLAN
 
 
 def test_skipped_checks_are_derived_from_the_plan_in_historical_order() -> None:

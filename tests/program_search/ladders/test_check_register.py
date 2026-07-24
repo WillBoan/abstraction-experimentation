@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from arc_lab.program_search.ladders.checks import CHECK_PLAN
+from arc_lab.program_search.ladders.checks.plan import DOCUMENT_PLAN
 from arc_lab.program_search.ladders.checks.register import REGISTER_PATH, render_register
 
 REPO = Path(__file__).resolve().parents[3]
@@ -28,3 +29,7 @@ def test_the_register_covers_every_check() -> None:
         assert f"{index}. `{check.code}`" in text, f"{check.code} missing from the run order"
         assert f"| `{check.code}`" in text, f"{check.code} missing from its family table"
         assert check.summary in text, f"{check.code} summary missing"
+    for index, rule in enumerate(DOCUMENT_PLAN, start=1):
+        assert f"S{index}. `{rule.code}`" in text, f"{rule.code} missing from the run order"
+        assert f"| `{rule.code}`" in text, f"{rule.code} missing from the syntax table"
+        assert rule.summary in text, f"{rule.code} summary missing"

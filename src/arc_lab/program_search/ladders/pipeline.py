@@ -35,13 +35,28 @@ def lint_source(source: str, *, run_lint: bool = True) -> list[LadderDiagnostic]
     ``run_lint=True`` adds the full lint (seconds on a deep ladder).
     """
     from .anchors import AnchorIndex
+    from .checks.run import check_document
     from .lang.errors import LadderFormatError
     from .lang.load import lintable_spec, resolve
     from .lang.parse import parse_document
 
     lines = source.splitlines()
     try:
-        loaded = resolve(parse_document(source))
+        document = parse_document(source)
+    except LadderFormatError as exc:
+        return [_from_format_error(exc, lines)]
+
+    # The SYNTAX checks are pure predicates over the document, so ALL of them can be reported at
+    # once, each on its exact span -- where `resolve()` below can only ever raise the first thing
+    # it trips on. When any of them fails the document cannot resolve anyway, so stop here rather
+    # than following it with a resolution error that is downstream of a name the author repeated.
+    anchors = AnchorIndex.from_document(document)
+    syntax = check_document(document)
+    if any(finding.severity == "error" for finding in syntax):
+        return [_from_finding(finding, anchors) for finding in syntax]
+
+    try:
+        loaded = resolve(document)
     except LadderFormatError as exc:
         return [_from_format_error(exc, lines)]
 
@@ -55,7 +70,6 @@ def lint_source(source: str, *, run_lint: bool = True) -> list[LadderDiagnostic]
     if spec is None:
         return []
 
-    anchors = AnchorIndex.from_document(loaded.document)
     return [_from_finding(finding, anchors) for finding in spec.lint().findings if not finding.ok]
 
 
@@ -101,11 +115,12 @@ def _from_format_error(exc: LadderFormatError, lines: Sequence[str]) -> LadderDi
 
 
 def _from_finding(finding: LintFinding, anchors: AnchorIndex) -> LadderDiagnostic:
-    # The finding names its subject structurally, so the AnchorIndex resolves it to the exact source
-    # span (rung / task / floor entry) by lookup -- the code stays the bare, stable check code.
+    # A SYNTAX check already knows its exact span (it holds the document); every other check names
+    # its subject structurally, and the AnchorIndex resolves that to a span by lookup. Either way
+    # the code stays the bare, stable check code.
     return LadderDiagnostic(
         code=finding.code,
-        range=anchors.resolve(finding.occurrence),
+        range=finding.anchor if finding.anchor is not None else anchors.resolve(finding.occurrence),
         severity=severity_from_legacy(finding.severity),
         message=finding.detail,
         occurrence=None if finding.occurrence is None else str(finding.occurrence),

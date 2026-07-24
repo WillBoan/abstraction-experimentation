@@ -15,10 +15,28 @@ The tuple is grouped by family for reading; within it the historical block order
 
 from __future__ import annotations
 
-from arc_lab.program_search.ladders.checks import advisories, demonstrations, depth, structure
+from arc_lab.program_search.ladders.checks import (
+    advisories,
+    demonstrations,
+    depth,
+    document,
+    structure,
+)
 from arc_lab.program_search.ladders.checks import learnability as learn
 from arc_lab.program_search.ladders.checks import vocabulary as vocab
-from arc_lab.program_search.ladders.checks.base import CheckStage, LadderCheck
+from arc_lab.program_search.ladders.checks.base import CheckStage, DocumentCheck, LadderCheck
+
+#: The ``stage=SYNTAX`` rules, in the order the strict loader used to raise them inline. These run
+#: over the parsed document BEFORE resolution -- the loader raises the first, the editor reports
+#: them all. Order is the historical one, so which error a malformed file raises is unchanged
+#: within the floor; a duplicate config path or task id now surfaces before a rung-template error,
+#: which is the one deliberate reordering (a cheaper, more basic defect reported first).
+DOCUMENT_PLAN: tuple[DocumentCheck, ...] = (
+    document.FloorNonEmpty(),
+    document.FloorNamesUnique(),
+    document.ConfigPathsUnique(),
+    document.TaskIdsUnique(),
+)
 
 CHECK_PLAN: tuple[LadderCheck, ...] = (
     # Structure (S): is this a ladder at all?

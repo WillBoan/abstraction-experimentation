@@ -1,16 +1,30 @@
-<!-- Generated from `checks/plan.py::CHECK_PLAN` -- regenerate with `uv run arc-lab lint-checks --out docs/abstraction_ladders/LINT-CHECKS.md`; never hand-edit. -->
+<!-- Generated from `checks/plan.py` -- regenerate with `uv run arc-lab lint-checks --out docs/abstraction_ladders/LINT-CHECKS.md`; never hand-edit. -->
 
 # Ladder lint checks
 
 Every static check a `.ladder` file is held to, in the order they run. This file is GENERATED from the checks themselves (each one declares its code, family, stage and severity in its class body), so it cannot drift from what the lint actually does.
 
-- **29 checks**: 24 error-class, 5 advisory. Most are parametrised per rung or per task, so a real ladder runs many more instances.
-- **10 are corpus-backed** -- they read the generated task grids, or evaluate a subterm on them. `lint(corpus_backed=False)` skips exactly these and NAMES them in `LadderShape.skipped_checks`, which is what lets a draft over assumed primitives be linted at all.
+- **4 syntax checks** run over the parsed document, before anything resolves. They are pure predicates over what the file says, so the editor reports all of them at once on their exact spans; a strict load raises the first and stops.
+- **29 lint checks** run over the resolved ladder: 24 error-class, 5 advisory. Most are parametrised per rung or per task, so a real ladder runs many more instances.
+- **10 of those are corpus-backed** -- they read the generated task grids, or evaluate a subterm on them. `lint(corpus_backed=False)` skips exactly these and NAMES them in `LadderShape.skipped_checks`, which is what lets a draft over assumed primitives be linted at all.
 - **Severity** is the check's default; two checks decide it per finding (`constant-subterm`, `proposer-compat` -- see their rows).
 
 Prose context -- the layering these sit in, what lint can and cannot catch, and the current batch health -- is in [LADDER-CHECKS-2026-07-21.md](LADDER-CHECKS-2026-07-21.md).
 
-## Structure (S) -- is this a ladder at all?
+## Syntax -- the document alone (`DOCUMENT_PLAN`)
+
+Everything a file answers on its own. A rule belongs here only if it needs nothing but the parsed document; the rest of the load-time errors are raised while *constructing* a library, template or config, so they have no completed model to be a predicate over.
+
+| #   | code                  | severity | what it checks                                          |
+| --- | --------------------- | -------- | ------------------------------------------------------- |
+| S1  | `floor-non-empty`     | error    | The floor declares at least one primitive (spec FLR-3). |
+| S2  | `floor-names-unique`  | error    | No floor primitive is declared twice.                   |
+| S3  | `config-paths-unique` | error    | No config path is overridden twice.                     |
+| S4  | `task-ids-unique`     | error    | No task id is used twice.                               |
+
+## Lint -- the resolved ladder (`CHECK_PLAN`)
+
+### Structure (S) -- is this a ladder at all?
 
 | #   | code                    | stage      | severity | what it checks                                                                    |
 | --- | ----------------------- | ---------- | -------- | --------------------------------------------------------------------------------- |
@@ -22,7 +36,7 @@ Prose context -- the layering these sit in, what lint can and cannot catch, and 
 | 6   | `rung-referenced`       | structural | error    | Every rung is reachable from the top (some higher rung or top solution calls it). |
 | 28  | `rung-distinct`         | structural | error    | No two rungs unfold to the same floor-level template.                             |
 
-## Depth sandwich (D) -- the tractability claims
+### Depth sandwich (D) -- the tractability claims
 
 | #   | code                          | stage      | severity | what it checks                                                                   |
 | --- | ----------------------------- | ---------- | -------- | -------------------------------------------------------------------------------- |
@@ -35,14 +49,14 @@ Prose context -- the layering these sit in, what lint can and cannot catch, and 
 | 13  | `top-double-jump-intractable` | structural | error    | No top solution is reachable over L_{k-1} (with the top rung skipped).           |
 | 14  | `rewrite-shallow`             | corpus     | error    | No known equation re-expresses the layer above a skipped rung shallowly.         |
 
-## Learnability (L) -- can this machinery mint it?
+### Learnability (L) -- can this machinery mint it?
 
 | #   | code              | stage      | severity | what it checks                                                                     |
 | --- | ----------------- | ---------- | -------- | ---------------------------------------------------------------------------------- |
 | 15  | `proposer-compat` | structural | error    | The configured proposer can serve every demonstration kind the rungs are shown at. |
 | 29  | `mdl-break-even`  | corpus     | error    | Minting each rung pays for itself in bits on its own demonstrations.               |
 
-## Demonstration plan (P) -- what the tasks show
+### Demonstration plan (P) -- what the tasks show
 
 | #   | code                    | stage      | severity | what it checks                                                                  |
 | --- | ----------------------- | ---------- | -------- | ------------------------------------------------------------------------------- |
@@ -55,7 +69,7 @@ Prose context -- the layering these sit in, what lint can and cannot catch, and 
 | 22  | `constant-subterm`      | corpus     | error    | No stated solution contains a train-constant composite scalar subterm.          |
 | 23  | `if-condition-varies`   | corpus     | error    | Every conditional's condition takes both truth values across a task's examples. |
 
-## Advisories (A) -- observations, not defects
+### Advisories (A) -- observations, not defects
 
 | #   | code                     | stage      | severity | what it checks                                                                |
 | --- | ------------------------ | ---------- | -------- | ----------------------------------------------------------------------------- |
@@ -63,7 +77,7 @@ Prose context -- the layering these sit in, what lint can and cannot catch, and 
 | 25  | `no-lambda-in-templates` | structural | warn     | No rung template contains a lambda (whose reachability depth cannot certify). |
 | 26  | `floor-fully-exercised`  | structural | warn     | Every floor primitive is used by some rung, demonstration, distractor or top. |
 
-## Vocabulary (V) -- config coherence
+### Vocabulary (V) -- config coherence
 
 | #   | code                 | stage      | severity | what it checks                                                           |
 | --- | -------------------- | ---------- | -------- | ------------------------------------------------------------------------ |
@@ -71,7 +85,12 @@ Prose context -- the layering these sit in, what lint can and cannot catch, and 
 
 ## Run order
 
-`CHECK_PLAN` is an explicit ordered tuple -- not import order, not subclass discovery -- so the numbers above are the order findings come back in, and `skipped_checks` is that same order filtered to the corpus-backed entries:
+Both plans are explicit ordered tuples -- not import order, not subclass discovery -- so the numbers above are the order findings come back in, and `skipped_checks` is the lint order filtered to the corpus-backed entries:
+
+S1. `floor-non-empty`
+S2. `floor-names-unique`
+S3. `config-paths-unique`
+S4. `task-ids-unique`
 
 1. `levels-contiguous`
 2. `top-solutions-aligned`
