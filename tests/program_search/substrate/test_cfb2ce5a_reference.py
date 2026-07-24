@@ -1,6 +1,6 @@
 """The cfb2ce5a reference primitives: the documented tie-breaks, the degenerate cases, and ⊥.
 
-These are scaffolding meant to be decomposed away (``primitives/tiles.py``), so what is pinned here
+These are scaffolding meant to be decomposed away (``primitives/cfb2ce5a_reference.py``), so what is pinned here
 is exactly what a decomposition would have to reproduce — above all the tie-break rules, which are
 the part a plausible-looking replacement gets silently wrong.
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 
 from arc_lab.core.grid import Grid
-from arc_lab.program_search.substrate.primitives.tiles import (
+from arc_lab.program_search.substrate.primitives.cfb2ce5a_reference import (
     _largest_filled_square,
     _nth_nonzero_color,
     _nth_seed_source_color,

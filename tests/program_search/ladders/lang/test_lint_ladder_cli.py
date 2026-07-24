@@ -35,7 +35,7 @@ def test_a_draft_is_incomplete_not_clean() -> None:
 def test_an_unimplemented_floor_fails_to_load_without_draft_mode() -> None:
     """Assumed primitives do not resolve, so plain load is a hard failure -- ``--draft`` is the
     deliberate opt-in to trusting declared signatures. v4 still assumes the missing ``list``
-    constructor; v1's floor is implemented (``substrate/primitives/tiles.py``) and so is NOT this."""
+    constructor; v1's floor is implemented (``substrate/primitives/cfb2ce5a_reference.py``) and so is NOT this."""
     draft = _DRAFTS / "cfb2ce5a-4-fold.ladder"
     assert _lint_one(str(draft), quiet=True, draft=False) is _Outcome.FAILED
 

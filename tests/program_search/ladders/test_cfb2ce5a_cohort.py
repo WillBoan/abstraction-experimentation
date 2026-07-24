@@ -39,7 +39,7 @@ def _cfb2ce5a() -> Task:
 @pytest.mark.parametrize("name", _DRAFT_NAMES)
 def test_a_draft_resolves_with_no_assumed_primitives(name: str) -> None:
     # `resolve` without `assume_missing` is the real bar: every floor name must be a live primitive.
-    # Before `primitives/tiles.py` these drafts could only load as sketches.
+    # Before `primitives/cfb2ce5a_reference.py` these drafts could only load as sketches.
     loaded = resolve(parse_ladder_file(_DRAFTS / f"{name}.ladder"))
     assert not loaded.assumed
 
