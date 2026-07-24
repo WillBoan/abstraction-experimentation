@@ -8,7 +8,7 @@ ladder al15-shift-frame
 #
 # Floor ``{concat_v, translate, pad}`` -> ``shift_stack`` -> ``framed`` -> top.
 #
-# - ``r1 = shift_stack``: ``concat_v(g, translate(g, 0, 1))`` -- stack ``g`` over a one-column-shifted
+# - ``r1 = shift_stack``: ``concat_v(g, translate(g, (0, 1)))`` -- stack ``g`` over a one-column-shifted
 #   copy. The ``translate`` makes it **asymmetric** (no flip fixes it), so no symmetry-union shortcut.
 # - ``r2 = framed``: ``pad(r1, 1, 5)`` -- a one-cell border. ``pad`` is a *different* operation from
 #   the stack, which is what breaks telescoping: ``r2`` is not ``r1`` applied to itself.
@@ -36,12 +36,12 @@ config {
 
 floor al15-L0 {
     use concat_v:  (Grid, Grid) -> Grid
-    use translate: (Grid, Int, Int) -> Grid
+    use translate: (Grid, Offset) -> Grid
     use pad:       (Grid, Int, Color) -> Grid
 }
 
 rung {
-    shift_stack(g: Grid) -> Grid = concat_v(g, translate(g, 0, 1))
+    shift_stack(g: Grid) -> Grid = concat_v(g, translate(g, (0, 1)))
 
     task shift_stack-00 {
         solution: shift_stack(input)

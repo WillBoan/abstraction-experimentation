@@ -174,18 +174,21 @@ def _synthetic(names: tuple[str, ...], sources: tuple[ConstantSource, ...]) -> t
 def test_overlapping_constant_sources_are_counted_once() -> None:
     # `finite-enumerate` mints INT 0..max-dim and `harvest-from-instance` re-mints whichever of
     # those the grid contains, so `3` is yielded twice and the pool's dedup collapses it. Counting
-    # the raw yield over-predicted every product it feeds (28 vs an actual 19 on this exact floor).
-    # The two counts are genuinely different quantities and both must be right: the engine
-    # CONSIDERS all 6 leaves (round 0) and POOLS the 5 distinct ones, so round 1's product draws
-    # on 4 INTs, not 5.
+    # the raw yield over-predicted every product it feeds. The two counts are genuinely different
+    # quantities and both must be right: the engine CONSIDERS all 6 leaves (round 0) and POOLS only
+    # the distinct ones, so round 1's product draws on fewer INTs than were yielded.
+    #
+    # The INT consumer here is `scale`; it used to be `translate`, which now takes an `Offset` and
+    # so puts no INT in use at all (`leaves.py::_type_in_use`) — which would have made this floor
+    # mint zero INT leaves and quietly stop testing the overlap it exists to test.
     config, task = _synthetic(
-        ("flip_h", "flip_v", "rot90", "translate"),
+        ("flip_h", "flip_v", "rot90", "scale"),
         ("finite-enumerate", "harvest-from-instance"),
     )
     result = _run(config, task)
     actual = [g["composed"] for g in result.stats.generations]
     forecast = forecast_cost(config, task, survival=survival_from(result.stats))
-    assert actual[:2] == [6, 19]
+    assert actual[:2] == [6, 7]
     assert [r.composed for r in forecast.rounds[:2]] == actual[:2]
 
 

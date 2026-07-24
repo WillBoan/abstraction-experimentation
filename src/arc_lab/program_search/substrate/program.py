@@ -32,11 +32,14 @@ from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from arc_lab.core.geometry import Coord, Offset
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.substrate.library import Closure, apply_function_value
 from arc_lab.program_search.substrate.types import (
     BOOL,
+    COORD,
     GRID,
+    OFFSET,
     ArrowType,
     Type,
     TypeCon,
@@ -125,6 +128,10 @@ class Program(ABC):
             if not isinstance(value_type, str):
                 raise ValueError(f"malformed const node: {data!r}")
             const_type = base_type(value_type)
+            if const_type in (COORD, OFFSET):
+                return Const(
+                    value=_addressing_literal(const_type, value, data), value_type=const_type
+                )
             if const_type == BOOL:
                 if not isinstance(value, bool):
                     raise ValueError(f"malformed const node: {data!r}")
@@ -188,6 +195,22 @@ class Program(ABC):
                 raise ValueError(f"malformed primref node: {data!r}")
             return PrimRef(name=name)
         raise ValueError(f"unknown program node: {data!r}")
+
+
+def _addressing_literal(const_type: TypeCon, value: object, data: object) -> Coord | Offset:
+    """Rebuild a :class:`Coord` / :class:`Offset` literal from its serialized ``[a, b]`` pair.
+
+    Fail-fast like the scalar branches: a truncated or mistyped pair must be rejected loudly rather
+    than silently becoming a different coordinate.
+    """
+    if (
+        not isinstance(value, (list, tuple))
+        or len(value) != 2
+        or not all(isinstance(part, int) and not isinstance(part, bool) for part in value)
+    ):
+        raise ValueError(f"malformed const node: {data!r}")
+    first, second = int(value[0]), int(value[1])
+    return Coord(first, second) if const_type == COORD else Offset(first, second)
 
 
 @dataclass(frozen=True, slots=True)
@@ -256,9 +279,20 @@ class Param(Program):
 
 @dataclass(frozen=True, slots=True)
 class Const(Program):
-    """A literal scalar value, tagged with its type (e.g. a COLOR or an INT)."""
+    """A literal value, tagged with its type (e.g. a COLOR, an INT, or an OFFSET).
 
-    value: int | bool
+    Scalars plus the two *addressing* literals, :class:`Coord` and :class:`Offset`. Those two earn
+    their place for a specific reason: without them a coordinate can only be built by applying
+    ``coord``/``offset``, which costs a level of depth at **every** call site --
+    ``translate(g, 1, 0)`` becoming ``translate(g, offset(1, 0))`` would deepen every existing
+    ladder that translates and break its depth sandwich. As literals they are round-0 leaves, so the
+    depth profile is preserved exactly.
+
+    :class:`Rect` is deliberately NOT a literal: rects come from perception (``bbox``,
+    ``filled_squares``), and a literal one is ``rect(coord_lit, offset_lit)`` at depth 1 anyway.
+    """
+
+    value: int | bool | Coord | Offset
     value_type: TypeCon
 
     def evaluate(
@@ -274,13 +308,20 @@ class Const(Program):
         return self.value_type
 
     def to_dict(self) -> dict[str, object]:
-        return {"op": "const", "value": self.value, "value_type": self.value_type.name}
+        value: object = self.value
+        if isinstance(self.value, Coord):
+            value = [self.value.row, self.value.col]
+        elif isinstance(self.value, Offset):
+            value = [self.value.d_row, self.value.d_col]
+        return {"op": "const", "value": value, "value_type": self.value_type.name}
 
     def children(self) -> tuple[Program, ...]:
         return ()
 
     def __str__(self) -> str:
-        return str(self.value).lower() if isinstance(self.value, bool) else str(self.value)
+        if isinstance(self.value, bool):
+            return str(self.value).lower()
+        return str(self.value)  # Coord/Offset render themselves; ints fall through to str()
 
 
 @dataclass(frozen=True, slots=True)

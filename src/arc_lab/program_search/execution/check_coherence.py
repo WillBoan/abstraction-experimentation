@@ -38,7 +38,7 @@ from arc_lab.program_search.execution.type_closure import (
     leaf_seed_names,
     required_names,
 )
-from arc_lab.program_search.search.leaves import ConstantSource
+from arc_lab.program_search.search.leaves import CONSTANT_LEAF_TYPES, ConstantSource
 from arc_lab.program_search.substrate.library import Library, Primitive
 from arc_lab.program_search.substrate.types import ArrowType, TypeCon, TypeVar
 
@@ -87,7 +87,7 @@ def _type_closure_findings(
             continue
         missing = sorted({name for name in required_names(primitive) if name not in reachable})
         for name in missing:
-            if name in {"int", "color", "bool"}:
+            if name in CONSTANT_LEAF_TYPES:
                 findings.append(
                     CoherenceFinding(
                         severity="warning",

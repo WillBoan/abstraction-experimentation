@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import pytest
 
+from arc_lab.core.geometry import Offset
 from arc_lab.core.grid import Grid
 from arc_lab.core.mask import Mask
 from arc_lab.core.task import Example, Task
@@ -12,6 +13,7 @@ from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.cost import ProgramSize
 from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.substrate.library import Library
+from arc_lab.program_search.substrate.primitives.addressing import OFFSET_OF
 from arc_lab.program_search.substrate.primitives.arithmetic import (
     ABS,
     ARITHMETIC_PRIMITIVES,
@@ -229,19 +231,21 @@ def test_crop_to_content() -> None:
 
 
 def test_blank_and_its_bounds() -> None:
-    assert BLANK.impl(2, 2, 7) == Grid.from_list([[7, 7], [7, 7]])
+    # The extent is one `Offset`, not two ints: a size IS a displacement from the origin.
+    assert BLANK.impl(Offset(2, 2), 7) == Grid.from_list([[7, 7], [7, 7]])
     with pytest.raises(ValueError):
-        BLANK.impl(0, 2, 7)
+        BLANK.impl(Offset(0, 2), 7)
     with pytest.raises(ValueError):
-        BLANK.impl(31, 2, 7)
+        BLANK.impl(Offset(31, 2), 7)
 
 
 def test_translate_shifts_and_fills_with_zero() -> None:
-    assert TRANSLATE.impl(Grid.from_list([[1, 2], [3, 4]]), 1, 0) == Grid.from_list(
+    # A shift IS a displacement, so it travels as one `Offset` rather than two independent ints.
+    assert TRANSLATE.impl(Grid.from_list([[1, 2], [3, 4]]), Offset(1, 0)) == Grid.from_list(
         [[0, 0], [1, 2]]
     )
-    assert TRANSLATE.impl(Grid.from_list([[1, 2]]), 0, -1) == Grid.from_list([[2, 0]])
-    assert TRANSLATE.impl(Grid.from_list([[1]]), 5, 5) == Grid.from_list([[0]])  # shifted fully out
+    assert TRANSLATE.impl(Grid.from_list([[1, 2]]), Offset(0, -1)) == Grid.from_list([[2, 0]])
+    assert TRANSLATE.impl(Grid.from_list([[1]]), Offset(5, 5)) == Grid.from_list([[0]])  # fully out
 
 
 def test_concat_h_and_v() -> None:
@@ -375,8 +379,9 @@ def test_crop_to_content_solves_a_crop_task() -> None:
 
 def test_pair_composition_pools_and_projects() -> None:
     # snd(shape(g)) == width — a pair value flowing through composition, ending in an INT the goal
-    # test can't use directly, so drive it through blank: blank(1, snd(shape(g)), 0) = a 1 x width
-    # zero row, size-generally.
+    # test can't use directly, so drive it through blank: blank(offset(1, snd(shape(g))), 0) = a
+    # 1 x width zero row, size-generally. `offset` is the extra step `blank`'s Offset extent needs;
+    # it is exactly the int -> offset bridge, so the pair-flow this test exists for is unchanged.
     def one_by_width(grid: Grid) -> Grid:
         return Grid.from_list([[0] * grid.width])
 
@@ -386,7 +391,7 @@ def test_pair_composition_pools_and_projects() -> None:
         train=tuple(Example(input=g, output=one_by_width(g)) for g in grids),
         test=(),
     )
-    library = Library(name="row", primitives=(SHAPE, SND, BLANK))
-    solution = _solve(task, library, depth_limit=3)
+    library = Library(name="row", primitives=(SHAPE, SND, BLANK, OFFSET_OF))
+    solution = _solve(task, library, depth_limit=4)
     unseen = Grid.from_list([[9, 9, 9, 9]])
     assert solution.evaluate_grid(unseen, library) == one_by_width(unseen)  # type: ignore[attr-defined]

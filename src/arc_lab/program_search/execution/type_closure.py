@@ -13,7 +13,7 @@ repo's convention: flag an approximation rather than claim false precision — s
 
 from __future__ import annotations
 
-from arc_lab.program_search.search.leaves import ConstantSource
+from arc_lab.program_search.search.leaves import CONSTANT_SOURCE_TYPES, ConstantSource
 from arc_lab.program_search.substrate.library import Primitive
 from arc_lab.program_search.substrate.types import ArrowType, Type, TypeCon
 
@@ -37,10 +37,8 @@ def leaf_seed_names(constant_sources: tuple[ConstantSource, ...]) -> frozenset[s
     that needs something else too, only ever be over-generous about a type nothing consumes anyway.
     """
     names = set(_ALWAYS_LEAF_NAMES)
-    if "finite-enumerate" in constant_sources:
-        names |= {"int", "color", "bool"}
-    if "harvest-from-instance" in constant_sources:
-        names |= {"int", "color"}
+    for source in constant_sources:
+        names |= CONSTANT_SOURCE_TYPES.get(source, frozenset())
     return frozenset(names)
 
 

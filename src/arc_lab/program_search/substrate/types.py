@@ -75,8 +75,17 @@ INT = TypeCon("int")  # a small non-negative integer (e.g. a tiling dimension)
 BOOL = TypeCon("bool")  # a truth value, produced by control primitives and branch conditions
 FN = TypeCon("fn")  # an opaque function value; an ArrowType refines it where the shape is known
 MASK = TypeCon("mask")  # a boolean cell selection over a grid (ONTOLOGY.md's L3 region type)
+# The addressing types (core/geometry.py). Distinct from `pair[int, int]` on purpose: a pair is
+# inhabited by shapes, counts and min/max results too, so a structural coordinate lets the
+# enumerator feed a grid's dimensions into a position slot. Distinct from EACH OTHER on purpose:
+# a position is not a displacement, which is what makes `coord + coord` a type error.
+COORD = TypeCon("coord")  # an absolute (row, col) position; may be negative
+OFFSET = TypeCon("offset")  # a (d_row, d_col) displacement
+RECT = TypeCon("rect")  # an axis-aligned region: origin + extent; may extend past the grid
 
-_BASE_TYPES: dict[str, TypeCon] = {t.name: t for t in (GRID, COLOR, INT, BOOL, FN, MASK)}
+_BASE_TYPES: dict[str, TypeCon] = {
+    t.name: t for t in (GRID, COLOR, INT, BOOL, FN, MASK, COORD, OFFSET, RECT)
+}
 
 
 def list_type(element: Type) -> TypeCon:

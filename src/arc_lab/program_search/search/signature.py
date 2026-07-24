@@ -17,6 +17,7 @@ from collections.abc import Mapping, Sequence
 from enum import Enum
 from typing import TypeAlias
 
+from arc_lab.core.geometry import Coord, Offset, Rect
 from arc_lab.core.grid import Grid
 from arc_lab.core.mask import Mask
 
@@ -228,6 +229,15 @@ def _inhabits(value: Value, expected: Type) -> bool:
         return _is_function(value)
     if name == "mask":
         return isinstance(value, Mask)
+    # The addressing types. Each must be checked EXACTLY, not structurally: a Coord and an Offset
+    # hold the same two ints, and treating them as interchangeable here would undo the type-level
+    # split (`coord + coord` becoming buildable again) at exactly the point search validates values.
+    if name == "coord":
+        return isinstance(value, Coord)
+    if name == "offset":
+        return isinstance(value, Offset)
+    if name == "rect":
+        return isinstance(value, Rect)
     if name == "list" and len(args) == 1:
         return isinstance(value, tuple) and all(_inhabits(element, args[0]) for element in value)
     if name == "pair" and len(args) == 2:

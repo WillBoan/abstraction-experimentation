@@ -16,7 +16,10 @@ from arc_lab.program_search.substrate.primitives.pairs import FST, PAIR
 def test_d4_bundles_all_eight_transforms_onto_one_self_loop() -> None:
     graph = build_library_graph(D4_LIBRARY)
     node_ids = {n.node_id for n in graph.nodes}
-    assert node_ids == {"grid", "int", "color", "bool"}
+    # Every type a constant policy could mint appears, whether or not this library consumes it —
+    # `leaf_seed_names` is a documented over-approximation (D4 has no int/color/bool primitive
+    # either). The addressing types joined that set, so they show up here for the same reason.
+    assert node_ids == {"grid", "int", "color", "bool", "coord", "offset"}
     (edge,) = graph.edges
     assert edge.source == "grid" and edge.target == "grid"
     assert set(edge.primitives) == set(D4_LIBRARY.names())

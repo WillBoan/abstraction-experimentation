@@ -13,21 +13,31 @@ from __future__ import annotations
 
 import numpy as np
 
+from arc_lab.core.geometry import Offset
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.substrate.library import Primitive
-from arc_lab.program_search.substrate.types import COLOR, GRID, INT
+from arc_lab.program_search.substrate.types import COLOR, GRID, INT, OFFSET
 
 _MAX_SIDE = 30
 
 
-def _blank(height: int, width: int, color: int) -> Grid:
+def _blank(size: Offset, color: int) -> Grid:
+    """A uniform grid of the given extent. The extent is an :class:`Offset` -- a size is a
+    displacement from the origin to just past the end, so it needs no type of its own."""
+    height, width = size.d_row, size.d_col
     if not (1 <= height <= _MAX_SIDE and 1 <= width <= _MAX_SIDE):
         raise ValueError(f"blank dimensions must be in [1, {_MAX_SIDE}], got {(height, width)}")
     return Grid(np.full((height, width), color))
 
 
-def _translate(grid: Grid, d_row: int, d_col: int) -> Grid:
-    """Shift all cells by (d_row, d_col); vacated cells fill with color 0."""
+def _translate(grid: Grid, by: Offset) -> Grid:
+    """Shift all cells by ``by``; vacated cells fill with color 0.
+
+    Takes an :class:`Offset` rather than two ints because a shift IS a displacement -- the type says
+    so, and it keeps the pair bundled instead of letting the enumerator mix a row-shift from one
+    source with a column-shift from another.
+    """
+    d_row, d_col = by.d_row, by.d_col
     out = np.zeros(grid.shape, dtype=np.int8)
     height, width = grid.shape
     src = grid.array
@@ -76,9 +86,9 @@ def _downsample(grid: Grid, factor: int) -> Grid:
     return Grid(grid.array[::factor, ::factor])
 
 
-BLANK = Primitive(name="blank", param_types=(INT, INT, COLOR), return_type=GRID, impl=_blank)
+BLANK = Primitive(name="blank", param_types=(OFFSET, COLOR), return_type=GRID, impl=_blank)
 TRANSLATE = Primitive(
-    name="translate", param_types=(GRID, INT, INT), return_type=GRID, impl=_translate
+    name="translate", param_types=(GRID, OFFSET), return_type=GRID, impl=_translate
 )
 CONCAT_H = Primitive(name="concat_h", param_types=(GRID, GRID), return_type=GRID, impl=_concat_h)
 CONCAT_V = Primitive(name="concat_v", param_types=(GRID, GRID), return_type=GRID, impl=_concat_v)

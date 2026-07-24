@@ -22,6 +22,7 @@ from arc_lab.program_search.substrate.library import (
     Value,
     apply_function_value,
 )
+from arc_lab.program_search.substrate.primitives.addressing import OFFSET_OF
 from arc_lab.program_search.substrate.primitives.build import HEIGHT, WIDTH
 from arc_lab.program_search.substrate.primitives.cells import CELLS, FROM_CELLS
 from arc_lab.program_search.substrate.types import BOOL, ArrowType, TypeVar, list_type
@@ -265,4 +266,6 @@ SORT_BY = Primitive(
 
 #: `map` + a minimal real list vocabulary (`cells`/`from_cells`, row-major, mirroring `build_grid`'s
 #: convention) + dimension perceivers — enough to demonstrate `map` solving a real task end-to-end.
-HOF_LIBRARY = Library(name="hof", primitives=(MAP, CELLS, FROM_CELLS, WIDTH, HEIGHT))
+# `offset` is what carries int -> grid now that `from_cells` takes an extent rather than two
+# ints: without an Offset producer the int<->grid cycle this library exists to show is broken.
+HOF_LIBRARY = Library(name="hof", primitives=(MAP, CELLS, FROM_CELLS, WIDTH, HEIGHT, OFFSET_OF))

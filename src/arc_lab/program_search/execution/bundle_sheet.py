@@ -67,10 +67,10 @@ _FRAGMENTS: dict[str, BundleSpec] = {
     "HO_GRID": BundleSpec(("build_grid",)),
     "PERCEIVE_COLOR": BundleSpec(("most_common_color", "least_common_color")),
     "PERCEIVE_INT": BundleSpec(("count_color", "num_colors", "palette", "shape")),
-    "CELLS_IO": BundleSpec(("cells", "from_cells")),
+    "CELLS_IO": BundleSpec(("cells", "from_cells", "offset")),
     "CELL_STATEFUL": BundleSpec(("read", "set_cell")),
     # The convenience union documented in _PRIMITIVE_BUNDLES.md: CELLS_IO + CELL_STATEFUL.
-    "CELL_IO": BundleSpec(("cells", "from_cells", "read", "set_cell")),
+    "CELL_IO": BundleSpec(("cells", "from_cells", "read", "set_cell", "offset")),
     "CELL_TARGETS": BundleSpec(("swap_cells", "move_cell")),
     "RECOLOR_OPS": BundleSpec(("map_color", "swap_colors", "filter_color")),
     "MASK_INTRO": BundleSpec(("mask_by_color", "nonbg_mask", "bbox_mask")),
@@ -80,7 +80,7 @@ _FRAGMENTS: dict[str, BundleSpec] = {
     "MASK_ELIM": BundleSpec(("crop_to_mask", "paint_through_mask", "crop_to_content")),
     "COMBINATORS": BundleSpec(("overlay", "tile")),
     "LAYOUT_OPS": BundleSpec(
-        ("translate", "concat_h", "concat_v", "pad", "tile_repeat", "downsample", "blank")
+        ("translate", "concat_h", "concat_v", "pad", "tile_repeat", "downsample", "blank", "offset")
     ),
     "SCALE": BundleSpec(("scale",)),
     # Verified-minimal generating pair (BFS: {flip_h, transpose} reaches all 8 D4 elements;
@@ -181,7 +181,9 @@ _FLOORS: dict[str, BundleSpec] = {
         ("nonbg_mask", "crop_to_content", "crop_to_mask", *_D4, "map_color")
     ),
     # -- Spatial / layout
-    "LAYOUT_GEN": BundleSpec(("translate", "concat_h", "concat_v", "pad", "downsample", "blank")),
+    "LAYOUT_GEN": BundleSpec(
+        ("translate", "concat_h", "concat_v", "pad", "downsample", "blank", "offset")
+    ),
     "LAYOUT_FULL": BundleSpec(
         (
             "translate",
@@ -191,6 +193,7 @@ _FLOORS: dict[str, BundleSpec] = {
             "tile_repeat",
             "downsample",
             "blank",
+            "offset",
             "scale",
             "width",
             "height",
@@ -205,6 +208,7 @@ _FLOORS: dict[str, BundleSpec] = {
             "sort_by",
             "cells",
             "from_cells",
+            "offset",
             "width",
             "height",
             "if",
@@ -224,6 +228,7 @@ _FLOORS: dict[str, BundleSpec] = {
             "filter",
             "cells",
             "from_cells",
+            "offset",
             "width",
             "height",
             "eq",
@@ -233,7 +238,19 @@ _FLOORS: dict[str, BundleSpec] = {
         constant_sources=(),
     ),
     "LIST_ALGEBRA": BundleSpec(
-        ("cells", "from_cells", "zip", "length", "head", "pair", "fst", "snd", "fold", "sort_by"),
+        (
+            "cells",
+            "from_cells",
+            "offset",
+            "zip",
+            "length",
+            "head",
+            "pair",
+            "fst",
+            "snd",
+            "fold",
+            "sort_by",
+        ),
         constant_sources=(),
     ),
 }

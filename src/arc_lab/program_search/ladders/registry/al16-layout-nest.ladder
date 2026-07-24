@@ -12,7 +12,7 @@ ladder al16-layout-nest
 #
 # Floor ``{concat_h, concat_v, translate}`` -> ``pair`` -> ``stack`` -> top.
 #
-# - ``r1 = pair``: ``concat_h(g, translate(g, 1, 0))`` -- a horizontal pair, one copy row-shifted
+# - ``r1 = pair``: ``concat_h(g, translate(g, (1, 0)))`` -- a horizontal pair, one copy row-shifted
 #   (asymmetric, so no flip/symmetry shortcut).
 # - ``r2 = stack``: ``concat_v(r1, r1)`` -- stack two ``pair``s vertically (a new axis).
 # - ``top``: ``concat_h(r2, r2)`` -- widen again, back on the horizontal axis.
@@ -29,11 +29,11 @@ config {
 floor al16-L0 {
     use concat_h:  (Grid, Grid) -> Grid
     use concat_v:  (Grid, Grid) -> Grid
-    use translate: (Grid, Int, Int) -> Grid
+    use translate: (Grid, Offset) -> Grid
 }
 
 rung {
-    pair(g: Grid) -> Grid = concat_h(g, translate(g, 1, 0))
+    pair(g: Grid) -> Grid = concat_h(g, translate(g, (1, 0)))
 
     task pair-00 {
         solution: pair(input)

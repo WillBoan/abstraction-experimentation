@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import pytest
 
+from arc_lab.core.geometry import Offset
 from arc_lab.program_search.ladders.lang import LadderFormatError
 from arc_lab.program_search.ladders.lang.expr import elaborate_expression, render_expression
 from arc_lab.program_search.substrate.library import Library
@@ -30,6 +31,7 @@ from arc_lab.program_search.substrate.types import (
     COLOR,
     GRID,
     INT,
+    OFFSET,
     ArrowType,
     Type,
     list_type,
@@ -49,6 +51,7 @@ _LIB = Library(
             "flip_h",
             "flip_v",
             "translate",
+            "scale",
             "if",
             "eq",
             "most_common_color",
@@ -66,8 +69,14 @@ def _elab(text: str, params: tuple[tuple[str, Type], ...] = ()) -> Program:
 
 
 def test_negative_int_literal() -> None:
-    assert _elab("translate(input, -1, 0)") == Apply(
-        "translate", (Input(), Const(-1, INT), Const(0, INT))
+    # `scale` is the INT consumer here; `translate` now takes an `Offset`, so it no longer exercises
+    # a bare negative INT literal at all.
+    assert _elab("scale(input, -1)") == Apply("scale", (Input(), Const(-1, INT)))
+
+
+def test_negative_components_in_an_offset_literal() -> None:
+    assert _elab("translate(input, (-1, 0))") == Apply(
+        "translate", (Input(), Const(Offset(-1, 0), OFFSET))
     )
 
 
@@ -161,7 +170,8 @@ def test_a_binder_may_not_shadow_a_parameter() -> None:
 @pytest.mark.parametrize(
     ("text", "params"),
     [
-        ("translate(input, -1, 0)", ()),
+        ("translate(input, (-1, 0))", ()),
+        ("scale(input, -1)", ()),
         ("flip_h(input) if true else input", ()),
         ("map(flip_h, gs)", (("gs", _GRIDS),)),
         ("build_grid(height(input), width(input), lambda r, c: read(input, c, r))", ()),

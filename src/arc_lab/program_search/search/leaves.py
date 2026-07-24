@@ -12,11 +12,22 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator
 from typing import Literal, TypeAlias
 
+from arc_lab.core.geometry import Coord, Offset
 from arc_lab.core.grid import Grid
 
 from ..substrate.library import Library
 from ..substrate.program import Const, Input, Program, Var
-from ..substrate.types import BOOL, COLOR, GRID, INT, ArrowType, Type, TypeCon
+from ..substrate.types import (
+    BOOL,
+    COLOR,
+    COORD,
+    GRID,
+    INT,
+    OFFSET,
+    ArrowType,
+    Type,
+    TypeCon,
+)
 from .context import Context
 from .scope import Scope
 
@@ -29,6 +40,21 @@ ConstantSource: TypeAlias = Literal[
     # parameterize: Mints nothing in SEARCH (used in LEARN, not SEARCH).
     "parameterize",
 ]
+
+
+#: Which base types each constant policy can supply as round-0 leaves, by type name — the ONE
+#: statement of it. Read-side consumers (the coherence checker's reachability closure, the cost
+#: forecaster) must ask here rather than restate it: when the addressing types arrived, three
+#: separate copies of "int/color/bool" silently disagreed with what `_finite_enumerate` actually
+#: mints, and a bundle using `translate` read as structurally dead.
+CONSTANT_SOURCE_TYPES: dict[str, frozenset[str]] = {
+    "finite-enumerate": frozenset({INT.name, COLOR.name, BOOL.name, COORD.name, OFFSET.name}),
+    "harvest-from-instance": frozenset({INT.name, COLOR.name, COORD.name, OFFSET.name}),
+    "parameterize": frozenset(),  # mints nothing in SEARCH
+}
+
+#: Every type any constant policy could supply — the union of the above.
+CONSTANT_LEAF_TYPES: frozenset[str] = frozenset().union(*CONSTANT_SOURCE_TYPES.values())
 
 
 def seed_leaves(
@@ -92,10 +118,19 @@ def _type_in_use(vtype: Type, library: Library) -> bool:
 
 
 def _finite_enumerate(grids: Iterable[Grid], library: Library) -> Iterator[tuple[Program, Type]]:
-    """A fixed, typed, bounded set: ``INT`` 0..max-dim, ``COLOR`` 0..9, ``BOOL`` {False, True} —
-    only for whichever of these base types ``library`` actually uses somewhere."""
+    """A fixed, typed, bounded set: ``INT`` 0..max-dim, ``COLOR`` 0..9, ``BOOL`` {False, True},
+    ``COORD``/``OFFSET`` the 0..max-dim square — only for whichever of these base types ``library``
+    actually uses somewhere.
+
+    **The addressing types are quadratic in max-dim** ((d+1)^2 leaves), which is the honest mirror of
+    the INT range rather than an arbitrary cap: bounding them smaller would silently put some
+    programs out of reach. It moves work that the old two-INT-argument spelling paid at
+    *composition* time to *leaf* time, so the reachable set is unchanged — but the round-0 pool is
+    much larger, and a library using these on full-size ARC grids wants a ``max_pool`` to match.
+    ``constant_sources`` is already opt-in for exactly this reason (``ladder_default_config``).
+    """
+    max_dimension = max((max(grid.height, grid.width) for grid in grids), default=0)
     if _type_in_use(INT, library):
-        max_dimension = max((max(grid.height, grid.width) for grid in grids), default=0)
         for value in range(max_dimension + 1):
             yield Const(value=value, value_type=INT), INT
     if _type_in_use(COLOR, library):
@@ -104,23 +139,38 @@ def _finite_enumerate(grids: Iterable[Grid], library: Library) -> Iterator[tuple
     if _type_in_use(BOOL, library):
         for flag in (False, True):
             yield Const(value=flag, value_type=BOOL), BOOL
+    if _type_in_use(COORD, library):
+        for row in range(max_dimension + 1):
+            for col in range(max_dimension + 1):
+                yield Const(value=Coord(row, col), value_type=COORD), COORD
+    if _type_in_use(OFFSET, library):
+        for d_row in range(max_dimension + 1):
+            for d_col in range(max_dimension + 1):
+                yield Const(value=Offset(d_row, d_col), value_type=OFFSET), OFFSET
 
 
 def _harvest_from_instance(
     grids: Iterable[Grid], library: Library
 ) -> Iterator[tuple[Program, Type]]:
     """The literals present in the instance: the colors used and the grid dimensions — only for
-    whichever of ``COLOR``/``INT`` ``library`` actually uses somewhere."""
+    whichever of ``COLOR``/``INT``/``COORD``/``OFFSET`` ``library`` actually uses somewhere.
+
+    The addressing types harvest the *cross product of the observed dimensions*, which is the
+    instance-scoped analogue of the INT set (and far smaller than ``finite-enumerate``'s square).
+    Content-derived positions are a perceiver's job (``content_coords``), not a constant's.
+    """
     want_color = _type_in_use(COLOR, library)
     want_int = _type_in_use(INT, library)
-    if not want_color and not want_int:
+    want_coord = _type_in_use(COORD, library)
+    want_offset = _type_in_use(OFFSET, library)
+    if not (want_color or want_int or want_coord or want_offset):
         return
     colors: set[int] = set()
     dimensions: set[int] = set()
     for grid in grids:
         if want_color:
             colors.update(color for row in grid.to_list() for color in row)
-        if want_int:
+        if want_int or want_coord or want_offset:
             dimensions.update((grid.height, grid.width))
     if want_color:
         for color in sorted(colors):
@@ -128,6 +178,12 @@ def _harvest_from_instance(
     if want_int:
         for dimension in sorted(dimensions):
             yield Const(value=dimension, value_type=INT), INT
+    for first in sorted(dimensions):
+        for second in sorted(dimensions):
+            if want_coord:
+                yield Const(value=Coord(first, second), value_type=COORD), COORD
+            if want_offset:
+                yield Const(value=Offset(first, second), value_type=OFFSET), OFFSET
 
 
 def _distinct_input_grids(contexts: tuple[Context, ...]) -> list[Grid]:

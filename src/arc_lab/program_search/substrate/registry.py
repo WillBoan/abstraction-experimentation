@@ -10,6 +10,7 @@ registry is the single place that knows every hand-coded primitive.
 from __future__ import annotations
 
 from arc_lab.program_search.substrate.library import Primitive
+from arc_lab.program_search.substrate.primitives.addressing import ADDRESSING_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.arithmetic import ARITHMETIC_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.build import BUILD_AFFINE_LIBRARY
 from arc_lab.program_search.substrate.primitives.cells import (
@@ -29,6 +30,7 @@ from arc_lab.program_search.substrate.primitives.lists import LIST_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.mask import MASK_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.pairs import PAIR_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.perceive import PERCEIVE_PRIMITIVES
+from arc_lab.program_search.substrate.primitives.regions import REGION_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.scaling import SCALE
 from arc_lab.program_search.substrate.primitives.tiles import TILE_PRIMITIVES
 
@@ -50,11 +52,24 @@ def _gather() -> dict[str, Primitive]:
         MASK_PRIMITIVES,
         LAYOUT_PRIMITIVES,
         TILE_PRIMITIVES,  # reference impls for the cfb2ce5a floor; resolvable, in no preset
+        ADDRESSING_PRIMITIVES,
+        REGION_PRIMITIVES,
     )
     registry: dict[str, Primitive] = {}
     for group in groups:
         for prim in group:
-            registry.setdefault(prim.name, prim)
+            # Groups legitimately OVERLAP (`read`/`set_cell` are listed by two bundles), so a
+            # re-listing of the same primitive is fine. A same-name/different-primitive collision is
+            # not: this used to `setdefault`, which resolved it silently first-wins, so a new bundle
+            # could have its primitive quietly dropped. In a flat global namespace of ~110 names
+            # that is a live hazard, and a name clash must be loud.
+            existing = registry.get(prim.name)
+            if existing is not None and existing != prim:
+                raise ValueError(
+                    f"duplicate primitive name {prim.name!r} in the substrate registry: two "
+                    "different primitives claim it; rename one"
+                )
+            registry[prim.name] = prim
     return registry
 
 

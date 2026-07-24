@@ -9,7 +9,7 @@ ladder al18-fanin-rotate
 #
 # Floor ``{concat_h, concat_v, translate, rot180}`` -> ``pair`` -> ``rot`` -> top.
 #
-# - ``r1 = pair``: ``concat_h(g, translate(g, 1, 0))`` -- an asymmetric horizontal pair.
+# - ``r1 = pair``: ``concat_h(g, translate(g, (1, 0)))`` -- an asymmetric horizontal pair.
 # - ``r2 = rot``: ``rot180(pair)`` -- the pair rotated 180 (references ``pair``; same shape, so it
 #   recombines).
 # - ``top``: ``concat_v(pair, rot)`` -- **fan-in 2**, stacking both rungs.
@@ -26,12 +26,12 @@ config {
 floor al18-L0 {
     use concat_h:  (Grid, Grid) -> Grid
     use concat_v:  (Grid, Grid) -> Grid
-    use translate: (Grid, Int, Int) -> Grid
+    use translate: (Grid, Offset) -> Grid
     use rot180:    (Grid) -> Grid
 }
 
 rung {
-    pair(g: Grid) -> Grid = concat_h(g, translate(g, 1, 0))
+    pair(g: Grid) -> Grid = concat_h(g, translate(g, (1, 0)))
 
     task pair-00 {
         solution: pair(input)

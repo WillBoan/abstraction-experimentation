@@ -29,6 +29,7 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias
 
+from arc_lab.core.geometry import Coord, Offset
 from arc_lab.program_search.learn.antiunify import AbstractionProposer, _close_template, _is_useful
 from arc_lab.program_search.learn.telemetry import SleepCounters
 from arc_lab.program_search.substrate.library import Library, Primitive
@@ -46,6 +47,7 @@ from arc_lab.program_search.substrate.program import (
 )
 from arc_lab.program_search.substrate.types import (
     BOOL,
+    COORD,
     GRID,
     INT,
     ArrowType,
@@ -94,6 +96,13 @@ def to_sexpr(program: Program) -> str:
         # this branch must precede the int case.)
         if isinstance(program.value, bool):
             return "true" if program.value else "false"
+        # An addressing literal encodes its two components as ONE terminal (`1_2:offset`). It must
+        # not fall through to `str(value)`, whose `<1, 2>` rendering contains spaces and would be
+        # tokenized as several atoms. `_` separates cleanly even when a component is negative.
+        if isinstance(program.value, Coord):
+            return f"{program.value.row}_{program.value.col}:{program.value_type.name}"
+        if isinstance(program.value, Offset):
+            return f"{program.value.d_row}_{program.value.d_col}:{program.value_type.name}"
         # A non-INT scalar keeps its type through untyped Stitch as a typed literal (`3:color`) —
         # one opaque terminal to Stitch, an exact Const to `from_sexpr` even in an untyped context.
         if program.value_type != _INT:
@@ -384,14 +393,24 @@ def _is_int_literal(atom: str) -> bool:
     return atom.lstrip("-").isdigit()
 
 
-def _typed_literal(atom: str) -> tuple[int, TypeCon] | None:
-    """Parse a typed scalar literal ``<int>:<base-type>`` (e.g. ``3:color``), or ``None``.
+def _typed_literal(atom: str) -> tuple[int | Coord | Offset, TypeCon] | None:
+    """Parse a typed literal — ``<int>:<base-type>`` (``3:color``) or ``<int>_<int>:<base-type>``
+    (``1_2:offset``) — or ``None``.
 
     The inverse of :func:`to_sexpr`'s non-INT Const encoding. An unknown type name raises
     (:func:`base_type` is fail-fast), which is right: the token can only come from our own encoder.
     """
     head, sep, name = atom.partition(":")
-    if not sep or not _is_int_literal(head):
+    if not sep:
+        return None
+    if "_" in head:  # an addressing literal: two components in one terminal
+        first, _, second = head.partition("_")
+        if not _is_int_literal(first) or not _is_int_literal(second):
+            return None
+        base = base_type(name)
+        row, col = int(first), int(second)
+        return (Coord(row, col) if base == COORD else Offset(row, col)), base
+    if not _is_int_literal(head):
         return None
     return int(head), base_type(name)
 

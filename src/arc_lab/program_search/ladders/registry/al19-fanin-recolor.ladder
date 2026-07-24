@@ -9,7 +9,7 @@ ladder al19-fanin-recolor
 #
 # Floor ``{concat_h, concat_v, translate, map_color}`` -> ``pair`` -> ``recol`` -> top.
 #
-# - ``r1 = pair``: ``concat_h(g, translate(g, 1, 0))``.
+# - ``r1 = pair``: ``concat_h(g, translate(g, (1, 0)))``.
 # - ``r2 = recol``: ``map_color(pair, 1, 7)`` (references ``pair``; shape-preserving, so it recombines).
 # - ``top``: ``concat_v(pair, recol)`` -- **fan-in 2**.
 #
@@ -25,12 +25,12 @@ config {
 floor al19-L0 {
     use concat_h:  (Grid, Grid) -> Grid
     use concat_v:  (Grid, Grid) -> Grid
-    use translate: (Grid, Int, Int) -> Grid
+    use translate: (Grid, Offset) -> Grid
     use map_color: (Grid, Color, Color) -> Grid
 }
 
 rung {
-    pair(g: Grid) -> Grid = concat_h(g, translate(g, 1, 0))
+    pair(g: Grid) -> Grid = concat_h(g, translate(g, (1, 0)))
 
     task pair-00 {
         solution: pair(input)

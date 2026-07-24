@@ -14,9 +14,10 @@ from __future__ import annotations
 
 import numpy as np
 
+from arc_lab.core.geometry import Offset
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.substrate.library import Primitive, Value
-from arc_lab.program_search.substrate.types import COLOR, GRID, INT, list_type, pair_type
+from arc_lab.program_search.substrate.types import COLOR, GRID, INT, OFFSET, list_type, pair_type
 
 
 def _color_counts(grid: Grid) -> np.ndarray:
@@ -49,6 +50,17 @@ def _shape(grid: Grid) -> Value:
     return (grid.height, grid.width)
 
 
+def _extent(grid: Grid) -> Offset:
+    """The grid's size as an :class:`Offset` -- the addressing-typed companion to ``shape``.
+
+    Kept ALONGSIDE ``shape`` rather than replacing it: ``shape``'s ``pair[int, int]`` is the right
+    answer when the caller wants two independent ints, and ``extent`` is the right one when the
+    result feeds the addressing algebra (``rect``, ``offset_scale``, ``blank``). Replacing it would
+    move a return type for no gain.
+    """
+    return Offset(grid.height, grid.width)
+
+
 MOST_COMMON_COLOR = Primitive(
     name="most_common_color", param_types=(GRID,), return_type=COLOR, impl=_most_common_color
 )
@@ -63,6 +75,7 @@ PALETTE = Primitive(
     name="palette", param_types=(GRID,), return_type=list_type(COLOR), impl=_palette
 )
 SHAPE = Primitive(name="shape", param_types=(GRID,), return_type=pair_type(INT, INT), impl=_shape)
+EXTENT = Primitive(name="extent", param_types=(GRID,), return_type=OFFSET, impl=_extent)
 
 PERCEIVE_PRIMITIVES = (
     MOST_COMMON_COLOR,
@@ -71,4 +84,5 @@ PERCEIVE_PRIMITIVES = (
     NUM_COLORS,
     PALETTE,
     SHAPE,
+    EXTENT,
 )

@@ -5,16 +5,23 @@ The loop is `reference Primitive` + `decomposition as a Program template` ->
 machinery; the point is that a floor-lowering claim ("this powerful primitive is really just these
 simpler ones") becomes a *checked* fact instead of a plausible-looking rewrite, and stays checked.
 
-Two results are recorded, and the negative one matters as much as the positive:
+Results recorded so far:
 
-- ``retain_colors`` IS a composition of the existing mask algebra -> it should leave the floor.
-- ``largest_filled_square`` is NOT decomposable over the current substrate at all, because nothing in
-  it produces a *list of regions* to search over. That is the cfb2ce5a headline made concrete: the
-  difficulty is perceptual, not compositional.
+- ``retain_colors`` IS a composition of the existing mask algebra -> it left the floor.
+- ``largest_filled_square`` **was** irreducible, and no longer is. The original finding was that
+  nothing in the substrate produced a *list of regions* to select among, so the percept could not be
+  decomposed *by construction* -- pinned here as a tripwire that would fail the moment a producer
+  appeared. The addressing tier (``primitives/regions.py``) is that producer, the tripwire fired as
+  designed, and the percept is now ``crop_rect(g, head(filled_squares(g, bg)))`` at depth 3.
+
+That arc is the point of the loop: a negative result with a *named structural cause* told us exactly
+which capability to add, and the same check that proved it impossible now proves the decomposition
+correct.
 """
 
 from __future__ import annotations
 
+from arc_lab.program_search.analysis.depth import compositional_depth
 from arc_lab.program_search.analysis.equivalence import observationally_equivalent_functions
 from arc_lab.program_search.analysis.grids import exact_grids
 from arc_lab.program_search.substrate.abstraction import make_abstraction
@@ -23,7 +30,7 @@ from arc_lab.program_search.substrate.primitives.mask import MASK_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.tiles import RETAIN_COLORS
 from arc_lab.program_search.substrate.program import Apply, Const, Param, Program
 from arc_lab.program_search.substrate.registry import BASE_PRIMITIVES
-from arc_lab.program_search.substrate.types import COLOR, GRID, TypeCon
+from arc_lab.program_search.substrate.types import COLOR, COORD, GRID, INT, RECT, TypeCon
 
 _MASK_ALGEBRA = Library("mask-algebra", MASK_PRIMITIVES)
 
@@ -101,21 +108,135 @@ def test_the_loop_refutes_a_decomposition_that_is_merely_plausible() -> None:
     assert verdict.counterexample is not None
 
 
-def test_nothing_in_the_substrate_produces_a_list_of_regions() -> None:
-    """Why ``largest_filled_square`` cannot be decomposed here — a tripwire, not a preference.
+def test_the_substrate_can_now_enumerate_regions_to_select_among() -> None:
+    """The capability whose absence made the percept irreducible.
 
-    Decomposing "the largest all-nonzero square" means enumerating candidate regions and selecting
-    among them, which needs ``map``/``filter``/``sort_by``/``fold`` to have a ``list[mask]`` or
-    ``list[grid]`` to range over. The substrate has no such producer: every list-valued primitive
-    yields ``list[color]`` or a ``list`` of pairs. So the percept is irreducible *by construction*,
-    and lowering that floor is a deliberate substrate extension (a region-enumeration tier), not a
-    rewrite. When someone adds one, this test fails — which is the signal to revisit the decomposition.
+    The predecessor of this test asserted that NO primitive produced a ``list[rect]``/``list[mask]``,
+    so ``map``/``filter``/``sort_by``/``head`` had nothing region-shaped to range over. That was the
+    named structural cause behind "cfb2ce5a's difficulty is perceptual, not compositional" — and the
+    thing the addressing tier was built to fix.
     """
-    region_lists = {
-        name: prim.return_type
+    producers = {
+        name
         for name, prim in BASE_PRIMITIVES.items()
         if isinstance(prim.return_type, TypeCon)
         and prim.return_type.name == "list"
-        and prim.return_type.args in ((GRID,), (TypeCon("mask"),))
+        and prim.return_type.args in ((RECT,), (TypeCon("mask"),), (COORD,))
     }
-    assert not region_lists, f"a region enumerator now exists: {region_lists}"
+    assert {"filled_squares", "connected_regions", "quadrants", "content_coords"} <= producers
+
+
+def test_largest_filled_square_is_no_longer_irreducible() -> None:
+    """The headline: the percept that could not be decomposed at all is now a depth-3 composition.
+
+    ``filled_squares`` orders largest-first then row-major, which is exactly the reference's
+    documented tie-break (topmost, then leftmost) — so ``head`` of it IS the source square, and
+    ``crop_rect`` is the generic elimination that used to be fused into the same atom.
+    """
+    library = Library(
+        "addressing-tier",
+        tuple(BASE_PRIMITIVES[name] for name in ("crop_rect", "head", "filled_squares")),
+    )
+    grid = Param(0, GRID)
+    template: Program = Apply(
+        "crop_rect",
+        (grid, Apply("head", (Apply("filled_squares", (grid, Const(0, COLOR))),))),
+    )
+    assert compositional_depth(template) == 3
+
+    decomposed = make_abstraction(
+        "largest_filled_square_decomposed", template, library, signature=((GRID,), GRID)
+    )
+    verdict = observationally_equivalent_functions(
+        BASE_PRIMITIVES["largest_filled_square"],
+        decomposed,
+        exact_grids({(1, 1), (2, 5), (3, 3), (4, 4), (5, 5), (6, 4)}),
+        max_combos=100_000,
+    )
+    assert verdict.equivalent, verdict.counterexample
+    assert verdict.cases_tested > 30
+
+
+def test_the_background_is_a_parameter_so_the_general_reading_is_one_rung_higher() -> None:
+    """Why ONE parameterized ``filled_squares`` beats two named primitives.
+
+    The specialized reading is ``filled_squares(g, 0)`` (depth 1 — ``0`` is a COLOR constant leaf);
+    the general one is ``filled_squares(g, most_common_color(g))`` (depth 2). Being one level apart
+    is the whole point: a ladder can climb from the specialized percept to the general one as a real
+    rung, which two unrelated atoms could never express.
+    """
+    grid = Param(0, GRID)
+    specialized: Program = Apply("filled_squares", (grid, Const(0, COLOR)))
+    general: Program = Apply("filled_squares", (grid, Apply("most_common_color", (grid,))))
+    assert compositional_depth(specialized) == 1
+    assert compositional_depth(general) == 2
+
+
+def _addressing_lib(*names: str) -> Library:
+    return Library("addressing", tuple(BASE_PRIMITIVES[name] for name in names))
+
+
+def test_relative_tile_decomposes_into_the_addressing_algebra() -> None:
+    """The second bespoke atom to fall: ``relative_tile(g, down, right)`` located the source square
+    and cropped the tile ``down``/``right`` whole squares away -- two jobs fused. Over the tier it is
+    the source square (``head(filled_squares)``), a lattice step (``offset(mul(...), mul(...))`` --
+    per-axis, so not ``offset_scale``), and the generic ``crop_rect``. Depth 9: a lot of composition,
+    which is the honest measure of how much this atom was doing.
+    """
+    grid, down, right = Param(0, GRID), Param(1, INT), Param(2, INT)
+    square = Apply("head", (Apply("filled_squares", (grid, Const(0, COLOR))),))
+    size = Apply("offset_row", (Apply("rect_extent", (square,)),))
+    step = Apply("offset", (Apply("mul", (down, size)), Apply("mul", (right, size))))
+    tile = Apply(
+        "rect",
+        (
+            Apply("coord_add", (Apply("rect_origin", (square,)), step)),
+            Apply("rect_extent", (square,)),
+        ),
+    )
+    template: Program = Apply("crop_rect", (grid, tile))
+    library = _addressing_lib(
+        "head",
+        "filled_squares",
+        "offset_row",
+        "rect_extent",
+        "offset",
+        "mul",
+        "rect",
+        "coord_add",
+        "rect_origin",
+        "crop_rect",
+    )
+    decomposed = make_abstraction(
+        "relative_tile_decomposed", template, library, signature=((GRID, INT, INT), GRID)
+    )
+    verdict = observationally_equivalent_functions(
+        BASE_PRIMITIVES["relative_tile"],
+        decomposed,
+        exact_grids({(2, 2), (4, 4), (4, 6), (5, 5), (6, 6)}),
+        max_combos=50_000,
+    )
+    assert verdict.equivalent, verdict.counterexample
+    assert verdict.cases_tested > 500
+
+
+def test_nth_nonzero_color_is_not_a_clean_composition_because_it_totalizes() -> None:
+    """A refusal that is a finding, not a failure. The core of ``nth_nonzero_color(g, i)`` is
+    ``read`` at the i-th ``content_coords`` position -- but the reference returns color 0 when i is
+    out of range (it TOTALIZES), while ``nth`` raises. So exact equivalence correctly splits, and
+    names the witness: an index past the last nonzero cell. Retiring this atom needs the guard made
+    explicit (an ``if`` over ``length``), not just the read -- which is exactly what the loop tells us.
+    """
+    grid, index = Param(0, GRID), Param(1, INT)
+    coords = Apply("content_coords", (grid, Const(0, COLOR)))
+    at = Apply("nth", (coords, index))
+    core: Program = Apply("read", (grid, Apply("coord_row", (at,)), Apply("coord_col", (at,))))
+    library = _addressing_lib("read", "coord_row", "coord_col", "nth", "content_coords")
+    decomposed = make_abstraction(
+        "nth_nonzero_color_core", core, library, signature=((GRID, INT), COLOR)
+    )
+    verdict = observationally_equivalent_functions(
+        BASE_PRIMITIVES["nth_nonzero_color"], decomposed, exact_grids({(2, 2), (3, 3)})
+    )
+    assert not verdict.equivalent
+    assert verdict.counterexample is not None  # (grid, index-past-the-end)

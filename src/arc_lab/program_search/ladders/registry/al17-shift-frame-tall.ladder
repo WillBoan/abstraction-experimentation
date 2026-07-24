@@ -16,12 +16,12 @@ config {
 
 floor al17-L0 {
     use concat_v:  (Grid, Grid) -> Grid
-    use translate: (Grid, Int, Int) -> Grid
+    use translate: (Grid, Offset) -> Grid
     use pad:       (Grid, Int, Color) -> Grid
 }
 
 rung {
-    shift1(g: Grid) -> Grid = concat_v(g, translate(g, 0, 1))
+    shift1(g: Grid) -> Grid = concat_v(g, translate(g, (0, 1)))
 
     task shift1-00 {
         solution: shift1(input)

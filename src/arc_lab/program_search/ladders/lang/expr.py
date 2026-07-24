@@ -33,6 +33,7 @@ import ast
 import itertools
 from collections.abc import Sequence
 
+from arc_lab.core.geometry import Coord, Offset
 from arc_lab.program_search.ladders.lang.errors import FragmentError, LadderFormatError
 from arc_lab.program_search.ladders.lang.names import check_identifier
 from arc_lab.program_search.ladders.lang.type_syntax import render_type
@@ -53,8 +54,10 @@ from arc_lab.program_search.substrate.program import (
 from arc_lab.program_search.substrate.types import (
     BOOL,
     COLOR,
+    COORD,
     GRID,
     INT,
+    OFFSET,
     ArrowType,
     Substitution,
     Type,
@@ -76,6 +79,10 @@ TRUE_KEYWORD, FALSE_KEYWORD = "true", "false"
 #: ``FN`` hold no literal at all. Deliberately stricter than ``Const``, which the substrate lets
 #: carry any nullary type.
 _INT_LITERAL_TYPES: frozenset[TypeCon] = frozenset({COLOR, INT})
+
+#: The types a ``(a, b)`` literal may inhabit -- the addressing pairs. A ``pair[int, int]`` is
+#: deliberately NOT here: it is a structural container built with ``pair(..)``, not a literal.
+_ADDRESSING_LITERAL_TYPES: frozenset[TypeCon] = frozenset({COORD, OFFSET})
 
 
 def elaborate_expression(
@@ -175,6 +182,8 @@ class _Elaborator:
             return self._constant(node, expected)
         if isinstance(node, ast.UnaryOp):
             return self._negative(node, expected)
+        if isinstance(node, ast.Tuple):
+            return self._addressing(node, expected)
         if isinstance(node, ast.IfExp):
             return self._conditional(node, expected)
         if isinstance(node, ast.Lambda):
@@ -252,6 +261,42 @@ class _Elaborator:
                 f"`{str(value).lower()}` cannot fill a `{render_type(resolved)}` position"
             )
         return Const(value, BOOL), BOOL
+
+    def _addressing(self, node: ast.Tuple, expected: Type | None) -> tuple[Program, Type]:
+        """A ``(a, b)`` literal in a ``Coord``/``Offset`` position (spec EXP-5, as int literals).
+
+        Written as a LITERAL rather than as ``offset(0, 1)`` on purpose: an application would add a
+        level of :func:`compositional_depth` at every call site, which is exactly what would deepen
+        `translate`-using ladders past their declared ``depth_limit``. Like an int literal, its type
+        comes from the position it fills, so there is no ambiguity with a ``pair``.
+        """
+        parts: list[int] = []
+        for written in node.elts:
+            negated = isinstance(written, ast.UnaryOp) and isinstance(written.op, ast.USub)
+            element = written.operand if isinstance(written, ast.UnaryOp) else written
+            if (
+                not isinstance(element, ast.Constant)
+                or isinstance(element.value, bool)
+                or not isinstance(element.value, int)
+            ):
+                raise LadderFormatError(
+                    "a coord/offset literal is a pair of int literals, e.g. `(0, 1)`"
+                )
+            parts.append(-element.value if negated else element.value)
+        if len(parts) != 2:
+            raise LadderFormatError(
+                f"a coord/offset literal has exactly 2 components, got {len(parts)}"
+            )
+        rendered = f"({parts[0]}, {parts[1]})"
+        resolved = self._literal_type(rendered, expected)
+        if resolved not in _ADDRESSING_LITERAL_TYPES:
+            allowed = ", ".join(sorted(render_type(t) for t in _ADDRESSING_LITERAL_TYPES))
+            raise LadderFormatError(
+                f"the literal {rendered} cannot fill a `{render_type(resolved)}` position "
+                f"(a pair literal is {allowed})"
+            )
+        value = Coord(*parts) if resolved == COORD else Offset(*parts)
+        return Const(value, resolved), resolved
 
     def _literal_type(self, value: object, expected: Type | None) -> TypeCon:
         """The nullary type a literal in this position takes, or a load error (spec EXP-5)."""
@@ -470,6 +515,12 @@ def _render(program: Program, param_names: tuple[str, ...], binders: tuple[str, 
     if isinstance(program, Const):
         if isinstance(program.value, bool):
             return TRUE_KEYWORD if program.value else FALSE_KEYWORD
+        # An addressing literal renders as the `(a, b)` SOURCE syntax, not its value's `<0, 1>`
+        # repr -- this function's output must re-parse, and `<0, 1>` is not part of the format.
+        if isinstance(program.value, Coord):
+            return f"({program.value.row}, {program.value.col})"
+        if isinstance(program.value, Offset):
+            return f"({program.value.d_row}, {program.value.d_col})"
         return str(program.value)
     if isinstance(program, PrimRef):
         return program.name

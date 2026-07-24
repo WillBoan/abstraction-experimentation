@@ -13,13 +13,15 @@ these compose directly as typed grid transforms, so they need no AST lambda — 
 
 from __future__ import annotations
 
+from arc_lab.core.geometry import Offset
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.substrate.library import Library, Primitive, Value
-from arc_lab.program_search.substrate.types import COLOR, GRID, INT, list_type
+from arc_lab.program_search.substrate.types import COLOR, GRID, INT, OFFSET, list_type
 
 _GRID = GRID
 _COLOR = COLOR
 _INT = INT
+_OFFSET = OFFSET
 _COLOR_LIST = list_type(_COLOR)
 
 
@@ -45,8 +47,14 @@ def _cells(grid: Grid) -> Value:
     return tuple(color for row in grid.to_list() for color in row)
 
 
-def _from_cells(width: int, height: int, cells: Value) -> Grid:
-    """The inverse of :func:`_cells`: unflatten ``cells`` row-major into a ``height x width`` grid."""
+def _from_cells(size: Offset, cells: Value) -> Grid:
+    """The inverse of :func:`_cells`: unflatten ``cells`` row-major into a grid of extent ``size``.
+
+    ``size`` is an :class:`Offset` (an extent), so the two dimensions travel together and cannot be
+    silently transposed by the enumerator -- ``from_cells`` is the one place a height/width swap
+    produces a *valid* grid of the wrong shape rather than an error.
+    """
+    height, width = size.d_row, size.d_col
     if not isinstance(cells, tuple):
         raise TypeError(f"from_cells expects a list, got {type(cells).__name__}")
     if width < 0 or height < 0:
@@ -93,7 +101,7 @@ SET_CELL = Primitive(
 CELLS = Primitive(name="cells", param_types=(_GRID,), return_type=_COLOR_LIST, impl=_cells)
 FROM_CELLS = Primitive(
     name="from_cells",
-    param_types=(_INT, _INT, _COLOR_LIST),
+    param_types=(_OFFSET, _COLOR_LIST),
     return_type=_GRID,
     impl=_from_cells,
 )
