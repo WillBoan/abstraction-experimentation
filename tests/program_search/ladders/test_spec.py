@@ -5,22 +5,19 @@ from __future__ import annotations
 import dataclasses
 
 from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
+from arc_lab.program_search.ladders.checks.demonstrations import rung_argument_columns
+from arc_lab.program_search.ladders.graph import consumer_programs
 from arc_lab.program_search.ladders.registry import make_ladder
 from arc_lab.program_search.ladders.shape import LadderShape, LintFinding
-from arc_lab.program_search.ladders.spec import (
-    Demonstration,
-    DemonstrationKind,
-    _consumer_programs,
-    _rung_argument_columns,
-)
+from arc_lab.program_search.ladders.spec import Demonstration, DemonstrationKind
 from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.substrate.primitives.control import IF
 from arc_lab.program_search.substrate.program import Apply, Const, If, Input, Param
 from arc_lab.program_search.substrate.types import BOOL, COLOR, GRID
 
 
-def _failed(shape: LadderShape, check: str) -> bool:
-    return any(finding.check == check and not finding.ok for finding in shape.findings)
+def _failed(shape: LadderShape, slug: str) -> bool:
+    return any(finding.slug == slug and not finding.ok for finding in shape.findings)
 
 
 def test_ladder1_lints_ok_with_the_verified_sandwich() -> None:
@@ -150,7 +147,7 @@ def test_structural_tier_skips_exactly_the_grid_backed_checks() -> None:
     structural = spec.lint(corpus_backed=False)
     assert set(structural.skipped_checks) == _CORPUS_BACKED_CHECKS
     # No skipped family emitted a finding, and the structural checks still ran and passed.
-    families = {f.check.split("[")[0] for f in structural.findings}
+    families = {f.code for f in structural.findings}
     assert families.isdisjoint(_CORPUS_BACKED_CHECKS)
     assert "jump-affordable" in families and "rung-referenced" in families
     assert structural.ok  # al1 is structurally clean
@@ -163,10 +160,10 @@ def test_double_jump_is_measured_over_all_consumers_not_just_the_successor() -> 
     # numbers are unchanged on this batch (all consumers are equally deep), but the check now spans
     # the whole consumer set, which is the point.
     spec = make_ladder("al17-shift-frame-tall")
-    consumers = {cid for cid, _ in _consumer_programs(spec.rungs, spec.top)["shift1"]}
+    consumers = {cid for cid, _ in consumer_programs(spec.rungs, spec.top)["shift1"]}
     assert consumers == {"frame1", "shift2"}  # plural, non-adjacent -- a real DAG fan-out
     shape = spec.lint()
-    checks = [f for f in shape.findings if f.check == "double-jump-intractable[shift1]"]
+    checks = [f for f in shape.findings if f.slug == "double-jump-intractable[shift1]"]
     assert len(checks) == 1 and checks[0].ok  # runs for the DAG rung, and passes
 
 
@@ -177,7 +174,7 @@ def test_rung_referenced_is_reachability_not_chain_adjacency() -> None:
     # with no dead rung is clean.
     dag = make_ladder("al17-shift-frame-tall").lint()
     assert dag.is_chain is False
-    assert not any(f.check.startswith("rung-referenced") and not f.ok for f in dag.findings)
+    assert not any(f.code == "rung-referenced" and not f.ok for f in dag.findings)
     chain = make_ladder("al1-mirror").lint()
     assert chain.is_chain is True
 
@@ -198,7 +195,7 @@ def test_lint_catches_a_budget_that_makes_the_raw_top_reachable() -> None:
     bad = dataclasses.replace(spec, reference_config=spec.reference_config.with_(budget=deep))
     shape = bad.lint()
     assert not shape.ok
-    assert any(finding.check == "raw-intractable" and not finding.ok for finding in shape.findings)
+    assert any(finding.code == "raw-intractable" and not finding.ok for finding in shape.findings)
 
 
 def test_lint_catches_the_al14_literal_collapse_statically() -> None:
@@ -210,8 +207,7 @@ def test_lint_catches_the_al14_literal_collapse_statically() -> None:
     # al1 also enumerates constants and stays clean: the check fires on train-constant COMPOSITE
     # subterms, not on the mere presence of a constant domain.
     assert not any(
-        f.check.startswith("constant-subterm") and not f.ok
-        for f in make_ladder("al1-mirror").lint().findings
+        f.code == "constant-subterm" and not f.ok for f in make_ladder("al1-mirror").lint().findings
     )
 
 
@@ -227,7 +223,7 @@ def test_constant_subterm_downgrades_to_warn_without_a_constant_domain() -> None
     shape = dataclasses.replace(spec, reference_config=config).lint()
     assert shape.ok
     downgraded = [
-        f for f in shape.findings if f.check == "constant-subterm[move_cell_up-00]" and not f.ok
+        f for f in shape.findings if f.slug == "constant-subterm[move_cell_up-00]" and not f.ok
     ]
     assert len(downgraded) == 1 and downgraded[0].severity == "warn"
 
@@ -250,7 +246,7 @@ def test_floor_if_summoner_is_exercised_by_an_if_node() -> None:
     floor = spec.floor().extended(name=f"{spec.floor().name}+if", extra=(IF,))
     config = dataclasses.replace(spec.reference_config, library=floor)
     with_if_idle = dataclasses.replace(spec, reference_config=config).lint()
-    idle = next(f for f in with_if_idle.findings if f.check == "floor-fully-exercised")
+    idle = next(f for f in with_if_idle.findings if f.code == "floor-fully-exercised")
     assert not idle.ok and "'if'" in idle.detail  # nothing uses branching yet
 
     demo = spec.rungs[0].demonstrations[0]
@@ -263,7 +259,7 @@ def test_floor_if_summoner_is_exercised_by_an_if_node() -> None:
     with_if_used = dataclasses.replace(
         spec, reference_config=config, rungs=(rung, *spec.rungs[1:])
     ).lint()
-    used = next(f for f in with_if_used.findings if f.check == "floor-fully-exercised")
+    used = next(f for f in with_if_used.findings if f.code == "floor-fully-exercised")
     assert used.ok
 
 
@@ -278,7 +274,7 @@ def test_free_param_variation_counts_every_call_site() -> None:
             solution=Apply("r", (inner, Const(1, COLOR))),
         )
 
-    columns = _rung_argument_columns((demo("a", 2), demo("b", 3)), "r")
+    columns = rung_argument_columns((demo("a", 2), demo("b", 3)), "r")
     # Column 1 is the grid slot (computed in the outer call, `input` in the inner) -- derived,
     # kept; column 2 is the colour, aggregating all four call sites: distinct {1, 2, 3}. The
     # column now keeps ORDER (a tuple, for the covariance check), so ask set for distinctness.
@@ -295,8 +291,7 @@ def test_lint_catches_the_al7_telescoping_statically() -> None:
     assert _failed(shape, "rewrite-shallow[wide8]")
     for sound in ("al1-mirror", "al2-rot90-calibration"):
         assert not any(
-            f.check.startswith("rewrite-shallow") and not f.ok
-            for f in make_ladder(sound).lint().findings
+            f.code == "rewrite-shallow" and not f.ok for f in make_ladder(sound).lint().findings
         )
 
 
@@ -321,17 +316,21 @@ def test_free_params_covary_fires_when_two_positions_hold_equal_values() -> None
     # values at every call site, so antiunification fuses them into one shared param -- arity 2
     # where the demos meant arity 3. The failure mode sleep-probes S-B measured.
     findings = _with_recolor_demos(_covary_demo("a", 2, 2), _covary_demo("b", 5, 5))
-    covary = next(f for f in findings if f.check.startswith("free-params-covary"))
+    covary = next(f for f in findings if f.code == "free-params-covary")
     assert not covary.ok and covary.severity == "error"
     # free-param-varies must stay clean on the same demos -- both columns do vary.
-    assert all(f.ok for f in findings if f.check.startswith("free-param-varies[mirror_recolor"))
+    assert all(
+        f.ok
+        for f in findings
+        if f.code == "free-param-varies" and f.occurrence.subject == "mirror_recolor"  # type: ignore[union-attr]
+    )
 
 
 def test_free_params_covary_stays_silent_when_positions_differ() -> None:
     # (2,4) and (5,3): the columns never hold equal values at a shared call site, so the two params
     # stay distinct and the mint keeps its full arity.
     findings = _with_recolor_demos(_covary_demo("a", 2, 4), _covary_demo("b", 5, 3))
-    assert all(f.ok for f in findings if f.check.startswith("free-params-covary"))
+    assert all(f.ok for f in findings if f.code == "free-params-covary")
 
 
 def test_hof_holes_fillable_flags_a_floor_the_config_cannot_synthesize() -> None:
@@ -339,7 +338,7 @@ def test_hof_holes_fillable_flags_a_floor_the_config_cannot_synthesize() -> None
     # map's hole result `b` is pinned by no sibling, so synthesis is skipped and the primitive is
     # silently point-free-only -- exactly battery E's finding. filter/fold (pinned hole results)
     # do not fire.
-    from arc_lab.program_search.ladders.spec import unfillable_function_holes
+    from arc_lab.program_search.ladders.checks.vocabulary import unfillable_function_holes
     from arc_lab.program_search.substrate.library import Library
     from arc_lab.program_search.substrate.registry import BASE_PRIMITIVES
 

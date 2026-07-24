@@ -1,6 +1,6 @@
 # Ladder editor tooling plan — highlighting, diagnostics, LSP, formatter (2026-07-23)
 
-**Status: planned, not started. Chosen starting scope = the Light path (see below): full foundations, deferred features.** This is the implementation plan for `.ladder` editor tooling, agreed 2026-07-23 after an external design review (rev 2 incorporates that review; the adjudication further down records what was adopted vs declined and why). The full 10-phase catalog (Phases A–J) is the reference superset; the **Light path** section names the subset we build first and the seams that keep the deferrals debt-free. Companion to the format spec `LADDER-FORMAT.md`; independent of the experimental program in `AL-PLAN-2026-07-23.md`.
+**Status (2026-07-23): the Light path is SHIPPED and closed — Phases A, B, C, E1, F, G, plus both follow-ups (the generated check register and the `stage=SYNTAX` checks). Build status per phase is recorded inline below. Remaining phases (C3, D, E2, H, I, J) stay deferred by decision, not by omission; work on this plan is stopped deliberately so the experimental program is the priority.** This is the implementation plan for `.ladder` editor tooling, agreed 2026-07-23 after an external design review (rev 2 incorporates that review; the adjudication further down records what was adopted vs declined and why). The full 10-phase catalog (Phases A–J) is the reference superset; the **Light path** section names the subset we build first and the seams that keep the deferrals debt-free. Companion to the format spec `LADDER-FORMAT.md`; independent of the experimental program in `AL-PLAN-2026-07-23.md`.
 
 ## Context
 
@@ -41,6 +41,72 @@ Goal: TextMate + semantic-token highlighting, live error/warning squiggles with 
 **Honest sizing:** this is _not_ the minimal "Phase A only" slice — C, E1, and F are among the heaviest pieces in the whole plan. It is a deliberate "full foundations, deferred features" scope: every line it builds is load-bearing for the rest, and the cut falls entirely on additive layers (tolerance, navigation, formatting). Phase A still ships visible value first; each later phase upgrades precision without removing anything.
 
 Phase headers below are tagged `[LIGHT]` / `[DEFERRED]` accordingly.
+
+## Phase A build status (2026-07-23)
+
+**Shipped** in two commits (`98d0ddf` Python slice, `5b88e0f` VS Code extension), `make check` green:
+`diagnostics/` value types (Position, half-open Range, Severity, `LadderDiagnostic`), a pygls-free
+`lsp/shim.py`, an `lsp/convert.py`, a thin `lsp/server.py`, and `arc-lab lsp` (stdio, stdout-clean).
+Extension under `editors/vscode-ladder/` (TextMate grammar + `vscode-languageclient`, esbuild bundle,
+tsc-strict). Validated end-to-end by driving the server over stdio (initialize -> didOpen -> real
+`publishDiagnostics`); only the *visual* highlighting still needs a human F5.
+
+**Measured latency finding (corrects the plan's risk #5).** Full lint of al14 is ~4.6s, and it is
+**not** the corpus/evaluation checks -- `lint(corpus_backed=False)` is no faster. The cost is the
+**structural unfold-based depth checks** (`raw-intractable`, double-jump, etc., which `unfold_program`
+al14's deep telescope). Parse+resolve alone is ~2ms. Two consequences carried forward:
+
+1. The cheap on-change tier is **parse+resolve only** (not "structural-cheap, corpus-expensive" as
+   assumed). The shim already gates on this; Phase G/H's `LintTier` boundary should too.
+2. Phase F's laziness/caching is load-bearing on the *structural* checks specifically -- and this same
+   ~4.6s is paid today by `arc-lab lint-ladder al14` and every `run-ladder` stage-1 lint, so it is a
+   standing lint-performance issue worth its own item independent of the editor work.
+
+## Phase F build status (2026-07-23)
+
+**Shipped** in three commits (`a30a1c7` package skeleton, `36aa213` the ABC + context + plan,
+`824aaf0` structured occurrences), `make check` green at each.
+
+- `checks/base.py` -- `LadderCheck(ABC)`: `code` / `category` / `stage` / `default_severity` /
+  `summary` as `ClassVar`s in the class body, logic in the single abstract `run(ctx)`. `finding()`
+  stamps code and severity, so a code is declared once and cannot drift from its check. `Verdict`
+  keeps the three evaluation cores plain functions that report an outcome without knowing a code.
+- `checks/context.py` -- `CheckContext`, every derivation a `cached_property`.
+- `checks/plan.py` -- `CHECK_PLAN`, an explicit ordered tuple of instances; `skipped_checks` is
+  now DERIVED from its `stage=CORPUS` entries rather than hand-listed beside each gated block.
+- `checks/{structure,depth,learnability,demonstrations,advisories,vocabulary}.py` -- the 29 checks.
+- `ladders/graph.py` -- the rung dependency graph, shared by the checks and `render()`.
+- `shape.py` -- `LintFinding(code, ok, detail, severity, occurrence)` with
+  `Occurrence(subject, params)` and a `.slug` property. `AnchorIndex.resolve` is now a pure lookup;
+  the last slug-parsing in the anchor path is gone.
+
+**Verified behavior-preserving** by dumping every finding for all 20 registry ladders before and
+after: multisets identical (full and structural tiers), `skipped_checks` byte-identical, derived
+shapes identical. One deliberate presentation change: findings group by check rather than
+interleaving by subject (no test locked that order -- the posture locks sort).
+
+**Latency, revisited.** The lazy context also removed a duplicate unfold of every top solution:
+al14's full lint drops **4.6s -> 3.0s**. The structural tier is still ~2.9s of that, so finding #1
+above stands unchanged -- the server's cheap tier remains parse+resolve only.
+
+**Both follow-ups then closed** (commits `9b9d5ed`, `7f1d2a8`):
+
+- **`LINT-CHECKS.md` is generated** from the class-body metadata by `arc-lab lint-checks`, with a
+  test pinning the committed copy, so a check that never reaches the register fails the gate.
+- **The `stage=SYNTAX` rules landed, scoped to what actually qualifies.** Exactly four load-time
+  rules are pure predicates over the parsed document (empty floor; duplicate floor primitive,
+  config path, task id); they are `DocumentCheck`s sharing the new `Check` parent with
+  `LadderCheck`. `resolve()` raises the first, unchanged; the editor reports all four at once, each
+  on its own token. `LintFinding` gained an optional exact `anchor` to carry that span.
+
+  The **other ~76 load-time raise sites are not movable and are not moved**: they fire while
+  *constructing* a library, elaborating a template or applying config, so there is no completed
+  model to run a predicate over. This is the part that genuinely waits for Phase D/E2 -- the
+  tolerant resolver is what gives them a model. The `SYNTAX` slot now exists and is populated, so
+  that work extends this rather than reworking it.
+
+**Remaining deferrals are unchanged**: C3 (per-parameter spans -- which is also what would let a
+`free-param-varies` finding narrow from its rung to the offending parameter), D, E2, H, I, J.
 
 ## Diagnostic production model (the emitted-vs-rule principle)
 

@@ -10,15 +10,49 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from arc_lab.program_search.ladders.diagnostics import Range
+
+
+@dataclass(frozen=True, slots=True)
+class Occurrence:
+    """What a finding is ABOUT, structurally -- never a string to be parsed back apart.
+
+    ``subject`` is the named entity the finding anchors to: a rung name, a task id, a floor
+    primitive. ``params`` narrows it to specific free-parameter positions (1-based), for the checks
+    that speak about a rung's arguments rather than the rung itself.
+
+    Its string form is the historical occurrence spelling -- ``rot180``, ``sym_both#1``,
+    ``mirror_recolor#1,#2`` -- so slugs are unchanged; but nothing has to take that spelling apart
+    again, which is what the editor's anchor lookup used to do.
+    """
+
+    subject: str
+    params: tuple[int, ...] = ()
+
+    def __str__(self) -> str:
+        return f"{self.subject}{','.join(f'#{index}' for index in self.params)}"
+
 
 @dataclass(frozen=True, slots=True)
 class LintFinding:
     """One static check's result. ``severity`` is ``"error"`` (fails ``ok``) or ``"warn"``."""
 
-    check: str
+    #: The stable code of the check that produced it -- see ``checks/plan.py::CHECK_PLAN``.
+    code: str
     ok: bool
     detail: str
     severity: str = "error"
+    #: The subject, when the check speaks about one; ``None`` for a whole-file finding.
+    occurrence: Occurrence | None = None
+    #: An EXACT source range, when the check knew one outright (the ``SYNTAX`` checks hold the
+    #: parsed document, so they do). ``None`` means "anchor me by subject", which is what every
+    #: spec-level check does -- it has no spans, only names.
+    anchor: Range | None = None
+
+    @property
+    def slug(self) -> str:
+        """``code`` or ``code[occurrence]`` -- the display spelling, for humans and locks."""
+        return self.code if self.occurrence is None else f"{self.code}[{self.occurrence}]"
 
 
 @dataclass(frozen=True, slots=True)

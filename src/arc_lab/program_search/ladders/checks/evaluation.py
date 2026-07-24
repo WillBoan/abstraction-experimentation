@@ -1,18 +1,20 @@
-"""Evaluation-backed lint checks over a ladder's STATED solutions.
+"""Evaluation-backed lint check CORES over a ladder's STATED solutions.
 
-These run inside ``LadderSpec.lint()`` but live apart from it (the spec passes plain data in, so
-there is no import cycle). They keep lint *search-free* while giving up evaluation-freeness: each
-check evaluates the stated solutions' subterms on the tasks' own train inputs — deterministic,
-cheap, no engine search, no run identity.
+These are the three expensive computations the lint's evaluation-backed checks are built on. They
+are deliberately plain functions taking plain data -- no ``LadderSpec``, no ``CheckContext`` -- so
+they stay independently unit-testable (``tests/.../test_checks.py``) and free of the check
+machinery; the ``LadderCheck`` subclasses that call them live alongside in this package. They keep
+lint *search-free* while giving up evaluation-freeness: each evaluates the stated solutions'
+subterms on the tasks' own train inputs — deterministic, cheap, no engine search, no run identity.
 
-The law behind ``constancy_findings``: the enumerator dedupes candidates by signature (behavior on
+The law behind ``constancy_verdicts``: the enumerator dedupes candidates by signature (behavior on
 the train examples) and keeps the cheapest representative of each class — so a COMPOSITE subterm
 whose value is constant across a task's train examples is strictly beaten by its literal whenever
 that value is in the configured constant domain. The depth that computing the value was meant to
 contribute never exists (the al14 literal collapse, made static). A merely-constant subterm whose
 value is NOT mintable still contributes fictional depth, hence the warn tier.
 
-``conditional_findings`` is the same law's branching corollary: an ``If`` whose condition is
+``conditional_verdicts`` is the same law's branching corollary: an ``If`` whose condition is
 constant across a task's train examples has the taken branch's signature, so search keeps the
 branch alone and the conditional collapses.
 
@@ -33,7 +35,7 @@ from arc_lab.program_search.analysis.rewrite import (
     ShallowWitness,
     shallow_equivalent,
 )
-from arc_lab.program_search.ladders.shape import LintFinding
+from arc_lab.program_search.ladders.checks.base import Verdict
 from arc_lab.program_search.search.leaves import ConstantSource, policy_constants
 from arc_lab.program_search.substrate.library import Library, Value
 from arc_lab.program_search.substrate.program import (
@@ -59,20 +61,20 @@ _ERROR = object()
 _SCALAR_TYPES = (INT, COLOR, BOOL)
 
 
-def constancy_findings(
+def constancy_verdicts(
     stated: Sequence[tuple[str, Program]],
     train_inputs: Mapping[str, tuple[Grid, ...]],
     library: Library,
     constant_sources: tuple[ConstantSource, ...],
-) -> tuple[LintFinding, ...]:
-    """One ``constant-subterm[<task_id>]`` finding per stated task (pass or fail).
+) -> tuple[Verdict, ...]:
+    """One ``constant-subterm`` verdict per stated task (pass or fail).
 
     Error when a composite scalar subterm is train-constant AND its (type, value) is in the
     ladder's own configured constant domain (the beating literal exists in this ladder's search);
     warn when merely train-constant. Tasks with fewer than 2 train examples are skipped (everything
     is trivially constant there — the ``min-2-train-examples`` advisory owns that defect).
     """
-    findings: list[LintFinding] = []
+    verdicts: list[Verdict] = []
     for task_id, solution in stated:
         grids = train_inputs.get(task_id, ())
         if len(grids) < 2:
@@ -97,19 +99,18 @@ def constancy_findings(
             target = beaten if (result_type, values[0]) in domain else fictional
             target.setdefault(_spell(node), values[0])
         if beaten:
-            findings.append(
-                LintFinding(
-                    check=f"constant-subterm[{task_id}]",
+            verdicts.append(
+                Verdict(
+                    subject=task_id,
                     ok=False,
                     detail="train-constant subterms beaten by an enumerated literal: "
                     f"{_offenders(beaten)}",
-                    severity="error",
                 )
             )
         elif fictional:
-            findings.append(
-                LintFinding(
-                    check=f"constant-subterm[{task_id}]",
+            verdicts.append(
+                Verdict(
+                    subject=task_id,
                     ok=False,
                     detail="train-constant subterms (fictional depth; value not mintable here): "
                     f"{_offenders(fictional)}",
@@ -117,22 +118,22 @@ def constancy_findings(
                 )
             )
         else:
-            findings.append(LintFinding(check=f"constant-subterm[{task_id}]", ok=True, detail=""))
-    return tuple(findings)
+            verdicts.append(Verdict(subject=task_id, ok=True, detail=""))
+    return tuple(verdicts)
 
 
-def conditional_findings(
+def conditional_verdicts(
     stated: Sequence[tuple[str, Program]],
     train_inputs: Mapping[str, tuple[Grid, ...]],
     library: Library,
-) -> tuple[LintFinding, ...]:
-    """One ``if-condition-varies[<task_id>]`` finding per stated task that CONTAINS an ``If``.
+) -> tuple[Verdict, ...]:
+    """One ``if-condition-varies`` verdict per stated task that CONTAINS an ``If``.
 
     Error unless every ``If``'s condition takes both truth values across the task's train
     examples. Tasks without branching emit nothing (the check is dormant until a conditional
     floor exists); conditions that fail to evaluate are skipped, never flagged.
     """
-    findings: list[LintFinding] = []
+    verdicts: list[Verdict] = []
     for task_id, solution in stated:
         conditionals = [node for node in _distinct_composites(solution) if isinstance(node, If)]
         grids = train_inputs.get(task_id, ())
@@ -147,31 +148,28 @@ def conditional_findings(
                 continue
             constant.setdefault(_spell(node.cond), next(iter(observed), "?"))
         if constant:
-            findings.append(
-                LintFinding(
-                    check=f"if-condition-varies[{task_id}]",
+            verdicts.append(
+                Verdict(
+                    subject=task_id,
                     ok=False,
                     detail="conditions constant across train examples (the If collapses to the "
                     f"taken branch): {_offenders(constant)}",
-                    severity="error",
                 )
             )
         else:
-            findings.append(
-                LintFinding(check=f"if-condition-varies[{task_id}]", ok=True, detail="")
-            )
-    return tuple(findings)
+            verdicts.append(Verdict(subject=task_id, ok=True, detail=""))
+    return tuple(verdicts)
 
 
-def rewrite_findings(
+def rewrite_verdicts(
     rungs: Sequence[tuple[str, Program]],
     top_solutions: Sequence[tuple[str, Program]],
     libraries: Sequence[Library],
     depth_limit: int,
     probe_inputs: Mapping[str, tuple[Grid, ...]],
     limits: RewriteLimits | None = None,
-) -> tuple[LintFinding, ...]:
-    """``rewrite-shallow[<skipped-rung>]``: bounded equational skip-path detection.
+) -> tuple[Verdict, ...]:
+    """``rewrite-shallow``: bounded equational skip-path detection, one verdict per skipped rung.
 
     For each skipped rung ``r_i``: can the layer above it (rung ``r_{i+1}``'s template, or —
     for ``r_k`` — each top reference solution) be re-expressed over ``L_{i-1}`` within the
@@ -189,7 +187,7 @@ def rewrite_findings(
     """
     active_limits = limits if limits is not None else RewriteLimits()
     full_lib = libraries[-1]
-    findings: list[LintFinding] = []
+    verdicts: list[Verdict] = []
     k = len(rungs)
     for i in range(1, k + 1):
         skipped_name = rungs[i - 1][0]
@@ -213,15 +211,8 @@ def rewrite_findings(
                     f"{label} is reachable over L_{i - 1} at depth {witness.depth} "
                     f"(<= depth_limit {depth_limit}) via {_spell(witness.term)}"
                 )
-            findings.append(
-                LintFinding(
-                    check=f"rewrite-shallow[{skipped_name}]",
-                    ok=not confirmed,
-                    detail=detail,
-                    severity="error",
-                )
-            )
-    return tuple(findings)
+            verdicts.append(Verdict(subject=skipped_name, ok=not confirmed, detail=detail))
+    return tuple(verdicts)
 
 
 #: Scalar probe values for non-GRID template parameters during witness confirmation.

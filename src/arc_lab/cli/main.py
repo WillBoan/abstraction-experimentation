@@ -19,12 +19,15 @@ from . import (
     check_primitive_bundles,
     configs,
     datasets,
+    diff_ladder,
     estimate,
     ladder,
     ladder_seeds,
     learn,
     library_graph,
+    lint_checks,
     lint_ladder,
+    lsp,
     probe_ladder,
     run_study,
     runs,
@@ -80,8 +83,11 @@ app.command(name="learn")(learn.learn)
 app.command(name="run-study")(run_study.run_study_command)
 app.command(name="run-ladder")(ladder.run_ladder_command)
 app.command(name="lint-ladder")(lint_ladder.lint_ladder_command)
+app.command(name="lint-checks")(lint_checks.lint_checks_command)
+app.command(name="diff-ladder")(diff_ladder.diff_ladder_command)
 app.command(name="ladder-seeds")(ladder_seeds.ladder_seeds_command)
 app.command(name="probe-ladder")(probe_ladder.probe_ladder_command)
+app.command(name="lsp")(lsp.lsp_command)
 app.command(name="analyze-run")(analyze_run.analyze_run_command)
 app.command(name="taskgen")(taskgen.taskgen)
 app.command(name="runs")(runs.list_runs)

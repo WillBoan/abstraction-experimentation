@@ -30,6 +30,7 @@ from arc_lab.program_search.substrate.primitives.mask import MASK_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.pairs import PAIR_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.perceive import PERCEIVE_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.scaling import SCALE
+from arc_lab.program_search.substrate.primitives.tiles import TILE_PRIMITIVES
 
 
 def _gather() -> dict[str, Primitive]:
@@ -48,6 +49,7 @@ def _gather() -> dict[str, Primitive]:
         ARITHMETIC_PRIMITIVES,
         MASK_PRIMITIVES,
         LAYOUT_PRIMITIVES,
+        TILE_PRIMITIVES,  # reference impls for the cfb2ce5a floor; resolvable, in no preset
     )
     registry: dict[str, Primitive] = {}
     for group in groups:

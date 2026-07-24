@@ -33,7 +33,7 @@ import ast
 import itertools
 from collections.abc import Sequence
 
-from arc_lab.program_search.ladders.lang.errors import LadderFormatError
+from arc_lab.program_search.ladders.lang.errors import FragmentError, LadderFormatError
 from arc_lab.program_search.ladders.lang.names import check_identifier
 from arc_lab.program_search.ladders.lang.type_syntax import render_type
 from arc_lab.program_search.search.search_engine import BRANCHING_ENTRY
@@ -111,11 +111,29 @@ def elaborate_typed(
     stripped = text.strip()
     if not stripped:
         raise LadderFormatError("empty expression")
+    # Offsets are reported into the ORIGINAL text so a caller can map them through the fragment's
+    # source map; `lead` accounts for any leading whitespace `strip()` dropped (usually none, since
+    # rung bodies and solutions arrive pre-stripped). Source is ASCII (LEX-1), so an `ast` byte
+    # col_offset equals a code-point offset.
+    lead = len(text) - len(text.lstrip())
     try:
         tree = ast.parse(stripped, mode="eval")
     except SyntaxError as exc:
-        raise LadderFormatError(f"could not parse expression {stripped!r}: {exc.msg}") from None
-    return _Elaborator(library=library, params=params, allow_input=allow_input).run_typed(tree.body)
+        column = (exc.offset or 1) - 1  # SyntaxError.offset is a 1-based character position
+        raise FragmentError(
+            f"could not parse expression {stripped!r}: {exc.msg}",
+            lead + column,
+            lead + column + 1,
+        ) from None
+    elaborator = _Elaborator(library=library, params=params, allow_input=allow_input)
+    try:
+        return elaborator.run_typed(tree.body)
+    except FragmentError:
+        raise  # already offset-precise (a per-node error, once those are added)
+    except LadderFormatError as exc:
+        # A semantic error with no node offset yet: anchor it to the whole expression. Tightening
+        # individual raise sites to their node's span later needs no change here.
+        raise FragmentError(exc.detail, lead, lead + len(stripped)) from None
 
 
 def render_expression(program: Program, param_names: Sequence[str] = ()) -> str:

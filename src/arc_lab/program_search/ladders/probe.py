@@ -38,6 +38,7 @@ from arc_lab.core.task import Task
 from arc_lab.program_search.analysis.behavioral import matches_target
 from arc_lab.program_search.analysis.compression import SolvedTask
 from arc_lab.program_search.analysis.depth import compositional_depth
+from arc_lab.program_search.analysis.grids import discriminating_grids
 from arc_lab.program_search.execution.forecast_cost import (
     DEFAULT_SURVIVAL,
     forecast_cost,
@@ -462,25 +463,8 @@ def _probe_grids(spec: LadderSpec) -> tuple[Grid, ...]:
         for example in entry.task.train:
             grids.setdefault(example.input, None)
             shapes.add((example.input.height, example.input.width))
-    for grid in _discriminating_grids(shapes):
+    for grid in discriminating_grids(shapes):
         grids.setdefault(grid, None)
-    return tuple(grids)
-
-
-def _discriminating_grids(shapes: set[tuple[int, int]]) -> tuple[Grid, ...]:
-    """Three position-separating colour patterns per shape — deterministic, no RNG.
-
-    Shapes are taken from the corpus so the probes stay in the ladder's own input space: a program
-    that differs from the intent only on shapes the ladder never uses is not evidence of anything.
-    """
-    grids: list[Grid] = []
-    for height, width in sorted(shapes):
-        patterns = (
-            [[(r * width + c) % 10 for c in range(width)] for r in range(height)],
-            [[(c * height + r) % 10 for c in range(width)] for r in range(height)],
-            [[(r * 7 + c * 3) % 10 for c in range(width)] for r in range(height)],
-        )
-        grids.extend(Grid.from_list(rows) for rows in patterns)
     return tuple(grids)
 
 

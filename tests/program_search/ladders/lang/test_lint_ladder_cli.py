@@ -32,8 +32,29 @@ def test_a_draft_is_incomplete_not_clean() -> None:
     assert _lint_one(str(draft), quiet=True, draft=True) is _Outcome.INCOMPLETE
 
 
-def test_a_draft_without_draft_mode_fails_to_load() -> None:
-    """Its proposed primitives do not resolve, so plain load is a hard failure -- the flag is the
-    deliberate opt-in to trusting declared signatures."""
-    draft = _DRAFTS / "cfb2ce5a-1-basic.ladder"
+def test_an_unimplemented_floor_fails_to_load_without_draft_mode() -> None:
+    """Assumed primitives do not resolve, so plain load is a hard failure -- ``--draft`` is the
+    deliberate opt-in to trusting declared signatures. v4 still assumes the missing ``list``
+    constructor; v1's floor is implemented (``substrate/primitives/tiles.py``) and so is NOT this."""
+    draft = _DRAFTS / "cfb2ce5a-4-fold.ladder"
     assert _lint_one(str(draft), quiet=True, draft=False) is _Outcome.FAILED
+
+
+def test_an_implemented_draft_with_no_heldout_is_incomplete_rather_than_failing() -> None:
+    """The two ways a draft is incomplete are independent. Implementing the cfb2ce5a floor removed
+    the assumed-primitive one, and the file still has no ``heldout`` task -- so it loads for real,
+    lints structurally, and reports INCOMPLETE. It must not crash, and must not read as CLEAN."""
+    draft = _DRAFTS / "cfb2ce5a-1-basic.ladder"
+    assert _lint_one(str(draft), quiet=True, draft=False) is _Outcome.INCOMPLETE
+
+
+def test_the_json_and_language_server_path_survives_a_corpusless_draft() -> None:
+    """The same defect as above, at the OTHER entry point. `lint_source` is what `--json` and the
+    language server call on every keystroke, and it had its own copy of the "assumed == draft"
+    proxy -- so an implemented-floor draft with no `heldout` task crashed it with a raw ValueError.
+    It must return quietly instead; `--draft` is where the structural report lives."""
+    from arc_lab.program_search.ladders.pipeline import lint_source
+
+    source = (_DRAFTS / "cfb2ce5a-1-basic.ladder").read_text()
+    assert lint_source(source) == []  # no corpus to lint against: quiet, not a crash
+    assert lint_source(source, run_lint=False) == []  # and it parses + resolves cleanly

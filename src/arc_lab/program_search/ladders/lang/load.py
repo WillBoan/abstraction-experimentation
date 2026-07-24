@@ -26,7 +26,11 @@ from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
 from arc_lab.program_search.execution.overrides import apply_overrides
 from arc_lab.program_search.execution.studies import split_by_meta
 from arc_lab.program_search.ladders.chain import oracle_libraries
-from arc_lab.program_search.ladders.lang.errors import LadderFormatError, at_line
+from arc_lab.program_search.ladders.lang.errors import (
+    FragmentError,
+    LadderFormatError,
+    at_line,
+)
 from arc_lab.program_search.ladders.lang.expr import elaborate_expression, elaborate_typed
 from arc_lab.program_search.ladders.lang.parse import LadderDocument, RungBlock, TaskBlock
 from arc_lab.program_search.ladders.lang.type_syntax import (
@@ -113,6 +117,7 @@ def resolve(document: LadderDocument, *, assume_missing: bool = False) -> Loaded
     Everything here depends on the file alone, so every spec violation surfaces as a load error
     (spec VAL-1) without needing the ladder's testbed to exist yet.
     """
+    _raise_first_document_error(document)
     floor, assumed = _floor(document, assume_missing=assume_missing)
     libraries, templates = _chain(document, floor)
     config = _config(document, floor)
@@ -127,6 +132,23 @@ def resolve(document: LadderDocument, *, assume_missing: bool = False) -> Loaded
         config=config,
         assumed=assumed,
     )
+
+
+def _raise_first_document_error(document: LadderDocument) -> None:
+    """Run the ``stage=SYNTAX`` checks and raise the first failure, as this function's body used to.
+
+    These rules are pure predicates over the parsed document -- duplicate names, an empty floor --
+    so they live in ``checks/document.py`` and are shared with the editor, which reports ALL of
+    them at once. A strict load can only ever surface the first, which is what this does.
+    """
+    from arc_lab.program_search.ladders.checks.run import check_document
+
+    for finding in check_document(document):
+        if finding.severity != "error":
+            continue
+        # The check carries the exact span, so the 1-based line the message is keyed to follows.
+        line = None if finding.anchor is None else finding.anchor.start.line + 1
+        raise LadderFormatError(finding.detail, line=line)
 
 
 def ladder_tasks(loaded: LoadedLadder) -> tuple[GeneratedTask, ...]:
@@ -200,6 +222,24 @@ def draft_spec(loaded: LoadedLadder) -> LadderSpec:
     )
     corpus = Corpus(name=loaded.name, entries=entries)
     return _spec_with_corpora(loaded, *split_by_meta(corpus))
+
+
+def lintable_spec(loaded: LoadedLadder) -> LadderSpec | None:
+    """:func:`draft_spec`, or ``None`` when the document yields no train/heldout corpus.
+
+    A `.ladder` with no ``heldout`` demonstration cannot be split into a testbed, so the
+    corpus-backed lint tier has nothing to run against and the caller must fall back to the
+    structural tier (or stay quiet) rather than crash.
+
+    **This is independent of whether the floor is implemented, and neither is a proxy for the
+    other** -- the cfb2ce5a cohort acquired a fully implemented floor while still having no
+    ``heldout`` task. Using ``loaded.assumed`` to mean "is a draft" is the bug this exists to stop
+    recurring; it had already been written twice (``cli/lint_ladder.py``, ``ladders/pipeline.py``).
+    """
+    try:
+        return draft_spec(loaded)
+    except ValueError:  # `split_by_meta`: no train/heldout split to lint against
+        return None
 
 
 def ladder_spec(loaded: LoadedLadder) -> LadderSpec:
@@ -289,17 +329,13 @@ def _floor(
     need. ``assume_missing`` (draft mode) builds the unknown ones from their declared signatures
     instead of failing, so everything downstream still gets checked.
     """
-    if not document.floor:
-        raise LadderFormatError("the floor needs at least one primitive (spec FLR-3)")
     seen: set[str] = set()
     primitives: list[Primitive] = []
     assumed: list[str] = []
     missing: list[tuple[str, int]] = []
     mismatched: list[tuple[str, int]] = []
     for entry in document.floor:
-        if entry.name in seen:
-            raise LadderFormatError(f"duplicate floor primitive {entry.name!r}", line=entry.line)
-        seen.add(entry.name)
+        seen.add(entry.name)  # `floor-names-unique` (SYNTAX) already rejected any repeat
         primitive = BASE_PRIMITIVES.get(entry.name)
         if primitive is None:
             if not assume_missing:
@@ -370,6 +406,9 @@ def _template(block: RungBlock, below: Library) -> Program:
         template, actual = elaborate_typed(
             block.body, library=below, params=declared.params, allow_input=False
         )
+    except FragmentError as exc:
+        span = block.body_map.range(exc.start, exc.end)
+        raise LadderFormatError(exc.detail, line=block.line, span=span) from None
     except LadderFormatError as exc:
         raise at_line(exc, block.line) from None
     if unify(actual, declared.return_type) is None:
@@ -400,8 +439,7 @@ def _config(document: LadderDocument, floor: Library) -> Config:
     """The reference config: the frozen ladder default + this file's overrides (spec CFG)."""
     overrides: dict[str, object] = {}
     for entry in document.config:
-        if entry.path in overrides:  # spec CFG-5
-            raise LadderFormatError(f"duplicate config path {entry.path!r}", line=entry.line)
+        # spec CFG-5 (no duplicate path) is `config-paths-unique`, a SYNTAX check.
         if entry.path == "library" or entry.path.startswith("library."):  # spec CFG-4
             raise LadderFormatError(
                 "`library` is not settable: the `floor` section owns it", line=entry.line
@@ -433,13 +471,14 @@ def _solutions(document: LadderDocument, libraries: tuple[Library, ...]) -> dict
         *((task, libraries[0]) for block in document.distractors for task in block.tasks),
         *((task, libraries[-1]) for task in document.top),
     ]
-    for block, library in blocks:
-        if block.task_id in solutions:  # spec NAM-2
-            raise LadderFormatError(f"duplicate task id {block.task_id!r}", line=block.line)
+    for block, library in blocks:  # spec NAM-2 (unique ids) is the `task-ids-unique` SYNTAX check
         try:
             solutions[block.task_id] = elaborate_expression(
                 block.solution, library=library, allow_input=True
             )
+        except FragmentError as exc:
+            span = block.solution_map.range(exc.start, exc.end)
+            raise LadderFormatError(exc.detail, line=block.line, span=span) from None
         except LadderFormatError as exc:
             raise at_line(exc, block.line) from None
     return solutions

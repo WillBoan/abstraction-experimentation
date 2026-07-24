@@ -94,9 +94,7 @@ def test_conditional_over_a_floor_without_the_if_summoner_is_a_load_error() -> N
     only if the ladder does not load at all."""
     no_if = Library(name="no-if", primitives=tuple(p for p in _LIB.primitives if p.name != "if"))
     with pytest.raises(LadderFormatError, match=r"needs the `if` summoner"):
-        elaborate_expression(
-            "flip_h(input) if true else input", library=no_if, allow_input=True
-        )
+        elaborate_expression("flip_h(input) if true else input", library=no_if, allow_input=True)
     # ... and it is exactly the summoner that is missing: with `if` present the same text loads.
     assert isinstance(_elab("flip_h(input) if true else input"), If)
 

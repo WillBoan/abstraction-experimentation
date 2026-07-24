@@ -7,6 +7,7 @@ import dataclasses
 import pytest
 
 from arc_lab.core.grid import Grid
+from arc_lab.program_search.analysis.grids import discriminating_grids as _discriminating_grids
 from arc_lab.program_search.ladders.probe import (
     AS_INTENDED,
     COLLAPSED,
@@ -15,7 +16,6 @@ from arc_lab.program_search.ladders.probe import (
     SKIP_PATH,
     MintProbe,
     RungProbe,
-    _discriminating_grids,
     probe_ladder,
     probe_rung,
 )
