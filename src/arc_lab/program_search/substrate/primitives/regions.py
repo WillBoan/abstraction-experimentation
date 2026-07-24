@@ -267,6 +267,29 @@ def _content_coords(grid: Grid, background: int) -> tuple[Coord, ...]:
     return tuple(Coord(int(row), int(col)) for row, col in zip(rows, cols, strict=True))
 
 
+def _content_colors(grid: Grid, background: int) -> tuple[int, ...]:
+    """The colors of the non-background cells, row-major -- **index-aligned** with
+    :func:`_content_coords`.
+
+    That alignment is the whole point, and what distinguishes this from the two existing
+    color-list producers: they are three different things.
+
+    ==========================  =================  ==========  ============  ==========
+    producer                    contents           order       duplicates    background
+    ==========================  =================  ==========  ============  ==========
+    ``palette(g)``              distinct colors    ascending   no            included
+    ``cells(g)``                every cell         row-major   yes           included
+    ``content_colors(g, bg)``   non-bg cells       row-major   yes           excluded
+    ==========================  =================  ==========  ============  ==========
+
+    So ``palette`` is roughly ``sort(unique(cells))`` and this is ``cells`` minus the background --
+    no redundancy. Being a *parallel projection of one traversal* alongside ``content_coords`` is
+    what makes ``nth`` over either meaningful (and what a fused ``Cell`` list would combine).
+    """
+    array = grid.array
+    return tuple(int(color) for color in array[_filled(grid, background)].ravel())
+
+
 MASK_AREA = Primitive(name="mask_area", param_types=(MASK,), return_type=INT, impl=_mask_area)
 BBOX = Primitive(name="bbox", param_types=(MASK,), return_type=RECT, impl=_bbox)
 RECT_CLIP = Primitive(name="rect_clip", param_types=(GRID, RECT), return_type=RECT, impl=_rect_clip)
@@ -309,6 +332,12 @@ CONTENT_COORDS = Primitive(
     return_type=list_type(COORD),
     impl=_content_coords,
 )
+CONTENT_COLORS = Primitive(
+    name="content_colors",
+    param_types=(GRID, COLOR),
+    return_type=list_type(COLOR),
+    impl=_content_colors,
+)
 
 REGION_PRIMITIVES = (
     MASK_AREA,
@@ -324,4 +353,5 @@ REGION_PRIMITIVES = (
     MAXIMAL_FILLED_SQUARES,
     CONNECTED_REGIONS,
     CONTENT_COORDS,
+    CONTENT_COLORS,
 )

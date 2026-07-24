@@ -1,10 +1,13 @@
 """Cell-level primitives: read and set a single cell.
 
 These are the L1 floor for the low-primitive-formation direction (`ONTOLOGY.md`): a grid as
-a mapping from coordinates to colors, manipulated one cell at a time. Coordinates are plain
-``Int``s (row, col) — no ``Coord`` type — kept in bounds by the task-mined coordinate
-constants (see `Enumerate(coord_ints=True)`); an out-of-range index simply raises and the
-candidate is discarded during search.
+a mapping from coordinates to colors, manipulated one cell at a time. An out-of-range index
+simply raises and the candidate is discarded during search.
+
+**Each operation ships in two flavors**: over loose ``Int``s (``read``, ``set_cell``, ...) and over
+:class:`~arc_lab.core.geometry.Coord` (``read_color_at_coord``, ...). Neither supersedes the other --
+see the flavor note above the coord family for why both exist and why a flavor must be chosen for the
+whole family at once.
 
 Unlike ``with_cell`` folded over a comprehension (the general size-general construction),
 these compose directly as typed grid transforms, so they need no AST lambda — just the
@@ -13,15 +16,23 @@ these compose directly as typed grid transforms, so they need no AST lambda — 
 
 from __future__ import annotations
 
-from arc_lab.core.geometry import Offset
+from arc_lab.core.geometry import Coord, Offset
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.substrate.library import Library, Primitive, Value
-from arc_lab.program_search.substrate.types import COLOR, GRID, INT, OFFSET, list_type
+from arc_lab.program_search.substrate.types import (
+    COLOR,
+    COORD,
+    GRID,
+    INT,
+    OFFSET,
+    list_type,
+)
 
 _GRID = GRID
 _COLOR = COLOR
 _INT = INT
 _OFFSET = OFFSET
+_COORD = COORD
 _COLOR_LIST = list_type(_COLOR)
 
 
@@ -94,6 +105,40 @@ def _move_cell(grid: Grid, row_a: int, col_a: int, row_b: int, col_b: int) -> Gr
     return _set_cell(_set_cell(grid, row_b, col_b, color), row_a, col_a, 0)
 
 
+# -- the coord-flavored family -----------------------------------------------------------------------
+#
+# The SAME four operations over :class:`Coord` instead of loose ints. Added ALONGSIDE the int
+# versions rather than replacing them, for two independent reasons:
+#
+# 1. al14's rung computes its coordinates (``sub(n, 1)``), so wrapping them in ``coord(...)`` takes
+#    ``move_cell_up`` from d_i=3 to 4 -- past the ``depth_limit: 3`` it declares -- and al14 carries
+#    pinned probe expectations (the 2026-07-21 collapse/collision finding). A literal cannot rescue a
+#    *computed* coordinate, so replacing ``read`` would have forced a research artifact to move.
+# 2. Neither flavor is "better": how coordinate-shaped a primitive should be is a per-experiment
+#    judgment call, and having both is what makes that a knob instead of a commitment.
+#
+# **All four ship together, deliberately.** ``swap_cells``/``move_cell`` exist to be *withheld* study
+# targets, rederivable from their own floor's ``read``/``set_cell`` (``CELL_FLOOR_WITH_TARGETS``). A
+# half-split family -- coord targets over an int floor -- would silently break that derivability, so
+# the flavor is a property of the whole family.
+
+
+def _read_color_at_coord(grid: Grid, at: Coord) -> int:
+    return _read(grid, at.row, at.col)
+
+
+def _set_color_at_coord(grid: Grid, at: Coord, color: int) -> Grid:
+    return _set_cell(grid, at.row, at.col, color)
+
+
+def _swap_cells_at_coords(grid: Grid, a: Coord, b: Coord) -> Grid:
+    return _swap_cells(grid, a.row, a.col, b.row, b.col)
+
+
+def _move_cell_between_coords(grid: Grid, source: Coord, target: Coord) -> Grid:
+    return _move_cell(grid, source.row, source.col, target.row, target.col)
+
+
 READ = Primitive(name="read", param_types=(_GRID, _INT, _INT), return_type=_COLOR, impl=_read)
 SET_CELL = Primitive(
     name="set_cell", param_types=(_GRID, _INT, _INT, _COLOR), return_type=_GRID, impl=_set_cell
@@ -118,6 +163,52 @@ MOVE_CELL = Primitive(
     impl=_move_cell,
 )
 
+READ_COLOR_AT_COORD = Primitive(
+    name="read_color_at_coord",
+    param_types=(_GRID, _COORD),
+    return_type=_COLOR,
+    impl=_read_color_at_coord,
+)
+SET_COLOR_AT_COORD = Primitive(
+    name="set_color_at_coord",
+    param_types=(_GRID, _COORD, _COLOR),
+    return_type=_GRID,
+    impl=_set_color_at_coord,
+)
+SWAP_CELLS_AT_COORDS = Primitive(
+    name="swap_cells_at_coords",
+    param_types=(_GRID, _COORD, _COORD),
+    return_type=_GRID,
+    impl=_swap_cells_at_coords,
+)
+MOVE_CELL_BETWEEN_COORDS = Primitive(
+    name="move_cell_between_coords",
+    param_types=(_GRID, _COORD, _COORD),
+    return_type=_GRID,
+    impl=_move_cell_between_coords,
+)
+
 #: The cell-level starting library (E2/E3): read + set_cell. Deliberately excludes the target
 #: primitives (`swap_cells`/`move_cell`) — those exist to be *withheld* and re-derived.
 CELL_LIBRARY = Library(name="cells", primitives=(READ, SET_CELL))
+
+#: The coord-flavored counterpart, same contract: the accessors, targets withheld. Kept separate
+#: from `CELL_LIBRARY` so a study picks ONE flavor -- mixing them breaks the derivability the
+#: withheld targets depend on (see the flavor note above).
+COORD_CELL_LIBRARY = Library(
+    name="coord-cells", primitives=(READ_COLOR_AT_COORD, SET_COLOR_AT_COORD)
+)
+
+#: Every cell primitive, both flavors -- the registry's view.
+CELL_PRIMITIVES = (
+    READ,
+    SET_CELL,
+    CELLS,
+    FROM_CELLS,
+    SWAP_CELLS,
+    MOVE_CELL,
+    READ_COLOR_AT_COORD,
+    SET_COLOR_AT_COORD,
+    SWAP_CELLS_AT_COORDS,
+    MOVE_CELL_BETWEEN_COORDS,
+)

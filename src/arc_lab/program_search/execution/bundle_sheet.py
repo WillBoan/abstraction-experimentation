@@ -72,6 +72,11 @@ _FRAGMENTS: dict[str, BundleSpec] = {
     # The convenience union documented in _PRIMITIVE_BUNDLES.md: CELLS_IO + CELL_STATEFUL.
     "CELL_IO": BundleSpec(("cells", "from_cells", "read", "set_cell", "offset")),
     "CELL_TARGETS": BundleSpec(("swap_cells", "move_cell")),
+    # The coord-flavored counterparts. A study must take the floor and its withheld targets from the
+    # SAME flavor: coord targets over an int floor are not rederivable from that floor, which is
+    # exactly the derivability contract `CELL_FLOOR_WITH_TARGETS` encodes.
+    "COORD_CELL_STATEFUL": BundleSpec(("read_color_at_coord", "set_color_at_coord")),
+    "COORD_CELL_TARGETS": BundleSpec(("swap_cells_at_coords", "move_cell_between_coords")),
     "RECOLOR_OPS": BundleSpec(("map_color", "swap_colors", "filter_color")),
     "MASK_INTRO": BundleSpec(("mask_by_color", "nonbg_mask", "bbox_mask")),
     "MASK_ALGEBRA": BundleSpec(
@@ -144,6 +149,15 @@ _FLOORS: dict[str, BundleSpec] = {
     #    likewise needed Enumerate(coord_ints=True)).
     "CELL_FLOOR": BundleSpec(("read", "set_cell")),
     "CELL_FLOOR_WITH_TARGETS": BundleSpec(("read", "set_cell", "swap_cells", "move_cell")),
+    "COORD_CELL_FLOOR_WITH_TARGETS": BundleSpec(
+        (
+            "read_color_at_coord",
+            "set_color_at_coord",
+            "swap_cells_at_coords",
+            "move_cell_between_coords",
+            "coord",  # the Coord producer -- without it the floor is an island
+        )
+    ),
     # -- Region / mask
     "MASK_MIN": BundleSpec(("nonbg_mask", "crop_to_mask"), constant_sources=()),
     "MASK_BASIC": BundleSpec(

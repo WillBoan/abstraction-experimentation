@@ -13,12 +13,9 @@ from arc_lab.program_search.substrate.library import Primitive
 from arc_lab.program_search.substrate.primitives.addressing import ADDRESSING_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.arithmetic import ARITHMETIC_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.build import BUILD_AFFINE_LIBRARY
-from arc_lab.program_search.substrate.primitives.cells import (
-    CELL_LIBRARY,
-    CELLS,
-    FROM_CELLS,
-    MOVE_CELL,
-    SWAP_CELLS,
+from arc_lab.program_search.substrate.primitives.cells import CELL_PRIMITIVES
+from arc_lab.program_search.substrate.primitives.cfb2ce5a_reference import (
+    CFB2CE5A_REFERENCE_PRIMITIVES,
 )
 from arc_lab.program_search.substrate.primitives.color import FILTER_COLOR, MAP_COLOR, SWAP_COLORS
 from arc_lab.program_search.substrate.primitives.combinators import COMBINATORS
@@ -32,7 +29,6 @@ from arc_lab.program_search.substrate.primitives.pairs import PAIR_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.perceive import PERCEIVE_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.regions import REGION_PRIMITIVES
 from arc_lab.program_search.substrate.primitives.scaling import SCALE
-from arc_lab.program_search.substrate.primitives.tiles import TILE_PRIMITIVES
 
 
 def _gather() -> dict[str, Primitive]:
@@ -40,8 +36,7 @@ def _gather() -> dict[str, Primitive]:
         D4_LIBRARY.primitives,
         (MAP_COLOR, SWAP_COLORS, FILTER_COLOR, SCALE),
         COMBINATORS,
-        CELL_LIBRARY.primitives,
-        (CELLS, FROM_CELLS, SWAP_CELLS, MOVE_CELL),
+        CELL_PRIMITIVES,  # both flavors: int-indexed and coord-indexed
         BUILD_AFFINE_LIBRARY.primitives,  # superset of BUILD_LIBRARY (adds add, mul)
         CONTROL_PRIMITIVES,
         (MAP, FILTER, FOLD, SORT_BY),
@@ -51,7 +46,7 @@ def _gather() -> dict[str, Primitive]:
         ARITHMETIC_PRIMITIVES,
         MASK_PRIMITIVES,
         LAYOUT_PRIMITIVES,
-        TILE_PRIMITIVES,  # reference impls for the cfb2ce5a floor; resolvable, in no preset
+        CFB2CE5A_REFERENCE_PRIMITIVES,  # reference impls for the cfb2ce5a floor; resolvable, in no preset
         ADDRESSING_PRIMITIVES,
         REGION_PRIMITIVES,
     )

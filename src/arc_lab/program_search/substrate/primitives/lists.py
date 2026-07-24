@@ -50,6 +50,25 @@ def _nth(xs: Value, index: int) -> Value:
     return xs[index]
 
 
+def _nth_or_default(xs: Value, index: int, default: Value) -> Value:
+    """:func:`_nth`, but TOTAL: ``default`` when the index is out of range, never ``⊥``.
+
+    The house convention is that a domain error raises and prunes as ``⊥`` (see the module
+    docstring), and ``nth`` follows it. This is the deliberate opposite, and it exists because
+    "the nth thing, or a fallback" is a real percept: cfb2ce5a's floor spelled it twice, and its
+    seed-binding degenerates to an identity recolor rather than ``⊥`` when a tile carries fewer
+    seeds than the ladder reads.
+
+    Shipping BOTH is the point. It is also markedly cheaper than totalizing by hand: the guarded
+    spelling needs ``lt`` + ``length`` **and** the branching summoner in the floor (only the ``If``
+    *node* short-circuits -- the ``if`` *primitive* evaluates both branches and would raise anyway),
+    which is depth 4; this is depth 2.
+    """
+    if not isinstance(xs, tuple):
+        raise TypeError(f"nth_or_default expects a list, got {type(xs).__name__}")
+    return xs[index] if 0 <= index < len(xs) else default
+
+
 def _range(count: int) -> Value:
     """``0 .. count - 1``. The one thing that turns a *number* into a list.
 
@@ -70,6 +89,12 @@ ZIP = Primitive(
 LENGTH = Primitive(name="length", param_types=(list_type(_A),), return_type=INT, impl=_length)
 HEAD = Primitive(name="head", param_types=(list_type(_A),), return_type=_A, impl=_head)
 NTH = Primitive(name="nth", param_types=(list_type(_A), INT), return_type=_A, impl=_nth)
+NTH_OR_DEFAULT = Primitive(
+    name="nth_or_default",
+    param_types=(list_type(_A), INT, _A),
+    return_type=_A,
+    impl=_nth_or_default,
+)
 RANGE = Primitive(name="range", param_types=(INT,), return_type=list_type(INT), impl=_range)
 
-LIST_PRIMITIVES = (ZIP, LENGTH, HEAD, NTH, RANGE)
+LIST_PRIMITIVES = (ZIP, LENGTH, HEAD, NTH, NTH_OR_DEFAULT, RANGE)

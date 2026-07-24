@@ -272,3 +272,93 @@ def test_an_offset_consuming_primitive_is_reachable_in_a_real_search() -> None:
         budget=Budget(depth_limit=2, max_arity=2, max_pool=200),
     )
     assert result.stats.solved, result.stats
+
+
+# -- the coord-flavored cell family, and the list/color companions ---------------------------------
+
+
+def test_content_colors_is_index_aligned_with_content_coords() -> None:
+    """The property that earns `content_colors` its place beside two existing color-list producers:
+    they are parallel projections of ONE traversal, which is what makes `nth` over either mean the
+    same cell."""
+    from arc_lab.program_search.substrate.primitives.regions import _content_colors
+
+    coords = _content_coords(_GRID, 0)
+    colors = _content_colors(_GRID, 0)
+    assert len(coords) == len(colors)
+    for coord, color in zip(coords, colors, strict=True):
+        assert _GRID.to_list()[coord.row][coord.col] == color
+
+
+def test_content_colors_is_none_of_palette_or_cells() -> None:
+    # palette = distinct + ascending + background included; cells = every cell; content_colors =
+    # non-background only, row-major, duplicates kept. Three different things, no redundancy.
+    grid = Grid.from_list([[0, 5], [7, 5]])
+    from arc_lab.program_search.substrate.primitives.regions import _content_colors
+
+    assert BASE_PRIMITIVES["palette"].impl(grid) == (0, 5, 7)
+    assert BASE_PRIMITIVES["cells"].impl(grid) == (0, 5, 7, 5)
+    assert _content_colors(grid, 0) == (5, 7, 5)  # duplicates kept, background dropped
+
+
+def test_nth_or_default_totalizes_where_nth_prunes() -> None:
+    """Both flavors ship on purpose. `nth` follows the house convention (a domain error prunes as
+    ⊥); `nth_or_default` is the deliberate opposite, because "the nth thing, or a fallback" is a
+    real percept -- and it is depth 2 where hand-guarding with `if` is depth 4."""
+    nth, or_default = BASE_PRIMITIVES["nth"], BASE_PRIMITIVES["nth_or_default"]
+    assert nth.impl((7, 8, 9), 1) == or_default.impl((7, 8, 9), 1, 0) == 8
+    with pytest.raises(ValueError, match="out of range"):
+        nth.impl((7, 8, 9), 5)
+    assert or_default.impl((7, 8, 9), 5, 0) == 0  # the split, made explicit
+    assert or_default.impl((7, 8, 9), -1, 4) == 4
+
+
+@pytest.mark.parametrize(
+    ("coord_name", "int_name"),
+    [
+        ("read_color_at_coord", "read"),
+        ("set_color_at_coord", "set_cell"),
+        ("swap_cells_at_coords", "swap_cells"),
+        ("move_cell_between_coords", "move_cell"),
+    ],
+)
+def test_each_coord_cell_primitive_agrees_with_its_int_twin(coord_name: str, int_name: str) -> None:
+    """The two flavors must be the SAME operation -- only the argument shape differs. If they ever
+    diverge, a ladder's choice of flavor would silently change its semantics rather than its depth.
+    """
+    grid = Grid.from_list([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    a, b = Coord(0, 1), Coord(2, 2)
+    coord_prim, int_prim = BASE_PRIMITIVES[coord_name], BASE_PRIMITIVES[int_name]
+    if coord_name == "read_color_at_coord":
+        assert coord_prim.impl(grid, a) == int_prim.impl(grid, a.row, a.col)
+    elif coord_name == "set_color_at_coord":
+        assert coord_prim.impl(grid, a, 9) == int_prim.impl(grid, a.row, a.col, 9)
+    else:
+        assert coord_prim.impl(grid, a, b) == int_prim.impl(grid, a.row, a.col, b.row, b.col)
+
+
+def test_the_coord_cell_family_ships_whole_so_its_targets_stay_rederivable() -> None:
+    """`swap_cells`/`move_cell` exist to be WITHHELD study targets, rederivable from their own
+    floor's accessors. A half-split family -- coord targets over an int floor -- would break that
+    silently, so the flavor is a property of the whole family and the bundle sheet mirrors it."""
+    from arc_lab.program_search.execution.bundle_sheet import resolve_bundle
+    from arc_lab.program_search.execution.check_coherence import check_library_coherence
+
+    library, sources = resolve_bundle("COORD_CELL_FLOOR_WITH_TARGETS")
+    names = set(library.names())
+    assert {"read_color_at_coord", "set_color_at_coord"} <= names  # the floor
+    assert {"swap_cells_at_coords", "move_cell_between_coords"} <= names  # its targets
+    assert check_library_coherence(library, constant_sources=sources).is_coherent
+
+
+def test_al14s_int_flavored_rung_still_fits_its_declared_depth() -> None:
+    """WHY both flavors exist. al14 computes its coordinates (`sub(n, 1)`), so a `coord(...)` wrapper
+    would take `move_cell_up` from d_i=3 to 4 -- past the `depth_limit: 3` the ladder declares, and
+    past its pinned probe expectations. A literal cannot rescue a COMPUTED coordinate, so the int
+    flavor had to survive rather than be replaced."""
+    from arc_lab.program_search.analysis.depth import compositional_depth
+    from arc_lab.program_search.ladders.registry import load_ladder
+
+    loaded = load_ladder("al14-cell-row-grid")
+    assert compositional_depth(loaded.templates[0]) == 3
+    assert loaded.config.budget.depth_limit == 3

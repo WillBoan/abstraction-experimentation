@@ -26,8 +26,8 @@ from arc_lab.program_search.analysis.equivalence import observationally_equivale
 from arc_lab.program_search.analysis.grids import exact_grids
 from arc_lab.program_search.substrate.abstraction import make_abstraction
 from arc_lab.program_search.substrate.library import Library, Primitive
+from arc_lab.program_search.substrate.primitives.cfb2ce5a_reference import RETAIN_COLORS
 from arc_lab.program_search.substrate.primitives.mask import MASK_PRIMITIVES
-from arc_lab.program_search.substrate.primitives.tiles import RETAIN_COLORS
 from arc_lab.program_search.substrate.program import Apply, Const, Param, Program
 from arc_lab.program_search.substrate.registry import BASE_PRIMITIVES
 from arc_lab.program_search.substrate.types import COLOR, COORD, GRID, INT, RECT, TypeCon
@@ -220,33 +220,54 @@ def test_relative_tile_decomposes_into_the_addressing_algebra() -> None:
     assert verdict.cases_tested > 500
 
 
-def test_nth_nonzero_color_is_not_a_clean_composition_because_it_totalizes() -> None:
-    """This tests a decomposition of ``nth_nonzero_color`` that is *almost* correct, but not quite.
+def test_nth_nonzero_color_decomposes_once_totality_is_expressible() -> None:
+    """The atom that first REFUSED to decompose, and what it taught us.
 
-    The decomposition's program is:
+    The natural reading is "the i-th nonzero color" -> ``nth(content_colors(g, 0), i)``, depth 2.
+    That split, with witness ``(2x2 grid, i=3)``: the reference returns color 0 for an absent index
+    (it TOTALIZES) while ``nth`` raises, and ``0 != BOTTOM``. Invisible on every in-range input --
+    exactly what an edge-inclusive exact battery exists to find.
 
-    ```
-    nth_nonzero_color(g: Grid, i: Int) -> Color
-    = read(g, coord_row(nth(content_coords(g, 0), i)), coord_col(nth(content_coords(g, 0), i)))
-    ```
+    So the gap was never the *indexing*, it was **totality** -- a design axis of its own. Naming it
+    gave two ways to close it, and the cheaper one won:
 
-    A refusal that is a finding, not a failure. The core of ``nth_nonzero_color(g, i)`` is
-    ``read`` at the i-th ``content_coords`` position -- but the reference returns color 0 when i is
-    out of range (it TOTALIZES), while ``nth`` raises. So exact equivalence correctly splits, and
-    names the witness: an index past the last nonzero cell. Retiring this atom needs the guard made
-    explicit (an ``if`` over ``length``), not just the read -- which is exactly what the loop tells us.
+    * ``If(lt(i, length(cc)), nth(cc, i), 0)`` -- depth 4, and needs the branching summoner in the
+      floor (only the ``If`` NODE short-circuits; the ``if`` PRIMITIVE evaluates both branches and
+      raises anyway).
+    * ``nth_or_default(cc, i, 0)`` -- depth 2, no ``if`` at all.
     """
-
     grid, index = Param(0, GRID), Param(1, INT)
-    coords = Apply("content_coords", (grid, Const(0, COLOR)))
-    at = Apply("nth", (coords, index))
-    core: Program = Apply("read", (grid, Apply("coord_row", (at,)), Apply("coord_col", (at,))))
-    library = _addressing_lib("read", "coord_row", "coord_col", "nth", "content_coords")
+    colors = Apply("content_colors", (grid, Const(0, COLOR)))
+    template: Program = Apply("nth_or_default", (colors, index, Const(0, COLOR)))
+    assert compositional_depth(template) == 2
+
+    library = _addressing_lib("content_colors", "nth_or_default")
     decomposed = make_abstraction(
-        "nth_nonzero_color_core", core, library, signature=((GRID, INT), COLOR)
+        "nth_nonzero_color_decomposed", template, library, signature=((GRID, INT), COLOR)
+    )
+    verdict = observationally_equivalent_functions(
+        BASE_PRIMITIVES["nth_nonzero_color"],
+        decomposed,
+        exact_grids({(2, 2), (3, 3), (4, 4), (2, 5)}),
+        max_combos=50_000,
+    )
+    assert verdict.equivalent, verdict.counterexample
+    assert verdict.cases_tested > 100
+
+
+def test_the_partial_indexing_variant_splits_on_exactly_the_totality_boundary() -> None:
+    """The negative half, kept: plain ``nth`` is right on every in-range index and wrong only past
+    the end. Pinning it is what stops "close enough" from passing for equivalent."""
+    grid, index = Param(0, GRID), Param(1, INT)
+    partial: Program = Apply("nth", (Apply("content_colors", (grid, Const(0, COLOR))), index))
+    decomposed = make_abstraction(
+        "nth_nonzero_color_partial",
+        partial,
+        _addressing_lib("content_colors", "nth"),
+        signature=((GRID, INT), COLOR),
     )
     verdict = observationally_equivalent_functions(
         BASE_PRIMITIVES["nth_nonzero_color"], decomposed, exact_grids({(2, 2), (3, 3)})
     )
     assert not verdict.equivalent
-    assert verdict.counterexample is not None  # (grid, index-past-the-end)
+    assert verdict.counterexample is not None
