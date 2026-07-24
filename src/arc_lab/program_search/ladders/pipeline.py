@@ -101,13 +101,14 @@ def _from_format_error(exc: LadderFormatError, lines: Sequence[str]) -> LadderDi
 
 
 def _from_finding(finding: LintFinding, anchors: AnchorIndex) -> LadderDiagnostic:
-    # `finding.check` is the legacy slug (may embed `[occurrence]`); the AnchorIndex maps it to the
-    # exact source span of its subject (rung / task / floor entry), or the ladder header.
+    # The finding names its subject structurally, so the AnchorIndex resolves it to the exact source
+    # span (rung / task / floor entry) by lookup -- the code stays the bare, stable check code.
     return LadderDiagnostic(
-        code=finding.check,
-        range=anchors.resolve(finding.check),
+        code=finding.code,
+        range=anchors.resolve(finding.occurrence),
         severity=severity_from_legacy(finding.severity),
         message=finding.detail,
+        occurrence=None if finding.occurrence is None else str(finding.occurrence),
     )
 
 

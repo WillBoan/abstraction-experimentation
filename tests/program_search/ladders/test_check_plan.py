@@ -58,7 +58,7 @@ def test_the_plan_owns_every_code_a_lint_emits() -> None:
     # so this holds by construction -- and would break loudly if a check ever hand-built a slug.
     owned = {check.code for check in CHECK_PLAN}
     for name in ("al1-mirror", "al7-fast-tower"):
-        emitted = {f.check.split("[")[0] for f in make_ladder(name).lint().findings}
+        emitted = {f.code for f in make_ladder(name).lint().findings}
         assert emitted <= owned, f"{name}: unowned codes {sorted(emitted - owned)}"
 
 
@@ -79,5 +79,5 @@ def test_severity_defaults_are_stamped_from_the_class_body() -> None:
     advisory = next(c for c in CHECK_PLAN if c.code == "floor-fully-exercised")
     assert advisory.finding(False, "x").severity == "warn"
     error = next(c for c in CHECK_PLAN if c.code == "rung-referenced")
-    assert error.finding(False, "x", occurrence="r1").check == "rung-referenced[r1]"
+    assert error.finding(False, "x", subject="r1").slug == "rung-referenced[r1]"
     assert error.finding(False, "x").severity == "error"

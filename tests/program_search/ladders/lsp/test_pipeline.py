@@ -52,14 +52,12 @@ def test_finding_becomes_a_diagnostic() -> None:
 
     header = Range(Position(0, 0), Position(0, 5))
     anchors = AnchorIndex(rungs={}, tasks={}, floor={}, file=header)
-    finding = LintFinding(
-        check="min-2-demos", ok=False, detail="rung r has 1 demo", severity="warn"
-    )
+    finding = LintFinding(code="min-2-demos", ok=False, detail="rung r has 1 demo", severity="warn")
     diag = _from_finding(finding, anchors)
     assert diag.code == "min-2-demos"
     assert diag.severity is Severity.WARNING
     assert diag.message == "rung r has 1 demo"
-    assert diag.range == header  # a file-level slug anchors to the ladder header
+    assert diag.range == header  # a subjectless finding anchors to the ladder header
 
 
 def test_format_error_maps_line_and_detail() -> None:
@@ -178,3 +176,18 @@ def test_diagnostics_to_json_is_lsp_shaped() -> None:
     }
     # No diagnostics -> clean.
     assert diagnostics_to_json([], path="x.ladder")["outcome"] == "clean"
+
+
+def test_lsp_diagnostic_carries_both_the_slug_and_the_structured_pair() -> None:
+    # The Problems panel prints `code`, so it gets the informative slug; the stable code and its
+    # occurrence also travel structurally in `data`, so nothing has to parse the slug back apart.
+    diag = LadderDiagnostic(
+        code="jump-affordable",
+        range=Range(Position(1, 0), Position(1, 4)),
+        severity=Severity.ERROR,
+        message="needs depth_limit 3, have 2",
+        occurrence="rot180",
+    )
+    lsp_diag = to_lsp(diag, uri="file:///x.ladder")
+    assert lsp_diag.code == "jump-affordable[rot180]"
+    assert lsp_diag.data == {"code": "jump-affordable", "occurrence": "rot180"}

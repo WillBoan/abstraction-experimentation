@@ -1,10 +1,11 @@
-"""AnchorIndex: a lint finding's slug resolves to the exact source span of its subject."""
+"""AnchorIndex: a lint finding's subject resolves to that entity's exact source span."""
 
 from __future__ import annotations
 
 from arc_lab.program_search.ladders.anchors import AnchorIndex
 from arc_lab.program_search.ladders.lang.parse import parse_document
 from arc_lab.program_search.ladders.registry import ladder_paths
+from arc_lab.program_search.ladders.shape import Occurrence
 
 
 def _text_at(source: str, span: object) -> str:
@@ -15,7 +16,7 @@ def _text_at(source: str, span: object) -> str:
     return line[span.start.character : span.end.character]
 
 
-def test_slug_resolves_to_its_subject_span() -> None:
+def test_an_occurrence_resolves_to_its_subject_span() -> None:
     source = ladder_paths()["al1-mirror"].read_text()
     document = parse_document(source)
     index = AnchorIndex.from_document(document)
@@ -24,17 +25,18 @@ def test_slug_resolves_to_its_subject_span() -> None:
     task = document.rungs[0].tasks[0].task_id
     primitive = document.floor[0].name
 
-    # A rung slug resolves to the exact rung name token, including a `#index` param suffix.
-    assert _text_at(source, index.resolve(f"rung-referenced[{rung}]")) == rung
-    assert _text_at(source, index.resolve(f"jump-affordable[{rung}]")) == rung
-    assert _text_at(source, index.resolve(f"free-param-varies[{rung}#0]")) == rung
-    # Task and floor slugs resolve to that entity's span.
-    assert index.resolve(f"constant-subterm[{task}]") == index.tasks[task]
-    assert index.resolve(f"hof-holes-fillable[{primitive}]") == index.floor[primitive]
+    # A rung subject resolves to the exact rung name token -- params narrow the finding, not the
+    # lookup, so a `#index` occurrence still anchors at the rung (C3 adds per-parameter spans).
+    assert _text_at(source, index.resolve(Occurrence(rung))) == rung
+    assert _text_at(source, index.resolve(Occurrence(rung, (1,)))) == rung
+    assert _text_at(source, index.resolve(Occurrence(rung, (1, 2)))) == rung
+    # Task and floor subjects resolve to that entity's span.
+    assert index.resolve(Occurrence(task)) == index.tasks[task]
+    assert index.resolve(Occurrence(primitive)) == index.floor[primitive]
 
-    # A file-level slug (no subject) anchors to the ladder header; an unknown subject falls back too.
-    assert index.resolve("levels-contiguous") == document.header_span
-    assert index.resolve("mystery[nope]") == document.header_span
+    # No subject anchors to the ladder header; an unknown subject falls back to it too.
+    assert index.resolve(None) == document.header_span
+    assert index.resolve(Occurrence("nope")) == document.header_span
 
 
 def test_from_document_covers_every_named_entity() -> None:

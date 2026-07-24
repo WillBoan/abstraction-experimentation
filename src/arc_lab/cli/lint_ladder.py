@@ -160,9 +160,9 @@ def _lint_one(target: str, *, quiet: bool, draft: bool) -> _Outcome:
         f"({len(errors)} errors, {len(warnings)} warnings)"
     )
     for finding in errors:
-        typer.echo(f"  ERROR {finding.check}: {finding.detail}")
+        typer.echo(f"  ERROR {finding.slug}: {finding.detail}")
     for finding in warnings:
-        typer.echo(f"  warn  {finding.check}: {finding.detail}")
+        typer.echo(f"  warn  {finding.slug}: {finding.detail}")
     return _Outcome.CLEAN if shape.ok else _Outcome.FAILED
 
 
@@ -219,9 +219,9 @@ def _report_draft(label: str, loaded: LoadedLadder, *, reason: str) -> _Outcome:
         f"({len(errors)} errors, {len(warnings)} warnings)"
     )
     for finding in errors:
-        typer.echo(f"    ERROR {finding.check}: {finding.detail}")
+        typer.echo(f"    ERROR {finding.slug}: {finding.detail}")
     for finding in warnings:
-        typer.echo(f"    warn  {finding.check}: {finding.detail}")
+        typer.echo(f"    warn  {finding.slug}: {finding.detail}")
 
     typer.echo(
         f"\n  Skipped -- these need evaluated task grids, which this draft cannot supply ({reason}): "

@@ -40,7 +40,7 @@ class DistinctTrainInputs(LadderCheck):
             yield self.finding(
                 len(set(inputs)) == len(inputs),
                 "repeated train inputs: the example set is smaller than it looks",
-                occurrence=entry.task.task_id,
+                subject=entry.task.task_id,
             )
 
 
@@ -56,7 +56,7 @@ class OutputsVary(LadderCheck):
             yield self.finding(
                 len(set(outputs)) > 1 or len(outputs) < 2,
                 "every train output is the same grid: a constant program fits the task",
-                occurrence=entry.task.task_id,
+                subject=entry.task.task_id,
             )
 
 
@@ -73,7 +73,7 @@ class NotIdentity(LadderCheck):
             yield self.finding(
                 any(a != b for a, b in zip(inputs, outputs, strict=True)),
                 "output == input on every train example: the identity fits the task",
-                occurrence=entry.task.task_id,
+                subject=entry.task.task_id,
             )
 
 
@@ -94,7 +94,7 @@ class HeldoutDistinct(LadderCheck):
             yield self.finding(
                 twin is None,
                 f"identical train examples to the train task {twin!r}",
-                occurrence=entry.task.task_id,
+                subject=entry.task.task_id,
             )
 
 
@@ -119,7 +119,8 @@ class FreeParamVaries(LadderCheck):
                     len(set(values)) > 1 or len(demos) < 2,
                     f"every demonstration passes {min(values, default='?')}: the mint "
                     "will specialise to it instead of taking a parameter",
-                    occurrence=f"{rung.name}#{free_index}",
+                    subject=rung.name,
+                    params=(free_index,),
                 )
 
 
@@ -148,7 +149,8 @@ class FreeParamsCovary(LadderCheck):
                     f"positions #{left} and #{right} hold the same value at every call site, so "
                     "antiunification shares ONE parameter between them: the mint fuses the two "
                     "and cannot express the case where they differ",
-                    occurrence=f"{rung.name}#{left},#{right}",
+                    subject=rung.name,
+                    params=(left, right),
                 )
 
 

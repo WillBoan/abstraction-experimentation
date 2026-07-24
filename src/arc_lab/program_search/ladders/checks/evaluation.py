@@ -101,7 +101,7 @@ def constancy_verdicts(
         if beaten:
             verdicts.append(
                 Verdict(
-                    occurrence=task_id,
+                    subject=task_id,
                     ok=False,
                     detail="train-constant subterms beaten by an enumerated literal: "
                     f"{_offenders(beaten)}",
@@ -110,7 +110,7 @@ def constancy_verdicts(
         elif fictional:
             verdicts.append(
                 Verdict(
-                    occurrence=task_id,
+                    subject=task_id,
                     ok=False,
                     detail="train-constant subterms (fictional depth; value not mintable here): "
                     f"{_offenders(fictional)}",
@@ -118,7 +118,7 @@ def constancy_verdicts(
                 )
             )
         else:
-            verdicts.append(Verdict(occurrence=task_id, ok=True, detail=""))
+            verdicts.append(Verdict(subject=task_id, ok=True, detail=""))
     return tuple(verdicts)
 
 
@@ -150,14 +150,14 @@ def conditional_verdicts(
         if constant:
             verdicts.append(
                 Verdict(
-                    occurrence=task_id,
+                    subject=task_id,
                     ok=False,
                     detail="conditions constant across train examples (the If collapses to the "
                     f"taken branch): {_offenders(constant)}",
                 )
             )
         else:
-            verdicts.append(Verdict(occurrence=task_id, ok=True, detail=""))
+            verdicts.append(Verdict(subject=task_id, ok=True, detail=""))
     return tuple(verdicts)
 
 
@@ -211,7 +211,7 @@ def rewrite_verdicts(
                     f"{label} is reachable over L_{i - 1} at depth {witness.depth} "
                     f"(<= depth_limit {depth_limit}) via {_spell(witness.term)}"
                 )
-            verdicts.append(Verdict(occurrence=skipped_name, ok=not confirmed, detail=detail))
+            verdicts.append(Verdict(subject=skipped_name, ok=not confirmed, detail=detail))
     return tuple(verdicts)
 
 

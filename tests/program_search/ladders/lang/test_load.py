@@ -131,7 +131,7 @@ def test_static_lint_records_the_batch_s_known_defects() -> None:
     this set means one of two things, both deliberate: a new retirement, or a regression in the
     checks themselves."""
     failing = {
-        name: sorted(f.check for f in _lint_findings(name) if not f.ok and f.severity == "error")
+        name: sorted(f.slug for f in _lint_findings(name) if not f.ok and f.severity == "error")
         for name in ladder_paths()
     }
     failing = {name: checks for name, checks in failing.items() if checks}
@@ -205,15 +205,13 @@ def test_the_evaluation_backed_checks_batch_posture() -> None:
     in this ladder's own search?" clause, working."""
     by_ladder = {name: _lint_findings(name) for name in ladder_paths()}
     assert not any(
-        f.check.startswith("if-condition-varies")
-        for findings in by_ladder.values()
-        for f in findings
+        f.code == "if-condition-varies" for findings in by_ladder.values() for f in findings
     )
     constancy_errors = {
         name
         for name, findings in by_ladder.items()
         for f in findings
-        if f.check.startswith("constant-subterm") and not f.ok and f.severity == "error"
+        if f.code == "constant-subterm" and not f.ok and f.severity == "error"
     }
     assert constancy_errors == {
         "al4-mask-crop",
@@ -225,7 +223,7 @@ def test_the_evaluation_backed_checks_batch_posture() -> None:
         name
         for name, findings in by_ladder.items()
         for f in findings
-        if f.check.startswith("rewrite-shallow") and not f.ok
+        if f.code == "rewrite-shallow" and not f.ok
     }
     assert rewrite_errors == {
         "al3-quad-symmetrize",
@@ -236,9 +234,9 @@ def test_the_evaluation_backed_checks_batch_posture() -> None:
         "al11-greedy-trap",
     }
     al8_warns = [
-        f.check
+        f.slug
         for f in by_ladder["al8-lean-perceiver"]
-        if f.check.startswith("constant-subterm") and not f.ok and f.severity == "warn"
+        if f.code == "constant-subterm" and not f.ok and f.severity == "warn"
     ]
     assert al8_warns == [
         "constant-subterm[swap_ext-00]",
@@ -256,11 +254,10 @@ def test_the_two_future_proofing_checks_are_dormant_on_the_batch() -> None:
     value is on the ladders Phase 2/3 will build, not this batch. If either lights up here, a real
     ladder tripped it and the finding is genuine."""
     fired = {
-        (name, f.check)
+        (name, f.slug)
         for name in ladder_paths()
         for f in _lint_findings(name)
-        if not f.ok
-        and (f.check.startswith("free-params-covary") or f.check == "hof-holes-fillable")
+        if not f.ok and f.code in {"free-params-covary", "hof-holes-fillable"}
     }
     assert fired == set()
 
@@ -270,10 +267,10 @@ def test_the_demonstration_plan_checks_hold_across_the_batch() -> None:
     `.ladder` migration retired -- so it is now only true if the lint says so."""
     variation = {"distinct-train-inputs", "outputs-vary", "not-identity"}
     offenders = [
-        (name, f.check)
+        (name, f.slug)
         for name in ladder_paths()
         for f in _lint_findings(name)
-        if not f.ok and f.check.split("[")[0] in variation
+        if not f.ok and f.code in variation
     ]
     assert offenders == []
 
@@ -496,8 +493,8 @@ def test_draft_spec_matches_the_committed_testbed_spec() -> None:
         draft, committed = draft_spec(loaded), ladder_spec(loaded)
         assert draft.train_corpus.content_hash() == committed.train_corpus.content_hash(), name
         assert draft.heldout_corpus.content_hash() == committed.heldout_corpus.content_hash(), name
-        assert [(f.check, f.ok) for f in draft.lint().findings] == [
-            (f.check, f.ok) for f in committed.lint().findings
+        assert [(f.slug, f.ok) for f in draft.lint().findings] == [
+            (f.slug, f.ok) for f in committed.lint().findings
         ], name
 
 

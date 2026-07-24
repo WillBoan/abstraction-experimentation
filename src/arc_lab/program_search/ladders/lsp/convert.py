@@ -33,9 +33,12 @@ def to_lsp(diagnostic: LadderDiagnostic, *, uri: str) -> lsp.Diagnostic:
         range=_range(diagnostic.range),
         message=diagnostic.message,
         severity=lsp.DiagnosticSeverity(diagnostic.severity.value),
-        # Shim: the slug carries the occurrence inline. Phase G switches to the bare `code` with the
-        # occurrence in `Diagnostic.data`.
+        # `code` is the SLUG, deliberately: it is what the Problems panel prints beside the message,
+        # and `rung-referenced[rot180]` says which rung where a bare code would not. The structured
+        # pair travels in `data` alongside it, so a client can still filter on the stable code
+        # without parsing the slug back apart.
         code=diagnostic.slug,
+        data={"code": diagnostic.code, "occurrence": diagnostic.occurrence},
         source=diagnostic.source,
         related_information=related or None,
     )

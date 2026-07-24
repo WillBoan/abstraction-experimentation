@@ -34,7 +34,7 @@ class JumpAffordable(LadderCheck):
             yield self.finding(
                 shape.jump_needs <= ctx.ref_limit,
                 f"needs depth_limit {shape.jump_needs} (d={shape.jump_depth}), have {ctx.ref_limit}",
-                occurrence=shape.name,
+                subject=shape.name,
             )
 
 
@@ -53,7 +53,7 @@ class ProperComposition(LadderCheck):
                 shape.jump_depth >= 2,
                 f"jump depth {shape.jump_depth}: a rung must compose over L_{index}, "
                 "not restate a bare primitive",
-                occurrence=shape.name,
+                subject=shape.name,
             )
 
 
@@ -87,7 +87,7 @@ class DoubleJumpIntractable(LadderCheck):
                 need > ctx.ref_limit,
                 f"skipping it reaches `{cid}` at depth_limit {need} "
                 f"(inlined depth {compositional_depth(shallow)}), must exceed {ctx.ref_limit}",
-                occurrence=rung.name,
+                subject=rung.name,
             )
 
 

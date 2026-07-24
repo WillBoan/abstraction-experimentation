@@ -58,7 +58,7 @@ class ProposerCompat(LadderCheck):
                 yield self.finding(
                     True,  # an unknown capability is reported, never assumed broken
                     "proposer capability not statically known",
-                    occurrence=rung.name,
+                    subject=rung.name,
                     severity="warn",
                 )
                 continue
@@ -67,7 +67,7 @@ class ProposerCompat(LadderCheck):
                 kinds <= provided,
                 f"{sorted(k.value for k in kinds - provided)} unservable by "
                 f"{type(proposer).__name__}",
-                occurrence=rung.name,
+                subject=rung.name,
             )
 
 
@@ -113,5 +113,5 @@ class MdlBreakEven(LadderCheck):
                 gain > 0,
                 f"minting it costs {-gain:.1f} bits more than it saves on its own "
                 f"{len(entries)} demonstration(s), so governance will refuse it",
-                occurrence=rung.name,
+                subject=rung.name,
             )

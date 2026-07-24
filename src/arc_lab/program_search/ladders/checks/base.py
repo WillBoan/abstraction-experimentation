@@ -24,7 +24,7 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
-from arc_lab.program_search.ladders.shape import LintFinding
+from arc_lab.program_search.ladders.shape import LintFinding, Occurrence
 
 if TYPE_CHECKING:
     from arc_lab.program_search.ladders.checks.context import CheckContext
@@ -40,8 +40,8 @@ class Verdict:
     the code. That keeps the code declared in exactly one place: the class body.
     """
 
-    #: The subject this outcome is about (a rung name, a task id), or ``None`` for a file-level one.
-    occurrence: str | None
+    #: The named entity this outcome is about (a rung, a task id) -- ``None`` for a file-level one.
+    subject: str | None
     ok: bool
     detail: str
     #: Overrides the owning check's ``default_severity`` when the severity is itself a verdict.
@@ -100,21 +100,27 @@ class LadderCheck(ABC):
         ok: bool,
         detail: str,
         *,
-        occurrence: str | None = None,
+        subject: str | None = None,
+        params: tuple[int, ...] = (),
         severity: str | None = None,
     ) -> LintFinding:
         """One finding stamped with this check's code and default severity.
 
-        ``occurrence`` names the subject (a rung, a task id, a parameter position); ``severity``
-        overrides the class default for the checks whose severity is a *verdict*, not a property of
-        the check -- ``constant-subterm`` (does the beating literal exist in this ladder's own
-        search?) and ``proposer-compat`` (is the proposer's capability statically known?).
+        ``subject`` names the entity the finding is about (a rung, a task id) and ``params`` narrows
+        it to free-parameter positions -- together they become a structured
+        :class:`~..shape.Occurrence`, not a slug string somebody has to parse back apart.
+
+        ``severity`` overrides the class default for the checks whose severity is itself a
+        *verdict* rather than a property of the check: ``constant-subterm`` (does the beating
+        literal exist in this ladder's own search?) and ``proposer-compat`` (is the proposer's
+        capability statically known?).
         """
         return LintFinding(
-            check=self.code if occurrence is None else f"{self.code}[{occurrence}]",
+            code=self.code,
             ok=ok,
             detail=detail,
             severity=severity if severity is not None else self.default_severity,
+            occurrence=None if subject is None else Occurrence(subject, params),
         )
 
     def stamp(self, verdicts: Iterable[Verdict]) -> Iterator[LintFinding]:
@@ -123,6 +129,6 @@ class LadderCheck(ABC):
             yield self.finding(
                 verdict.ok,
                 verdict.detail,
-                occurrence=verdict.occurrence,
+                subject=verdict.subject,
                 severity=verdict.severity,
             )

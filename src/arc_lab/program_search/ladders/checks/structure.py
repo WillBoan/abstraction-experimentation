@@ -108,7 +108,7 @@ class RungReferenced(LadderCheck):
                 len(ctx.consumers[rung.name]) >= 1,
                 f"no higher rung or top solution calls {rung.name}: it is dead "
                 "(unreachable from the top at any depth_limit)",
-                occurrence=rung.name,
+                subject=rung.name,
             )
 
 
@@ -129,5 +129,5 @@ class RungDistinct(LadderCheck):
                 (ctx.rungs[j].name for j in range(index) if unfolded[j] == unfolded[index]), None
             )
             yield self.finding(
-                twin is None, f"identical unfolded template to {twin!r}", occurrence=rung.name
+                twin is None, f"identical unfolded template to {twin!r}", subject=rung.name
             )

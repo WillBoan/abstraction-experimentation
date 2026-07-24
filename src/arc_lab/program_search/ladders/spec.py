@@ -219,9 +219,9 @@ class LadderSpec:
             f"{len(shape.findings)} checks (errors: {len(errors)}, warnings: {len(warnings)})",
         ]
         for finding in errors:
-            lines.append(f"  - ERROR `{finding.check}`: {finding.detail}")
+            lines.append(f"  - ERROR `{finding.slug}`: {finding.detail}")
         for finding in warnings:
-            lines.append(f"  - warn `{finding.check}`: {finding.detail}")
+            lines.append(f"  - warn `{finding.slug}`: {finding.detail}")
         lines.append(
             "- Empirical certificate (jump tractability in fact, skip paths, demonstration "
             "health): NOT covered by this file -- see results.md beside it, generated from the "
