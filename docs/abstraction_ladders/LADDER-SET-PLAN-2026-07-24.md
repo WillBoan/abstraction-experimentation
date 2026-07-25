@@ -1,6 +1,6 @@
 # Ladder-set experiment plan (2026-07-24)
 
-The execution plan for building and running the experiment set of abstraction ladders. A dated plan; it extends the program of record ([AL-PLAN-2026-07-23.md](AL-PLAN-2026-07-23.md), whose "chosen direction" — the cfb2ce5a variant program — this generalizes into the full set). Structure and vocabulary: [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md). Cost-model constraints and design disciplines: [BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md). Comparison licenses: [LADDER-RELATIONSHIPS-2026-07-23.md](LADDER-RELATIONSHIPS-2026-07-23.md).
+The execution plan for building and running the experiment set of abstraction ladders. A dated plan; it extends the program of record ([AL-PLAN-2026-07-23.md](AL-PLAN-2026-07-23.md), whose "chosen direction" — the cfb2ce5a variant program — this generalizes into the full set). **Phase 0/1 execution is narrowed to a minimum viable set by [MVE-PLAN-2026-07-25.md](MVE-PLAN-2026-07-25.md)** (after the 2026-07-25 ground-truth audit); this file's goals, measurements, and Phase 2+ gates stand. Structure and vocabulary: [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md). Cost-model constraints and design disciplines: [BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md). Comparison licenses: [LADDER-RELATIONSHIPS-2026-07-23.md](LADDER-RELATIONSHIPS-2026-07-23.md).
 
 ## Goals
 
