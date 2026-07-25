@@ -65,11 +65,20 @@ class DoubleJumpIntractable(LadderCheck):
     check; for a DAG it catches a non-adjacent or plural consumer the successor-only form missed.
     The TOP layer's necessity relative to ``r_k`` is ``top-double-jump-intractable`` -- per top
     solution, and finer-grained -- so top consumers are excluded here.
+
+    **Warning, not error** (severity relaxed 2026-07-24, the certificate-profile reframe): this is
+    skip-freeness -- the sandwich's constraint 2, a *simplification*, not an admission requirement
+    (CERTIFICATE-PROFILE-2026-07-24.md). A skippable rung is a data point about a cut placement,
+    recorded in the per-rung verdict profile, not a reason the ladder may not exist. The real gates
+    stay errors: ``jump-affordable`` (constraint 1, near-fundamental) and ``raw-intractable`` (the
+    whole-ladder "does this measure anything" claim). Mixed-depth ladders may now lint-clean and are
+    gated by the probe's joint depth+considered budget.
     """
 
     code = "double-jump-intractable"
     category = Category.DEPTH
     stage = CheckStage.STRUCTURAL
+    default_severity = "warn"
     summary = "Skipping a rung leaves every higher rung out of reach at the pinned depth_limit."
 
     def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
@@ -140,9 +149,15 @@ class RawIntractable(LadderCheck):
 
 
 class TopDoubleJumpIntractable(LadderCheck):
+    """The top layer's skip-freeness relative to ``r_k``. **Warning, not error** for the same
+    reason as :class:`DoubleJumpIntractable` (constraint 2, the certificate-profile reframe): a
+    top reachable without the top rung is a skippable-top data point, gated by the certificate's
+    ``no_skip_paths`` and by ``raw-intractable`` (whole-ladder), not by this static lint."""
+
     code = "top-double-jump-intractable"
     category = Category.DEPTH
     stage = CheckStage.STRUCTURAL
+    default_severity = "warn"
     summary = "No top solution is reachable over L_{k-1} (with the top rung skipped)."
 
     def run(self, ctx: CheckContext) -> Iterator[LintFinding]:

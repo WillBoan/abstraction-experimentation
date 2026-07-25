@@ -12,16 +12,16 @@ Derived from `al10-skippable.ladder` (in `program_search/ladders/registry/`) -- 
 
 ## Verification
 
-- Static lint (what this file asserts): **FAILED** -- 39 checks (errors: 3, warnings: 1)
+- Static lint (what this file asserts): **FAILED** -- 38 checks (errors: 2, warnings: 2)
   - ERROR `raw-intractable`: d_raw=4 needs depth_limit 4, must exceed 4
-  - ERROR `top-double-jump-intractable`: top over L_0 depth 4 needs depth_limit 4, must exceed 4
   - ERROR `rewrite-shallow[rot90]`: top-00 is reachable over L_0 at depth 4 (<= depth_limit 4) via flip_h(transpose(flip_h(transpose(input))))
+  - warn `top-double-jump-intractable`: top over L_0 depth 4 needs depth_limit 4, must exceed 4
   - warn `not-all-telescope`: every rung has fan-in 1 (a pure telescope)
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
 ## Shape
 
-- Overall: chain with recombination (max fan-in 2)
+- Overall: chain, recombination (max fan-in 2)
 - Off-spine: none
 - Dependencies (lower-rung calls, with multiplicity):
   - r_1 `rot90`: floor primitives only
@@ -76,3 +76,5 @@ The frozen ladder default with the source file's `config` block applied -- the e
   - early_stop: `True`
   - reset_programs_each_wake: `True`
   - score_each_wake: `False`
+  - wake_schedule: `full`
+  - curriculum: `None`

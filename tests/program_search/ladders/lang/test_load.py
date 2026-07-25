@@ -153,10 +153,13 @@ def test_static_lint_records_the_batch_s_known_defects() -> None:
     assert failing["al7-fast-tower"] == doubling
     assert failing["al9-decoy"] == doubling  # inherited spine, identical collapse
     assert failing["al11-greedy-trap"] == doubling
+    # `top-double-jump-intractable` fires on al10 too, but is a WARNING since the 2026-07-24
+    # certificate-profile reframe (skip-freeness is a quality lens, not a gate), so it drops out of
+    # the error-severity failing set. The control still fails its lint on the two errors below and is
+    # still rejected by the certificate (`no_skip_paths` false), unchanged.
     assert failing["al10-skippable"] == [
         "raw-intractable",
         "rewrite-shallow[rot90]",
-        "top-double-jump-intractable",
     ]
     assert failing["al4-mask-crop"] == [
         "constant-subterm[flatten_content-00]",

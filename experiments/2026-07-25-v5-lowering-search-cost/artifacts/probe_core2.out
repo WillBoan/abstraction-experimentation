@@ -1,0 +1,173 @@
+r_1 `rot180` over `cfb2ce5a-lowered-core-L0` — FAILED
+
+| probe | task             | verdict     | gen | considered | depth (found/intended) |
+| ----- | ---------------- | ----------- | --- | ---------- | ---------------------- |
+| wake  | rot180-00        | as-intended | 2   | 50000      | 2/2                    |
+| wake  | rot180-01        | as-intended | 2   | 50000      | 2/2                    |
+| skip  | right_pattern-00 | skip-path   | 2   | 50000      | 2/None                 |
+| skip  | right_pattern-01 | skip-path   | 2   | 50000      | 2/None                 |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 6): ~9,783,042 considered, calibrated on this cell's funnel; dominated by paint_through_mask: grid(4988) x mask(163) x color(10)
+  ! skip right_pattern-00: SKIP PATH — L_0 solves it: flip_h(relative_tile(input, 0, 0))
+  ! skip right_pattern-01: SKIP PATH — L_0 solves it: flip_h(relative_tile(input, 0, 0))
+
+r_2 `right_pattern` over `cfb2ce5a-lowered-core-L0+rot180` — FAILED
+
+| probe | task             | verdict     | gen | considered | depth (found/intended) |
+| ----- | ---------------- | ----------- | --- | ---------- | ---------------------- |
+| wake  | right_pattern-00 | as-intended | 2   | 50000      | 2/2                    |
+| wake  | right_pattern-01 | as-intended | 2   | 50000      | 2/2                    |
+| skip  | below_pattern-00 | skip-path   | 2   | 50000      | 2/None                 |
+| skip  | below_pattern-01 | skip-path   | 2   | 50000      | 2/None                 |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 6): ~10,452,353 considered, calibrated on this cell's funnel; dominated by paint_through_mask: grid(5167) x mask(169) x color(10)
+  ! skip below_pattern-00: SKIP PATH — L_1 solves it: flip_v(relative_tile(input, 0, 0))
+  ! skip below_pattern-01: SKIP PATH — L_1 solves it: flip_v(relative_tile(input, 0, 0))
+
+r_3 `below_pattern` over `cfb2ce5a-lowered-core-L0+rot180+right_pattern` — FAILED
+
+| probe | task                | verdict     | gen | considered | depth (found/intended) |
+| ----- | ------------------- | ----------- | --- | ---------- | ---------------------- |
+| wake  | below_pattern-00    | alternative | 2   | 50000      | 2/2                    |
+| wake  | below_pattern-01    | alternative | 2   | 50000      | 2/2                    |
+| skip  | diagonal_pattern-00 | skip-path   | 2   | 50000      | 2/None                 |
+| skip  | diagonal_pattern-01 | skip-path   | 2   | 50000      | 2/None                 |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 6): ~10,958,661 considered, calibrated on this cell's funnel; dominated by paint_through_mask: grid(5311) x mask(173) x color(10)
+  ! skip diagonal_pattern-00: SKIP PATH — L_2 solves it: flip_v(right_pattern(input))
+  ! skip diagonal_pattern-01: SKIP PATH — L_2 solves it: flip_v(right_pattern(input))
+
+r_4 `diagonal_pattern` over `cfb2ce5a-lowered-core-L0+rot180+right_pattern+below_pattern` — FAILED
+
+| probe | task                 | verdict      | gen | considered | depth (found/intended) |
+| ----- | -------------------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | diagonal_pattern-00  | alternative  | 2   | 50000      | 2/2                    |
+| wake  | diagonal_pattern-01  | alternative  | 2   | 50000      | 2/2                    |
+| skip  | first_source_color-0 | skip-path    | 2   | 50000      | 2/None                 |
+| skip  | first_source_color-1 | inconclusive | -   | 50000      | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 6): ~11,254,014 considered, calibrated on this cell's funnel; dominated by paint_through_mask: grid(5403) x mask(175) x color(10)
+  ! skip first_source_color-0: SKIP PATH — L_3 solves it: map_color(right_pattern(input), 2, 0)
+  ! skip first_source_color-1: INCONCLUSIVE — censored, so unsolved proves nothing
+
+r_5 `first_source_color` over `cfb2ce5a-lowered-core-L0+rot180+right_pattern+below_pattern+diagonal_pattern` — FAILED
+
+| probe | task                  | verdict      | gen | considered | depth (found/intended) |
+| ----- | --------------------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | first_source_color-0  | collision    | 2   | 50000      | 2/5                    |
+| wake  | first_source_color-1  | censored     | -   | 50000      | -                      |
+| skip  | second_source_color-0 | inconclusive | -   | 50000      | -                      |
+| skip  | second_source_color-1 | inconclusive | -   | 50000      | -                      |
+
+- sleep: MISSED; minted [] at arity None (intended 2)
+- one round deeper (depth_limit 6): ~10,155,490 considered, calibrated on this cell's funnel; dominated by paint_through_mask: grid(5455) x mask(175) x color(9)
+  ! wake first_source_color-0: COLLISION — retained program differs off the train support: map_color(right_pattern(input), 2, 0)
+  ! wake first_source_color-1: CENSORED — the jump is not affordable here (50000 considered)
+  ! skip second_source_color-0: INCONCLUSIVE — censored, so unsolved proves nothing
+  ! skip second_source_color-1: INCONCLUSIVE — censored, so unsolved proves nothing
+  ! sleep: the intended abstraction was NOT minted (got [])
+
+r_6 `second_source_color` over `cfb2ce5a-lowered-core-L0+rot180+right_pattern+below_pattern+diagonal_pattern+first_source_color` — FAILED
+
+| probe | task                  | verdict      | gen | considered | depth (found/intended) |
+| ----- | --------------------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | second_source_color-0 | censored     | -   | 50000      | -                      |
+| wake  | second_source_color-1 | censored     | -   | 50000      | -                      |
+| skip  | first_target_color-0  | inconclusive | -   | 50000      | -                      |
+| skip  | first_target_color-1  | inconclusive | -   | 50000      | -                      |
+- one round deeper (depth_limit 6): ~10,493,140,476 considered, calibrated on this cell's funnel; dominated by map_color: grid(4116) x color(1471) x color(1471)
+  ! wake second_source_color-0: CENSORED — the jump is not affordable here (50000 considered)
+  ! wake second_source_color-1: CENSORED — the jump is not affordable here (50000 considered)
+  ! skip first_target_color-0: INCONCLUSIVE — censored, so unsolved proves nothing
+  ! skip first_target_color-1: INCONCLUSIVE — censored, so unsolved proves nothing
+
+r_7 `first_target_color` over `cfb2ce5a-lowered-core-L0+rot180+right_pattern+below_pattern+diagonal_pattern+first_source_color+second_source_color` — FAILED
+
+| probe | task                  | verdict      | gen | considered | depth (found/intended) |
+| ----- | --------------------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | first_target_color-0  | censored     | -   | 50000      | -                      |
+| wake  | first_target_color-1  | censored     | -   | 50000      | -                      |
+| skip  | second_target_color-0 | inconclusive | -   | 50000      | -                      |
+| skip  | second_target_color-1 | inconclusive | -   | 50000      | -                      |
+- one round deeper (depth_limit 6): ~18,583,320,824 considered, calibrated on this cell's funnel; dominated by map_color: grid(3404) x color(2252) x color(2252)
+  ! wake first_target_color-0: CENSORED — the jump is not affordable here (50000 considered)
+  ! wake first_target_color-1: CENSORED — the jump is not affordable here (50000 considered)
+  ! skip second_target_color-0: INCONCLUSIVE — censored, so unsolved proves nothing
+  ! skip second_target_color-1: INCONCLUSIVE — censored, so unsolved proves nothing
+
+r_8 `second_target_color` over `cfb2ce5a-lowered-core-L0+rot180+right_pattern+below_pattern+diagonal_pattern+first_source_color+second_source_color+first_target_color` — FAILED
+
+| probe | task                  | verdict      | gen | considered | depth (found/intended) |
+| ----- | --------------------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | second_target_color-0 | censored     | -   | 50000      | -                      |
+| wake  | second_target_color-1 | censored     | -   | 50000      | -                      |
+| skip  | source_mask-0         | inconclusive | -   | 50000      | -                      |
+| skip  | source_mask-1         | inconclusive | -   | 50000      | -                      |
+- one round deeper (depth_limit 6): ~17,643,532,799 considered, calibrated on this cell's funnel; dominated by map_color: grid(3509) x color(2160) x color(2160)
+  ! wake second_target_color-0: CENSORED — the jump is not affordable here (50000 considered)
+  ! wake second_target_color-1: CENSORED — the jump is not affordable here (50000 considered)
+  ! skip source_mask-0: INCONCLUSIVE — censored, so unsolved proves nothing
+  ! skip source_mask-1: INCONCLUSIVE — censored, so unsolved proves nothing
+
+r_9 `source_mask` over `cfb2ce5a-lowered-core-L0+rot180+right_pattern+below_pattern+diagonal_pattern+first_source_color+second_source_color+first_target_color+second_target_color` — FAILED
+
+| probe | task                 | verdict      | gen | considered | depth (found/intended) |
+| ----- | -------------------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | source_mask-0        | censored     | -   | 50000      | -                      |
+| wake  | source_mask-1        | censored     | -   | 50000      | -                      |
+| skip  | seeded_source_mask-0 | inconclusive | -   | 50000      | -                      |
+| skip  | seeded_source_mask-1 | inconclusive | -   | 50000      | -                      |
+- one round deeper (depth_limit 6): ~16,689,287,343 considered, calibrated on this cell's funnel; dominated by map_color: grid(3613) x color(2069) x color(2069)
+  ! wake source_mask-0: CENSORED — the jump is not affordable here (50000 considered)
+  ! wake source_mask-1: CENSORED — the jump is not affordable here (50000 considered)
+  ! skip seeded_source_mask-0: INCONCLUSIVE — censored, so unsolved proves nothing
+  ! skip seeded_source_mask-1: INCONCLUSIVE — censored, so unsolved proves nothing
+
+r_10 `seeded_source_mask` over `cfb2ce5a-lowered-core-L0+rot180+right_pattern+below_pattern+diagonal_pattern+first_source_color+second_source_color+first_target_color+second_target_color+source_mask` — FAILED
+
+| probe | task                 | verdict      | gen | considered | depth (found/intended) |
+| ----- | -------------------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | seeded_source_mask-0 | censored     | -   | 50000      | -                      |
+| wake  | seeded_source_mask-1 | censored     | -   | 50000      | -                      |
+| skip  | instantiate_first-0  | inconclusive | -   | 50000      | -                      |
+| skip  | instantiate_first-1  | inconclusive | -   | 50000      | -                      |
+- one round deeper (depth_limit 6): ~15,022,131,906 considered, calibrated on this cell's funnel; dominated by map_color: grid(3122) x color(1742) x color(1742)
+  ! wake seeded_source_mask-0: CENSORED — the jump is not affordable here (50000 considered)
+  ! wake seeded_source_mask-1: CENSORED — the jump is not affordable here (50000 considered)
+  ! skip instantiate_first-0: INCONCLUSIVE — censored, so unsolved proves nothing
+  ! skip instantiate_first-1: INCONCLUSIVE — censored, so unsolved proves nothing
+
+r_11 `instantiate_first` over `cfb2ce5a-lowered-core-L0+rot180+right_pattern+below_pattern+diagonal_pattern+first_source_color+second_source_color+first_target_color+second_target_color+source_mask+seeded_source_mask` — FAILED
+
+| probe | task                      | verdict   | gen | considered | depth (found/intended) |
+| ----- | ------------------------- | --------- | --- | ---------- | ---------------------- |
+| wake  | instantiate_first-0       | censored  | -   | 50000      | -                      |
+| wake  | instantiate_first-1       | censored  | -   | 50000      | -                      |
+| skip  | instantiate_seeded_tile-0 | skip-path | 1   | 50000      | 1/None                 |
+| skip  | instantiate_seeded_tile-1 | skip-path | 1   | 50000      | 1/None                 |
+- one round deeper (depth_limit 6): ~33,116,582,692 considered, calibrated on this cell's funnel; dominated by map_color: grid(1503) x color(2997) x color(2997)
+  ! wake instantiate_first-0: CENSORED — the jump is not affordable here (50000 considered)
+  ! wake instantiate_first-1: CENSORED — the jump is not affordable here (50000 considered)
+  ! skip instantiate_seeded_tile-0: SKIP PATH — L_10 solves it: relative_tile(input, 0, 1)
+  ! skip instantiate_seeded_tile-1: SKIP PATH — L_10 solves it: relative_tile(input, 1, 0)
+
+r_12 `instantiate_seeded_tile` over `cfb2ce5a-lowered-core-L0+rot180+right_pattern+below_pattern+diagonal_pattern+first_source_color+second_source_color+first_target_color+second_target_color+source_mask+seeded_source_mask+instantiate_first` — FAILED
+
+| probe | task                      | verdict   | gen | considered | depth (found/intended) |
+| ----- | ------------------------- | --------- | --- | ---------- | ---------------------- |
+| wake  | instantiate_seeded_tile-0 | collision | 1   | 50000      | 1/3                    |
+| wake  | instantiate_seeded_tile-1 | collision | 1   | 50000      | 1/3                    |
+| skip  | completed-diagonal-tile   | skip-path | 1   | 50000      | 1/None                 |
+
+- sleep: MISSED; minted [] at arity None (intended 2)
+- one round deeper (depth_limit 6): ~31,835,299,885 considered, calibrated on this cell's funnel; dominated by map_color: grid(2402) x color(2398) x color(2398)
+  ! wake instantiate_seeded_tile-0: COLLISION — retained program differs off the train support: relative_tile(input, 0, 1)
+  ! wake instantiate_seeded_tile-1: COLLISION — retained program differs off the train support: relative_tile(input, 1, 0)
+  ! skip completed-diagonal-tile: SKIP PATH — L_11 solves it: relative_tile(input, 1, 1)
+  ! sleep: the intended abstraction was NOT minted (got [])
+
+0/12 rungs probe clean

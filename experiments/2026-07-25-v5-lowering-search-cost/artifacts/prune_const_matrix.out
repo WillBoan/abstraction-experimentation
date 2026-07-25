@@ -1,0 +1,10 @@
+considered_limit=50000  (each rung run at depth_limit = its target depth)
+rung                    dL        none        prim       const        both
+first_source_color       5  CENS:50000  CENS:50000  CENS:50000  CENS:50000
+second_source_color      5  CENS:50000  CENS:50000  CENS:50000  CENS:50000
+first_target_color       4  CENS:50000  CENS:50000  CENS:50000     ok:4720
+second_target_color      4  CENS:50000  CENS:50000  CENS:50000     ok:4720
+source_mask              5  CENS:50000  CENS:50000  CENS:50000  CENS:50000
+seeded_source_mask       4  CENS:50000  CENS:50000  CENS:50000     ok:8387
+instantiate_first        3  CENS:50000  CENS:50000  CENS:50000    ok:13675
+instantiate_seeded_tile   3  CENS:50000  CENS:50000  CENS:50000    ok:26051

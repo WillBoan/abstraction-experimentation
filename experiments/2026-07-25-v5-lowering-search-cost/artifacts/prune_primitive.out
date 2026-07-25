@@ -1,0 +1,18 @@
+depth_limit=5  considered_limit=50000
+
+first_source_color       |below|=17 -> |pruned|= 6  considered= 50000  CENSORED
+    pruned lib: ['content_coords', 'map_color', 'nth', 'read_color_at_coord', 'relative_tile', 'right_pattern']
+second_source_color      |below|=18 -> |pruned|= 6  considered= 50000  CENSORED
+    pruned lib: ['content_coords', 'map_color', 'nth', 'read_color_at_coord', 'relative_tile', 'right_pattern']
+first_target_color       |below|=19 -> |pruned|= 4  considered= 50000  CENSORED
+    pruned lib: ['content_colors', 'map_color', 'nth_or_default', 'relative_tile']
+second_target_color      |below|=20 -> |pruned|= 4  considered= 50000  CENSORED
+    pruned lib: ['content_colors', 'map_color', 'nth_or_default', 'relative_tile']
+source_mask              |below|=21 -> |pruned|= 7  considered= 50000  CENSORED
+    pruned lib: ['first_source_color', 'mask_by_color', 'mask_union', 'paint_through_mask', 'relative_tile', 'right_pattern', 'second_source_color']
+seeded_source_mask       |below|=22 -> |pruned|= 5  considered= 50000  CENSORED
+    pruned lib: ['mask_complement', 'paint_through_mask', 'relative_tile', 'right_pattern', 'source_mask']
+instantiate_first        |below|=23 -> |pruned|= 6  considered= 50000  CENSORED
+    pruned lib: ['first_source_color', 'first_target_color', 'map_color', 'relative_tile', 'right_pattern', 'seeded_source_mask']
+instantiate_seeded_tile  |below|=24 -> |pruned|= 6  considered= 50000  CENSORED
+    pruned lib: ['instantiate_first', 'map_color', 'relative_tile', 'right_pattern', 'second_source_color', 'second_target_color']

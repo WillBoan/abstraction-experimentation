@@ -5,7 +5,7 @@
 Every static check a `.ladder` file is held to, in the order they run. This file is GENERATED from the checks themselves (each one declares its code, family, stage and severity in its class body), so it cannot drift from what the lint actually does.
 
 - **4 syntax checks** run over the parsed document, before anything resolves. They are pure predicates over what the file says, so the editor reports all of them at once on their exact spans; a strict load raises the first and stops.
-- **29 lint checks** run over the resolved ladder: 24 error-class, 5 advisory. Most are parametrised per rung or per task, so a real ladder runs many more instances.
+- **29 lint checks** run over the resolved ladder: 22 error-class, 7 advisory. Most are parametrised per rung or per task, so a real ladder runs many more instances.
 - **10 of those are corpus-backed** -- they read the generated task grids, or evaluate a subterm on them. `lint(corpus_backed=False)` skips exactly these and NAMES them in `LadderShape.skipped_checks`, which is what lets a draft over assumed primitives be linted at all.
 - **Severity** is the check's default; two checks decide it per finding (`constant-subterm`, `proposer-compat` -- see their rows).
 
@@ -42,11 +42,11 @@ Everything a file answers on its own. A rule belongs here only if it needs nothi
 | --- | ----------------------------- | ---------- | -------- | -------------------------------------------------------------------------------- |
 | 7   | `jump-affordable`             | structural | error    | Every rung template is in reach at the pinned depth_limit.                       |
 | 8   | `proper-composition`          | structural | error    | Every rung composes over the layer below rather than restating a bare primitive. |
-| 9   | `double-jump-intractable`     | structural | error    | Skipping a rung leaves every higher rung out of reach at the pinned depth_limit. |
+| 9   | `double-jump-intractable`     | structural | warn     | Skipping a rung leaves every higher rung out of reach at the pinned depth_limit. |
 | 10  | `top-affordable-with-ladder`  | structural | error    | Every top reference solution is in reach over L_k at the pinned depth_limit.     |
 | 11  | `top-uses-top-rung`           | structural | error    | Every top reference solution calls the top bridging rung.                        |
 | 12  | `raw-intractable`             | structural | error    | No top solution is reachable from the bare floor at the pinned depth_limit.      |
-| 13  | `top-double-jump-intractable` | structural | error    | No top solution is reachable over L_{k-1} (with the top rung skipped).           |
+| 13  | `top-double-jump-intractable` | structural | warn     | No top solution is reachable over L_{k-1} (with the top rung skipped).           |
 | 14  | `rewrite-shallow`             | corpus     | error    | No known equation re-expresses the layer above a skipped rung shallowly.         |
 
 ### Learnability (L) -- can this machinery mint it?

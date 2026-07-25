@@ -6,10 +6,12 @@ ladder al10-skippable
 # rung below. This control breaks exactly that one rule and nothing else. al2's top-skip depth is 4,
 # so pinning ``depth_limit=4`` (instead of 2) means the top is reachable raw -- the rung buys nothing.
 #
-# **This ladder is expected to FAIL its lint** (``top-double-jump-intractable``) and to be REJECTED by
-# the certificate (``no_skip_paths`` false). That is the control working, not a defect. What it
-# measures is what rung-necessity enforcement actually buys -- settling empirically what the design
-# doc settled by fiat.
+# **This ladder is expected to FAIL its lint** (``raw-intractable`` + ``rewrite-shallow[rot90]``, both
+# errors; the skip-freeness codes ``top-double-jump-intractable`` / ``double-jump-intractable`` fire
+# too but are WARNINGS since the 2026-07-24 certificate-profile reframe) and to be REJECTED by the
+# certificate (``no_skip_paths`` false -- the reframe's own gate, unchanged). That is the control
+# working, not a defect. What it measures is what rung-necessity enforcement actually buys --
+# settling empirically what the design doc settled by fiat.
 
 config {
     budget.depth_limit: 4
