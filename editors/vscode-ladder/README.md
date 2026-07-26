@@ -22,10 +22,20 @@ The language server needs the `lsp` extra installed in the arc-lab venv:
 uv sync --extra lsp
 ```
 
+## Staleness: why the server restarts itself
+
+The server is **one long-lived process**, and it builds `BASE_PRIMITIVES` and the check plan at _import_ time. So it lints against the substrate as it stood when the process launched. Add a primitive mid-session and every open `.ladder` file that uses it reports `unknown primitive ..., not in the substrate registry` -- while `arc-lab lint-ladder`, which starts a fresh interpreter per invocation, says OK. The file is fine; the process is old.
+
+Two things close that gap:
+
+- **`Ladder: Restart Language Server`** in the command palette -- the manual out.
+- A watcher on `ladder.server.watchGlobs` (the substrate and the ladders package -- the sources the diagnostics are actually computed _from_) that restarts automatically, debounced so a formatter or a `git checkout` costs one restart rather than fifty. Disable with `ladder.server.restartOnSourceChange`.
+
 ## Configuration
 
 - `ladder.server.command` (default `uv`) and `ladder.server.args` (default `["run","arc-lab","lsp"]`) -- how the server is launched.
 - `ladder.server.cwd` -- working directory (defaults to the first workspace folder).
+- `ladder.server.restartOnSourceChange` (default `true`) and `ladder.server.watchGlobs` -- see above.
 - `ladder.trace.server` -- `off` | `messages` | `verbose` LSP trace, shown in the "Ladder Language Server" output channel.
 
 ## Package

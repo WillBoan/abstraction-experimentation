@@ -2,7 +2,7 @@
   "name": "vscode-ladder",
   "displayName": "Ladder (.ladder)",
   "description": "Syntax highlighting and diagnostics for arc-lab `.ladder` files.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "arc-lab",
   "private": true,
   "license": "MIT",
@@ -18,6 +18,13 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "ladder.restartServer",
+        "title": "Restart Language Server",
+        "category": "Ladder"
+      }
+    ],
     "languages": [
       {
         "id": "ladder",
@@ -62,6 +69,22 @@
           "type": "string",
           "default": "",
           "description": "Working directory for the language server (defaults to the first workspace folder)."
+        },
+        "ladder.server.restartOnSourceChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Restart the language server when the Python sources its diagnostics come from change. The server snapshots the substrate registry and check plan at import time, so without this a primitive added mid-session reads as unresolved in every open .ladder file."
+        },
+        "ladder.server.watchGlobs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "src/arc_lab/program_search/substrate/**/*.py",
+            "src/arc_lab/program_search/ladders/**/*.py"
+          ],
+          "description": "Globs (relative to the server's working directory) watched when ladder.server.restartOnSourceChange is enabled."
         },
         "ladder.trace.server": {
           "type": "string",
