@@ -38,6 +38,40 @@ class JumpAffordable(LadderCheck):
             )
 
 
+class DemoAffordable(LadderCheck):
+    """Every rung's own DEMONSTRATION must be in reach at the pinned ``depth_limit``.
+
+    ``jump-affordable`` measures the rung TEMPLATE, but the wake at rung ``i`` searches for the
+    demonstrating task's solution over ``L_{i-1}`` -- and that is a different program whenever the
+    demo wraps the rung rather than being it. A rung returning a non-Grid value (Mask / Int /
+    Offset / Coord) **must** be wrapped, since a task solution has to produce a Grid, so its demo
+    costs ``d_i + (wrapper depth - 1)``. A ladder can therefore pass ``jump-affordable`` on every
+    rung while every one of its demonstrations is structurally unreachable -- the climb then
+    censors uniformly and the probe reports "not affordable" with no indication of why.
+
+    Invisible to the whole al1-al20 batch: those ladders are Grid-valued and demoed as full
+    solutions (wrapper depth 1), where the demo target IS the template and this check is exactly
+    ``jump-affordable``. It bites the moment a ladder ladders BELOW the Grid type.
+    """
+
+    code = "demo-affordable"
+    category = Category.DEPTH
+    stage = CheckStage.STRUCTURAL
+    summary = "Every rung's demonstrations are in reach over L_{i-1} at the pinned depth_limit."
+
+    def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
+        for rung in ctx.rungs:
+            for task_id, target in ctx.demo_targets[rung.name]:
+                need = min_depth_limit(target)
+                yield self.finding(
+                    need <= ctx.ref_limit,
+                    f"demo `{task_id}` needs depth_limit {need} "
+                    f"(d={compositional_depth(target)}) over L_{rung.level - 1}, "
+                    f"have {ctx.ref_limit}",
+                    subject=rung.name,
+                )
+
+
 class ProperComposition(LadderCheck):
     """A rung is a PROPER composition over ``L_{i-1}``. A depth-1 template is a bare primitive
     already in that library, so it belongs to a lower rung and buys no depth."""
@@ -182,14 +216,28 @@ class RewriteShallow(LadderCheck):
     summary = "No known equation re-expresses the layer above a skipped rung shallowly."
 
     def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
+        # Targets are each rung's CONSUMERS, unfolded to the floor -- the same DAG generalisation
+        # `double-jump-intractable` already makes. A consumer id is either a higher rung's name or
+        # `top:<task_id>`; top consumers are relabelled to the bare task id so the `probe_inputs`
+        # lookup (keyed by rung name or top task id) resolves.
+        unfolded_rungs = {
+            rung.name: unfolded
+            for rung, unfolded in zip(ctx.rungs, ctx.unfolded_templates, strict=True)
+        }
+        rung_consumers = []
+        for rung in ctx.rungs:
+            targets = []
+            for cid, _ in ctx.consumer_programs[rung.name]:
+                if cid.startswith("top:"):
+                    task_id = cid[len("top:") :]
+                    if task_id in ctx.unfolded_by_id:
+                        targets.append((task_id, ctx.unfolded_by_id[task_id]))
+                elif cid in unfolded_rungs:
+                    targets.append((cid, unfolded_rungs[cid]))
+            rung_consumers.append((rung.name, targets))
         yield from self.stamp(
             rewrite_verdicts(
-                list(zip((rung.name for rung in ctx.rungs), ctx.unfolded_templates, strict=True)),
-                [
-                    (tid, ctx.unfolded_by_id[tid])
-                    for tid in ctx.spec.top.task_ids
-                    if tid in ctx.unfolded_by_id
-                ],
+                rung_consumers,
                 ctx.libraries,
                 ctx.ref_limit,
                 ctx.probe_inputs,

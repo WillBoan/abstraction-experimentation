@@ -108,6 +108,30 @@ class CheckContext:
     # -- unfolds (the expensive tier; the shared cache) ------------------------------
 
     @cached_property
+    def demo_targets(self) -> dict[str, list[tuple[str, Program]]]:
+        """Per rung, each demonstration's solution expressed over ``L_{i-1}`` -- the program the
+        wake at that rung must ACTUALLY find.
+
+        Only this rung is expanded: a demo may also call strictly-lower rungs (NAM-5), and those
+        are already in ``L_{i-1}``, so they stay folded. What is left is exactly the target the
+        climb searches for before sleep has minted anything at this level.
+
+        Distinct from :attr:`unfolded_templates`, which is the rung's own body: for a rung whose
+        demonstration wraps it (any non-Grid rung must be wrapped -- a task solution has to produce
+        a Grid), the wrapper adds depth the template does not carry.
+        """
+        return {
+            rung.name: [
+                (
+                    demo.task_id,
+                    unfold_program(demo.solution, self.full_lib, expand=frozenset({rung.name})),
+                )
+                for demo in rung.demonstrations
+            ]
+            for rung in self.rungs
+        }
+
+    @cached_property
     def unfolded_templates(self) -> tuple[Program, ...]:
         """Every rung template unfolded to the floor, in level order."""
         return tuple(unfold_program(rung.template, self.full_lib) for rung in self.rungs)

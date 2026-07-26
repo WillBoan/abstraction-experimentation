@@ -44,6 +44,7 @@ from arc_lab.program_search.execution.forecast_cost import (
     forecast_cost,
     survival_from,
 )
+from arc_lab.program_search.ladders import graph
 from arc_lab.program_search.ladders._render import table
 from arc_lab.program_search.ladders.spec import LadderSpec
 from arc_lab.program_search.search.budget import Budget
@@ -291,11 +292,20 @@ def probe_rung(spec: LadderSpec, level: int, *, budget: Budget | None = None) ->
         if observed is None:
             observed = (entry.task, result)
 
-    skip_ids = (
-        [d.task_id for d in spec.rungs[level].demonstrations]
-        if level < len(spec.rungs)
-        else list(spec.top.task_ids)
-    )
+    # Skip targets are this rung's CONSUMERS, not the next rung by level. For a chain the only
+    # consumer is the immediate successor -- and r_k's consumers are the top tasks -- so this is
+    # byte-identical to the old adjacency form there. On a DAG it is the correction: sibling
+    # branches do not consume each other, so asking whether `east` is still reachable without
+    # `west` tests a dependency that never existed. (Same generalisation as the static
+    # `double-jump-intractable` and `rewrite-shallow` checks.)
+    demos_by_rung = {r.name: [d.task_id for d in r.demonstrations] for r in spec.rungs}
+    skip_ids: list[str] = []
+    for consumer_id in graph.consumer_graph(spec.rungs, spec.top)[rung.name]:
+        if consumer_id.startswith("top:"):
+            skip_ids.append(consumer_id[len("top:") :])
+        else:
+            skip_ids.extend(demos_by_rung.get(consumer_id, ()))
+    skip_ids = list(dict.fromkeys(skip_ids))  # a rung feeding several consumers can repeat a task
     skip: list[TaskProbe] = []
     for task_id in skip_ids:
         above_entry = by_id.get(task_id)

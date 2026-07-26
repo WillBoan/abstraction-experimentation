@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from arc_lab.program_search.ladders.lang import LadderFormatError
-from arc_lab.program_search.ladders.lang.load import ladder_tasks, resolve
+from arc_lab.program_search.ladders.lang.load import ladder_tasks, resolve, structural_spec
 from arc_lab.program_search.ladders.lang.parse import parse_document
 from arc_lab.program_search.ladders.registry import ladder_paths, load_ladder, make_ladder
 from arc_lab.program_search.ladders.shape import LintFinding
@@ -261,6 +261,79 @@ def test_the_two_future_proofing_checks_are_dormant_on_the_batch() -> None:
         for name in ladder_paths()
         for f in _lint_findings(name)
         if not f.ok and f.code in {"free-params-covary", "hof-holes-fillable"}
+    }
+    assert fired == set()
+
+
+#: A rung returning a non-Grid value must be demonstrated through a WRAPPER (a task solution has
+#: to produce a Grid), so the wake searches for the wrapper, not the template. Here the template is
+#: depth 2 -- affordable at the pinned `depth_limit` 2 -- while the demo it is shown at is depth 3.
+_WRAPPED_RUNG = """
+ladder t2
+
+config {
+    budget.depth_limit: 2
+}
+
+floor t2-L0 {
+    use mask_by_color:       (Grid, Color) -> Mask
+    use mask_complement:     (Mask) -> Mask
+    use paint_through_mask:  (Grid, Mask, Color) -> Grid
+}
+
+rung {
+    filled(g: Grid) -> Mask = mask_complement(mask_by_color(g, 0))
+
+    task a {
+        solution: paint_through_mask(input, filled(input), 5)
+        train [[1, 2], [3, 0]]
+        test  [[5, 6], [0, 8]]
+    }
+    task b {
+        solution: paint_through_mask(input, filled(input), 5)
+        train [[2, 0], [4, 5]]
+        test  [[6, 7], [8, 0]]
+    }
+}
+
+top {
+    task c {
+        solution: paint_through_mask(input, filled(input), 7)
+        train [[1, 0], [3, 4]]
+        test  [[5, 0], [7, 8]]
+    }
+}
+"""
+
+
+def test_demo_affordable_catches_a_wrapped_rung_jump_affordable_passes() -> None:
+    """`jump-affordable` measures the rung TEMPLATE; the climb searches for the DEMONSTRATION.
+
+    For a Grid-valued rung shown as a full solution those coincide, which is why the whole
+    al1-al20 batch never distinguished them. For a rung returning a non-Grid value they cannot:
+    the demo must wrap the rung to produce a Grid, and the wrapper's depth is what the wake pays.
+    Without this check such a ladder lints clean and then censors on every rung at probe time,
+    reporting only "the jump is not affordable here" with no cause.
+    """
+    spec = structural_spec(resolve(parse_document(_WRAPPED_RUNG)))
+    findings = spec.lint(corpus_backed=False).findings
+    failed = {f.code for f in findings if not f.ok}
+    # The template is depth 2 and reachable; only the demonstration is out of reach.
+    assert "jump-affordable" not in failed
+    assert "demo-affordable" in failed
+    detail = next(f for f in findings if f.code == "demo-affordable" and not f.ok).detail
+    assert "needs depth_limit 3" in detail and "have 2" in detail
+
+
+def test_demo_affordable_is_dormant_on_the_batch() -> None:
+    """Every al1-al20 ladder is Grid-valued and demoed as a full solution, so its demo target IS
+    its template and this check is exactly `jump-affordable` there. It fires only on ladders that
+    ladder BELOW the Grid type -- if it lights up here, a real ladder tripped it."""
+    fired = {
+        (name, f.slug)
+        for name in ladder_paths()
+        for f in _lint_findings(name)
+        if not f.ok and f.code == "demo-affordable"
     }
     assert fired == set()
 

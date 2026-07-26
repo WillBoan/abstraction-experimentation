@@ -48,6 +48,7 @@ CHECK_PLAN: tuple[LadderCheck, ...] = (
     structure.RungReferenced(),
     # Depth sandwich (D): the tractability claims, anchored at the reference budget.
     depth.JumpAffordable(),
+    depth.DemoAffordable(),
     depth.ProperComposition(),
     depth.DoubleJumpIntractable(),
     depth.TopAffordableWithLadder(),

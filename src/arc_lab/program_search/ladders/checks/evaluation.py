@@ -162,8 +162,7 @@ def conditional_verdicts(
 
 
 def rewrite_verdicts(
-    rungs: Sequence[tuple[str, Program]],
-    top_solutions: Sequence[tuple[str, Program]],
+    rung_consumers: Sequence[tuple[str, Sequence[tuple[str, Program]]]],
     libraries: Sequence[Library],
     depth_limit: int,
     probe_inputs: Mapping[str, tuple[Grid, ...]],
@@ -171,35 +170,31 @@ def rewrite_verdicts(
 ) -> tuple[Verdict, ...]:
     """``rewrite-shallow``: bounded equational skip-path detection, one verdict per skipped rung.
 
-    For each skipped rung ``r_i``: can the layer above it (rung ``r_{i+1}``'s template, or —
-    for ``r_k`` — each top reference solution) be re-expressed over ``L_{i-1}`` within the
-    pinned ``depth_limit``? A found witness is the collapse the depth sandwich cannot see
-    (al7's ``tall4 == stack2(stack2 g)``); it is reported only after BEHAVIORAL confirmation
+    For each skipped rung ``r_i``: can a program that CALLS it be re-expressed over ``L_{i-1}``
+    within the pinned ``depth_limit``? A found witness is the collapse the depth sandwich cannot
+    see (al7's ``tall4 == stack2(stack2 g)``); it is reported only after BEHAVIORAL confirmation
     on the target's own probe inputs, because normal-form equality inherits the interchange
     law's shape side-condition. No witness (or any cap) is a silent pass — this check can
     convict, never acquit.
 
-    ``rungs`` are ``(name, unfolded template)`` in level order and ``top_solutions`` are
-    ``(task_id, unfolded solution)`` — targets arrive PRE-UNFOLDED to the floor (the caller's
-    shared cache owns the expensive unfolds; al14's top is millions of node occurrences).
-    ``libraries`` is ``L_0..L_k``; ``probe_inputs`` maps a rung name (its demos' train inputs)
-    or a top task id to grids.
+    Targets are the rung's **consumers** (:func:`graph.consumer_programs`), not the next rung by
+    level. For a chain the only consumer is the immediate successor -- and ``r_k``'s consumers are
+    the top solutions -- so this is byte-identical to the old adjacency form there. For a DAG it is
+    the correction: sibling branches do not consume each other, and asking whether skipping
+    ``left_half`` leaves ``right_half`` reachable convicts on a dependency that never existed.
+    Mirrors the same generalisation already made in ``double-jump-intractable``.
+
+    ``rung_consumers`` is ``(rung name, [(consumer id, unfolded consumer program)])`` in level
+    order -- targets arrive PRE-UNFOLDED to the floor (the caller's shared cache owns the expensive
+    unfolds; al14's top is millions of node occurrences). ``libraries`` is ``L_0..L_k``;
+    ``probe_inputs`` maps a rung name (its demos' train inputs) or a top task id to grids.
     """
     active_limits = limits if limits is not None else RewriteLimits()
     full_lib = libraries[-1]
     verdicts: list[Verdict] = []
-    k = len(rungs)
-    for i in range(1, k + 1):
-        skipped_name = rungs[i - 1][0]
+    for i, (skipped_name, consumers) in enumerate(rung_consumers, start=1):
         skip_library = libraries[i - 1]
-        if i < k:
-            above_name, above_template = rungs[i]
-            targets = [(above_name, above_template, probe_inputs.get(above_name, ()))]
-        else:
-            targets = [
-                (task_id, solution, probe_inputs.get(task_id, ()))
-                for task_id, solution in top_solutions
-            ]
+        targets = [(label, prog, probe_inputs.get(label, ())) for label, prog in consumers]
         for label, target, grids in targets:
             witness = shallow_equivalent(
                 target, skip_library, libraries[0], depth_limit, active_limits
