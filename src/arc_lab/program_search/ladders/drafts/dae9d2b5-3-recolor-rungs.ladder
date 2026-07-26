@@ -1,0 +1,137 @@
+ladder dae9d2b5-3-recolor-rungs
+
+# ``dae9d2b5-3-recolor-rungs``: the shipped ``dae9d2b5-halves-union`` spine with the two recolours
+# PROMOTED TO RUNGS, so the top collapses to a plain ``overlay`` of two named halves.
+#
+#     recolored_west(g) = map_color(west(g), 4, 6)
+#     recolored_east(g) = map_color(east(g), 3, 6)
+#     top: overlay(0, recolored_west(input), recolored_east(input))       # d2 instead of d3
+#
+# The intent is finer granularity: four rungs instead of two, and a top that reads as one idea.
+
+config {
+    budget.depth_limit: 3
+    budget.max_arity: 3
+    budget.max_pool: 150
+    budget.considered_limit: 30000000
+    search_engine.constant_sources: ['finite-enumerate-scalars']
+}
+
+floor dae9d2b5-recolor-L0 {
+    use halves_h:  (Grid) -> List[Rect]
+    use head:      (List[a]) -> a
+    use nth:       (List[a], Int) -> a
+    use crop_rect: (Grid, Rect) -> Grid
+    use overlay:   (Color, Grid...) -> Grid
+    use map_color: (Grid, Color, Color) -> Grid
+}
+
+rung {
+    west(g: Grid) -> Grid = crop_rect(g, head(halves_h(g)))
+
+    task west-00 {
+        solution: west(input)
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        test  [[4,0,3,3],[0,4,0,0]]
+    }
+    task west-01 {
+        solution: west(input)
+        train [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+        train [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+    }
+    heldout task west-heldout {
+        solution: west(input)
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+    }
+}
+
+rung {
+    east(g: Grid) -> Grid = crop_rect(g, nth(halves_h(g), 1))
+
+    task east-00 {
+        solution: east(input)
+        train [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        test  [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+    }
+    task east-01 {
+        solution: east(input)
+        train [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+        train [[4,0,0,0,0,3],[0,4,0,0,3,0],[0,0,4,3,0,0],[4,4,4,0,0,0]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0]]
+    }
+    heldout task east-heldout {
+        solution: east(input)
+        train [[4,0,0,3],[0,4,3,0],[4,0,0,0],[0,4,3,3],[4,4,3,0]]
+        train [[4,0,0,4,0,3,0,0,0,3],[0,4,0,4,0,0,3,0,3,0]]
+        test  [[4,0,0,0,4,0,0,0,0,3],[0,4,0,4,0,0,0,3,0,0],[0,0,4,0,0,0,3,0,0,0],[4,4,4,4,0,3,0,0,0,0]]
+    }
+}
+
+rung {
+    recolored_west(g: Grid) -> Grid = map_color(west(g), 4, 6)
+
+    task rwest-00 {
+        solution: recolored_west(input)
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,0,3,3],[0,4,0,0]]
+    }
+    task rwest-01 {
+        solution: recolored_west(input)
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        train [[4,0,0,0,0,3],[0,4,0,0,3,0],[0,0,4,3,0,0],[4,4,4,0,0,0]]
+        test  [[4,0,0,4,0,3,0,0,0,3],[0,4,0,4,0,0,3,0,3,0]]
+    }
+    heldout task rwest-heldout {
+        solution: recolored_west(input)
+        train [[4,0,0,0,4,0,0,0,0,3],[0,4,0,4,0,0,0,3,0,0],[0,0,4,0,0,0,3,0,0,0],[4,4,4,4,0,3,0,0,0,0]]
+        train [[4,0,0,3],[0,4,3,0],[4,0,0,0],[0,4,3,3],[4,4,3,0]]
+        test  [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+    }
+}
+
+rung {
+    recolored_east(g: Grid) -> Grid = map_color(east(g), 3, 6)
+
+    task reast-00 {
+        solution: recolored_east(input)
+        train [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+        train [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+        test  [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+    }
+    task reast-01 {
+        solution: recolored_east(input)
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,0,0,4,0,0,0,0,3],[0,4,0,4,0,0,0,3,0,0],[0,0,4,0,0,0,3,0,0,0],[4,4,4,4,0,3,0,0,0,0]]
+        test  [[4,0,0,3],[0,4,3,0],[4,0,0,0],[0,4,3,3],[4,4,3,0]]
+    }
+    heldout task reast-heldout {
+        solution: recolored_east(input)
+        train [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        test  [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+    }
+}
+
+top {
+    task dae9d2b5 {
+        solution: overlay(0, recolored_west(input), recolored_east(input))
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,4,3,3,0],[4,0,0,3,0,0],[0,0,4,3,0,0]]
+        train [[0,0,4,0,3,0],[0,4,4,3,0,3],[4,4,0,0,0,3]]
+        train [[4,4,0,3,0,0],[0,0,0,0,0,3],[4,0,0,0,0,0]]
+        train [[0,0,0,0,3,0],[4,0,0,0,0,0],[0,0,4,3,3,0]]
+        test  [[0,4,4,3,0,0],[4,0,0,3,3,0],[0,4,0,3,0,0]]
+    }
+    heldout task dae9d2b5-heldout {
+        solution: overlay(0, recolored_west(input), recolored_east(input))
+        train [[0,0,4,0,3,0],[0,4,0,3,3,3],[4,0,0,3,0,0]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+    }
+}
