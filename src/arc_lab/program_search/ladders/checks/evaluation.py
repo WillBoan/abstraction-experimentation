@@ -177,12 +177,15 @@ def rewrite_verdicts(
     law's shape side-condition. No witness (or any cap) is a silent pass — this check can
     convict, never acquit.
 
-    Targets are the rung's **consumers** (:func:`graph.consumer_programs`), not the next rung by
+    Targets are the rung's **consumers** (``CheckContext.consumer_targets``), not the next rung by
     level. For a chain the only consumer is the immediate successor -- and ``r_k``'s consumers are
     the top solutions -- so this is byte-identical to the old adjacency form there. For a DAG it is
     the correction: sibling branches do not consume each other, and asking whether skipping
     ``left_half`` leaves ``right_half`` reachable convicts on a dependency that never existed.
     Mirrors the same generalisation already made in ``double-jump-intractable``.
+
+    A consuming rung contributes its DEMONSTRATION TARGETS, not its template -- those are what its
+    wake searches for, so those are what a skip path has to reach.
 
     ``rung_consumers`` is ``(rung name, [(consumer id, unfolded consumer program)])`` in level
     order -- targets arrive PRE-UNFOLDED to the floor (the caller's shared cache owns the expensive
@@ -194,19 +197,26 @@ def rewrite_verdicts(
     verdicts: list[Verdict] = []
     for i, (skipped_name, consumers) in enumerate(rung_consumers, start=1):
         skip_library = libraries[i - 1]
-        targets = [(label, prog, probe_inputs.get(label, ())) for label, prog in consumers]
-        for label, target, grids in targets:
-            witness = shallow_equivalent(
-                target, skip_library, libraries[0], depth_limit, active_limits
-            )
-            confirmed = witness is not None and _witness_confirmed(witness, target, full_lib, grids)
+        # ONE verdict per consumer, not per target: a consumer rung contributes a target per
+        # demonstration (the same program with its parameters bound to different literals), and
+        # those are one claim about one consumer, not several. The first confirmed witness convicts.
+        by_label: dict[str, list[Program]] = {}
+        for label, prog in consumers:
+            by_label.setdefault(label, []).append(prog)
+        for label, programs in by_label.items():
+            grids = probe_inputs.get(label, ())
             detail = ""
-            if confirmed and witness is not None:
-                detail = (
-                    f"{label} is reachable over L_{i - 1} at depth {witness.depth} "
-                    f"(<= depth_limit {depth_limit}) via {_spell(witness.term)}"
+            for target in programs:
+                witness = shallow_equivalent(
+                    target, skip_library, libraries[0], depth_limit, active_limits
                 )
-            verdicts.append(Verdict(subject=skipped_name, ok=not confirmed, detail=detail))
+                if witness is not None and _witness_confirmed(witness, target, full_lib, grids):
+                    detail = (
+                        f"{label} is reachable over L_{i - 1} at depth {witness.depth} "
+                        f"(<= depth_limit {depth_limit}) via {_spell(witness.term)}"
+                    )
+                    break
+            verdicts.append(Verdict(subject=skipped_name, ok=not detail, detail=detail))
     return tuple(verdicts)
 
 

@@ -46,6 +46,7 @@ from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.program import (
     AppFn,
     Apply,
+    Const,
     Input,
     Lam,
     Param,
@@ -246,7 +247,14 @@ def _primitive_names(program: Program) -> set[str]:
 
 
 def _target_leaves(target: Program) -> list[tuple[Program, Type]]:
-    """The target's distinct ``Param``/``Input`` leaves, first-seen order."""
+    """The target's distinct ``Param``/``Input``/``Const`` leaves, first-seen order.
+
+    ``Const`` counts for the same reason the others do: a witness has to compute the same function
+    of the same holes, and a literal the target already names is available to any search that
+    enumerates constants at all. Leaving it out silently un-convicts every target stated with its
+    parameters BOUND -- a rung template carries ``#1`` where its demonstration carries ``3``, so
+    the equational skip path is identical but only the template form can be re-expressed.
+    """
     leaves: list[tuple[Program, Type]] = []
     seen: set[Program] = set()
     for node in target.walk():
@@ -256,6 +264,9 @@ def _target_leaves(target: Program) -> list[tuple[Program, Type]]:
         elif isinstance(node, Input) and node not in seen:
             seen.add(node)
             leaves.append((node, GRID))
+        elif isinstance(node, Const) and node not in seen:
+            seen.add(node)
+            leaves.append((node, node.value_type))
     return leaves
 
 
