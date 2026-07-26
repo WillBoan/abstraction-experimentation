@@ -1,0 +1,228 @@
+ladder dae9d2b5-1-arith-halves
+
+# ``dae9d2b5-halves-union``: the OR-of-two-halves competence of the real ARC task ``dae9d2b5``
+# (arc1-train), laddered over a geometry+mask floor. The first MVE ladder on a screened real task
+# (MVE-PLAN-2026-07-25).
+#
+# The competence: an ``h x 2w`` grid carries colour 4 on its left half and 3 on its right; the answer
+# is the ``h x w`` grid holding 6 wherever EITHER half is non-blank. Verified against arc1-train
+# ground truth (all 5 train + both held-out tests) at depth 9 before authoring.
+#
+# The spine derives the split geometry rather than baking it: ``half_width`` -> ``half_extent`` ->
+# the two halves -> the mask algebra -> the painted answer. Two chains meet at ``both_blank``
+# (fan-in 2), so this is a genuine recombination, not a telescope.
+#
+# **Grid discipline (the al14 lesson, applied):** every task's train inputs differ in WIDTH, so the
+# composite INT subterm ``floordiv(width(input), 2)`` is never train-constant and can never be beaten
+# by an enumerated literal. That is also why the top task carries two synthetic same-rule grids
+# alongside the five real ARC ones -- the real task's grids are all 3x6, which alone would bake the
+# split width into a literal and measure the wrong thing.
+#
+# **Proposer**: ``StitchProposer``, not the batch default ``AntiunifyPairs``. Four rungs here return
+# non-Grid values (Int / Offset / Coord / Mask), and a task solution must produce a Grid, so those
+# rungs can only ever be demonstrated as FRAGMENTS -- a kind AntiunifyPairs structurally cannot
+# serve (``proposer-compat``). Any ladder that ladders below the Grid type meets this.
+
+config {
+    budget.depth_limit: 3
+    budget.max_pool: 4000
+    search_engine.constant_sources: ['finite-enumerate-scalars']
+    learn.learn_engine.proposer: 'StitchProposer'
+}
+
+floor dae9d2b5-L0 {
+    use width:              (Grid) -> Int
+    use height:             (Grid) -> Int
+    use floordiv:           (Int, Int) -> Int
+    use offset:             (Int, Int) -> Offset
+    use coord:              (Int, Int) -> Coord
+    use rect:               (Coord, Offset) -> Rect
+    use crop_rect:          (Grid, Rect) -> Grid
+    use mask_by_color:      (Grid, Color) -> Mask
+    use mask_intersect:     (Mask, Mask) -> Mask
+    use mask_complement:    (Mask) -> Mask
+    use blank:              (Offset, Color) -> Grid
+    use paint_through_mask: (Grid, Mask, Color) -> Grid
+}
+
+rung {
+    half_width(g: Grid) -> Int = floordiv(width(g), 2)
+
+    task half_width-00 {
+        solution: blank(offset(half_width(input), half_width(input)), 0)
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        test  [[4,0,3,3],[0,4,0,0]]
+    }
+    task half_width-01 {
+        solution: blank(offset(half_width(input), half_width(input)), 0)
+        train [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+        train [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+    }
+    heldout task half_width-heldout {
+        solution: blank(offset(half_width(input), half_width(input)), 0)
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+    }
+}
+
+rung {
+    half_extent(g: Grid) -> Offset = offset(height(g), half_width(g))
+
+    task half_extent-00 {
+        solution: blank(half_extent(input), 0)
+        train [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        test  [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+    }
+    task half_extent-01 {
+        solution: blank(half_extent(input), 0)
+        train [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+        train [[4,0,0,0,0,3],[0,4,0,0,3,0],[0,0,4,3,0,0],[4,4,4,0,0,0]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0]]
+    }
+    heldout task half_extent-heldout {
+        solution: blank(half_extent(input), 0)
+        train [[4,0,0,3],[0,4,3,0],[4,0,0,0],[0,4,3,3],[4,4,3,0]]
+        train [[4,0,0,4,0,3,0,0,0,3],[0,4,0,4,0,0,3,0,3,0]]
+        test  [[4,0,0,0,4,0,0,0,0,3],[0,4,0,4,0,0,0,3,0,0],[0,0,4,0,0,0,3,0,0,0],[4,4,4,4,4,3,0,0,0,0]]
+    }
+}
+
+rung {
+    right_origin(g: Grid) -> Coord = coord(0, half_width(g))
+
+    task right_origin-00 {
+        solution: crop_rect(input, rect(right_origin(input), half_extent(input)))
+        train [[4,0,0,3],[0,4,3,0],[4,4,0,0]]
+        train [[4,0,0,4,0,3,0,0,0,3],[0,4,0,4,0,0,3,0,3,0]]
+        test  [[4,0,0,0,4,0,0,0,0,3],[0,4,0,4,0,0,0,3,0,0],[0,0,4,0,0,0,3,0,0,0],[4,4,4,4,4,3,0,0,0,0]]
+    }
+    task right_origin-01 {
+        solution: crop_rect(input, rect(right_origin(input), half_extent(input)))
+        train [[4,0,0,0,4,0,0,3,0,0],[0,4,4,4,0,3,0,0,0,3],[4,0,0,0,4,0,3,0,3,0]]
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        test  [[4,0,3,3],[0,4,0,0]]
+    }
+    heldout task right_origin-heldout {
+        solution: crop_rect(input, rect(right_origin(input), half_extent(input)))
+        train [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+        train [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+    }
+}
+
+rung {
+    left_half(g: Grid) -> Grid = crop_rect(g, rect(coord(0, 0), half_extent(g)))
+
+    task left_half-00 {
+        solution: left_half(input)
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        test  [[4,0,3,3],[0,4,0,0]]
+    }
+    task left_half-01 {
+        solution: left_half(input)
+        train [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+        train [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+    }
+    heldout task left_half-heldout {
+        solution: left_half(input)
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+    }
+}
+
+rung {
+    right_half(g: Grid) -> Grid = crop_rect(g, rect(right_origin(g), half_extent(g)))
+
+    task right_half-00 {
+        solution: right_half(input)
+        train [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        test  [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+    }
+    task right_half-01 {
+        solution: right_half(input)
+        train [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+        train [[4,0,0,0,0,3],[0,4,0,0,3,0],[0,0,4,3,0,0],[4,4,4,0,0,0]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0]]
+    }
+    heldout task right_half-heldout {
+        solution: right_half(input)
+        train [[4,0,0,3],[0,4,3,0],[4,0,0,0],[0,4,3,3],[4,4,3,0]]
+        train [[4,0,0,4,0,3,0,0,0,3],[0,4,0,4,0,0,3,0,3,0]]
+        test  [[4,0,0,0,4,0,0,0,0,3],[0,4,0,4,0,0,0,3,0,0],[0,0,4,0,0,0,3,0,0,0],[4,4,4,4,4,3,0,0,0,0]]
+    }
+}
+
+rung {
+    both_blank(g: Grid) -> Mask = mask_intersect(mask_by_color(left_half(g), 0), mask_by_color(right_half(g), 0))
+
+    task both_blank-00 {
+        solution: paint_through_mask(blank(half_extent(input), 0), both_blank(input), 8)
+        train [[4,0,0,3],[0,4,3,0],[4,4,0,0]]
+        train [[4,0,0,4,0,3,0,0,0,3],[0,4,0,4,0,0,3,0,3,0]]
+        test  [[4,0,0,0,4,0,0,0,0,3],[0,4,0,4,0,0,0,3,0,0],[0,0,4,0,0,0,3,0,0,0],[4,4,4,4,4,3,0,0,0,0]]
+    }
+    task both_blank-01 {
+        solution: paint_through_mask(blank(half_extent(input), 0), both_blank(input), 8)
+        train [[4,0,0,0,4,0,0,3,0,0],[0,4,4,4,0,3,0,0,0,3],[4,0,0,0,4,0,3,0,3,0]]
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        test  [[4,0,3,3],[0,4,0,0]]
+    }
+    heldout task both_blank-heldout {
+        solution: paint_through_mask(blank(half_extent(input), 0), both_blank(input), 8)
+        train [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+        train [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+    }
+}
+
+rung {
+    either_filled(g: Grid) -> Mask = mask_complement(both_blank(g))
+
+    task either_filled-00 {
+        solution: paint_through_mask(blank(half_extent(input), 0), either_filled(input), 8)
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        test  [[4,0,3,3],[0,4,0,0]]
+    }
+    task either_filled-01 {
+        solution: paint_through_mask(blank(half_extent(input), 0), either_filled(input), 8)
+        train [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+        train [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+    }
+    heldout task either_filled-heldout {
+        solution: paint_through_mask(blank(half_extent(input), 0), either_filled(input), 8)
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+    }
+}
+
+top {
+    task dae9d2b5 {
+        solution: paint_through_mask(blank(half_extent(input), 0), either_filled(input), 6)
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,4,3,3,0],[4,0,0,3,0,0],[0,0,4,3,0,0]]
+        train [[0,0,4,0,3,0],[0,4,4,3,0,3],[4,4,0,0,0,3]]
+        train [[4,4,0,3,0,0],[0,0,0,0,0,3],[4,0,0,0,0,0]]
+        train [[0,0,0,0,3,0],[4,0,0,0,0,0],[0,0,4,3,3,0]]
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        train [[4,0,0,4,0,3,0,0,0,3],[0,4,0,4,0,0,3,0,3,0]]
+        test  [[0,4,4,3,0,0],[4,0,0,3,3,0],[0,4,0,3,0,0]]
+    }
+    heldout task dae9d2b5-heldout {
+        solution: paint_through_mask(blank(half_extent(input), 0), either_filled(input), 6)
+        train [[0,0,4,0,3,0],[0,4,0,3,3,3],[4,0,0,3,0,0]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        test  [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+    }
+}

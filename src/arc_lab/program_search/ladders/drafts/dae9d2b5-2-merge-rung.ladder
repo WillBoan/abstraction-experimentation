@@ -1,0 +1,125 @@
+ladder dae9d2b5-2-merge-rung
+
+# ``dae9d2b5-2-merge-rung``: the perceived-split `dae9d2b5` ladder WITH the merge as a rung.
+# RECONSTRUCTED (2026-07-26) from the recorded design -- the generator was patched forward in
+# place before this variant was saved.
+#
+# **Kept because its probe verdict is the finding.** Every rung wakes AS-INTENDED and sleep
+# recovers each at the intended arity, but the top probes an explicit SKIP PATH:
+#
+#     overlay(0, map_color(west(input), 4, 6), map_color(east(input), 3, 6))
+#
+# reaches the top over L_2 without `merged`, because **`map_color` distributes over `overlay`**:
+# merge-then-recolour equals recolour-then-merge when the colours do not collide. So a merge rung
+# is not skip-free on this competence at all -- which is why the shipped
+# `dae9d2b5-halves-union` states its top in the distributed form and drops the rung.
+#
+# That distributivity is a candidate `BASE_EQUATION` (TODO item 19): with it, `rewrite-shallow`
+# would convict this statically in ~1s instead of a 25-minute probe. It is CONDITIONAL (it breaks
+# when the recolour target equals the overlay mask colour, and `overlay` takes the max non-mask
+# value, so recolouring can change which value wins), so it needs the same behavioural-confirmation
+# treatment `concat-interchange` gets.
+
+config {
+    budget.depth_limit: 3
+    budget.max_arity: 3
+    budget.max_pool: 2000
+    budget.considered_limit: 1500000
+    search_engine.constant_sources: ['finite-enumerate-scalars']
+}
+
+floor dae9d2b5-merge-L0 {
+    use halves_h:  (Grid) -> List[Rect]
+    use head:      (List[a]) -> a
+    use nth:       (List[a], Int) -> a
+    use crop_rect: (Grid, Rect) -> Grid
+    use overlay:   (Color, Grid...) -> Grid
+    use map_color: (Grid, Color, Color) -> Grid
+}
+
+rung {
+    west(g: Grid) -> Grid = crop_rect(g, head(halves_h(g)))
+
+    task west-00 {
+        solution: west(input)
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        test  [[4,0,3,3],[0,4,0,0]]
+    }
+    task west-01 {
+        solution: west(input)
+        train [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+        train [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+    }
+    heldout task west-heldout {
+        solution: west(input)
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+    }
+}
+
+rung {
+    east(g: Grid) -> Grid = crop_rect(g, nth(halves_h(g), 1))
+
+    task east-00 {
+        solution: east(input)
+        train [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        test  [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+    }
+    task east-01 {
+        solution: east(input)
+        train [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+        train [[4,0,0,0,0,3],[0,4,0,0,3,0],[0,0,4,3,0,0],[4,4,4,0,0,0]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0]]
+    }
+    heldout task east-heldout {
+        solution: east(input)
+        train [[4,0,0,3],[0,4,3,0],[4,0,0,0],[0,4,3,3],[4,4,3,0]]
+        train [[4,0,0,4,0,3,0,0,0,3],[0,4,0,4,0,0,3,0,3,0]]
+        test  [[4,0,0,0,4,0,0,0,0,3],[0,4,0,4,0,0,0,3,0,0],[0,0,4,0,0,0,3,0,0,0],[4,4,4,4,0,3,0,0,0,0]]
+    }
+}
+
+rung {
+    merged(g: Grid) -> Grid = overlay(0, west(g), east(g))
+
+    task merged-00 {
+        solution: merged(input)
+        train [[4,0,0,3],[0,4,3,0],[4,4,0,0]]
+        train [[4,0,0,3],[0,4,3,0],[4,0,0,0],[0,4,3,3],[4,4,3,0]]
+        test  [[4,0,0,4,0,3,0,0,0,3],[0,4,0,4,0,0,3,0,3,0]]
+    }
+    task merged-01 {
+        solution: merged(input)
+        train [[4,0,0,0,4,0,0,0,0,3],[0,4,0,4,0,0,0,3,0,0],[0,0,4,0,0,0,3,0,0,0],[4,4,4,4,0,3,0,0,0,0]]
+        train [[4,0,0,0,4,0,0,3,0,0],[0,4,4,4,0,3,0,0,0,3],[4,0,0,0,4,0,3,0,3,0]]
+        test  [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+    }
+    heldout task merged-heldout {
+        solution: merged(input)
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        train [[4,0,3,3],[0,4,0,0]]
+        test  [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+    }
+}
+
+top {
+    task dae9d2b5 {
+        solution: map_color(map_color(merged(input), 4, 6), 3, 6)
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,4,3,3,0],[4,0,0,3,0,0],[0,0,4,3,0,0]]
+        train [[0,0,4,0,3,0],[0,4,4,3,0,3],[4,4,0,0,0,3]]
+        train [[4,4,0,3,0,0],[0,0,0,0,0,3],[4,0,0,0,0,0]]
+        train [[0,0,0,0,3,0],[4,0,0,0,0,0],[0,0,4,3,3,0]]
+        test  [[0,4,4,3,0,0],[4,0,0,3,3,0],[0,4,0,3,0,0]]
+    }
+    heldout task dae9d2b5-heldout {
+        solution: map_color(map_color(merged(input), 4, 6), 3, 6)
+        train [[0,0,4,0,3,0],[0,4,0,3,3,3],[4,0,0,3,0,0]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+    }
+}
