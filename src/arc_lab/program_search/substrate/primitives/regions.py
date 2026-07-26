@@ -143,6 +143,33 @@ def _quadrants(grid: Grid) -> tuple[Rect, ...]:
     return tuple(quadrants)
 
 
+def _halves_h(grid: Grid) -> tuple[Rect, ...]:
+    """The two halves side by side (west, east) -- the ``concat_h`` inverse, as regions.
+
+    ``quadrants`` already computes this split (its ``left``), but bundles it with the row split, so
+    a two-panel grid could not be addressed without leaving the region types. Odd widths split with
+    the larger half first, matching ``quadrants`` exactly, so the two always tile the grid.
+    """
+    left = (grid.width + 1) // 2
+    spans = ((0, left), (left, grid.width))
+    return tuple(
+        Rect(Coord(0, col_lo), Offset(grid.height, col_hi - col_lo))
+        for col_lo, col_hi in spans
+        if col_lo < col_hi  # a 1-wide grid has no east half
+    )
+
+
+def _halves_v(grid: Grid) -> tuple[Rect, ...]:
+    """The two halves stacked (north, south) -- the ``concat_v`` inverse. See :func:`_halves_h`."""
+    top = (grid.height + 1) // 2
+    spans = ((0, top), (top, grid.height))
+    return tuple(
+        Rect(Coord(row_lo, 0), Offset(row_hi - row_lo, grid.width))
+        for row_lo, row_hi in spans
+        if row_lo < row_hi
+    )
+
+
 def _squares_of_size(grid: Grid, size: int) -> tuple[Rect, ...]:
     """Every axis-aligned ``size`` x ``size`` square, row-major. O(n^2) -- the affordable form."""
     if size < 1:
@@ -301,6 +328,12 @@ PASTE = Primitive(name="paste", param_types=(GRID, GRID, COORD), return_type=GRI
 QUADRANTS = Primitive(
     name="quadrants", param_types=(GRID,), return_type=list_type(RECT), impl=_quadrants
 )
+HALVES_H = Primitive(
+    name="halves_h", param_types=(GRID,), return_type=list_type(RECT), impl=_halves_h
+)
+HALVES_V = Primitive(
+    name="halves_v", param_types=(GRID,), return_type=list_type(RECT), impl=_halves_v
+)
 SQUARES_OF_SIZE = Primitive(
     name="squares_of_size",
     param_types=(GRID, INT),
@@ -347,6 +380,8 @@ REGION_PRIMITIVES = (
     CROP_RECT,
     PASTE,
     QUADRANTS,
+    HALVES_H,
+    HALVES_V,
     SQUARES_OF_SIZE,
     SQUARES,
     FILLED_SQUARES,
