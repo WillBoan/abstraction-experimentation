@@ -1,0 +1,136 @@
+ladder 4347f46a-hollow-rects
+
+# ``4347f46a-hollow-rects``: the hollow-every-rectangle competence of the real ARC task ``4347f46a``
+# (arc1-train), laddered over a shift+mask floor. An MVE ladder on a screened real task
+# (MVE-PLAN-2026-07-25).
+#
+# The competence: solid rectangles on a blank ground lose their interiors, keeping only their
+# one-cell borders. A cell is interior iff ALL FOUR orthogonal neighbours are filled; ``translate``
+# zero-fills, so grid-border cells are correctly never interior. Verified against arc1-train ground
+# truth (all 3 train + the held-out test) at depth 8 before authoring.
+#
+# The spine: one PARAMETERIZED rung ``neighbor_filled(g, d)`` -- "is the neighbour in direction d
+# filled" -- reused at four directions, then the vertical and horizontal pairs, which the top
+# intersects. ``neighbor_filled`` is demonstrated at varying ``d``, which is what makes the mint
+# take the direction as a parameter instead of specialising to one (the S-B arity law).
+#
+# **Breadth discipline, learned the hard way on this very ladder.** Two earlier shapes failed the
+# probe, both on the breadth axis rather than the depth axis:
+#
+# - A ``dae9d2b5`` exact-halves sibling needed ``floordiv`` to derive the split width. ``floordiv``
+#   closes over a growing INT pool (~1034 x 1034 = 1M compositions per round) and censored at 2M
+#   considered. Integer division is a breadth bomb in this engine.
+# - This ladder's own first draft used FOUR sibling shift rungs (``shift_down``/``up``/``left``/
+#   ``right``). Every one probed as a SKIP PATH -- each is independently reachable from the floor at
+#   ``depth_limit`` 3, since siblings do not compose -- and the four extra abstractions taxed the
+#   pool in every later round until rungs 5+ censored.
+#
+# Hence: no ``offset(Int, Int)`` and no int-producing primitive in the floor at all. Constants are
+# minted only for types the library actually USES (``leaves.py::_type_in_use``), so with INT and
+# COORD absent the round-0 battery is just the OFFSET square plus the 10 COLORs. Demo grids are kept
+# to max dimension 7 for the same reason -- the OFFSET battery is (max_dim + 1)^2.
+#
+# **Proposer**: ``StitchProposer``. Every rung returns a Mask and a task solution must produce a
+# Grid, so they can only be demonstrated as FRAGMENTS -- which ``AntiunifyPairs`` cannot serve.
+
+config {
+    budget.depth_limit: 3
+    budget.max_pool: 6000
+    budget.considered_limit: 1000000
+    search_engine.constant_sources: ['finite-enumerate']
+    learn.learn_engine.proposer: 'StitchProposer'
+}
+
+floor 4347f46a-L0 {
+    use translate:          (Grid, Offset) -> Grid
+    use offset_neg:         (Offset) -> Offset
+    use mask_by_color:      (Grid, Color) -> Mask
+    use mask_complement:    (Mask) -> Mask
+    use mask_intersect:     (Mask, Mask) -> Mask
+    use paint_through_mask: (Grid, Mask, Color) -> Grid
+}
+
+rung {
+    neighbor_filled(g: Grid, d: Offset) -> Mask = mask_complement(mask_by_color(translate(g, d), 0))
+
+    task neighbor_filled-00 {
+        solution: paint_through_mask(input, neighbor_filled(input, (1, 0)), 5)
+        train [[0,0,0,0,0,0],[0,2,2,2,2,0],[0,2,2,2,2,0],[0,2,2,2,2,0],[0,2,2,2,2,0],[0,0,0,0,0,0]]
+        train [[0,0,0,0,0,0],[0,3,3,3,0,0],[0,3,3,3,0,0],[0,3,3,3,0,0],[0,3,3,3,0,0],[0,3,3,3,0,0],[0,0,0,0,0,0]]
+        test  [[0,0,0,0,0,0,0],[0,0,6,6,6,6,0],[0,0,6,6,6,6,0],[0,0,6,6,6,6,0],[0,0,6,6,6,6,0],[0,0,0,0,0,0,0]]
+    }
+    task neighbor_filled-01 {
+        solution: paint_through_mask(input, neighbor_filled(input, (0, 1)), 5)
+        train [[0,0,0,0,0,0,0],[0,8,8,8,0,0,0],[0,8,8,8,0,0,0],[0,8,8,8,0,0,0],[0,0,0,4,4,4,0],[0,0,0,4,4,4,0],[0,0,0,4,4,4,0]]
+        train [[0,0,0,0,0,0,0],[0,0,0,0,0,7,7],[0,5,5,5,0,7,7],[0,5,5,5,0,7,7],[0,5,5,5,0,7,7],[0,0,0,0,0,0,0]]
+        test  [[0,0,0,0,0,0],[0,1,1,0,0,0],[0,1,1,0,9,9],[0,1,1,0,9,9],[0,1,1,0,9,9],[0,1,1,0,9,9],[0,0,0,0,0,0]]
+    }
+    heldout task neighbor_filled-heldout {
+        solution: paint_through_mask(input, neighbor_filled(input, offset_neg((1, 0))), 5)
+        train [[0,0,0,0,0,0],[0,3,3,3,3,0],[0,3,3,3,3,0],[0,3,3,3,3,0],[0,0,0,0,0,0]]
+        train [[0,0,0,0,0,0,0],[0,6,6,6,0,0,0],[0,6,6,6,0,0,0],[0,6,6,2,2,2,2],[0,0,0,2,2,2,2],[0,0,0,2,2,2,2],[0,0,0,2,2,2,2]]
+        test  [[0,0,0,0,0,0],[0,0,4,4,4,0],[0,0,4,4,4,0],[0,0,4,4,4,0],[0,0,4,4,4,0],[0,0,0,0,0,0]]
+    }
+}
+
+rung {
+    vertical_neighbors(g: Grid) -> Mask = mask_intersect(neighbor_filled(g, (1, 0)), neighbor_filled(g, offset_neg((1, 0))))
+
+    task vertical_neighbors-00 {
+        solution: paint_through_mask(input, vertical_neighbors(input), 5)
+        train [[0,0,0,0,0,0],[0,1,1,0,0,0],[0,1,1,0,9,9],[0,1,1,0,9,9],[0,1,1,0,9,9],[0,1,1,0,9,9],[0,0,0,0,0,0]]
+        train [[0,0,0,0,0,0],[0,3,3,3,3,0],[0,3,3,3,3,0],[0,3,3,3,3,0],[0,0,0,0,0,0]]
+        test  [[0,0,0,0,0,0,0],[0,6,6,6,0,0,0],[0,6,6,6,0,0,0],[0,6,6,2,2,2,2],[0,0,0,2,2,2,2],[0,0,0,2,2,2,2],[0,0,0,2,2,2,2]]
+    }
+    task vertical_neighbors-01 {
+        solution: paint_through_mask(input, vertical_neighbors(input), 5)
+        train [[0,0,0,0,0,0],[0,0,4,4,4,0],[0,0,4,4,4,0],[0,0,4,4,4,0],[0,0,4,4,4,0],[0,0,0,0,0,0]]
+        train [[0,0,0,0,0,0],[0,0,0,0,5,5],[0,7,7,7,5,5],[0,7,7,7,5,5],[0,7,7,7,5,5],[0,7,7,7,5,5],[0,0,0,0,0,0]]
+        test  [[0,0,0,0,0,0,0],[0,9,9,9,0,0,0],[0,9,9,9,8,8,8],[0,9,9,9,8,8,8],[0,0,0,0,8,8,8]]
+    }
+    heldout task vertical_neighbors-heldout {
+        solution: paint_through_mask(input, vertical_neighbors(input), 5)
+        train [[0,0,0,0,0],[0,1,1,1,0],[0,1,1,1,0],[0,1,1,1,0],[0,1,1,1,0],[0,1,1,1,0],[0,0,0,0,0]]
+        train [[0,0,0,0,0],[0,2,2,2,0],[0,2,2,2,0],[0,2,2,2,0],[0,2,2,2,0],[0,0,0,0,0]]
+        test  [[0,0,0,0,0,0],[0,5,5,5,5,0],[0,5,5,5,5,0],[0,5,5,5,5,0],[0,0,6,6,6,0],[0,0,6,6,6,0],[0,0,6,6,6,0]]
+    }
+}
+
+rung {
+    horizontal_neighbors(g: Grid) -> Mask = mask_intersect(neighbor_filled(g, (0, 1)), neighbor_filled(g, offset_neg((0, 1))))
+
+    task horizontal_neighbors-00 {
+        solution: paint_through_mask(input, horizontal_neighbors(input), 5)
+        train [[0,0,0,0,0,0,0],[0,9,9,9,0,0,0],[0,9,9,9,8,8,8],[0,9,9,9,8,8,8],[0,0,0,0,8,8,8]]
+        train [[0,0,0,0,0],[0,1,1,1,0],[0,1,1,1,0],[0,1,1,1,0],[0,1,1,1,0],[0,1,1,1,0],[0,0,0,0,0]]
+        test  [[0,0,0,0,0],[0,2,2,2,0],[0,2,2,2,0],[0,2,2,2,0],[0,2,2,2,0],[0,0,0,0,0]]
+    }
+    task horizontal_neighbors-01 {
+        solution: paint_through_mask(input, horizontal_neighbors(input), 5)
+        train [[0,0,0,0,0,0],[0,5,5,5,5,0],[0,5,5,5,5,0],[0,5,5,5,5,0],[0,0,6,6,6,0],[0,0,6,6,6,0],[0,0,6,6,6,0]]
+        train [[0,0,0,0,0,0],[0,7,7,7,7,0],[0,7,7,7,7,0],[0,7,7,7,7,0],[0,0,0,0,0,0]]
+        test  [[0,0,0,0,0,0],[0,2,2,2,2,0],[0,2,2,2,2,0],[0,2,2,2,2,0],[0,2,2,2,2,0],[0,0,0,0,0,0]]
+    }
+    heldout task horizontal_neighbors-heldout {
+        solution: paint_through_mask(input, horizontal_neighbors(input), 5)
+        train [[0,0,0,0,0,0],[0,3,3,3,0,0],[0,3,3,3,0,0],[0,3,3,3,0,0],[0,3,3,3,0,0],[0,3,3,3,0,0],[0,0,0,0,0,0]]
+        train [[0,0,0,0,0,0,0],[0,0,6,6,6,6,0],[0,0,6,6,6,6,0],[0,0,6,6,6,6,0],[0,0,6,6,6,6,0],[0,0,0,0,0,0,0]]
+        test  [[0,0,0,0,0,0,0],[0,8,8,8,0,0,0],[0,8,8,8,0,0,0],[0,8,8,8,0,0,0],[0,0,0,4,4,4,0],[0,0,0,4,4,4,0],[0,0,0,4,4,4,0]]
+    }
+}
+
+top {
+    task 4347f46a {
+        solution: paint_through_mask(input, mask_intersect(vertical_neighbors(input), horizontal_neighbors(input)), 0)
+        train [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0],[0,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0],[0,8,8,8,8,0,3,3,3,3,3,3,3,0,0,0],[0,0,0,0,0,0,3,3,3,3,3,3,3,0,0,0],[0,0,0,0,0,0,3,3,3,3,3,3,3,0,0,0],[0,0,0,0,0,0,3,3,3,3,3,3,3,0,0,0],[0,0,0,0,0,0,3,3,3,3,3,3,3,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,6,6,6,6,6,6,6,0,0,0,7,7,7,0],[0,0,6,6,6,6,6,6,6,0,0,0,7,7,7,0],[0,0,6,6,6,6,6,6,6,0,0,0,7,7,7,0],[0,0,6,6,6,6,6,6,6,0,0,0,7,7,7,0],[0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+        train [[0,0,0,0,0,0,0],[0,2,2,2,2,2,0],[0,2,2,2,2,2,0],[0,2,2,2,2,2,0],[0,2,2,2,2,2,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]
+        train [[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,5,5,5,5,5,5,5,5,0,0],[0,0,5,5,5,5,5,5,5,5,0,0],[0,0,5,5,5,5,5,5,5,5,0,0],[0,0,5,5,5,5,5,5,5,5,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,4,4,4,4,4,4,0,0,0,0,0],[0,4,4,4,4,4,4,0,0,0,0,0],[0,4,4,4,4,4,4,0,0,0,0,0],[0,4,4,4,4,4,4,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]
+        test  [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,8,8,8,8,8,8,0,0,0,0,6,6,6,6,0,0,0,0],[0,8,8,8,8,8,8,0,0,0,0,6,6,6,6,0,0,0,0],[0,8,8,8,8,8,8,0,0,0,0,6,6,6,6,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,3,3,3,3,3,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,3,3,3,3,3,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,3,3,3,3,3,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+    }
+    heldout task 4347f46a-heldout {
+        solution: paint_through_mask(input, mask_intersect(vertical_neighbors(input), horizontal_neighbors(input)), 0)
+        train [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,8,8,8,8,8,8,0,0,0,0,6,6,6,6,0,0,0,0],[0,8,8,8,8,8,8,0,0,0,0,6,6,6,6,0,0,0,0],[0,8,8,8,8,8,8,0,0,0,0,6,6,6,6,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,4,4,4,4,4,4,0,0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,3,3,3,3,3,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,3,3,3,3,3,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,3,3,3,3,3,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+        train [[0,0,0,0,0,0,0],[0,6,6,6,0,0,0],[0,6,6,6,0,0,0],[0,6,6,2,2,2,2],[0,0,0,2,2,2,2],[0,0,0,2,2,2,2],[0,0,0,2,2,2,2]]
+        test  [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0],[0,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0],[0,8,8,8,8,0,3,3,3,3,3,3,3,0,0,0],[0,0,0,0,0,0,3,3,3,3,3,3,3,0,0,0],[0,0,0,0,0,0,3,3,3,3,3,3,3,0,0,0],[0,0,0,0,0,0,3,3,3,3,3,3,3,0,0,0],[0,0,0,0,0,0,3,3,3,3,3,3,3,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,6,6,6,6,6,6,6,0,0,0,7,7,7,0],[0,0,6,6,6,6,6,6,6,0,0,0,7,7,7,0],[0,0,6,6,6,6,6,6,6,0,0,0,7,7,7,0],[0,0,6,6,6,6,6,6,6,0,0,0,7,7,7,0],[0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+    }
+}

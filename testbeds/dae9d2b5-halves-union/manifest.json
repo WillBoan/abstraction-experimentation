@@ -1,0 +1,47 @@
+{
+  "name": "dae9d2b5-halves-union",
+  "note": "Generated from dae9d2b5-halves-union.ladder",
+  "content_hash": "b4fcc47eaeea6a98",
+  "tasks": [
+    {
+      "task_id": "west-00",
+      "label": "west",
+      "split": "train"
+    },
+    {
+      "task_id": "west-01",
+      "label": "west",
+      "split": "train"
+    },
+    {
+      "task_id": "west-heldout",
+      "label": "west",
+      "split": "heldout"
+    },
+    {
+      "task_id": "east-00",
+      "label": "east",
+      "split": "train"
+    },
+    {
+      "task_id": "east-01",
+      "label": "east",
+      "split": "train"
+    },
+    {
+      "task_id": "east-heldout",
+      "label": "east",
+      "split": "heldout"
+    },
+    {
+      "task_id": "dae9d2b5",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "dae9d2b5-heldout",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

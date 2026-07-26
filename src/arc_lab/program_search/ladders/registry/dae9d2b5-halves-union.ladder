@@ -1,0 +1,122 @@
+ladder dae9d2b5-halves-union
+
+# ``dae9d2b5-halves-union``: the merge-two-halves competence of the real ARC task ``dae9d2b5``
+# (arc1-train), laddered over a perceived-split floor. An MVE ladder on a screened real task
+# (MVE-PLAN-2026-07-25).
+#
+# The competence: an ``h x 2w`` grid carries colour 4 on its left half and 3 on its right; the answer
+# is the ``h x w`` grid holding 6 wherever EITHER half is non-blank. Verified against arc1-train
+# ground truth (all 5 train + both held-out tests) before authoring.
+#
+# The spine: the two halves; the top recolours each and merges them. Fan-in 2 at the top, so this
+# is a goal-layer recombination rather than a telescope.
+#
+# **The merge is deliberately NOT a rung**, and that is a measured finding rather than a taste call.
+# ``map_color`` DISTRIBUTES over ``overlay``: merge-then-recolour equals recolour-then-merge when
+# the colours do not collide. So any ``merged`` rung is reachable around -- the probe found
+# ``overlay(0, map_color(west(input), 4, 6), map_color(east(input), 3, 6))`` as an explicit SKIP
+# PATH on the top. Stating the top in that distributed form is what makes the ladder skip-free:
+# every rung is d3, the top is d3, and both double-jumps are d5.
+#
+# (That distributivity is a candidate ``BASE_EQUATION`` -- with it, ``rewrite-shallow`` would have
+# caught this statically in a second instead of the probe finding it after 25 minutes.)
+#
+# **Why this floor searches cheaply -- the breadth lesson this ladder was rebuilt on.** The first
+# version derived the split arithmetically (``floordiv(width(g), 2)``). ``floordiv`` closes over a
+# growing INT pool (~1034 x 1034 = 1M compositions per round) and censored at 2M considered. Two
+# changes remove the cost entirely rather than trimming it:
+#
+# - ``halves_h`` makes the split **perceived** instead of computed. The arithmetic does not move into
+#   the search space at all -- and ``quadrants`` already computed this very split internally, it just
+#   bundled it with the row split.
+# - ``overlay`` is the **grid-level OR**, so merging needs no Mask rung. Every rung is Grid-valued,
+#   which means every demo is a FULL SOLUTION: ``AntiunifyPairs`` (the batch default) serves it, and
+#   ``demo-affordable`` is trivially satisfied since no wrapper is needed.
+#
+# So no floor primitive takes an Offset or Coord and no addressing battery is minted. The whole
+# depth-3 enumeration measures ~90k considered (vs millions for the arithmetic version), which is
+# why the guard is set to 300k -- ample headroom for the SKIP probes to be conclusive rather than
+# censored. The remaining cost is `map_color`'s two colour slots (grid x 10 x 10). A corollary: no
+# composite INT/COLOR/BOOL subterm exists in any unfolded solution, so ``constant-subterm`` cannot
+# fire, and the top task is the five real ARC grids verbatim.
+
+config {
+    budget.depth_limit: 3
+    budget.max_arity: 3
+    budget.max_pool: 150
+    budget.considered_limit: 3000000
+    search_engine.constant_sources: ['finite-enumerate-scalars']
+}
+
+floor dae9d2b5-L0 {
+    use halves_h:  (Grid) -> List[Rect]
+    use head:      (List[a]) -> a
+    use nth:       (List[a], Int) -> a
+    use crop_rect: (Grid, Rect) -> Grid
+    use overlay:   (Color, Grid...) -> Grid
+    use map_color: (Grid, Color, Color) -> Grid
+}
+
+rung {
+    west(g: Grid) -> Grid = crop_rect(g, head(halves_h(g)))
+
+    task west-00 {
+        solution: west(input)
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        test  [[4,0,3,3],[0,4,0,0]]
+    }
+    task west-01 {
+        solution: west(input)
+        train [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+        train [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+    }
+    heldout task west-heldout {
+        solution: west(input)
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+    }
+}
+
+rung {
+    east(g: Grid) -> Grid = crop_rect(g, nth(halves_h(g), 1))
+
+    task east-00 {
+        solution: east(input)
+        train [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        test  [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+    }
+    task east-01 {
+        solution: east(input)
+        train [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+        train [[4,0,0,0,0,3],[0,4,0,0,3,0],[0,0,4,3,0,0],[4,4,4,0,0,0]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0]]
+    }
+    heldout task east-heldout {
+        solution: east(input)
+        train [[4,0,0,3],[0,4,3,0],[4,0,0,0],[0,4,3,3],[4,4,3,0]]
+        train [[4,0,0,4,0,3,0,0,0,3],[0,4,0,4,0,0,3,0,3,0]]
+        test  [[4,0,0,0,4,0,0,0,0,3],[0,4,0,4,0,0,0,3,0,0],[0,0,4,0,0,0,3,0,0,0],[4,4,4,4,0,3,0,0,0,0]]
+    }
+}
+
+top {
+    task dae9d2b5 {
+        solution: overlay(0, map_color(west(input), 4, 6), map_color(east(input), 3, 6))
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,4,3,3,0],[4,0,0,3,0,0],[0,0,4,3,0,0]]
+        train [[0,0,4,0,3,0],[0,4,4,3,0,3],[4,4,0,0,0,3]]
+        train [[4,4,0,3,0,0],[0,0,0,0,0,3],[4,0,0,0,0,0]]
+        train [[0,0,0,0,3,0],[4,0,0,0,0,0],[0,0,4,3,3,0]]
+        test  [[0,4,4,3,0,0],[4,0,0,3,3,0],[0,4,0,3,0,0]]
+    }
+    heldout task dae9d2b5-heldout {
+        solution: overlay(0, map_color(west(input), 4, 6), map_color(east(input), 3, 6))
+        train [[0,0,4,0,3,0],[0,4,0,3,3,3],[4,0,0,3,0,0]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+    }
+}
