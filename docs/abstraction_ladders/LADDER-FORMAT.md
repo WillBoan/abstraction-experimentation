@@ -6,7 +6,7 @@ A `.ladder` file is the **single source of truth for a ladder's identity**: it d
 
 This doc governs the implementation — where code and this spec disagree, this spec wins until deliberately amended.
 
-**Status (2026-07-22): implemented; all 20 ladders migrated; the expression grammar now covers all nine substrate node kinds.** The language lives in `src/arc_lab/program_search/ladders/lang/`, and `ladders/registry/` holds `.ladder` files only. A test locks every ladder's regenerated testbed against its committed one. One known gap sits *below* the format: `substitute_params` cannot inline a higher-order template whose call site passes a lambda-bound variable (it needs De Bruijn shifting), so that one shape has no `d_raw`.
+**Status (2026-07-22): implemented; all 20 ladders migrated; the expression grammar now covers all nine substrate node kinds.** The language lives in `src/arc_lab/program_search/ladders/lang/`, and `ladders/registry/` holds `.ladder` files only. A test locks every ladder's regenerated testbed against its committed one. One known gap sits _below_ the format: `substitute_params` cannot inline a higher-order template whose call site passes a lambda-bound variable (it needs De Bruijn shifting), so that one shape has no `d_raw`.
 
 ## 1. Motivation
 
