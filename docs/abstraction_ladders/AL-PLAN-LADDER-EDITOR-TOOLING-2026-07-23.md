@@ -13,7 +13,7 @@ Goal: TextMate + semantic-token highlighting, live error/warning squiggles with 
 **Principle: cut features, never foundations.** The Light path drops everything that is purely _additive_ later (a deferred feature costs only that feature when it lands) and keeps everything _foundational_ (anything that, hacked now, would have to be torn out and redone). Two things are foundational and are therefore done fully and properly here — no shortcuts:
 
 - **Position handling** — real spans through the model + the expression source-map (UTF-8-byte-offset to code-point to file-range). Explicitly **not** the slug-string-search line-finder hack; that would be exactly the kind of debt we later unwind.
-- **The check architecture** — the ~29 `LadderSpec.lint()` checks move into a **shared parent class now, not after.** Design settled 2026-07-23: a `LadderCheck` **ABC** that all checks subclass, each carrying its metadata as `ClassVar`s (`code`, `category`, `default_severity`, `stage`, `summary`, `message_template`) and its logic as a `run(self, ctx: CheckContext) -> Iterable[CheckResult]` method (the pylint shape — metadata and logic co-located in one class body). This is **distinct from the diagnostic value type**: `LadderDiagnostic`/`CheckResult` remain a single shared *value* class each and are **never** subclassed per kind (variety lives in the `code` field — per-kind diagnostic subclasses are the anti-pattern the reviewer and we both rejected). Two axes, two decisions: `LadderCheck` = the *checker*; `LadderDiagnostic` = the *emitted value* (one class). Execution order is an explicit `CHECK_PLAN: tuple[LadderCheck, ...]` (instances, pinned to today's emission order — never subclass-discovery or import order). **Refinement (2026-07-23, on deeper reflection):** the boundary between a `LadderCheck` and an inline descriptor is **emitted-vs-rule, not parse-vs-lint** (see the "Diagnostic production model" subsection below). A diagnostic is a `LadderCheck` (`stage`-tagged SYNTAX / RESOLVE / CORPUS) when it is a **predicate over a completed model**, and inline-emitted (descriptor-only) when **discovered mid-traversal** during work the pass must do anyway. That promotes ~7 structural well-formedness codes (`duplicate-task-id`, `section-order`, `name-mismatch`, `rung-shadows`, `duplicate-floor-primitive`, `duplicate-config-path`, `reserved-config-path`) into `stage=SYNTAX` `LadderCheck`s — reached in the Light path by separating tree construction from well-formedness validation — so `LadderCheck` is ~36 subclasses across three stages, and `DIAGNOSTIC_DESCRIPTORS` holds only the truly inline-emitted codes (lexical/brace-recovery + elaboration-local type/arity/unknown-name). Both still feed one `code -> metadata` table. Mild note: these stateless, declarative check classes lightly bend the repo's "machinery is data, no solver classes" rule — accepted deliberately for locality.
+- **The check architecture** — the ~29 `LadderSpec.lint()` checks move into a **shared parent class now, not after.** Design settled 2026-07-23: a `LadderCheck` **ABC** that all checks subclass, each carrying its metadata as `ClassVar`s (`code`, `category`, `default_severity`, `stage`, `summary`, `message_template`) and its logic as a `run(self, ctx: CheckContext) -> Iterable[CheckResult]` method (the pylint shape — metadata and logic co-located in one class body). This is **distinct from the diagnostic value type**: `LadderDiagnostic`/`CheckResult` remain a single shared _value_ class each and are **never** subclassed per kind (variety lives in the `code` field — per-kind diagnostic subclasses are the anti-pattern the reviewer and we both rejected). Two axes, two decisions: `LadderCheck` = the _checker_; `LadderDiagnostic` = the _emitted value_ (one class). Execution order is an explicit `CHECK_PLAN: tuple[LadderCheck, ...]` (instances, pinned to today's emission order — never subclass-discovery or import order). **Refinement (2026-07-23, on deeper reflection):** the boundary between a `LadderCheck` and an inline descriptor is **emitted-vs-rule, not parse-vs-lint** (see the "Diagnostic production model" subsection below). A diagnostic is a `LadderCheck` (`stage`-tagged SYNTAX / RESOLVE / CORPUS) when it is a **predicate over a completed model**, and inline-emitted (descriptor-only) when **discovered mid-traversal** during work the pass must do anyway. That promotes ~7 structural well-formedness codes (`duplicate-task-id`, `section-order`, `name-mismatch`, `rung-shadows`, `duplicate-floor-primitive`, `duplicate-config-path`, `reserved-config-path`) into `stage=SYNTAX` `LadderCheck`s — reached in the Light path by separating tree construction from well-formedness validation — so `LadderCheck` is ~36 subclasses across three stages, and `DIAGNOSTIC_DESCRIPTORS` holds only the truly inline-emitted codes (lexical/brace-recovery + elaboration-local type/arity/unknown-name). Both still feed one `code -> metadata` table. Mild note: these stateless, declarative check classes lightly bend the repo's "machinery is data, no solver classes" rule — accepted deliberately for locality.
 
 **In scope now (built fully):** Phases **A, B, C, E1, F, G**.
 
@@ -44,69 +44,36 @@ Phase headers below are tagged `[LIGHT]` / `[DEFERRED]` accordingly.
 
 ## Phase A build status (2026-07-23)
 
-**Shipped** in two commits (`98d0ddf` Python slice, `5b88e0f` VS Code extension), `make check` green:
-`diagnostics/` value types (Position, half-open Range, Severity, `LadderDiagnostic`), a pygls-free
-`lsp/shim.py`, an `lsp/convert.py`, a thin `lsp/server.py`, and `arc-lab lsp` (stdio, stdout-clean).
-Extension under `editors/vscode-ladder/` (TextMate grammar + `vscode-languageclient`, esbuild bundle,
-tsc-strict). Validated end-to-end by driving the server over stdio (initialize -> didOpen -> real
-`publishDiagnostics`); only the *visual* highlighting still needs a human F5.
+**Shipped** in two commits (`98d0ddf` Python slice, `5b88e0f` VS Code extension), `make check` green: `diagnostics/` value types (Position, half-open Range, Severity, `LadderDiagnostic`), a pygls-free `lsp/shim.py`, an `lsp/convert.py`, a thin `lsp/server.py`, and `arc-lab lsp` (stdio, stdout-clean). Extension under `editors/vscode-ladder/` (TextMate grammar + `vscode-languageclient`, esbuild bundle, tsc-strict). Validated end-to-end by driving the server over stdio (initialize -> didOpen -> real `publishDiagnostics`); only the _visual_ highlighting still needs a human F5.
 
-**Measured latency finding (corrects the plan's risk #5).** Full lint of al14 is ~4.6s, and it is
-**not** the corpus/evaluation checks -- `lint(corpus_backed=False)` is no faster. The cost is the
-**structural unfold-based depth checks** (`raw-intractable`, double-jump, etc., which `unfold_program`
-al14's deep telescope). Parse+resolve alone is ~2ms. Two consequences carried forward:
+**Measured latency finding (corrects the plan's risk #5).** Full lint of al14 is ~4.6s, and it is **not** the corpus/evaluation checks -- `lint(corpus_backed=False)` is no faster. The cost is the **structural unfold-based depth checks** (`raw-intractable`, double-jump, etc., which `unfold_program` al14's deep telescope). Parse+resolve alone is ~2ms. Two consequences carried forward:
 
-1. The cheap on-change tier is **parse+resolve only** (not "structural-cheap, corpus-expensive" as
-   assumed). The shim already gates on this; Phase G/H's `LintTier` boundary should too.
-2. Phase F's laziness/caching is load-bearing on the *structural* checks specifically -- and this same
-   ~4.6s is paid today by `arc-lab lint-ladder al14` and every `run-ladder` stage-1 lint, so it is a
-   standing lint-performance issue worth its own item independent of the editor work.
+1. The cheap on-change tier is **parse+resolve only** (not "structural-cheap, corpus-expensive" as assumed). The shim already gates on this; Phase G/H's `LintTier` boundary should too.
+2. Phase F's laziness/caching is load-bearing on the _structural_ checks specifically -- and this same ~4.6s is paid today by `arc-lab lint-ladder al14` and every `run-ladder` stage-1 lint, so it is a standing lint-performance issue worth its own item independent of the editor work.
 
 ## Phase F build status (2026-07-23)
 
-**Shipped** in three commits (`a30a1c7` package skeleton, `36aa213` the ABC + context + plan,
-`824aaf0` structured occurrences), `make check` green at each.
+**Shipped** in three commits (`a30a1c7` package skeleton, `36aa213` the ABC + context + plan, `824aaf0` structured occurrences), `make check` green at each.
 
-- `checks/base.py` -- `LadderCheck(ABC)`: `code` / `category` / `stage` / `default_severity` /
-  `summary` as `ClassVar`s in the class body, logic in the single abstract `run(ctx)`. `finding()`
-  stamps code and severity, so a code is declared once and cannot drift from its check. `Verdict`
-  keeps the three evaluation cores plain functions that report an outcome without knowing a code.
+- `checks/base.py` -- `LadderCheck(ABC)`: `code` / `category` / `stage` / `default_severity` / `summary` as `ClassVar`s in the class body, logic in the single abstract `run(ctx)`. `finding()` stamps code and severity, so a code is declared once and cannot drift from its check. `Verdict` keeps the three evaluation cores plain functions that report an outcome without knowing a code.
 - `checks/context.py` -- `CheckContext`, every derivation a `cached_property`.
-- `checks/plan.py` -- `CHECK_PLAN`, an explicit ordered tuple of instances; `skipped_checks` is
-  now DERIVED from its `stage=CORPUS` entries rather than hand-listed beside each gated block.
+- `checks/plan.py` -- `CHECK_PLAN`, an explicit ordered tuple of instances; `skipped_checks` is now DERIVED from its `stage=CORPUS` entries rather than hand-listed beside each gated block.
 - `checks/{structure,depth,learnability,demonstrations,advisories,vocabulary}.py` -- the 29 checks.
 - `ladders/graph.py` -- the rung dependency graph, shared by the checks and `render()`.
-- `shape.py` -- `LintFinding(code, ok, detail, severity, occurrence)` with
-  `Occurrence(subject, params)` and a `.slug` property. `AnchorIndex.resolve` is now a pure lookup;
-  the last slug-parsing in the anchor path is gone.
+- `shape.py` -- `LintFinding(code, ok, detail, severity, occurrence)` with `Occurrence(subject, params)` and a `.slug` property. `AnchorIndex.resolve` is now a pure lookup; the last slug-parsing in the anchor path is gone.
 
-**Verified behavior-preserving** by dumping every finding for all 20 registry ladders before and
-after: multisets identical (full and structural tiers), `skipped_checks` byte-identical, derived
-shapes identical. One deliberate presentation change: findings group by check rather than
-interleaving by subject (no test locked that order -- the posture locks sort).
+**Verified behavior-preserving** by dumping every finding for all 20 registry ladders before and after: multisets identical (full and structural tiers), `skipped_checks` byte-identical, derived shapes identical. One deliberate presentation change: findings group by check rather than interleaving by subject (no test locked that order -- the posture locks sort).
 
-**Latency, revisited.** The lazy context also removed a duplicate unfold of every top solution:
-al14's full lint drops **4.6s -> 3.0s**. The structural tier is still ~2.9s of that, so finding #1
-above stands unchanged -- the server's cheap tier remains parse+resolve only.
+**Latency, revisited.** The lazy context also removed a duplicate unfold of every top solution: al14's full lint drops **4.6s -> 3.0s**. The structural tier is still ~2.9s of that, so finding #1 above stands unchanged -- the server's cheap tier remains parse+resolve only.
 
 **Both follow-ups then closed** (commits `9b9d5ed`, `7f1d2a8`):
 
-- **`LINT-CHECKS.md` is generated** from the class-body metadata by `arc-lab lint-checks`, with a
-  test pinning the committed copy, so a check that never reaches the register fails the gate.
-- **The `stage=SYNTAX` rules landed, scoped to what actually qualifies.** Exactly four load-time
-  rules are pure predicates over the parsed document (empty floor; duplicate floor primitive,
-  config path, task id); they are `DocumentCheck`s sharing the new `Check` parent with
-  `LadderCheck`. `resolve()` raises the first, unchanged; the editor reports all four at once, each
-  on its own token. `LintFinding` gained an optional exact `anchor` to carry that span.
+- **`LINT-CHECKS.md` is generated** from the class-body metadata by `arc-lab lint-checks`, with a test pinning the committed copy, so a check that never reaches the register fails the gate.
+- **The `stage=SYNTAX` rules landed, scoped to what actually qualifies.** Exactly four load-time rules are pure predicates over the parsed document (empty floor; duplicate floor primitive, config path, task id); they are `DocumentCheck`s sharing the new `Check` parent with `LadderCheck`. `resolve()` raises the first, unchanged; the editor reports all four at once, each on its own token. `LintFinding` gained an optional exact `anchor` to carry that span.
 
-  The **other ~76 load-time raise sites are not movable and are not moved**: they fire while
-  *constructing* a library, elaborating a template or applying config, so there is no completed
-  model to run a predicate over. This is the part that genuinely waits for Phase D/E2 -- the
-  tolerant resolver is what gives them a model. The `SYNTAX` slot now exists and is populated, so
-  that work extends this rather than reworking it.
+  The **other ~76 load-time raise sites are not movable and are not moved**: they fire while _constructing_ a library, elaborating a template or applying config, so there is no completed model to run a predicate over. This is the part that genuinely waits for Phase D/E2 -- the tolerant resolver is what gives them a model. The `SYNTAX` slot now exists and is populated, so that work extends this rather than reworking it.
 
-**Remaining deferrals are unchanged**: C3 (per-parameter spans -- which is also what would let a
-`free-param-varies` finding narrow from its rung to the offending parameter), D, E2, H, I, J.
+**Remaining deferrals are unchanged**: C3 (per-parameter spans -- which is also what would let a `free-param-varies` finding narrow from its rung to the offending parameter), D, E2, H, I, J.
 
 ## Diagnostic production model (the emitted-vs-rule principle)
 
@@ -118,13 +85,13 @@ SourceText -> [scan] tokens+trivia -> [parse] document (+ error nodes) -> [resol
 
 Every diagnostic is produced in one of two ways — and **this, not the pass it happens in, decides its representation**:
 
-- **Emitted** (procedural, inline): discovered *mid-traversal* during work the pass must do anyway — lexing, brace recovery, `ast.parse`, type unification. It lives at the emission site with rich local context; metadata sits in `DIAGNOSTIC_DESCRIPTORS`; no rule object could re-derive it from a stable model without redoing the traversal. E.g. `unclosed-block`, `bad-grid`, `bad-expression-syntax`, `type-mismatch`, `arity-mismatch`, `unknown-name`.
+- **Emitted** (procedural, inline): discovered _mid-traversal_ during work the pass must do anyway — lexing, brace recovery, `ast.parse`, type unification. It lives at the emission site with rich local context; metadata sits in `DIAGNOSTIC_DESCRIPTORS`; no rule object could re-derive it from a stable model without redoing the traversal. E.g. `unclosed-block`, `bad-grid`, `bad-expression-syntax`, `type-mismatch`, `arity-mismatch`, `unknown-name`.
 - **Rule** (declarative): a **predicate over a completed model** — the document, the resolved model, or the resolved+corpus model. A `LadderCheck` subclass, `stage`-tagged by which model it needs. E.g. the ~7 structural well-formedness codes (over the document) and the 29 lint checks (over the resolved+corpus model).
 
 Two consequences:
 
 1. **`LadderCheck` is one hierarchy across all three model stages** (SYNTAX / RESOLVE / CORPUS), not a lint-only concept. `stage` doubles as the gating tier: a CORPUS rule is skipped — and named in `skipped_checks` — when no corpus is available. This subsumes the earlier `tier` field.
-2. **The tolerant-parser refactor (Phase D) is exactly when to revisit the emitted/rule line — but most of the move happens earlier.** Strict fail-fast parsing is what *forces* a structural fact to be emitted mid-parse (the parser bails before a full document exists). The Light path pre-empts this by **separating tree construction from well-formedness validation**: the parser builds the whole document (raising only on truly-unrecoverable lexical/brace errors), the `stage=SYNTAX` rules run over it, and the strict wrapper raises if any fired. So the ~7 structural codes become rules *now*, in the Light path — a modest, debt-free restructure that is also the target shape. Phase D then adds only **partiality** (the same SYNTAX rules run over a *partial* document), not a re-classification. This is the "refactor how files get loaded/parsed/linted" the pipeline was always heading toward; the seams (`_error`, one value type, one `code -> metadata` table) are built so it lands additively.
+2. **The tolerant-parser refactor (Phase D) is exactly when to revisit the emitted/rule line — but most of the move happens earlier.** Strict fail-fast parsing is what _forces_ a structural fact to be emitted mid-parse (the parser bails before a full document exists). The Light path pre-empts this by **separating tree construction from well-formedness validation**: the parser builds the whole document (raising only on truly-unrecoverable lexical/brace errors), the `stage=SYNTAX` rules run over it, and the strict wrapper raises if any fired. So the ~7 structural codes become rules _now_, in the Light path — a modest, debt-free restructure that is also the target shape. Phase D then adds only **partiality** (the same SYNTAX rules run over a _partial_ document), not a re-classification. This is the "refactor how files get loaded/parsed/linted" the pipeline was always heading toward; the seams (`_error`, one value type, one `code -> metadata` table) are built so it lands additively.
 
 Requirement this places on Phase F: `CheckContext` must expose the parsed `document` (for SYNTAX-stage rules), not only the `LadderSpec`.
 
