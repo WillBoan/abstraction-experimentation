@@ -33,18 +33,21 @@ ladder dae9d2b5-halves-union
 #   which means every demo is a FULL SOLUTION: ``AntiunifyPairs`` (the batch default) serves it, and
 #   ``demo-affordable`` is trivially satisfied since no wrapper is needed.
 #
-# So no floor primitive takes an Offset or Coord and no addressing battery is minted. The whole
-# depth-3 enumeration measures ~90k considered (vs millions for the arithmetic version), which is
-# why the guard is set to 300k -- ample headroom for the SKIP probes to be conclusive rather than
-# censored. The remaining cost is `map_color`'s two colour slots (grid x 10 x 10). A corollary: no
+# So no floor primitive takes an Offset or Coord and no addressing battery is minted. A corollary: no
 # composite INT/COLOR/BOOL subterm exists in any unfolded solution, so ``constant-subterm`` cannot
 # fire, and the top task is the five real ARC grids verbatim.
+
+# **The guard is sized to a MEASURED cost, not guessed.** Proving `no_skip_paths` needs the
+# depth-3 enumeration to run to EXHAUSTION -- a censored skip search proves nothing -- and that
+# search measures **22,153,716 considered**, dominated by `overlay`'s quadratic grid product
+# (10 x G^2, the price of having a grid-level OR at all). Guards below ~25M return INCONCLUSIVE
+# rather than `no-skip`. At 30M the probe reports 1/1 rungs clean.
 
 config {
     budget.depth_limit: 3
     budget.max_arity: 3
     budget.max_pool: 150
-    budget.considered_limit: 3000000
+    budget.considered_limit: 30000000
     search_engine.constant_sources: ['finite-enumerate-scalars']
 }
 
