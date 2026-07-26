@@ -265,7 +265,9 @@ class LadderSpec:
             rung.name: "/".join(sorted({d.kind.value for d in rung.demonstrations})) or "-"
             for rung in self.rungs
         }
-        rows = [["level", "rung", "d_i", "needs", "double-jump", "fan-in", "demos", "kind"]]
+        rows = [
+            ["level", "rung", "d_i", "needs", "d_tmpl", "double-jump", "fan-in", "demos", "kind"]
+        ]
         for s in shape.rungs:
             rows.append(
                 [
@@ -273,6 +275,7 @@ class LadderSpec:
                     f"`{s.name}`",
                     str(s.jump_depth),
                     str(s.jump_needs),
+                    str(s.template_depth),
                     "-" if s.double_jump_depth is None else str(s.double_jump_depth),
                     str(s.fan_in),
                     str(s.demonstration_count),
@@ -286,6 +289,7 @@ class LadderSpec:
                 _span(top_depths),
                 _span(top_needs),
                 "-",
+                "-",
                 _span(top_fan_ins),
                 str(len(self.top.task_ids)),
                 "-",
@@ -297,14 +301,20 @@ class LadderSpec:
             "",
             *table(rows),
             "",
-            "- `d_i`: the GENERATION the engine composes the template at over `L_{i-1}`, a leaf "
-            "being 0 (top row: of the reference solutions over `L_k`). The design doc's jump "
-            "depth, and the unit `solved_at_generation` reports in.",
+            "- `d_i`: the GENERATION the engine composes this rung's DEEPEST DEMONSTRATION at over "
+            "`L_{i-1}`, a leaf being 0 (top row: of the reference solutions over `L_k`). The "
+            "demonstration, not the template, because that is what the wake searches for. The "
+            "design doc's jump depth, and the unit `solved_at_generation` reports in.",
             "- `needs`: the smallest `depth_limit` that puts it in REACH -- the quantity every "
-            "affordability claim above is stated in. Equal to `d_i` for a first-order template; "
-            "larger when a lambda body needs its own descended budget (`analysis/depth.py`).",
-            "- `double-jump`: depth of the layer above with this rung inlined -- what skipping "
-            "this rung would cost in depth (for the last rung, from the top solutions)",
+            "affordability claim above, and the validity window, is stated in. Equal to `d_i` for "
+            "a first-order target; larger when a lambda body needs its own descended budget "
+            "(`analysis/depth.py`).",
+            "- `d_tmpl`: depth of the rung TEMPLATE -- what sleep has to mint. Equals `d_i` unless "
+            "a demonstration WRAPS the rung (any non-Grid rung must be wrapped, since a task "
+            "solution has to produce a Grid), which costs `d_tmpl + (wrapper depth - 1)`.",
+            "- `double-jump`: depth of the shallowest consumer TARGET above with this rung inlined "
+            "-- what skipping this rung would cost in depth (for the last rung, from the top "
+            "solutions)",
             "- `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count "
             "(design doc, section 2)",
             "- `kind`: the demonstration kind DERIVED from each task's solution shape "

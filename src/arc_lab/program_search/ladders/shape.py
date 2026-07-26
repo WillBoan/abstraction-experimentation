@@ -61,23 +61,43 @@ class RungShape:
 
     level: int
     name: str
-    #: ``compositional_depth`` of the rung template over ``L_{i-1}`` (affordable iff
-    #: ``jump_depth <= Budget.depth_limit``).
+    #: ``compositional_depth`` of the rung TEMPLATE over ``L_{i-1}``: the program SLEEP must
+    #: recover and mint. NOT the affordability quantity -- the wake searches for the rung's
+    #: demonstrations, which is what ``jump_depth`` measures. The two coincide exactly when every
+    #: demonstration is a full solution (wrapper depth 1), which is the common case.
+    template_depth: int
+    #: ``min_depth_limit`` of the template -- the mint-side twin of ``jump_needs``.
+    template_needs: int
+    #: ``compositional_depth`` of the DEEPEST demonstration target over ``L_{i-1}`` -- the program
+    #: the WAKE at this rung actually searches for. Falls back to ``template_depth`` when the rung
+    #: declares no demonstrations (a draft lint); ``depth_source`` says which.
     jump_depth: int
-    #: ``min_depth_limit`` of the same template: the smallest ``Budget.depth_limit`` that puts it
-    #: in REACH. Equal to ``jump_depth`` for a first-order template; larger when a lambda body
-    #: needs its own descended budget. Every affordability claim is stated in THIS one.
+    #: ``min_depth_limit`` of the same: the smallest ``Budget.depth_limit`` that puts the rung's
+    #: hardest demonstration in REACH. Equal to ``jump_depth`` for a first-order target; larger
+    #: when a lambda body needs its own descended budget. Every affordability claim, and the
+    #: validity window's lower bound, is stated in THIS one.
     jump_needs: int
-    #: Inlined depth of the layer above over ``L_{i-1}`` (this rung's calls expanded one level):
-    #: the next rung's template, or -- for the last bridging rung -- the shallowest top reference
-    #: solution. What skipping this rung would cost in depth.
+    #: ``"demonstrations"``, or ``"template"`` when the rung declares none and the two fields above
+    #: fell back. Named rather than silent: a template-sourced depth is an assumption, not a
+    #: measurement of what the climb will search for.
+    depth_source: str
+    #: The demonstration ``jump_needs`` was taken from -- the one that binds. ``None`` under the
+    #: template fallback.
+    deepest_demonstration: str | None
+    #: Inlined depth of the shallowest program above that calls this rung, with its calls expanded
+    #: one level: a higher rung's DEMONSTRATION TARGET, or a top reference solution. What skipping
+    #: this rung would cost in depth.
     double_jump_depth: int | None
+    #: ``min_depth_limit`` of that same shallowest inlined program -- the quantity the validity
+    #: window's upper bound is stated in (``double_jump_depth`` is the display number).
+    double_jump_needs: int | None
     #: Calls the template makes to ANY lower rung, with multiplicity (floor primitives don't
     #: count): 0 = floor-only (typical for r_1), 1 throughout = pure telescope, > 1 = recombining.
     fan_in: int
     demonstration_count: int
     #: ``True`` if the template contains a ``Lam``. The depth claims still hold (they are stated
-    #: in ``jump_needs``); what stays advisory is reachability under example propagation.
+    #: in ``jump_needs`` / ``double_jump_needs``); what stays advisory is reachability under
+    #: example propagation.
     involves_lambda: bool
 
 

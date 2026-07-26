@@ -16,21 +16,25 @@ from arc_lab.program_search.ladders.lang import LadderFormatError
 from arc_lab.program_search.ladders.lang.load import ladder_tasks, resolve, structural_spec
 from arc_lab.program_search.ladders.lang.parse import parse_document
 from arc_lab.program_search.ladders.registry import ladder_paths, load_ladder, make_ladder
-from arc_lab.program_search.ladders.shape import LintFinding
+from arc_lab.program_search.ladders.shape import LadderShape, LintFinding
 from arc_lab.program_search.ladders.spec import DemonstrationKind
 from arc_lab.program_search.substrate.program import If
 
 REPO = Path(__file__).resolve().parents[4]
 
-_LINT_CACHE: dict[str, tuple[LintFinding, ...]] = {}
+_LINT_CACHE: dict[str, LadderShape] = {}
 
 
-def _lint_findings(name: str) -> tuple[LintFinding, ...]:
+def _lint_shape(name: str) -> LadderShape:
     """One batch-wide lint sweep shared by the lock tests (linting all 20 is seconds, and
     three sweeps would be three times that for identical answers)."""
     if name not in _LINT_CACHE:
-        _LINT_CACHE[name] = make_ladder(name).lint().findings
+        _LINT_CACHE[name] = make_ladder(name).lint()
     return _LINT_CACHE[name]
+
+
+def _lint_findings(name: str) -> tuple[LintFinding, ...]:
+    return _lint_shape(name).findings
 
 
 MINIMAL = """
@@ -306,36 +310,53 @@ top {
 """
 
 
-def test_demo_affordable_catches_a_wrapped_rung_jump_affordable_passes() -> None:
-    """`jump-affordable` measures the rung TEMPLATE; the climb searches for the DEMONSTRATION.
+def test_jump_affordable_measures_the_demonstration_not_the_template() -> None:
+    """`jump-affordable` is stated on the program the WAKE searches for: the DEMONSTRATION.
 
-    For a Grid-valued rung shown as a full solution those coincide, which is why the whole
-    al1-al20 batch never distinguished them. For a rung returning a non-Grid value they cannot:
-    the demo must wrap the rung to produce a Grid, and the wrapper's depth is what the wake pays.
-    Without this check such a ladder lints clean and then censors on every rung at probe time,
-    reporting only "the jump is not affordable here" with no cause.
+    For a Grid-valued rung shown as a full solution the demo target IS the template, which is why
+    the whole al1-al20 batch never distinguished them. For a rung returning a non-Grid value they
+    cannot coincide: the demo must wrap the rung to produce a Grid, and the wrapper's depth is what
+    the wake pays. Measured on the template, this ladder lints clean and then censors on every rung
+    at probe time, reporting only "the jump is not affordable here" with no cause.
+
+    Here `filled` is a depth-2 Mask rung -- affordable at the pinned `depth_limit` 2 on its own --
+    whose demonstrations wrap it to depth 3. The `d=` figure in the detail is the demo's, and the
+    check names WHICH demonstration binds.
     """
     spec = structural_spec(resolve(parse_document(_WRAPPED_RUNG)))
-    findings = spec.lint(corpus_backed=False).findings
+    shape = spec.lint(corpus_backed=False)
+    findings = shape.findings
     failed = {f.code for f in findings if not f.ok}
-    # The template is depth 2 and reachable; only the demonstration is out of reach.
-    assert "jump-affordable" not in failed
-    assert "demo-affordable" in failed
-    detail = next(f for f in findings if f.code == "demo-affordable" and not f.ok).detail
-    assert "needs depth_limit 3" in detail and "have 2" in detail
+    assert "jump-affordable" in failed
+    detail = next(f for f in findings if f.code == "jump-affordable" and not f.ok).detail
+    assert "demo `a`" in detail
+    assert "needs depth_limit 3" in detail and "(d=3)" in detail and "have 2" in detail
+    # The template itself stays reachable -- the two quantities are reported side by side.
+    (rung_shape,) = shape.rungs
+    assert (rung_shape.template_depth, rung_shape.template_needs) == (2, 2)
+    assert (rung_shape.jump_depth, rung_shape.jump_needs) == (3, 3)
+    assert rung_shape.depth_source == "demonstrations"
 
 
-def test_demo_affordable_is_dormant_on_the_batch() -> None:
-    """Every al1-al20 ladder is Grid-valued and demoed as a full solution, so its demo target IS
-    its template and this check is exactly `jump-affordable` there. It fires only on ladders that
-    ladder BELOW the Grid type -- if it lights up here, a real ladder tripped it."""
-    fired = {
-        (name, f.slug)
+def test_where_demo_sourced_depth_departs_from_the_template_batch_wide() -> None:
+    """Pinned: the batch is Grid-valued and demoed as full solutions almost everywhere, so demo
+    target == template and the two depths agree. `al4-mask-crop`'s `nonbg_mask` is the one Mask
+    rung, and it is exactly the shape the distinction was built for -- the demo must wrap it to
+    produce a Grid, costing one level over the template. It stays affordable (al4's pinned
+    `depth_limit` covers 4), which is why the batch lock above is unmoved.
+
+    A new row here is a ladder that started laddering BELOW the Grid type; a row DISAPPEARING means
+    the demo-sourced reading silently reverted to the template one."""
+    apart = {
+        (name, s.name, s.template_needs, s.jump_needs)
         for name in ladder_paths()
-        for f in _lint_findings(name)
-        if not f.ok and f.code == "demo-affordable"
+        for s in _lint_shape(name).rungs
+        if s.template_needs != s.jump_needs
     }
-    assert fired == set()
+    assert apart == {("al4-mask-crop", "nonbg_mask", 3, 4)}
+    assert all(
+        s.depth_source == "demonstrations" for name in ladder_paths() for s in _lint_shape(name).rungs
+    )
 
 
 def test_the_demonstration_plan_checks_hold_across_the_batch() -> None:

@@ -77,8 +77,46 @@ class CheckContext:
     @cached_property
     def consumer_programs(self) -> dict[str, list[tuple[str, Program]]]:
         """Per rung, the ``(consumer id, program)`` pairs that call it -- higher rung templates and
-        top solutions. An empty list is a dead rung."""
+        top solutions. An empty list is a dead rung.
+
+        The STRUCTURAL reading of the graph: who mentions whom. ``is_chain``, the fan-out shape and
+        the rendered dependency list are facts about templates and read this. Anything asking what
+        a SEARCH would have to find reads :attr:`consumer_targets` instead.
+        """
         return graph.consumer_programs(self.rungs, self.spec.top)
+
+    @cached_property
+    def consumer_targets(self) -> dict[str, list[tuple[str, Program]]]:
+        """Per rung, the programs a SEARCH will actually look for that call it.
+
+        The search-side twin of :attr:`consumer_programs`, and the one every depth claim about
+        skipping is stated over. A consuming rung contributes its DEMONSTRATION TARGETS (each demo
+        solution over ``L_{j-1}``, :attr:`demo_targets`) rather than its template, because the wake
+        at that rung searches for its demonstrations -- the top already contributed its reference
+        solutions, so this makes the two halves of the graph speak the same unit.
+
+        Identical to :attr:`consumer_programs` whenever every demonstration is a full solution
+        (wrapper depth 1). It diverges exactly where a demo WRAPS its rung, and there the wrapper's
+        depth is depth a skip would also have to pay -- so the template reading UNDERSTATES the
+        double-jump, and the validity window came out narrower than the truth.
+        """
+        names = [rung.name for rung in self.rungs]
+        out: dict[str, list[tuple[str, Program]]] = {name: [] for name in names}
+        for rung in self.rungs:
+            # A rung with no demonstrations (a draft) falls back to its template, so a lower rung
+            # never silently loses its consumer and `double-jump-intractable` keeps firing.
+            targets = [target for _, target in self.demo_targets[rung.name]] or [rung.template]
+            for target in targets:
+                for lower in names:  # a target over L_{j-1} can only call strictly-lower rungs
+                    if graph.calls(target, lower):
+                        out[lower].append((rung.name, target))
+        for task_id, solution in zip(
+            self.spec.top.task_ids, self.spec.top.reference_solutions, strict=False
+        ):
+            for name in names:
+                if graph.calls(solution, name):
+                    out[name].append((f"top:{task_id}", solution))
+        return out
 
     @cached_property
     def consumers(self) -> dict[str, list[str]]:
@@ -92,7 +130,7 @@ class CheckContext:
 
     @cached_property
     def inlined_consumers(self) -> dict[str, list[tuple[str, Program]]]:
-        """Per rung, each consumer program with THIS rung expanded -- what skipping it would cost.
+        """Per rung, each consumer TARGET with THIS rung expanded -- what skipping it would cost.
 
         The DAG generalisation of "the immediate successor": for a chain the only consumer is the
         next rung, so this is the historical adjacency measurement exactly.
@@ -100,7 +138,7 @@ class CheckContext:
         return {
             rung.name: [
                 (cid, unfold_program(prog, self.full_lib, expand=frozenset({rung.name})))
-                for cid, prog in self.consumer_programs[rung.name]
+                for cid, prog in self.consumer_targets[rung.name]
             ]
             for rung in self.rungs
         }
@@ -224,20 +262,54 @@ class CheckContext:
         return tuple(compositional_depth(prog) for prog in self.unfolded_top)
 
     @cached_property
+    def top_needs(self) -> tuple[int, ...]:
+        """``min_depth_limit`` of each top reference solution over ``L_k``."""
+        return tuple(min_depth_limit(sol) for sol in self.spec.top.reference_solutions)
+
+    @cached_property
+    def raw_needs(self) -> tuple[int, ...]:
+        """``min_depth_limit`` of each top solution unfolded all the way to the floor."""
+        return tuple(min_depth_limit(prog) for prog in self.unfolded_top)
+
+    @cached_property
     def rung_shapes(self) -> tuple[RungShape, ...]:
-        """The per-rung derived quantities the report, certificate and renderer all consume."""
+        """The per-rung derived quantities the report, certificate and renderer all consume.
+
+        Both depth bounds are stated over the programs the ladder's searches will ACTUALLY run:
+        the lower over each rung's demonstration targets, the upper over its consumers' targets.
+        The rung template is reported alongside as ``template_depth``, because it is still what
+        sleep has to mint -- it is simply not what the wake has to find.
+        """
         names = {rung.name for rung in self.rungs}
         shapes: list[RungShape] = []
         for rung in self.rungs:
             inlined = self.inlined_consumers[rung.name]
+            targets = self.demo_targets[rung.name]
+            # `max`/`min` keep the FIRST extremal element, so ties resolve to declaration order --
+            # the earliest offending demonstration, and the shallowest-first consumer.
+            binding = max(targets, key=lambda item: min_depth_limit(item[1])) if targets else None
+            template_depth = compositional_depth(rung.template)
+            template_needs = min_depth_limit(rung.template)
+            shallowest = min(inlined, key=lambda item: min_depth_limit(item[1])) if inlined else None
             shapes.append(
                 RungShape(
                     level=rung.level,
                     name=rung.name,
-                    jump_depth=compositional_depth(rung.template),
-                    jump_needs=min_depth_limit(rung.template),
+                    template_depth=template_depth,
+                    template_needs=template_needs,
+                    jump_depth=(
+                        compositional_depth(binding[1]) if binding is not None else template_depth
+                    ),
+                    jump_needs=(
+                        min_depth_limit(binding[1]) if binding is not None else template_needs
+                    ),
+                    depth_source="demonstrations" if binding is not None else "template",
+                    deepest_demonstration=binding[0] if binding is not None else None,
                     double_jump_depth=(
-                        min(compositional_depth(prog) for _, prog in inlined) if inlined else None
+                        compositional_depth(shallowest[1]) if shallowest is not None else None
+                    ),
+                    double_jump_needs=(
+                        min_depth_limit(shallowest[1]) if shallowest is not None else None
                     ),
                     fan_in=graph.fan_in(rung.template, names),
                     demonstration_count=len(rung.demonstrations),
@@ -249,11 +321,16 @@ class CheckContext:
     @cached_property
     def validity_window(self) -> tuple[int, int]:
         """``(lower, upper)`` inclusive, in ``depth_limit`` units: every jump affordable and no
-        inlined double-jump (nor the raw top) reachable. ``lower > upper`` is a degenerate ladder."""
-        lower = max([*(s.jump_depth for s in self.rung_shapes), *self.top_depths])
+        inlined double-jump (nor the raw top) reachable. ``lower > upper`` is a degenerate ladder.
+
+        Stated in ``min_depth_limit`` throughout -- the smallest budget that puts a program in
+        REACH -- to match every check that reads it. That exceeds ``compositional_depth`` only when
+        a lambda body needs its own descended budget, so the two agree on first-order ladders.
+        """
+        lower = max([*(s.jump_needs for s in self.rung_shapes), *self.top_needs])
         intractables = [
-            *(s.double_jump_depth for s in self.rung_shapes if s.double_jump_depth is not None),
-            *self.raw_depth_profile,
+            *(s.double_jump_needs for s in self.rung_shapes if s.double_jump_needs is not None),
+            *self.raw_needs,
         ]
         upper = min(intractables) - 1 if intractables else self.ref_limit
         return (lower, upper)

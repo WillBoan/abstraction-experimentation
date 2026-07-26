@@ -6,6 +6,12 @@ to the floor -- must NOT be. Both sides are stated in ``min_depth_limit`` (the s
 reaches a program), which equals ``compositional_depth`` for a first-order template and exceeds it
 when a lambda body needs its own descended budget.
 
+Both sides are also stated over the programs the ladder's searches will ACTUALLY run, never over
+the rung templates: a rung's own bound comes from its DEMONSTRATION TARGETS, and a consumer's from
+its (``CheckContext.consumer_targets``). The two readings coincide whenever every demonstration is
+a full solution, and diverge exactly where one WRAPS its rung -- which the template reading missed
+in both directions at once, under-claiming affordability and under-claiming the double-jump.
+
 ``rewrite-shallow`` is the sandwich's equational blind spot, closed: the depth checks measure the
 INTENDED program, so a few known equations re-expressing the layer above a skipped rung shallowly
 would go unseen (al7's ``tall4 == stack2(stack2 g)``).
@@ -21,60 +27,54 @@ from arc_lab.program_search.ladders.checks.base import Category, CheckStage, Lad
 from arc_lab.program_search.ladders.checks.context import CheckContext
 from arc_lab.program_search.ladders.checks.evaluation import rewrite_verdicts
 from arc_lab.program_search.ladders.shape import LintFinding
+from arc_lab.program_search.substrate.abstraction import unfold_program
+from arc_lab.program_search.substrate.program import Program
 
 
 class JumpAffordable(LadderCheck):
-    code = "jump-affordable"
-    category = Category.DEPTH
-    stage = CheckStage.STRUCTURAL
-    summary = "Every rung template is in reach at the pinned depth_limit."
+    """Every rung's jump must be in REACH at the pinned ``depth_limit`` -- where "the jump" is the
+    program the WAKE searches for, not the rung template.
 
-    def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
-        for shape in ctx.rung_shapes:
-            yield self.finding(
-                shape.jump_needs <= ctx.ref_limit,
-                f"needs depth_limit {shape.jump_needs} (d={shape.jump_depth}), have {ctx.ref_limit}",
-                subject=shape.name,
-            )
-
-
-class DemoAffordable(LadderCheck):
-    """Every rung's own DEMONSTRATION must be in reach at the pinned ``depth_limit``.
-
-    ``jump-affordable`` measures the rung TEMPLATE, but the wake at rung ``i`` searches for the
-    demonstrating task's solution over ``L_{i-1}`` -- and that is a different program whenever the
-    demo wraps the rung rather than being it. A rung returning a non-Grid value (Mask / Int /
-    Offset / Coord) **must** be wrapped, since a task solution has to produce a Grid, so its demo
-    costs ``d_i + (wrapper depth - 1)``. A ladder can therefore pass ``jump-affordable`` on every
-    rung while every one of its demonstrations is structurally unreachable -- the climb then
-    censors uniformly and the probe reports "not affordable" with no indication of why.
+    The two differ whenever a demonstration WRAPS its rung rather than being it. A rung returning a
+    non-Grid value (Mask / Int / Offset / Coord) **must** be wrapped, since a task solution has to
+    produce a Grid, so its demo costs ``d_i + (wrapper depth - 1)``. Measured on the template, a
+    ladder can look affordable on every rung while every one of its demonstrations is structurally
+    unreachable -- the climb then censors uniformly and the probe reports "not affordable" with no
+    indication of why. (That failure shipped once, as the separate ``demo-affordable`` check;
+    ``RungShape.jump_needs`` is now demo-sourced, so the two are one claim again.)
 
     Invisible to the whole al1-al20 batch: those ladders are Grid-valued and demoed as full
-    solutions (wrapper depth 1), where the demo target IS the template and this check is exactly
-    ``jump-affordable``. It bites the moment a ladder ladders BELOW the Grid type.
+    solutions (wrapper depth 1), where the demo target IS the template. It bites the moment a
+    ladder ladders BELOW the Grid type.
     """
 
-    code = "demo-affordable"
+    code = "jump-affordable"
     category = Category.DEPTH
     stage = CheckStage.STRUCTURAL
     summary = "Every rung's demonstrations are in reach over L_{i-1} at the pinned depth_limit."
 
     def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
-        for rung in ctx.rungs:
-            for task_id, target in ctx.demo_targets[rung.name]:
-                need = min_depth_limit(target)
-                yield self.finding(
-                    need <= ctx.ref_limit,
-                    f"demo `{task_id}` needs depth_limit {need} "
-                    f"(d={compositional_depth(target)}) over L_{rung.level - 1}, "
-                    f"have {ctx.ref_limit}",
-                    subject=rung.name,
-                )
+        for shape in ctx.rung_shapes:
+            source = (
+                f"demo `{shape.deepest_demonstration}`"
+                if shape.deepest_demonstration is not None
+                else "template (no demonstrations declared)"
+            )
+            yield self.finding(
+                shape.jump_needs <= ctx.ref_limit,
+                f"{source} needs depth_limit {shape.jump_needs} (d={shape.jump_depth}) "
+                f"over L_{shape.level - 1}, have {ctx.ref_limit}",
+                subject=shape.name,
+            )
 
 
 class ProperComposition(LadderCheck):
     """A rung is a PROPER composition over ``L_{i-1}``. A depth-1 template is a bare primitive
-    already in that library, so it belongs to a lower rung and buys no depth."""
+    already in that library, so it belongs to a lower rung and buys no depth.
+
+    Stated on the TEMPLATE, deliberately: this is a claim about what sleep has to mint, and a
+    wrapper in a demonstration cannot make a bare primitive into a real abstraction.
+    """
 
     code = "proper-composition"
     category = Category.DEPTH
@@ -84,8 +84,8 @@ class ProperComposition(LadderCheck):
     def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
         for index, shape in enumerate(ctx.rung_shapes):
             yield self.finding(
-                shape.jump_depth >= 2,
-                f"jump depth {shape.jump_depth}: a rung must compose over L_{index}, "
+                shape.template_depth >= 2,
+                f"template depth {shape.template_depth}: a rung must compose over L_{index}, "
                 "not restate a bare primitive",
                 subject=shape.name,
             )
@@ -216,24 +216,26 @@ class RewriteShallow(LadderCheck):
     summary = "No known equation re-expresses the layer above a skipped rung shallowly."
 
     def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
-        # Targets are each rung's CONSUMERS, unfolded to the floor -- the same DAG generalisation
-        # `double-jump-intractable` already makes. A consumer id is either a higher rung's name or
-        # `top:<task_id>`; top consumers are relabelled to the bare task id so the `probe_inputs`
-        # lookup (keyed by rung name or top task id) resolves.
-        unfolded_rungs = {
-            rung.name: unfolded
-            for rung, unfolded in zip(ctx.rungs, ctx.unfolded_templates, strict=True)
-        }
+        # Targets are each rung's CONSUMER TARGETS, unfolded to the floor -- the same DAG
+        # generalisation `double-jump-intractable` makes, over the same search-side programs. A
+        # consumer id is either a higher rung's name or `top:<task_id>`; top consumers are
+        # relabelled to the bare task id so the `probe_inputs` lookup (keyed by rung name or top
+        # task id) resolves. Several demonstrations of one consumer share its id, so identical
+        # unfolds are deduped -- a repeated verdict would just be the same conviction twice.
         rung_consumers = []
         for rung in ctx.rungs:
-            targets = []
-            for cid, _ in ctx.consumer_programs[rung.name]:
+            targets: list[tuple[str, Program]] = []
+            for cid, prog in ctx.consumer_targets[rung.name]:
                 if cid.startswith("top:"):
                     task_id = cid[len("top:") :]
                     if task_id in ctx.unfolded_by_id:
-                        targets.append((task_id, ctx.unfolded_by_id[task_id]))
-                elif cid in unfolded_rungs:
-                    targets.append((cid, unfolded_rungs[cid]))
+                        pair = (task_id, ctx.unfolded_by_id[task_id])
+                    else:
+                        continue
+                else:
+                    pair = (cid, unfold_program(prog, ctx.full_lib))
+                if pair not in targets:
+                    targets.append(pair)
             rung_consumers.append((rung.name, targets))
         yield from self.stamp(
             rewrite_verdicts(
