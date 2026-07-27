@@ -1,0 +1,68 @@
+========================================================================================================
+C5 -- census (round-1 width) vs the FULL forecaster, against the same measured cells
+========================================================================================================
+
+ladder                         rung               pool  b1_full   forecast   measured  fc/meas
+94f9d214-nor-merged            north                30      231      1,555     13,139    0.12x
+94f9d214-nor-merged            south                30      232      1,480      7,489    0.20x
+94f9d214-nor-merged            recolored_north      30      233      1,603     21,301    0.08x
+94f9d214-nor-merged            recolored_south      30      234      1,528      7,505    0.20x
+94f9d214-nor-merged            merged               30      235      1,653     21,325    0.08x
+al1-mirror                     rot180              300      102      4,805      6,743    0.71x
+al1-mirror                     mirror_recolor      300      103      4,955      6,912    0.72x
+al15-shift-frame               shift_stack         400       57      2,272      3,587    0.63x
+al15-shift-frame               framed              400       58      2,411      3,759    0.64x
+al16-layout-nest               pair                400       18        377        311    1.21x
+al16-layout-nest               stack               400       19        446        375    1.19x
+al17-shift-frame-tall          shift1              400       57      2,272      3,587    0.63x
+al17-shift-frame-tall          frame1              400       58      2,411      3,759    0.64x
+al17-shift-frame-tall          shift2              400       59      2,554      3,935    0.65x
+al18-fanin-rotate              pair                400       19        446        375    1.19x
+al18-fanin-rotate              rot                 400       20        521        445    1.17x
+al19-fanin-recolor             pair                400      118     12,123      9,285    1.31x
+al19-fanin-recolor             recol               400      119     12,512      9,629    1.30x
+al2-rot90-calibration          rot90               400        2          7          7    1.00x
+al20-recolor-telescope         pair                400      117      8,984      7,055    1.27x
+al20-recolor-telescope         recol               400      118      9,261      7,305    1.27x
+al21-dag-siblings              mirror_h            400        4         61         61    1.00x
+al21-dag-siblings              mirror_flip         400        5         91         91    1.00x
+dae9d2b5-half-param            half                 30      131      1,768     12,139    0.15x
+dae9d2b5-half-param            recolored_west       30      140      1,834     12,229    0.15x
+dae9d2b5-half-param            recolored_east       30      141      1,856     12,239    0.15x
+dae9d2b5-split-recolor         west                150      131     40,108    230,497    0.17x
+dae9d2b5-split-recolor         east                150      132     41,448    255,577    0.16x
+dae9d2b5-split-recolor         recolored_west      150      133     42,810    282,419    0.15x
+dae9d2b5-split-recolor         recolored_east      150      134     44,194    311,083    0.14x
+dae9d2b5-split-recolor-lean    west                 30      131      1,768     12,139    0.15x
+dae9d2b5-split-recolor-lean    east                 30      132      1,790     12,149    0.15x
+dae9d2b5-split-recolor-lean    recolored_west       30      133      1,812     12,159    0.15x
+dae9d2b5-split-recolor-lean    recolored_east       30      134      1,834     12,169    0.15x
+fafffa47-nor-merged            north                30      231      1,555     13,139    0.12x
+fafffa47-nor-merged            south                30      232      1,480      7,489    0.20x
+fafffa47-nor-merged            recolored_north      30      233      1,603     21,301    0.08x
+fafffa47-nor-merged            recolored_south      30      234      1,528      7,505    0.20x
+fafffa47-nor-merged            merged               30      235      1,653     21,325    0.08x
+
+n = 39 cells
+  spearman(b1_full,  measured) = +0.803   <- the census
+  spearman(forecast, measured) = +0.455   <- the full model
+
+Accuracy of the full forecaster (predicted / measured):
+  median  0.20x
+  range   0.08x .. 1.31x
+  within 2x  : 18/39
+  within 10x : 35/39
+
+The C3 controlled pair (identical census, 19-26x measured spread):
+  ladder                           rung                   b1   forecast   measured  fc/meas
+  dae9d2b5-split-recolor           west                  131     40,108    230,497    0.17x
+  dae9d2b5-split-recolor           east                  132     41,448    255,577    0.16x
+  dae9d2b5-split-recolor           recolored_west        133     42,810    282,419    0.15x
+  dae9d2b5-split-recolor           recolored_east        134     44,194    311,083    0.14x
+  dae9d2b5-split-recolor-lean      west                  131      1,768     12,139    0.15x
+  dae9d2b5-split-recolor-lean      east                  132      1,790     12,149    0.15x
+  dae9d2b5-split-recolor-lean      recolored_west        133      1,812     12,159    0.15x
+  dae9d2b5-split-recolor-lean      recolored_east        134      1,834     12,169    0.15x
+
+  The census reads these 8 cells as ~identical (b1 1,211-1,214). If the forecaster's
+  numbers separate the two pools, the pool-blindness is FIXED by a model that already exists.

@@ -202,3 +202,22 @@ def test_bool_typed_if_branches_are_counted() -> None:
     forecast = forecast_cost(config, task, survival=survival_from(result.stats))
     assert actual[1] == 7  # 3 unary applications + 2 conditions x 2 ordered BOOL branch pairs
     assert forecast.rounds[1].composed == actual[1]
+
+
+def test_a_variadic_tail_is_typed_by_variadic_param_not_the_last_declared_param() -> None:
+    # REGRESSION (2026-07-27). `_slot_types` replicated `param_types[-1]` for a variadic primitive
+    # instead of `variadic_param`. They differ whenever a fixed parameter of another type comes
+    # first, which is the common shape: `overlay : (Color, Grid...) -> Grid` declares COLOR fixed
+    # and GRID repeated. Modelling colour tuples gave 10 + 10^2 + 10^3 = 1,110 where the engine
+    # composes 3 arities x 10 colours x 1 grid = 30 -- and inflated `b1_full` on the `dae9d2b5`
+    # floor from 131 to 1,211, a 9.24x over-count in a quantity `ladders/breadth.py` documents as
+    # EXACT. Caught by calibrating the census against measured cost, never by review; the census
+    # and the forecaster share `_slot_types`, so both read wrong together.
+    config, task = _synthetic(("overlay", "map_color", "split_h", "nth"), ("finite-enumerate",))
+    result = _run(config, task)
+    actual = [g["composed"] for g in result.stats.generations]
+    forecast = forecast_cost(config, task, survival=survival_from(result.stats))
+    assert forecast.rounds[1].composed == actual[1]
+
+    overlay = BASE_PRIMITIVES["overlay"]
+    assert overlay.is_variadic and overlay.param_types[-1] != overlay.variadic_param

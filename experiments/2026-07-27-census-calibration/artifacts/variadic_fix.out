@@ -1,0 +1,74 @@
+ladder                         rung                engine   current    fixed   cur/eng  fix/eng
+--------------------------------------------------------------------------------------------
+94f9d214-nor-merged            north                  231     1,311      231     5.68x    1.00x
+94f9d214-nor-merged            south                  232     1,312      232     5.66x    1.00x
+94f9d214-nor-merged            recolored_north        233     1,313      233     5.64x    1.00x
+94f9d214-nor-merged            recolored_south        234     1,314      234     5.62x    1.00x
+94f9d214-nor-merged            merged                 235     1,315      235     5.60x    1.00x
+al1-mirror                     rot180                 102       102      102     1.00x    1.00x
+al1-mirror                     mirror_recolor         103       103      103     1.00x    1.00x
+al15-shift-frame               shift_stack             57        57       57     1.00x    1.00x
+al15-shift-frame               framed                  58        58       58     1.00x    1.00x
+al16-layout-nest               pair                    18        18       18     1.00x    1.00x
+al16-layout-nest               stack                   19        19       19     1.00x    1.00x
+al17-shift-frame-tall          shift1                  57        57       57     1.00x    1.00x
+al17-shift-frame-tall          frame1                  58        58       58     1.00x    1.00x
+al17-shift-frame-tall          shift2                  59        59       59     1.00x    1.00x
+al18-fanin-rotate              pair                    19        19       19     1.00x    1.00x
+al18-fanin-rotate              rot                     20        20       20     1.00x    1.00x
+al19-fanin-recolor             pair                   118       118      118     1.00x    1.00x
+al19-fanin-recolor             recol                  119       119      119     1.00x    1.00x
+al2-rot90-calibration          rot90                    2         2        2     1.00x    1.00x
+al20-recolor-telescope         pair                   117       117      117     1.00x    1.00x
+al20-recolor-telescope         recol                  118       118      118     1.00x    1.00x
+al21-dag-siblings              mirror_h                 4         4        4     1.00x    1.00x
+al21-dag-siblings              mirror_flip              5         5        5     1.00x    1.00x
+al5-perceiver-chain            swap_extremes          104       104      104     1.00x    1.00x
+al5-perceiver-chain            swap_mirror            105       105      105     1.00x    1.00x
+al5-perceiver-chain            swap_stack             115       115      115     1.00x    1.00x
+dae9d2b5-half-param            half                   131     1,211      131     9.24x    1.00x
+dae9d2b5-half-param            recolored_west         140     1,220      140     8.71x    1.00x
+dae9d2b5-half-param            recolored_east         141     1,221      141     8.66x    1.00x
+dae9d2b5-split-recolor         west                   131     1,211      131     9.24x    1.00x
+dae9d2b5-split-recolor         east                   132     1,212      132     9.18x    1.00x
+dae9d2b5-split-recolor         recolored_west         133     1,213      133     9.12x    1.00x
+dae9d2b5-split-recolor         recolored_east         134     1,214      134     9.06x    1.00x
+dae9d2b5-split-recolor-lean    west                   131     1,211      131     9.24x    1.00x
+dae9d2b5-split-recolor-lean    east                   132     1,212      132     9.18x    1.00x
+dae9d2b5-split-recolor-lean    recolored_west         133     1,213      133     9.12x    1.00x
+dae9d2b5-split-recolor-lean    recolored_east         134     1,214      134     9.06x    1.00x
+fafffa47-nor-merged            north                  231     1,311      231     5.68x    1.00x
+fafffa47-nor-merged            south                  232     1,312      232     5.66x    1.00x
+fafffa47-nor-merged            recolored_north        233     1,313      233     5.64x    1.00x
+fafffa47-nor-merged            recolored_south        234     1,314      234     5.62x    1.00x
+fafffa47-nor-merged            merged                 235     1,315      235     5.60x    1.00x
+--------------------------------------------------------------------------------------------
+
+n = 42 rung cells (round-1 `composed`, pool raised so nothing truncates)
+  EXACT under the current model : 21/42
+  EXACT under the fixed model   : 42/42
+  worst over-count, current     : 9.24x
+  worst over-count, fixed       : 1.00x
+
+  cells the fix MOVES: 21/42
+    94f9d214-nor-merged            north                 1,311 ->      231  (engine 231)
+    94f9d214-nor-merged            south                 1,312 ->      232  (engine 232)
+    94f9d214-nor-merged            recolored_north       1,313 ->      233  (engine 233)
+    94f9d214-nor-merged            recolored_south       1,314 ->      234  (engine 234)
+    94f9d214-nor-merged            merged                1,315 ->      235  (engine 235)
+    dae9d2b5-half-param            half                  1,211 ->      131  (engine 131)
+    dae9d2b5-half-param            recolored_west        1,220 ->      140  (engine 140)
+    dae9d2b5-half-param            recolored_east        1,221 ->      141  (engine 141)
+    dae9d2b5-split-recolor         west                  1,211 ->      131  (engine 131)
+    dae9d2b5-split-recolor         east                  1,212 ->      132  (engine 132)
+    dae9d2b5-split-recolor         recolored_west        1,213 ->      133  (engine 133)
+    dae9d2b5-split-recolor         recolored_east        1,214 ->      134  (engine 134)
+    dae9d2b5-split-recolor-lean    west                  1,211 ->      131  (engine 131)
+    dae9d2b5-split-recolor-lean    east                  1,212 ->      132  (engine 132)
+    dae9d2b5-split-recolor-lean    recolored_west        1,213 ->      133  (engine 133)
+    dae9d2b5-split-recolor-lean    recolored_east        1,214 ->      134  (engine 134)
+    fafffa47-nor-merged            north                 1,311 ->      231  (engine 231)
+    fafffa47-nor-merged            south                 1,312 ->      232  (engine 232)
+    fafffa47-nor-merged            recolored_north       1,313 ->      233  (engine 233)
+    fafffa47-nor-merged            recolored_south       1,314 ->      234  (engine 234)
+    fafffa47-nor-merged            merged                1,315 ->      235  (engine 235)

@@ -1,0 +1,35 @@
+cell: dae9d2b5-split-recolor-lean / rung west / task west-00 @ L_0, depth 2
+floor: ['map_color', 'nth', 'overlay', 'split_h']
+
+============================================================================================
+max_pool = 30
+============================================================================================
+  MEASURED total considered :       12,139
+  FORECAST total considered :        1,258   (0.104x)
+  forecaster saturated_at   : None
+
+  round |  ENGINE composed  entered_pool |  MODEL composed  entered_pool
+  ----- | ---------------- ------------- | --------------- -------------
+      0 |               20            20 |              20            20
+      1 |              131            28 |           1,211           533
+      2 |           11,988           157 |              27            12
+
+    model round 1 census (capped at 30): {'color': 10, 'grid': 1, 'int': 9}  dominant: overlay: color(10)
+    model round 2 census (capped at 30): {'color': 1, 'grid': 28, 'int': 1, 'list': 1}  dominant: split_h: grid(28)
+
+============================================================================================
+max_pool = 150
+============================================================================================
+  MEASURED total considered :      230,497
+  FORECAST total considered :        1,850   (0.008x)
+  forecaster saturated_at   : None
+
+  round |  ENGINE composed  entered_pool |  MODEL composed  entered_pool
+  ----- | ---------------- ------------- | --------------- -------------
+      0 |               20            20 |              20            20
+      1 |              131            28 |           1,211           533
+      2 |          230,346         1,039 |             619           272
+
+    model round 1 census (capped at 150): {'color': 10, 'grid': 1, 'int': 9}  dominant: overlay: color(10)
+    model round 2 census (capped at 150): {'color': 2, 'grid': 144, 'int': 2, 'list': 1}  dominant: map_color: grid(144) x color(2) x color(2)
+

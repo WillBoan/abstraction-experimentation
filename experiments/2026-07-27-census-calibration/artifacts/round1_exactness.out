@@ -1,0 +1,20 @@
+leaf census (breadth.py): {grid: 1, int: 9, color: 10}
+total leaves = 20   max_arity = 3
+
+round_terms() per primitive over that census:
+  overlay      (color) -> grid [variadic]  count =   1,110
+  map_color    (grid, color, color) -> grid             count =     100
+  split_h      (grid) -> list             count =       1
+  nth          (list, int) -> a             count =       0
+  TOTAL                                                   1,211   <- this is b1_full
+
+rung_breadth().b1_full = 1,211
+
+ENGINE, same floor, same task, depth_limit=1:
+  generation 0: {'pool_size_start': 0, 'pool_size_before_truncation': 20, 'pool_size_end': 20, 'composed': 20, 'errored': 0, 'pruned': 0, 'deduped': 0, 'entered_pool': 20, 'displaced': 0, 'evicted': 0, 'incomplete': False}
+  generation 1: {'pool_size_start': 20, 'pool_size_before_truncation': 48, 'pool_size_end': 30, 'composed': 131, 'errored': 0, 'pruned': 0, 'deduped': 103, 'entered_pool': 28, 'displaced': 0, 'evicted': 0, 'incomplete': False}
+  total considered = 151
+
+====================================================================================
+round-1 composed:  MODEL 1,211   ENGINE 131   ratio 9.24x
+====================================================================================

@@ -252,14 +252,24 @@ def _round_terms(
 
 
 def _slot_types(primitive: Primitive, max_arity: int) -> list[tuple[Type, ...]]:
-    """The argument-type tuples a primitive composes over — one per variadic arity."""
+    """The argument-type tuples a primitive composes over — one per variadic arity.
+
+    The repeated tail is ``variadic_param``, the field that declares it — NOT ``param_types[-1]``.
+    They differ whenever a variadic primitive takes a fixed parameter of another type first, which
+    is the common shape: ``overlay : (Color, Grid...) -> Grid`` replicates GRID, while its last
+    declared parameter is COLOR. Reading the wrong one raised ``overlay``'s round-1 term from 30 to
+    1,110 (10 + 10^2 + 10^3 colour tuples), and ``b1_full`` on the ``dae9d2b5`` floor from 131 to
+    1,211 — a 9.24x over-count in a quantity :mod:`..ladders.breadth` documents as EXACT.
+    Measured 2026-07-27 against the engine on every uncompromised rung cell: 21/42 exact before,
+    42/42 after, and the 21 unaffected cells unmoved
+    (``experiments/2026-07-27-census-calibration/``).
+    """
     if not primitive.is_variadic:
         return [primitive.param_types]
-    fixed = primitive.param_types
-    variadic = fixed[-1] if fixed else None
-    if variadic is None:
-        return [()]
-    return [(*fixed, *([variadic] * extra)) for extra in range(max_arity)]
+    tail = primitive.variadic_param
+    if tail is None:  # unreachable: `is_variadic` is exactly `variadic_param is not None`
+        return [primitive.param_types]
+    return [(*primitive.param_types, *([tail] * extra)) for extra in range(max_arity)]
 
 
 def _available(slot: Type, census: Mapping[Type, int]) -> int:

@@ -1,0 +1,183 @@
+====================================================================================================
+C1 -- the corrected join (uncompromised reports; measured = the cell the census priced)
+====================================================================================================
+ladder                         rung               b1_full  b1_min      tax  d  pool   measured  cost/b1  cens
+94f9d214-nor-merged            north                  231       1    231.0  2    30     13,139     56.9  
+94f9d214-nor-merged            south                  232       1    232.0  2    30      7,489     32.3  
+94f9d214-nor-merged            recolored_north        233       5     46.6  2    30     21,301     91.4  
+94f9d214-nor-merged            recolored_south        234       5     46.8  2    30      7,505     32.1  
+94f9d214-nor-merged            merged                 235       5     47.0  2    30     21,325     90.7  
+al1-mirror                     rot180                 102       2     51.0  2   300      6,743     66.1  
+al1-mirror                     mirror_recolor         103       5     20.6  2   300      6,912     67.1  
+al15-shift-frame               shift_stack             57       2     28.5  2   400      3,587     62.9  
+al15-shift-frame               framed                  58       2     29.0  2   400      3,759     64.8  
+al16-layout-nest               pair                    18       2      9.0  2   400        311     17.3  
+al16-layout-nest               stack                   19       2      9.5  2   400        375     19.7  
+al17-shift-frame-tall          shift1                  57       2     28.5  2   400      3,587     62.9  
+al17-shift-frame-tall          frame1                  58       2     29.0  2   400      3,759     64.8  
+al17-shift-frame-tall          shift2                  59       2     29.5  2   400      3,935     66.7  
+al18-fanin-rotate              pair                    19       2      9.5  2   400        375     19.7  
+al18-fanin-rotate              rot                     20       2     10.0  2   400        445     22.2  
+al19-fanin-recolor             pair                   118       2     59.0  2   400      9,285     78.7  
+al19-fanin-recolor             recol                  119       5     23.8  2   400      9,629     80.9  
+al2-rot90-calibration          rot90                    2       2      1.0  2   400          7      3.5  
+al20-recolor-telescope         pair                   117       2     58.5  2   400      7,055     60.3  
+al20-recolor-telescope         recol                  118       5     23.6  2   400      7,305     61.9  
+al21-dag-siblings              mirror_h                 4       2      2.0  2   400         61     15.2  
+al21-dag-siblings              mirror_flip              5       2      2.5  2   400         91     18.2  
+al5-perceiver-chain            swap_extremes          104       2     52.0  3  7500     50,000    480.8  C
+al5-perceiver-chain            swap_mirror            105       4     26.2  3  7500     50,000    476.2  C
+al5-perceiver-chain            swap_stack             115       9     12.8  3  7500     50,000    434.8  C
+dae9d2b5-half-param            half                   131       1    131.0  2    30     12,139     92.7  
+dae9d2b5-half-param            recolored_west         140       5     28.0  2    30     12,229     87.3  
+dae9d2b5-half-param            recolored_east         141       5     28.2  2    30     12,239     86.8  
+dae9d2b5-split-recolor         west                   131       1    131.0  2   150    230,497   1759.5  
+dae9d2b5-split-recolor         east                   132       1    132.0  2   150    255,577   1936.2  
+dae9d2b5-split-recolor         recolored_west         133       5     26.6  2   150    282,419   2123.5  
+dae9d2b5-split-recolor         recolored_east         134       5     26.8  2   150    311,083   2321.5  
+dae9d2b5-split-recolor-lean    west                   131       1    131.0  2    30     12,139     92.7  
+dae9d2b5-split-recolor-lean    east                   132       1    132.0  2    30     12,149     92.0  
+dae9d2b5-split-recolor-lean    recolored_west         133       5     26.6  2    30     12,159     91.4  
+dae9d2b5-split-recolor-lean    recolored_east         134       5     26.8  2    30     12,169     90.8  
+fafffa47-nor-merged            north                  231       1    231.0  2    30     13,139     56.9  
+fafffa47-nor-merged            south                  232       1    232.0  2    30      7,489     32.3  
+fafffa47-nor-merged            recolored_north        233       5     46.6  2    30     21,301     91.4  
+fafffa47-nor-merged            recolored_south        234       5     46.8  2    30      7,505     32.1  
+fafffa47-nor-merged            merged                 235       5     47.0  2    30     21,325     90.7  
+
+excluded:
+  94f9d214-nor-halves                      compromised: solution-limit
+  94f9d214-nor-recolor                     compromised: solution-limit
+  94f9d214-recolor-first                   no committed report
+  al10-skippable                           no committed report
+  al11-greedy-trap                         no committed report
+  al12-unlearnable                         no committed report
+  al13-symmetry-repair                     no committed report
+  al14-cell-row-grid                       no committed report
+  al3-quad-symmetrize                      no committed report
+  al4-mask-crop                            no committed report
+  al6-mirror-tall                          no committed report
+  al7-fast-tower                           no committed report
+  al8-lean-perceiver                       no committed report
+  al9-decoy                                no committed report
+  dae9d2b5-halves-union                    no committed report
+  dae9d2b5-recolor-first                   no committed report
+  dae9d2b5-recolor-solo                    no committed report
+  dae9d2b5-split-asym-lean                 compromised: solution-limit
+  dae9d2b5-split-halves                    no committed report
+  dae9d2b5-split-halves-lean               compromised: solution-limit
+  fafffa47-nor-halves                      compromised: solution-limit
+  fafffa47-nor-recolor                     compromised: solution-limit
+  fafffa47-recolor-first                   no committed report
+
+joined rungs: 42   usable (uncensored): 39
+depths present among usable rows: [2]
+
+====================================================================================================
+C2 -- rank agreement, DECOMPOSED (the census makes two separate claims)
+====================================================================================================
+
+(a) POOLED over all rungs         spearman(b1_full, measured) = +0.803  (n=39)
+    ^ the first pass's number. Confounded: mixes the two claims below.
+
+(b) BETWEEN ladders (median/ladder) spearman = +0.966  (n=14 ladders)
+    ^ the census's "RANK FLOORS" claim. This is the one that matters for choosing a floor.
+      94f9d214-nor-merged            med b1       233   med measured      13,139   pool 30
+      al1-mirror                     med b1       102   med measured       6,828   pool 300
+      al15-shift-frame               med b1        58   med measured       3,673   pool 400
+      al16-layout-nest               med b1        18   med measured         343   pool 400
+      al17-shift-frame-tall          med b1        58   med measured       3,759   pool 400
+      al18-fanin-rotate              med b1        20   med measured         410   pool 400
+      al19-fanin-recolor             med b1       118   med measured       9,457   pool 400
+      al2-rot90-calibration          med b1         2   med measured           7   pool 400
+      al20-recolor-telescope         med b1       118   med measured       7,180   pool 400
+      al21-dag-siblings              med b1         4   med measured          76   pool 400
+      dae9d2b5-half-param            med b1       140   med measured      12,229   pool 30
+      dae9d2b5-split-recolor         med b1       132   med measured     268,998   pool 150
+      dae9d2b5-split-recolor-lean    med b1       132   med measured      12,154   pool 30
+      fafffa47-nor-merged            med b1       233   med measured      13,139   pool 30
+
+(c) WITHIN each ladder -- the "compare a ladder against ITSELF" claim:
+      94f9d214-nor-merged            rho +0.500   b1 range 231-235 (spread +4)   measured range 7,489-21,325
+      al1-mirror                     n=2 (too few rungs to rank)
+      al15-shift-frame               n=2 (too few rungs to rank)
+      al16-layout-nest               n=2 (too few rungs to rank)
+      al17-shift-frame-tall          rho +1.000   b1 range 57-59 (spread +2)   measured range 3,587-3,935
+      al18-fanin-rotate              n=2 (too few rungs to rank)
+      al19-fanin-recolor             n=2 (too few rungs to rank)
+      al2-rot90-calibration          n=1 (too few rungs to rank)
+      al20-recolor-telescope         n=2 (too few rungs to rank)
+      al21-dag-siblings              n=2 (too few rungs to rank)
+      dae9d2b5-half-param            rho +1.000   b1 range 131-141 (spread +10)   measured range 12,139-12,239
+      dae9d2b5-split-recolor         rho +1.000   b1 range 131-134 (spread +3)   measured range 230,497-311,083
+      dae9d2b5-split-recolor-lean    rho +1.000   b1 range 131-134 (spread +3)   measured range 12,139-12,169
+      fafffa47-nor-merged            rho +0.500   b1 range 231-235 (spread +4)   measured range 7,489-21,325
+      median within-ladder rho = +1.000  (n=6 ladders)
+
+====================================================================================================
+C3 -- what the census is BLIND to: a controlled pair, same census, different pool
+====================================================================================================
+
+rung               b1_full      pool 150    pool 30    ratio
+west                   131       230,497     12,139    19.0x
+east                   132       255,577     12,149    21.0x
+recolored_west         133       282,419     12,159    23.2x
+recolored_east         134       311,083     12,169    25.6x
+
+Same ladder, same floor, same rungs, same depth schedule -> BYTE-IDENTICAL census readings.
+Measured cost differs by the ratio above, entirely from `max_pool`. The census cannot see it.
+
+====================================================================================================
+C4 -- the mechanism: does cost track b1, or does the pool bind?
+====================================================================================================
+
+If round 1 floods the pool (b1 >> pool), round 2 composes over a POOL-SIZED census, so
+cost ~ b1 + g(pool, library) -- additive in b1, not multiplicative. Test: cost/b1 should
+COLLAPSE for rows where b1/pool is large, and the residual (cost - b1) should cluster by pool.
+
+ladder                         rung               b1/pool   cost/b1     cost-b1
+al2-rot90-calibration          rot90                 0.01       3.5           5
+al21-dag-siblings              mirror_h              0.01      15.2          57
+al21-dag-siblings              mirror_flip           0.01      18.2          86
+al16-layout-nest               pair                  0.04      17.3         293
+al16-layout-nest               stack                 0.05      19.7         356
+al18-fanin-rotate              pair                  0.05      19.7         356
+al18-fanin-rotate              rot                   0.05      22.2         425
+al15-shift-frame               shift_stack           0.14      62.9       3,530
+al17-shift-frame-tall          shift1                0.14      62.9       3,530
+al15-shift-frame               framed                0.14      64.8       3,701
+al17-shift-frame-tall          frame1                0.14      64.8       3,701
+al17-shift-frame-tall          shift2                0.15      66.7       3,876
+al20-recolor-telescope         pair                  0.29      60.3       6,938
+al19-fanin-recolor             pair                  0.29      78.7       9,167
+al20-recolor-telescope         recol                 0.29      61.9       7,187
+al19-fanin-recolor             recol                 0.30      80.9       9,510
+al1-mirror                     rot180                0.34      66.1       6,641
+al1-mirror                     mirror_recolor        0.34      67.1       6,809
+dae9d2b5-split-recolor         west                  0.87    1759.5     230,366
+dae9d2b5-split-recolor         east                  0.88    1936.2     255,445
+dae9d2b5-split-recolor         recolored_west        0.89    2123.5     282,286
+dae9d2b5-split-recolor         recolored_east        0.89    2321.5     310,949
+dae9d2b5-half-param            half                  4.37      92.7      12,008
+dae9d2b5-split-recolor-lean    west                  4.37      92.7      12,008
+dae9d2b5-split-recolor-lean    east                  4.40      92.0      12,017
+dae9d2b5-split-recolor-lean    recolored_west        4.43      91.4      12,026
+dae9d2b5-split-recolor-lean    recolored_east        4.47      90.8      12,035
+dae9d2b5-half-param            recolored_west        4.67      87.3      12,089
+dae9d2b5-half-param            recolored_east        4.70      86.8      12,098
+94f9d214-nor-merged            north                 7.70      56.9      12,908
+fafffa47-nor-merged            north                 7.70      56.9      12,908
+94f9d214-nor-merged            south                 7.73      32.3       7,257
+fafffa47-nor-merged            south                 7.73      32.3       7,257
+94f9d214-nor-merged            recolored_north       7.77      91.4      21,068
+fafffa47-nor-merged            recolored_north       7.77      91.4      21,068
+94f9d214-nor-merged            recolored_south       7.80      32.1       7,271
+fafffa47-nor-merged            recolored_south       7.80      32.1       7,271
+94f9d214-nor-merged            merged                7.83      90.7      21,090
+fafffa47-nor-merged            merged                7.83      90.7      21,090
+
+  pool-FLOODED rows (b1 >= pool, n=17): median cost/b1 = 90.7
+  pool-SLACK rows  (b1 <  pool, n=22): median cost/b1 = 63.9
+
+  If these two medians differ substantially, cost/b1 is NOT a floor constant and the
+  census's units cannot be converted to a cost forecast without the pool.
