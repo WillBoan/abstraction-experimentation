@@ -9,6 +9,7 @@ import pytest
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.analysis.grids import discriminating_grids as _discriminating_grids
 from arc_lab.program_search.ladders.probe import (
+    ALTERNATIVE,
     AS_INTENDED,
     COLLAPSED,
     COLLISION,
@@ -116,6 +117,29 @@ def test_the_probe_prices_one_round_deeper_and_names_the_dominant_factor() -> No
     assert probe.deeper.total_considered > 0
     assert "grid(" in probe.deeper.dominant
     assert "one round deeper (depth_limit 3)" in probe.render()
+
+
+def test_the_probes_pool_scales_with_the_rung_own_derived_depth() -> None:
+    # `dae9d2b5-recolor-first`'s derived schedule is [3, 3, 2]: rung 1 (recolored_west) itself
+    # needs depth 3, not just the top-serving level -- the first real ladder where a RUNG, not
+    # only the top, sits above the base depth. Before this fix, `probe_rung` derived only
+    # `depth_limit` from the schedule and left `max_pool` at the ladder's configured 30 -- so a
+    # depth-3 rung was probed with the pool sized for depth 2, saturating and reporting
+    # "unsolved" for a rung the real chain (which DOES scale the pool, `run.py::pool_for_depth`)
+    # can actually find. Every prior schedule puts depth >= 3 only at the top-serving level,
+    # which a rung's own probe never searches at directly, so the gap was invisible until now.
+    spec = make_ladder("dae9d2b5-recolor-first")
+    assert spec.depth_schedule()[0] == 3  # rung 1's own serving level, not just the top's
+    probe = probe_rung(spec, 1)
+    assert probe.saturation is not None
+    assert probe.saturation.max_pool == 150  # pool_for_depth(30, 3), not the configured 30
+    # Both demos WAKE-solve at the correctly-scaled pool (a valid program at the intended depth,
+    # not necessarily the declared one -- ALTERNATIVE is not a wake failure); at the configured
+    # pool of 30 this rung saturates and reports UNSOLVED instead, which is the defect this test
+    # guards against.
+    assert probe.wake_ok
+    assert [p.verdict for p in probe.wake] == [ALTERNATIVE, ALTERNATIVE]
+    assert [p.found_depth for p in probe.wake] == [3, 3]
 
 
 def test_the_probe_reports_a_saturated_cell_without_calling_it_unsound() -> None:

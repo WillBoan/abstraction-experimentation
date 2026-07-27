@@ -19,8 +19,6 @@ Exits non-zero when any probed rung fails, so it works in a script or a hook.
 
 from __future__ import annotations
 
-import dataclasses
-
 import typer
 
 from arc_lab.program_search.ladders.lang.errors import LadderFormatError
@@ -50,10 +48,9 @@ def probe_ladder_command(
         typer.echo(f"{name}: LOAD FAILED -- {exc}")
         raise typer.Exit(code=1) from exc
 
-    budget = spec.reference_config.budget
     if guard is not None:
         # `considered_limit` is `None` for an unguarded budget, which no raise can exceed.
-        current = budget.considered_limit
+        current = spec.reference_config.budget.considered_limit
         if current is not None and guard > current:
             typer.echo(
                 f"note: guard raised {current:,} -> {guard:,}. This buys a longer "
@@ -61,14 +58,18 @@ def probe_ladder_command(
                 "acquits. If a cell is INCONCLUSIVE, run `run-ladder` rather than escalating here.",
                 err=True,
             )
-        budget = dataclasses.replace(budget, considered_limit=guard)
     if level is not None and not 1 <= level <= len(spec.rungs):
         raise typer.BadParameter(f"level must be 1..{len(spec.rungs)} for {name}")
 
+    # `budget` is deliberately left at its default (`None`): passing a full replacement here would
+    # apply ONE pinned depth+pool to every probed level, discarding the per-level derivation
+    # `probe_rung` computes internally (2026-07-27's bug, found while probing
+    # `dae9d2b5-recolor-first` -- see `probe.py`'s docstring on `guard`). `--guard` threads only
+    # `considered_limit` on top of whatever budget each level derives.
     probes = (
-        (probe_rung(spec, level, budget=budget),)
+        (probe_rung(spec, level, guard=guard),)
         if level is not None
-        else probe_ladder(spec, budget=budget)
+        else probe_ladder(spec, guard=guard)
     )
     typer.echo(render_probes(probes))
     failed = [probe for probe in probes if not probe.ok]

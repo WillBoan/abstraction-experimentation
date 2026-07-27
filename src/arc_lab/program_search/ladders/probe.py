@@ -71,6 +71,7 @@ from arc_lab.program_search.execution.forecast_cost import (
 from arc_lab.program_search.execution.model.run_spec import RunSpec
 from arc_lab.program_search.ladders import graph
 from arc_lab.program_search.ladders._render import table
+from arc_lab.program_search.ladders.run import pool_for_depth
 from arc_lab.program_search.ladders.spec import LadderSpec
 from arc_lab.program_search.search.budget import Budget
 from arc_lab.program_search.search.leaves import constant_key
@@ -384,17 +385,26 @@ class RungProbe:
 
 
 def probe_ladder(
-    spec: LadderSpec, *, budget: Budget | None = None, runs_root: Path | None = None
+    spec: LadderSpec,
+    *,
+    budget: Budget | None = None,
+    guard: int | None = None,
+    runs_root: Path | None = None,
 ) -> tuple[RungProbe, ...]:
     """Probe every bridging rung of ``spec``, bottom-up."""
     return tuple(
-        probe_rung(spec, level, budget=budget, runs_root=runs_root)
+        probe_rung(spec, level, budget=budget, guard=guard, runs_root=runs_root)
         for level in range(1, len(spec.rungs) + 1)
     )
 
 
 def probe_rung(
-    spec: LadderSpec, level: int, *, budget: Budget | None = None, runs_root: Path | None = None
+    spec: LadderSpec,
+    level: int,
+    *,
+    budget: Budget | None = None,
+    guard: int | None = None,
+    runs_root: Path | None = None,
 ) -> RungProbe:
     """Probe rung ``level``: wake + collision, skip, sleep, forecast — all under ``L_{level-1}``."""
     rung = spec.rungs[level - 1]
@@ -403,12 +413,32 @@ def probe_rung(
     # The probe drives the REAL engine at the budget the climb will use, so it must honour the
     # ladder's depth schedule: level-1's search runs at this rung's own `depth_limit`, not at one
     # pinned number (`spec.DepthScheduleMode`). An explicit `budget` overrides outright -- it is
-    # the caller saying "measure this cell", not "measure the ladder".
+    # the caller saying "measure this cell", not "measure the ladder". ``guard`` is narrower: it
+    # overrides ONLY `considered_limit` on top of whichever budget was chosen (explicit or
+    # derived) -- the CLI's `--guard` needs this because passing a whole replacement `Budget`
+    # (2026-07-27's actual bug, found while probing `dae9d2b5-recolor-first`) silently discards
+    # the per-level derivation below for EVERY probed rung, not just the guard.
+    #
+    # The pool must travel WITH that depth for the same reason `run.py`'s chain scales it
+    # (`pool_for_depth`): a pool sized for the ladder's base depth silently starves a deeper
+    # level's retained-program pool, and the search saturates without composing anything --
+    # reported "unsolved" with no indication that the failure is the POOL, not the rung. This
+    # bit every real ladder built before 2026-07-27's fix landed on the CHAIN only: every prior
+    # schedule puts depth >= 3 exclusively at the TOP-serving level, which this probe's per-rung
+    # search never drives directly (the last rung's own jump still runs at its own, shallower
+    # depth) -- so the gap was invisible until the first ladder with a depth-3 RUNG (found by
+    # `dae9d2b5-recolor-first`'s probe reporting "unsolved" + "SATURATED" simultaneously, which
+    # is the tell: a genuinely intractable jump does not saturate, it exhausts).
     effective = budget
     if effective is None:
+        depth = spec.depth_schedule()[level - 1]
         effective = replace(
-            spec.reference_config.budget, depth_limit=spec.depth_schedule()[level - 1]
+            spec.reference_config.budget,
+            depth_limit=depth,
+            max_pool=pool_for_depth(spec.reference_config.budget.max_pool, depth),
         )
+    if guard is not None:
+        effective = replace(effective, considered_limit=guard)
     by_id = {entry.task.task_id: entry for entry in spec.train_corpus.entries}
 
     demos = [(d.task_id, d.solution) for d in rung.demonstrations if d.task_id in by_id]
