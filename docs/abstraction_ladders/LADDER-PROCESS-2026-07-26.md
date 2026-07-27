@@ -16,7 +16,7 @@ cost ~ (primitives x constants) ^ depth
 
 Depth is the exponent and no pruning beats it. Breadth is the base, and it is the one that actually bit: on `dae9d2b5-halves-union` rung 1, depth was fixed at 3 while the base alone moved the cost from **4** to **21,149,854** — a 5.3-million-fold spread over the *same* rung at the *same* depth.
 
-Both axes are now instrumented ([BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md)): the depth schedule per level and the round-1 breadth census, both printed by `lint-ladder` in ~1s. Everything in §3 and §5 is a corollary of this line.
+Both axes are now instrumented ([BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md)): the depth schedule per level and the round-1 breadth census, both printed by `lint-ladder` in ~1s. The instrument *ordering* in §3 and the breadth items in §5 are corollaries of this line; the instrument *contracts* (what each can prove) are not — they come from what each instrument observes.
 
 ## 2. Building a ladder
 
@@ -28,7 +28,7 @@ Both axes are now instrumented ([BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-0
 2. **Cut the term into competences.** Read the natural cut-sets off the verified term and name each one. If you cannot name a rung in three words, it is a fragment of a competence, not a rung.
 3. **Then choose the smallest floor** that puts each cut at depth 2–3, preferring *perceived* geometry over *computed* (§5). The floor is chosen to serve the cuts — never inherited and then worked around.
 4. **Author demonstrations last.** They are the plan's dominant cost centre, so they are the last thing to commit to a spine that might still move.
-5. **Verify** — lint, probe, taskgen, run (§3 for the order, §4 when something fires).
+5. **Register the expected profile, then verify** — lint, probe, `diff-ladder` for any member derived from another (membership/equivalence, picking the validator the floor relationship licenses — [LADDER-RELATIONSHIPS](LADDER-RELATIONSHIPS-2026-07-23.md)), taskgen, run, analyse (§3 for the order, §4 when something fires). Write the predicted per-rung verdict profile down **before** `run-ladder`: a profile is evidence only against a stated expectation, and a prediction cannot be retro-fitted ([MVE-PLAN](MVE-PLAN-2026-07-25.md)).
 
 Start a ladder, or the next variant of one, with `arc-lab new-ladder <name> [--from <existing>]`. It refuses to overwrite; that is the point (§7).
 
@@ -53,19 +53,29 @@ Every question has a cheapest instrument that can settle it. **Exhaust the cheap
 
 | # | Instrument | Cost | Proves | Cannot prove |
 | --- | --- | --- | --- | --- |
-| 1 | **hand algebra** | free | a rung is skippable; a term collapses | anything about search cost |
-| 2 | `lint-ladder` | ~1s, static | the ladder is unsound on paper | that it is sound |
-| 3 | pruned probe cell | seconds | the rung's own search is too costly | that the floor is affordable |
-| 4 | full probe cell | tracks the enumeration | a rung is broken in fact | that a rung is fine |
-| 5 | `run-ladder` | the whole chain | the certificate — the admission verdict | — |
+| 1 | **hand algebra** | ~minutes | a rung is skippable; a term collapses | anything about search cost |
+| 2 | `lint-ladder` | ~1s, static (one exception, below) | the ladder is unsound on paper | that it is sound |
+| 2b | `lint-ladder --full` | ~1s | — | (the `spec.md` artifact form: all six depth quantities, four breadth corners, resolved config) |
+| 3 | `diff-ladder` (derived members) | ~1s same-floor; a grid battery across floors | a member is / is not behaviour-preserving | anything across floors whose primitives are still assumed — INCONCLUSIVE |
+| 4 | pruned probe cell | seconds | the rung's own search is too costly | that the floor is affordable |
+| 5 | full probe cell | what the enumeration costs, capped by the ladder's own guard | a rung is broken in fact | that a rung is fine |
+| 6 | `run-ladder` | the whole chain | the certificate — the admission verdict | — |
 
 The session's own contrast: `dae9d2b5-3-recolor-rungs` was killed by **one lint, no probe**; the `map_color`/`overlay` skip path cost a **25-minute probe** that hand algebra would have found in minutes.
 
 **The probe convicts; only the certificate acquits.** A skip path, collapse, collision or wrong mint the probe finds is real. A clean probe is not a pass — the climb pays each jump under a library inflated by earlier mints, and cross-rung interactions are invisible to a per-rung cell.
 
+**Admission is exactly two verdict families** (`certificate.py::admitted`): every jump tractable, and every `no_skip_paths` verdict `is True` — `None` (censored) fails exactly as `False` does. Everything else the certificate carries — `demonstration_health`, static skippability — is verdict-profile data, not a gate ([CERTIFICATE-PROFILE](CERTIFICATE-PROFILE-2026-07-24.md)). When this doc says "admitted", it means that predicate and nothing more.
+
+**Read the compact table first.** `lint-ladder <name>` prints one line per rung — the level's budget, `d_i`/`needs`, the double-jump, the round-1 breadth `b1` and its `tax` ratio, and a `measured` column read back from any recorded probe cells for that level. Blank there means nobody has probed it, which is an honest gap rather than a zero. `--full` prints the artifact form; `arc-lab runs --probes` lists the cells themselves.
+
+**Lint's ~1s has one known exception.** Unfolding a heavily-shared tall DAG can blow up — `cfb2ce5a-5-lowered-full` does not terminate (>8 min, >2.6 GB RSS). A lint that is minutes-silent on a big DAG is hitting that, not working; the fix is recorded out-of-scope in [2026-07-26-AL-PLAN](2026-07-26-AL-PLAN.md) — park the ladder rather than waiting it out.
+
 **INCONCLUSIVE is a non-result by design, not a defect to tune away.** A censored cell means the search was cut short, so "unsolved" is a budget fact, not a verdict. Raising `--guard` buys a longer search, never a stronger verdict; if the answer matters, run `run-ladder`. (2026-07-25: six escalating guard runs, >1h. The CLI's own help was recommending it — that text is fixed; this is the reason.)
 
-**Pruning is a bound, never a measurement.** Anything built on `prune_library` chose its library by reading the answer. It prices a floor and sizes a guard; it is never a run whose cost may be quoted (§6, `pruned-library`).
+**Pruning is a bound, never a measurement.** A pruned cell chose its library AND its constant values by reading the answer. It prices a floor and sizes a guard; it is never a run whose cost may be quoted (§6, `pruned-library`).
+
+**Pruning has two halves and neither subsumes the other.** Dropping a primitive drops its types' whole constant battery for free — which is the entire story on `dae9d2b5-halves-union`'s `west` (round-1 width 1,211 -> 1). It is *no* story on al14's `move_cell_up`, where every primitive the program uses survives and the width does not move at all (300 -> 300) until the constant VALUES are restricted (-> 12). A cell offering only library pruning reports "this rung is expensive" where the truth is "its constant battery is"; the probe does both.
 
 **The breadth census is an indicator, never a prediction.** Exact for round 1 and it understates badly at depth: `dae9d2b5-halves-union` r_1 reads 1,211x statically against ~5.3e6 measured at depth 3. Use it to rank floors and to compare a ladder against itself.
 
@@ -76,7 +86,9 @@ The session's own contrast: `dae9d2b5-3-recolor-rungs` was killed by **one lint,
 | Fires | The judgement |
 | --- | --- |
 | `double-jump-intractable` (warn) | a data point about where the cut was placed, **not** a reason the ladder may not exist ([CERTIFICATE-PROFILE](CERTIFICATE-PROFILE-2026-07-24.md)). Do not redesign to silence it |
-| `raw-intractable` | the top is reachable from the bare floor — the ladder measures nothing. Redesign the top; do not just lower the budget |
+| `raw-intractable` | the top is reachable from the bare floor — the ladder measures nothing. **Withhold the primitive(s) that make it shallow** (and declare them, §2), or drop the task; redesigning the top is the last resort, because it changes which competence you are measuring |
+| `free-param-varies` | the demo plan feeds a rung parameter one value everywhere, so sleep will bake the literal in instead of minting at intended arity — the S-B law: **the demo value-patterns ARE the mint's spec**. Choose grids that vary the value; this is the manual demo-selection judgement the deferred selector would mechanize, and repeated pain here is that selector's build trigger ([MVE-PLAN](MVE-PLAN-2026-07-25.md)) |
+| `free-params-covary` | two parameters move in lockstep at every call site, so no mint can separate them. Vary them independently across demos — same S-B judgement as above |
 | `rewrite-shallow` | real, and the witness is printed. The rung buys less depth than it claims |
 | `constant-subterm` | a composite subterm is train-constant and beaten by a literal. Vary the grids so the value cannot be baked in (al14) |
 | probe: COLLAPSED | search retains something cheaper than intended — the rung is not the competence you think it is |
@@ -147,7 +159,7 @@ General habits, listed because these are the ones that cost real time here.
 
 **Probe — floor tax:** `clean` · `rung-too-expensive` · `floor-too-broad`.
 
-**Structure:** `skippable` (a rung whose consumer is reachable without it — a verdict-profile data point, not an admission failure) · `chain` vs `DAG` · `telescope` vs `recombination` (fan-in > 1).
+**Structure:** `skippable` (static, from lint: the consumer's double-jump fits the budget, so a skip *could* exist — a verdict-profile data point, not a gate; distinct from the certificate's `no_skip_paths = False`, where a skip path was empirically *found*, which fails admission) · `chain` vs `DAG` · `telescope` vs `recombination` (fan-in > 1).
 
 **Certificate:** `tractable_jumps` · `no_skip_paths` — **tri-state**: `True` none found, `False` found, `None` inconclusive because a search censored; `None` fails admission exactly as `False` does · `demonstration_health` (fraction solved *and* routed through the rung's own dependencies).
 
@@ -159,6 +171,6 @@ General habits, listed because these are the ones that cost real time here.
 
 - Format: [LADDER-FORMAT.md](LADDER-FORMAT.md) · Register: [LADDERS.md](LADDERS.md) · Checks: [LINT-CHECKS.md](LINT-CHECKS.md)
 - Verdict profile, not a sandwich gate: [CERTIFICATE-PROFILE-2026-07-24.md](CERTIFICATE-PROFILE-2026-07-24.md) · The two cost axes: [BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md)
-- Set structure: [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md) · Comparison licenses: [LADDER-RELATIONSHIPS-2026-07-23.md](LADDER-RELATIONSHIPS-2026-07-23.md)
+- Set structure: [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md) · Full-set plan (Phase 2+ entry gates): [LADDER-SET-PLAN-2026-07-24.md](LADDER-SET-PLAN-2026-07-24.md) · Comparison licenses: [LADDER-RELATIONSHIPS-2026-07-23.md](LADDER-RELATIONSHIPS-2026-07-23.md)
 - Active plans: [MVE-PLAN-2026-07-25.md](MVE-PLAN-2026-07-25.md) · [AL-PLAN-2026-07-23.md](AL-PLAN-2026-07-23.md) · [2026-07-26-AL-PLAN.md](2026-07-26-AL-PLAN.md)
 - Run model: [EXECUTION.md](../../EXECUTION.md) · Engine: [ARCHITECTURE.md](../../ARCHITECTURE.md) · Notebooks: [experiments/README.md](../../experiments/README.md)

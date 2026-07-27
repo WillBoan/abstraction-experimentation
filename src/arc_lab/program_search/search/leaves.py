@@ -67,23 +67,60 @@ CONSTANT_SOURCE_TYPES: dict[str, frozenset[str]] = {
 CONSTANT_LEAF_TYPES: frozenset[str] = frozenset().union(*CONSTANT_SOURCE_TYPES.values())
 
 
+def constant_key(constant: Const) -> str:
+    """The stable, JSON-safe spelling of one constant leaf -- ``"int=1"``, ``"color=6"``,
+    ``"offset=Offset(d_row=0, d_col=1)"``.
+
+    A string rather than the ``Const`` itself because this goes into a search engine's fields and
+    therefore into ``run_id`` (``execution/model/serde.py`` admits only dataclasses, tuples and
+    JSON scalars), and because a run's identity should be readable in ``runspec.json``. ``repr`` is
+    deterministic for every value type the constant policies mint (ints, bools, ``Coord``,
+    ``Offset`` -- all frozen dataclasses or scalars).
+    """
+    return f"{getattr(constant.value_type, 'name', constant.value_type)}={constant.value!r}"
+
+
 def seed_leaves(
     scope: Scope,
     contexts: tuple[Context, ...],
     constant_sources: tuple[ConstantSource, ...],
     library: Library,
+    constant_allowlist: frozenset[str] | None = None,
 ) -> Iterator[tuple[Program, Type]]:
     """The round-0 leaves: ``Input()``, the in-scope bound variables, and the policy constants.
 
     ``library`` gates *which* base-type constants a policy actually mints (:func:`_type_in_use`):
     a library with no ``BOOL``-typed primitive (and no ``if``) has no use for a ``BOOL`` leaf, and
     minting one anyway is pure dead weight in every pool it's absorbed into.
+
+    ``constant_allowlist`` is a further, VALUE-level restriction (keys per :func:`constant_key`):
+    only the listed values are minted. ``None`` means no restriction, which is every honest run.
+
+    The two prunings are genuinely different and neither subsumes the other. Type gating is
+    coarse: one ``COLOR``-taking primitive in the library buys the full ten-colour battery, even
+    for a program that needs one colour. Measured on al14's ``move_cell_up``, pruning the LIBRARY
+    to the primitives the program references changes its round-1 width not at all (300 -> 300),
+    while pruning to the values it uses takes it to 12. A tool that offers only the first would
+    report "this rung is expensive" where the truth is "its constant battery is".
+
+    An ORACLE knob (the allowlist is read off the answer), so it belongs only to design-time
+    instruments; a run under it is labelled ``pruned-library`` by ``ladders/compromise.py`` and its
+    cost may not be quoted.
     """
     yield Input(), GRID
     for index in range(len(scope)):
         binder = scope.type_of(index)
         yield Var(index=index, value_type=binder), binder
-    yield from policy_constants(_distinct_input_grids(contexts), constant_sources, library)
+    for leaf, leaf_type in policy_constants(
+        _distinct_input_grids(contexts), constant_sources, library
+    ):
+        if (
+            constant_allowlist is not None
+            and isinstance(leaf, Const)
+            and constant_key(leaf) not in constant_allowlist
+        ):
+            continue
+        yield leaf, leaf_type
 
 
 def policy_constants(

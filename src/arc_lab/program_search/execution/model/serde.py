@@ -27,11 +27,27 @@ def to_data(component: object) -> dict[str, object]:
     Dataclass fields recurse; tuples become lists; only JSON-compatible leaves are
     allowed — anything else raises ``TypeError`` so a non-serialisable component
     can never silently corrupt a ``run_id``.
+
+    A class may declare ``SERDE_OMIT_WHEN_NONE`` (a ``ClassVar`` of field names) to have those
+    fields **left out entirely when they are ``None``**. This exists so a new field can be added
+    to a component WITHOUT moving every existing ``run_id``: run identity should be semantic, and
+    a field whose ``None`` provably means "no effect" contributes nothing to what a run did.
+    ``from_data`` reconstructs from present keys only, so an omitted field simply takes its
+    dataclass default — the round trip is unchanged.
+
+    **The bar for using it is high**, because it hides a field from run identity: ``None`` must
+    mean the component behaves exactly as if the field did not exist. It is NOT a general
+    omit-defaults rule (that would move existing hashes, since fields like
+    ``Budget.solution_limit`` are already ``None`` and emitted).
     """
     data: dict[str, object] = {"kind": type(component).__name__}
     if dataclasses.is_dataclass(component) and not isinstance(component, type):
+        omit: frozenset[str] = getattr(type(component), "SERDE_OMIT_WHEN_NONE", frozenset())
         for field in dataclasses.fields(component):
-            data[field.name] = _value_to_data(getattr(component, field.name))
+            value = getattr(component, field.name)
+            if value is None and field.name in omit:
+                continue
+            data[field.name] = _value_to_data(value)
     return data
 
 

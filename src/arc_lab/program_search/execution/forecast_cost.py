@@ -151,7 +151,14 @@ def forecast_cost(
     # `('finite-enumerate', 'harvest-from-instance')` read 28 against an actual 19.
     seen: set[Program] = set()
     leaf_total = 0
-    for leaf, leaf_type in seed_leaves(Scope(()), contexts, engine.constant_sources, library):
+    allowlist = getattr(engine, "constant_allowlist", None)
+    for leaf, leaf_type in seed_leaves(
+        Scope(()),
+        contexts,
+        engine.constant_sources,
+        library,
+        None if allowlist is None else frozenset(allowlist),
+    ):
         leaf_total += 1  # the engine CONSIDERS every leaf yielded, duplicates included
         if leaf in seen:
             continue

@@ -73,10 +73,12 @@ from arc_lab.program_search.ladders import graph
 from arc_lab.program_search.ladders._render import table
 from arc_lab.program_search.ladders.spec import LadderSpec
 from arc_lab.program_search.search.budget import Budget
+from arc_lab.program_search.search.leaves import constant_key
+from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.search.search_result import SearchResult, SearchStats
 from arc_lab.program_search.substrate.abstraction import make_abstraction, unfold_program
 from arc_lab.program_search.substrate.library import Library
-from arc_lab.program_search.substrate.program import Program
+from arc_lab.program_search.substrate.program import Const, Program
 
 #: Wake verdicts, worst first — the order the summary reports them in.
 AS_INTENDED = "as-intended"
@@ -532,6 +534,21 @@ def prune_library(library: Library, program: Program) -> Library:
     return Library(name=f"{library.name}:pruned", primitives=kept, version=library.version)
 
 
+def constant_allowlist_for(program: Program) -> tuple[str, ...]:
+    """The VALUE-level constant allowlist for ``program`` -- the values it actually uses.
+
+    The other half of optimal pruning, and not implied by :func:`prune_library`: type gating is
+    coarse, so a surviving primitive still mints its whole typed battery. On al14's
+    ``move_cell_up``, library pruning changes round-1 width not at all (300 -> 300) while this
+    takes it to 12 -- a rung the primitive-only cell would report as "expensive" when what is
+    expensive is its constant battery.
+
+    An ORACLE, like the library pruning it accompanies.
+    """
+    keys = {constant_key(node) for node in program.walk() if isinstance(node, Const)}
+    return tuple(sorted(keys))
+
+
 def _referenced_primitives(program: Program) -> frozenset[str]:
     """Every primitive name the program applies or references by name."""
     from arc_lab.program_search.substrate.program import Apply, PrimRef
@@ -561,8 +578,19 @@ def _floor_tax(
     reading costs exactly one extra PRUNED search -- the cheap cell by many orders of magnitude,
     which is what makes this affordable to do on every rung by default rather than on request.
     """
+    # OPTIMAL pruning: both halves. Library pruning alone is not enough -- type gating is coarse,
+    # so a surviving primitive still mints its whole typed battery (al14's `move_cell_up`: library
+    # pruning 300 -> 300, value pruning 300 -> 12). A cell offering only the first would report
+    # "this rung is expensive" where the truth is "its constant battery is".
     pruned_lib = prune_library(below, intended)
-    pruned = _search(spec, task, pruned_lib, budget, runs_root=runs_root)
+    pruned = _search(
+        spec,
+        task,
+        pruned_lib,
+        budget,
+        runs_root=runs_root,
+        constant_allowlist=constant_allowlist_for(intended),
+    )
     return FloorTax(
         task_id=task.task_id,
         pruned_considered=pruned.stats.considered,
@@ -607,6 +635,7 @@ def _search(
     budget: Budget,
     *,
     runs_root: Path | None = None,
+    constant_allowlist: tuple[str, ...] | None = None,
 ) -> SearchResult:
     """One probe cell, as a RECORDED RUN -- cached, crash-safe, and inspectable afterwards.
 
@@ -628,6 +657,11 @@ def _search(
     """
     corpus = Corpus.of(f"{PROBE_CORPUS_PREFIX}{spec.name}:{library.name}:{task.task_id}", [task])
     config = spec.reference_config.with_(library=library, budget=budget, learn=None)
+    engine = config.search_engine
+    if constant_allowlist is not None and isinstance(engine, BottomUpSearchEngine):
+        # Only the bottom-up engine has a constant battery to restrict; any other engine simply
+        # gets the library pruning, and the cell says so by carrying no allowlist.
+        config = config.with_(search_engine=replace(engine, constant_allowlist=constant_allowlist))
     record = execute(RunSpec(config=config, corpus=corpus), runs_root=runs_root)
     row = next((r for r in record.trace_rows() if r.get("task_id") == task.task_id), None)
     result = search_result_from_row(row) if row is not None else None

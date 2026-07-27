@@ -19,7 +19,7 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Literal, TypeAlias
+from typing import ClassVar, Literal, TypeAlias
 
 from arc_lab.core.task import TrainExamples, train_with_output
 
@@ -311,6 +311,19 @@ class BottomUpSearchEngine(SearchEngine):
     #: ("Bidirectional", `unbuilt`) but not committed to this overhaul. Not yet built: `True` raises
     #: in `__post_init__`, so the gap is visible rather than silently absent.
     inverse_semantics_propagation: bool = False
+    #: VALUE-level constant restriction (keys per ``leaves.constant_key``); ``None`` = unrestricted,
+    #: which is every honest run. An ORACLE knob for design-time instruments only: the list is read
+    #: off the answer, so a run under it is labelled ``pruned-library`` and its cost may not be
+    #: quoted. It complements library pruning rather than duplicating it -- type gating is coarse,
+    #: and on al14's ``move_cell_up`` library pruning changes round-1 width not at all (300 -> 300)
+    #: while value pruning takes it to 12.
+    constant_allowlist: tuple[str, ...] | None = None
+
+    #: `constant_allowlist` is omitted from the serialised form when unset, so adding it did not
+    #: move a single existing `run_id` (`model/serde.py::to_data`). Sound because `None` means "no
+    #: restriction": the engine then mints exactly the constants it minted before the field
+    #: existed, so a run under it IS the run that was recorded, not merely one like it.
+    SERDE_OMIT_WHEN_NONE: ClassVar[frozenset[str]] = frozenset({"constant_allowlist"})
 
     def __post_init__(self) -> None:
         if self.inverse_semantics_propagation:
@@ -472,7 +485,13 @@ class BottomUpSearchEngine(SearchEngine):
         # log); every later round is the lazily-pulled ``_compose`` generator — see the absorption
         # call below on why laziness is behaviour-preserving.
         frontier: Iterable[tuple[Program, Type]] = [
-            *seed_leaves(scope, contexts, self.constant_sources, state.library),
+            *seed_leaves(
+                scope,
+                contexts,
+                self.constant_sources,
+                state.library,
+                None if self.constant_allowlist is None else frozenset(self.constant_allowlist),
+            ),
             *self._function_leaves(state),
         ]
         depth = 0

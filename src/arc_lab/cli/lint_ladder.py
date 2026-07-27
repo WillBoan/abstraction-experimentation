@@ -56,6 +56,12 @@ def lint_ladder_command(
         help="Exploratory mode: take unknown floor primitives at their declared signatures and "
         "report them as a worklist, instead of failing to load.",
     ),
+    full: bool = typer.Option(
+        False,
+        "--full",
+        help="Print the full `spec.md` artifact form (all six depth quantities, the four breadth "
+        "corners, the resolved config) instead of the compact terminal summary.",
+    ),
     quiet: bool = typer.Option(
         False, "--quiet", "-q", help="Only report findings, not the full rendered spec."
     ),
@@ -67,7 +73,9 @@ def lint_ladder_command(
     if json_output:
         _emit_json(targets)
         return
-    outcomes = [_lint_one(one, quiet=quiet or target is None, draft=draft) for one in targets]
+    outcomes = [
+        _lint_one(one, quiet=quiet or target is None, draft=draft, full=full) for one in targets
+    ]
     if target is None:
         clean = sum(outcome is _Outcome.CLEAN for outcome in outcomes)
         typer.echo(f"\n{clean}/{len(targets)} ladders lint clean")
@@ -132,7 +140,7 @@ def _resolve_target(target: str, *, draft: bool) -> LoadedLadder:
     return load_ladder(target)
 
 
-def _lint_one(target: str, *, quiet: bool, draft: bool) -> _Outcome:
+def _lint_one(target: str, *, quiet: bool, draft: bool, full: bool = False) -> _Outcome:
     """Lint one ladder and report; return its :class:`_Outcome`."""
     label = Path(target).stem if target.endswith(LADDER_SUFFIX) else target
     try:
@@ -153,7 +161,8 @@ def _lint_one(target: str, *, quiet: bool, draft: bool) -> _Outcome:
     errors = [f for f in shape.findings if not f.ok and f.severity == "error"]
     warnings = [f for f in shape.findings if not f.ok and f.severity == "warn"]
     if not quiet:
-        typer.echo(spec.render())
+        # The COMPACT terminal view by default; `--full` prints the `spec.md` artifact form.
+        typer.echo(spec.render_summary() if not full else spec.render())
         typer.echo("")
     typer.echo(
         f"{label}: {'OK' if shape.ok else 'FAILED'} -- {len(shape.findings)} checks "

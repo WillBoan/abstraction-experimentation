@@ -546,6 +546,47 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
             "(`-` when the pool saturates too early to fit).",
         ]
 
+        # WHERE the spend went, per cell. The single most load-bearing diagnostic there is: it is
+        # what turns "this cell is expensive" into "this cell is expensive BECAUSE of primitives
+        # the rung never uses" -- the 2026-07-25 read that was available from the first run and
+        # went unmade for hours.
+        attribution_rows = [["task", "library", "spend by primitive (shares OVERLAP)"]]
+        for entry in matrix:
+            columns = entry.get("columns") or {}
+            for level in levels:
+                cell = columns.get(level) or {}
+                contributors = cell.get("by_primitive")
+                if not isinstance(contributors, list) or not contributors:
+                    continue
+                attribution_rows.append(
+                    [
+                        f"`{entry.get('task_id')}`",
+                        f"L_{level}",
+                        ", ".join(
+                            f"`{c.get('primitive')}` {_count(c.get('considered'))} "
+                            f"({float(c.get('share') or 0):.1%})"
+                            for c in contributors
+                            if isinstance(c, dict)
+                        ),
+                    ]
+                )
+        if len(attribution_rows) > 1:
+            lines += [
+                "",
+                "## Spend attribution (`by_primitive`)",
+                "",
+                *table(attribution_rows),
+                "",
+                "- Shares **overlap and are not a partition**: one composition counts in every "
+                "bucket it touches, so a depth-3 program over three primitives appears three "
+                "times. Read a share as "
+                '"what fraction of the spend involved this primitive".',
+                "- A primitive at ~100% that the task's own solution never calls is the floor-tax "
+                "signature: the cell is paying for vocabulary it cannot use. Cross-check against "
+                "the round-1 breadth census in `spec.md`, and against `probe-ladder`'s floor tax, "
+                "which measures the same thing directly.",
+            ]
+
     jump_costs: Mapping[Any, Any] = cost.get("jump_costs") or {}
     censored = bool(cost.get("raw_censored"))
     ratio = cost.get("amortization_ratio_considered")
@@ -876,8 +917,36 @@ def _per_task_cells(record: RunRecord) -> dict[str, dict[str, object]]:
             # Cut short by a `considered_limit`: `considered` is the limit, not a measurement, and
             # `solved=False` here means "never established", not "no solution".
             "censored": bool(stats.get("censored")),
+            # Where the spend actually went. Carried per cell because attribution is the ONE read
+            # that turns "this is expensive" into "this is expensive BECAUSE"; on 2026-07-25 it sat
+            # in the trace for hours while the cost was attributed to depth by assertion.
+            "by_primitive": _top_contributors(stats),
         }
     return out
+
+
+def _top_contributors(stats: Mapping[str, object], limit: int = 6) -> list[dict[str, object]]:
+    """The biggest ``by_primitive`` contributors for one cell, worst first.
+
+    Shares OVERLAP and do not sum to 1: one composition is counted in every bucket it touches, so a
+    depth-3 program over three primitives appears three times. Read them as "what fraction of the
+    spend involved this primitive", never as a partition -- the 2026-07-25 attribution had three
+    primitives at ~100% each, which is informative rather than a bug.
+    """
+    total_block = stats.get("total")
+    total = total_block.get("considered", 0) if isinstance(total_block, Mapping) else 0
+    buckets = stats.get("by_primitive")
+    if not isinstance(buckets, Mapping) or not isinstance(total, int) or total <= 0:
+        return []
+    counts = {
+        str(name): sum(int(v) for v in outcome.values())
+        for name, outcome in buckets.items()
+        if isinstance(outcome, Mapping)
+    }
+    ranked = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:limit]
+    return [
+        {"primitive": name, "considered": count, "share": count / total} for name, count in ranked
+    ]
 
 
 def _task_generations(record: RunRecord, task_id: str) -> list[Any]:

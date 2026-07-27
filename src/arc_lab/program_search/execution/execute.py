@@ -287,15 +287,14 @@ def search_once(
     test examples), and that ``library`` is an explicit override rather than ``config.library``, so
     a caller searching under a different library says so.
 
-    Public, and deliberately the LOWEST layer of the stack, because two things need exactly this
-    and nothing above it. ``_run_task`` wraps it with predict/score and a trace row; the ladder
-    PROBE (``ladders/probe.py``) wants the search alone — it records nothing by design, and must
-    not touch test grids. Before 2026-07-26 the probe reimplemented this call, so the probe and the
-    climb could silently drift apart; their agreement was verified once (2026-07-22) and never
-    again. Sharing the call makes drift impossible rather than checked.
+    Public, and deliberately the LOWEST layer of the stack, because more than one caller needs
+    exactly this and nothing above it. ``_run_task`` wraps it with predict/score and a trace row;
+    the LEARN branch's per-wake search calls it directly.
 
-    What the layers ABOVE add — caching, crash-safe resume, and a ``runs/`` record — is exactly
-    what the probe does not want, which is why the seam is here and not at ``execute``.
+    (The ladder probe used to reimplement this call, so it and the climb could silently drift
+    apart -- their agreement was verified once, 2026-07-22, and never again. It now goes through
+    ``execute()`` proper, so its cells are cached and recorded like any run; this function stays
+    public because the layers below ``_run_task`` are still the honest place to draw the seam.)
     """
     return config.search_engine.run(
         train_examples=task.train,

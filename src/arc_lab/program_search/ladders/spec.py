@@ -14,6 +14,7 @@ from __future__ import annotations
 import enum
 from collections import Counter
 from dataclasses import dataclass
+from pathlib import Path
 
 from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.dataset import Corpus
@@ -454,6 +455,71 @@ class LadderSpec:
         if self.reference_config.learn is not None:
             lines += _data_bullets("Learn", to_data(self.reference_config.learn))
         return "\n".join(lines)
+
+    def render_summary(self, *, runs_root: Path | None = None) -> str:
+        """The TERMINAL view: the four depth quantities that carry claims, the breadth ratio, and
+        any cost already MEASURED for this ladder — one line per rung.
+
+        :meth:`render` is the artifact (`spec.md`), where width is free and all six depth
+        quantities plus the four breadth corners belong. This is what `lint-ladder` prints, and it
+        drops everything that only matters for a higher-order template.
+
+        The `measured` column is read back from recorded probe cells
+        (:mod:`~.recorded`) rather than stored anywhere: a `.ladder` file must not carry measured
+        costs (LADDER-FORMAT keeps chosen and derived apart, and a stale cost is worse than none),
+        but the numbers still want to be next to the rung table, which is where the design decision
+        gets made. Blank means nobody has probed it — an honest gap, not a zero.
+        """
+        from arc_lab.program_search.ladders.recorded import recorded_probe_cells
+
+        shape = self.lint()
+        cells = recorded_probe_cells(self.name, runs_root=runs_root)
+        breadth = {entry.name: entry for entry in shape.breadth}
+        libraries = [self.oracle_library(level).name for level in range(len(self.rungs) + 1)]
+
+        rows = [["level", "rung", "L_i-1", "d_i", "needs", "double-jump", "b1", "tax", "measured"]]
+        for s in shape.rungs:
+            width = breadth.get(s.name)
+            ratio = width.ratio if width is not None else None
+            measured = [
+                cell.display
+                for (library, _), cell in sorted(cells.items())
+                if library == libraries[s.level - 1]
+            ]
+            rows.append(
+                [
+                    str(s.level),
+                    f"`{s.name}`",
+                    str(shape.depth_schedule[s.level - 1]),
+                    str(s.jump_depth),
+                    str(s.jump_needs),
+                    "-" if s.double_jump_depth is None else str(s.double_jump_depth),
+                    "-" if width is None else f"{width.b1_full:,}",
+                    "-" if ratio is None else f"{ratio:,.0f}x",
+                    ", ".join(measured) if measured else "-",
+                ]
+            )
+        lo, hi = shape.validity_window
+        errors = sum(1 for f in shape.findings if not f.ok and f.severity == "error")
+        warnings = sum(1 for f in shape.findings if not f.ok and f.severity == "warn")
+        return "\n".join(
+            [
+                f"# {self.name} -- {'OK' if shape.ok else 'FAILED'} "
+                f"({errors} errors, {warnings} warnings)",
+                "",
+                f"- Depth schedule (`{self.depth_schedule_mode.value}`): "
+                f"{list(shape.depth_schedule)}"
+                + ("" if lo <= hi else "   (no single uniform budget serves every level)"),
+                f"- Floor: `{self.floor().name}` ({len(self.floor().primitives)} primitives) -- "
+                f"d_raw {list(shape.raw_depth_profile)}",
+                "",
+                *table(rows),
+                "",
+                "- `tax`: round-1 breadth ratio (`b1` full / irreducible) -- an INDICATOR that "
+                "understates at depth. `measured`: recorded probe cells for this level, `>` when "
+                "the guard cut the search short. Full detail: `spec.md`.",
+            ]
+        )
 
     def __str__(self) -> str:
         return self.render()
