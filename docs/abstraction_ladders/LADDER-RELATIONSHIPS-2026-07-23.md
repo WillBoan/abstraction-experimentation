@@ -1,6 +1,6 @@
 # Ladder relationships & cohorts (2026-07-23)
 
-How two ladders relate, what comparison each relationship licenses, and how to record it. A dated snapshot; the living notion of a run's cost model is [../../EXECUTION.md](../../EXECUTION.md) and the checks are [LADDER-CHECKS-2026-07-21.md](LADDER-CHECKS-2026-07-21.md).
+How two ladders relate, what comparison each relationship licenses, and how to record it. A dated snapshot; the living notion of a run's cost model is [../../EXECUTION.md](../../EXECUTION.md) and the checks are [LADDER-CHECKS-2026-07-21.md](../archive/LADDER-CHECKS-2026-07-21.md).
 
 ## Why this exists
 

@@ -9,7 +9,7 @@ Every static check a `.ladder` file is held to, in the order they run. This file
 - **10 of those are corpus-backed** -- they read the generated task grids, or evaluate a subterm on them. `lint(corpus_backed=False)` skips exactly these and NAMES them in `LadderShape.skipped_checks`, which is what lets a draft over assumed primitives be linted at all.
 - **Severity** is the check's default; two checks decide it per finding (`constant-subterm`, `proposer-compat` -- see their rows).
 
-Prose context -- the layering these sit in, what lint can and cannot catch, and the current batch health -- is in [LADDER-CHECKS-2026-07-21.md](LADDER-CHECKS-2026-07-21.md).
+Prose context -- the layering these sit in, what lint can and cannot catch, and the current batch health -- is in [LADDER-CHECKS-2026-07-21.md](../archive/LADDER-CHECKS-2026-07-21.md).
 
 ## Syntax -- the document alone (`DOCUMENT_PLAN`)
 
