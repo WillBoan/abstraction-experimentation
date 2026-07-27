@@ -120,6 +120,52 @@ _REPORT: dict[str, object] = {
 }
 
 
+def test_renders_goal_reachability_beside_the_certificate() -> None:
+    report: dict[str, object] = {
+        **_REPORT,
+        "top_reachable": {"chain": True, "climb": True},
+        "climb_executed": True,
+    }
+    text = _compact(render_report_markdown(report))
+    assert "chain (oracle `L_k`): **REACHED**" in text
+    assert "climb (learned library): **REACHED**" in text
+    assert "DOES NOT (PROVABLY) REACH ITS OWN GOAL" not in text
+
+
+def test_banners_a_ladder_that_cannot_reach_its_own_goal() -> None:
+    # The 2026-07-27 defect shape: chain reaches the top, the climb never does. The banner must
+    # fire so the member reads as a censored bound, not a measured point.
+    report: dict[str, object] = {
+        **_REPORT,
+        "top_reachable": {"chain": True, "climb": False},
+        "climb_executed": True,
+    }
+    text = render_report_markdown(report)
+    assert "THE LADDER DOES NOT (PROVABLY) REACH ITS OWN GOAL" in text
+    # A rejected ladder whose climb never ran is NOT bannered for the climb side: `None` is
+    # "not established", and the chain verdict stands alone.
+    skipped: dict[str, object] = {
+        **_REPORT,
+        "top_reachable": {"chain": True, "climb": None},
+        "climb_executed": False,
+    }
+    assert "DOES NOT (PROVABLY) REACH ITS OWN GOAL" not in render_report_markdown(skipped)
+
+
+def test_renders_a_forfeited_loop_overhead_factor() -> None:
+    base = _REPORT["comparisons"]
+    assert isinstance(base, dict)
+    comparisons: dict[str, object] = {
+        **base,
+        "loop_overhead_factor": None,
+        "loop_overhead_forfeited_by": ["solution-limit"],
+    }
+    report: dict[str, object] = {**_REPORT, "comparisons": comparisons}
+    assert "**Loop-overhead factor**: FORFEITED by solution-limit" in _compact(
+        render_report_markdown(report)
+    )
+
+
 def test_renders_every_section_from_the_report_dict() -> None:
     text = _compact(render_report_markdown(_REPORT))
     assert "# Ladder results: al1-mirror" in text  # the :train suffix is stripped

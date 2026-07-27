@@ -37,6 +37,14 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
     spec, shape = result.spec, result.shape
     cert = result.certificate
     k = len(spec.rungs)
+    active_compromises = compromises_in(spec.reference_config)
+    # Every registered option that forfeits the loop-overhead factor per its own registry entry:
+    # `solution-limit` and `wake-schedule` name it; `pruned-library` voids cost wholesale.
+    loop_overhead_forfeited_by = sorted(
+        option.code
+        for option in active_compromises
+        if option.code in ("solution-limit", "wake-schedule", "pruned-library")
+    )
     cells = {level: _per_task_cells(rec) for level, rec in result.oracle_chain.items()}
     considered: dict[int, dict[str, int]] = {
         level: {tid: _as_int(cell["considered"]) for tid, cell in by_task.items()}
@@ -99,6 +107,21 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
         else None
     )
 
+    # Top-reachability, CHAIN side (2026-07-27): does the oracle chain's own `L_k` search find the
+    # top at the ladder's configured budget? Admission never asserted this -- it is rung-scoped by
+    # design -- and three members shipped "admitted, every rung clean, goal unreachable" before
+    # anything surfaced it. Tri-state like `no_skip_paths`: censored-unsolved is "we do not know",
+    # never a verdict.
+    top_chain: bool | None
+    if not top_ids:
+        top_chain = None
+    elif all(tid in solved[k] for tid in top_ids):
+        top_chain = True
+    elif any(tid in search_censored_ids(result.oracle_chain[k]) for tid in top_ids):
+        top_chain = None
+    else:
+        top_chain = False
+
     # Rung recovery: minted (learned) abstractions vs the intended rungs, graded behaviorally.
     # Skipped wholesale (empty trace, no recovery rows, no end-to-end figure) when the certificate
     # rejected and the climb never ran -- absent, not zero.
@@ -131,6 +154,15 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
             wake_considered = entry.get("wake_considered")
             if isinstance(wake_considered, int):
                 end_to_end += wake_considered
+
+    # Top-reachability, CLIMB side (2026-07-27): did any wake, searching over what was actually
+    # LEARNED, solve the top? Distinct from `off_chain_top_solved` (an oracle-library necessity
+    # probe) and from the chain side above (oracle libraries, not learned ones) -- and it is the
+    # stage that broke on `dae9d2b5-split-asym-lean`, whose chain reached the top while its climb,
+    # searching at a pinned depth below the top's need, structurally could not.
+    top_climb: bool | None = None
+    if result.learn is not None and top_ids:
+        top_climb = any(_wake_solved_all(entry, top_ids) for entry in climb)
 
     # The raw arm (AL-PLAN-2026-07-23 decision 1): the deliberately-purchased raw baseline, and
     # RQ1's ONLY authority -- a MEASURED ratio when the arm solved every top task, a PROVEN lower
@@ -274,6 +306,13 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
             "no_skip_paths": cert.no_skip_paths,
             "demonstration_health": cert.demonstration_health,
         },
+        # NOT part of admission (whether it should gate is an open design decision): can the
+        # ladder's own configured budgets REACH its goal? `chain` reads the oracle `L_k` search
+        # (tri-state: censored-unsolved is None, not a verdict); `climb` reads the learned wakes
+        # (None when the climb never ran). Admission is rung-scoped by design, so without this
+        # block a ladder can be admitted, recover every rung, and never touch its goal -- which
+        # shipped three times on 2026-07-27 before anything surfaced it.
+        "top_reachable": {"chain": top_chain, "climb": top_climb},
         "climb_executed": result.climbed,
         # The wake-schedule arm label (design doc 3.7): any non-"full" value means the climb's
         # end-to-end cost, loop-overhead factor, and what sleep saw were measured under
@@ -296,18 +335,24 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
                 "when_justified": option.when_justified,
                 "severity": option.severity,
             }
-            for option in compromises_in(spec.reference_config)
+            for option in active_compromises
         ],
         "climb_trace": climb,
         "rung_recovery": recovery,
         "probe_cap": MAX_PROBE_COMBOS,
         "cost_matrix": cost_matrix,
         "comparisons": {
+            # The ratio is only meaningful when chain and climb pay the same currency: an early
+            # stop (or an assisted wake, or a pruned library) truncates the two stages at
+            # different points, and the compromise registry names the factor forfeited. Found by
+            # measurement 2026-07-27 (a member reported end-to-end BELOW marginal, 0.30x); the
+            # report now enforces what the registry states instead of leaving it to the reader.
             "loop_overhead_factor": (
                 (end_to_end / laddered_marginal)
-                if end_to_end is not None and laddered_marginal
+                if end_to_end is not None and laddered_marginal and not loop_overhead_forfeited_by
                 else None
             ),
+            "loop_overhead_forfeited_by": loop_overhead_forfeited_by or None,
             "marginal_rung_value": rung_value,
             "vocabulary_tax": vocabulary_tax,
             "enablement": enablement,
@@ -396,6 +441,27 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
             ]
         )
     lines += ["", "## Certificate (per jump)", "", *table(cert_rows)]
+
+    # Goal-reachability, beside the certificate because admission does not assert it.
+    reach: Mapping[str, Any] = report.get("top_reachable") or {}
+    if reach:
+        chain_reach = reach.get("chain")
+        climb_reach = reach.get("climb")
+        lines += [
+            "",
+            f"- Top reachable at the ladder's own budget -- chain (oracle `L_k`): "
+            f"**{_reach_verdict(chain_reach)}**; climb (learned library): "
+            f"**{_reach_verdict(climb_reach)}**",
+        ]
+        climb_ran = report.get("climb_executed") is True
+        if chain_reach is not True or (climb_ran and climb_reach is not True):
+            lines += [
+                "",
+                "> **THE LADDER DOES NOT (PROVABLY) REACH ITS OWN GOAL.** Admission is "
+                "rung-scoped -- every rung can certify clean while the goal stays out of reach. "
+                "Any cost or curve figure quoted from this run describes a climb that never "
+                "arrived; treat the member as a censored bound, not a measured point.",
+            ]
     if any(no_skip.get(level) is None for level in tractable):
         lines += [
             "",
@@ -617,6 +683,7 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
 
     comparisons: Mapping[str, Any] = report.get("comparisons") or {}
     overhead = comparisons.get("loop_overhead_factor")
+    overhead_forfeited = comparisons.get("loop_overhead_forfeited_by")
     to_first = cost.get("laddered_marginal_to_first")
     jump_to_first: Mapping[Any, Any] = cost.get("jump_costs_to_first") or {}
     lines += [
@@ -660,7 +727,15 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
         f"- End-to-end (every wake re-searches every task, incl. full-budget failures): "
         f"{_count(cost.get('laddered_end_to_end_considered'))}",
         "- **Loop-overhead factor**: "
-        + (f"{overhead:.2f}x" if isinstance(overhead, float) else "n/a")
+        + (
+            f"{overhead:.2f}x"
+            if isinstance(overhead, float)
+            else (
+                "FORFEITED by " + ", ".join(str(code) for code in overhead_forfeited)
+                if isinstance(overhead_forfeited, list)
+                else "n/a"
+            )
+        )
         + " -- what today's loop mechanics cost above the ideal (re-search + overshoot + "
         "termination + learned-vs-oracle gap)",
     ]
@@ -830,6 +905,15 @@ def _raw_estimate_lines(cost: Mapping[str, Any]) -> list[str]:
     return lines
 
 
+def _reach_verdict(value: object) -> str:
+    """Tri-state goal-reachability: ``None`` is "not established", never a pass."""
+    if value is True:
+        return "REACHED"
+    if value is False:
+        return "NOT REACHED"
+    return "NOT ESTABLISHED (censored or not run)"
+
+
 def _yes_no(value: object) -> str:
     if value is None:
         return "-"
@@ -868,6 +952,12 @@ def _climb_trace(learn_record: RunRecord) -> list[dict[str, object]]:
             entry["proposal_count"] = row.get("proposal_count")
             entry["antiunify_pair_count"] = row.get("antiunify_pair_count")
     return [by_iter[i] for i in sorted(by_iter)]
+
+
+def _wake_solved_all(entry: Mapping[str, object], task_ids: list[str]) -> bool:
+    """Whether one climb iteration's wake solved every one of ``task_ids``."""
+    solved = entry.get("wake_solved")
+    return isinstance(solved, list) and all(tid in solved for tid in task_ids)
 
 
 def _sum_to_first(indices: Mapping[str, int], task_ids: list[str]) -> int | None:

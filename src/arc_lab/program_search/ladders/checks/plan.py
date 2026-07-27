@@ -51,6 +51,7 @@ CHECK_PLAN: tuple[LadderCheck, ...] = (
     depth.ProperComposition(),
     depth.DoubleJumpIntractable(),
     depth.TopAffordableWithLadder(),
+    depth.ClimbBudgetCoversTop(),
     depth.TopUsesTopRung(),
     depth.RawIntractable(),
     depth.TopDoubleJumpIntractable(),

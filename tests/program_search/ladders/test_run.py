@@ -5,6 +5,7 @@ Heavy (a full LEARN run + oracle chain), so ``slow`` -- runs in ``make check``, 
 
 from __future__ import annotations
 
+import dataclasses
 from pathlib import Path
 
 import pytest
@@ -42,6 +43,15 @@ def test_ladder1_climbs_recovers_both_rungs_and_is_admitted(tmp_path: Path) -> N
     shape = report["shape"]
     assert isinstance(cost, dict) and cost["raw_solved"] is False
     assert isinstance(shape, dict) and shape["lint_ok"] is True
+    # Goal-reachability, surfaced beside the certificate because admission never asserts it: this
+    # ladder reaches its top in BOTH stages -- the oracle chain's L_k search and the learned climb.
+    reach = report["top_reachable"]
+    assert reach == {"chain": True, "climb": True}
+    # Uncompromised run -> the loop-overhead factor is present, not forfeited.
+    comparisons = report["comparisons"]
+    assert isinstance(comparisons, dict)
+    assert isinstance(comparisons["loop_overhead_factor"], float)
+    assert comparisons["loop_overhead_forfeited_by"] is None
 
 
 def test_a_dag_is_certified_against_its_consumers_not_its_levels(tmp_path: Path) -> None:
@@ -107,6 +117,27 @@ def test_a_rejected_ladder_never_pays_for_the_climb(tmp_path: Path) -> None:
     assert cost["jump_costs"]  # the chain's measurements are all present
     comparisons = report["comparisons"]
     assert isinstance(comparisons, dict) and comparisons["loop_overhead_factor"] is None
+
+
+@pytest.mark.slow
+def test_solution_limit_forfeits_the_loop_overhead_factor(tmp_path: Path) -> None:
+    """The solution-limit Compromise Option's registry entry names the loop-overhead factor
+    forfeited (found by measurement 2026-07-27: the chain and the climb truncate at different
+    points under an early stop, and a member reported end-to-end BELOW marginal, 0.30x). The
+    report enforces the registry instead of leaving the invalid ratio for a reader to quote."""
+    spec = make_ladder("al1-mirror")
+    budget = dataclasses.replace(
+        spec.reference_config.budget, solution_limit=1, solution_limit_mode="immediate"
+    )
+    early = dataclasses.replace(spec, reference_config=spec.reference_config.with_(budget=budget))
+    report = create_ladder_report(run_ladder(early, runs_root=tmp_path))
+    compromises = report["compromises"]
+    assert isinstance(compromises, list)
+    assert "solution-limit" in [c["code"] for c in compromises if isinstance(c, dict)]
+    comparisons = report["comparisons"]
+    assert isinstance(comparisons, dict)
+    assert comparisons["loop_overhead_factor"] is None
+    assert comparisons["loop_overhead_forfeited_by"] == ["solution-limit"]
 
 
 def test_climb_rejected_forces_the_climb_stage(tmp_path: Path) -> None:

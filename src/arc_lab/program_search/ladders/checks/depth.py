@@ -161,6 +161,39 @@ class TopAffordableWithLadder(LadderCheck):
             )
 
 
+class ClimbBudgetCoversTop(LadderCheck):
+    """The pinned ``budget.depth_limit`` must cover the derived schedule's maximum, because the
+    CLIMB searches at the pinned value. The chain is immune (it runs the per-level derived
+    schedule), so a pinned value below the deepest level's need leaves the goal **structurally
+    inexpressible to the learner at any budget**: the climb converges "cleanly", recovers every
+    rung, and never solves the top task -- with nothing saying so.
+
+    Shipped three times before this check existed (2026-07-27): ``dae9d2b5-split-asym-lean``
+    (pinned 2, top depth 3, climb never solved its top) and both NOR ``-halves`` members (pinned
+    3, top depth 4). Under ``PINNED`` schedule mode the schedule is uniform at the pinned value,
+    so this passes trivially -- ``al10-skippable`` is unaffected.
+
+    **Warning, not error, deliberately**: whether goal-reachability should GATE admission is an
+    open design decision (the report's ``top_reachable`` block surfaces the empirical fact); this
+    static form names the misconfiguration the moment it is authored.
+    """
+
+    code = "climb-budget-covers-top"
+    category = Category.DEPTH
+    stage = CheckStage.STRUCTURAL
+    default_severity = "warn"
+    summary = "The pinned depth_limit (the climb's search budget) covers the derived schedule."
+
+    def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
+        need = max(ctx.depth_schedule)
+        yield self.finding(
+            ctx.ref_limit >= need,
+            f"pinned depth_limit {ctx.ref_limit} is below the derived schedule's max {need}: "
+            "the climb searches at the pinned value, so the deepest level's target is "
+            "structurally out of the learner's reach",
+        )
+
+
 class TopUsesTopRung(LadderCheck):
     """The Top Rung's whole definition: its solutions USE the top bridging rung as a fragment. A
     top that never calls ``r_k`` isn't standing on the ladder at all.
