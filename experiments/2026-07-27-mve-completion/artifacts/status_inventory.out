@@ -1,0 +1,38 @@
+
+=== dae9d2b5 (pool 30, limit 2M)
+member                             rungs       stop  chain-top  climb-top  mrg-first    mrg-exh        e2e  loopov                     valid?
+dae9d2b5-split-halves-lean             2  immediate     SOLVED     SOLVED     288174          -    2288863    7.94              to-first only
+                                     jumps-to-first: {'east': 324, 'west': 320}  top-to-first: 287530
+dae9d2b5-split-asym-lean               3  immediate     SOLVED      NEVER     330279          -      98809    0.30              to-first only
+                                     jumps-to-first: {'east': 324, 'recolored_west': 17316, 'west': 320}  top-to-first: 312319
+dae9d2b5-split-recolor-lean            4    exhaust     SOLVED     SOLVED      35778     100973     302961    3.00                fully valid
+                                     jumps-to-first: {'east': 324, 'recolored_east': 17498, 'recolored_west': 17316, 'west': 320}  top-to-first: 320
+
+
+=== 94f9d214 (pool 30, limit 2M)
+member                             rungs       stop  chain-top  climb-top  mrg-first    mrg-exh        e2e  loopov                     valid?
+94f9d214-nor-halves                    2  immediate   CENSORED      NEVER          -          -    4002148    2.00 top-unreached; to-first only
+                                     jumps-to-first: {'north': 520, 'south': 524}  top-to-first: None
+94f9d214-nor-recolor                   4  immediate     SOLVED     SOLVED     523165          -    5505471   10.52              to-first only
+                                     jumps-to-first: {'north': 520, 'recolored_north': 30484, 'recolored_south': 17650, 'south': 524}  top-to-first: 473987
+
+
+=== fafffa47 (pool 30, limit 2M)
+member                             rungs       stop  chain-top  climb-top  mrg-first    mrg-exh        e2e  loopov                     valid?
+fafffa47-nor-halves                    2  immediate   CENSORED      NEVER          -          -    4002148    2.00 top-unreached; to-first only
+                                     jumps-to-first: {'north': 520, 'south': 524}  top-to-first: None
+fafffa47-nor-recolor                   4  immediate     SOLVED     SOLVED     523718          -    5504883   10.51              to-first only
+                                     jumps-to-first: {'north': 520, 'recolored_north': 30604, 'recolored_south': 17650, 'south': 524}  top-to-first: 474420
+
+
+=== dae9d2b5 reference (pool 150)
+member                             rungs       stop  chain-top  climb-top  mrg-first    mrg-exh        e2e  loopov                     valid?
+dae9d2b5-split-recolor                 4    exhaust     SOLVED     SOLVED    1176600    2500789    7690929    3.08                fully valid
+                                     jumps-to-first: {'east': 362, 'recolored_east': 616262, 'recolored_west': 559018, 'west': 358}  top-to-first: 600
+
+
+=== RQ1 per cohort (raw arms, sound bounds)
+dae9d2b5-split-recolor             ratio>=10.0 (lower-bound) guard=25,007,890 solved=False sound=True
+dae9d2b5-split-recolor-lean        ratio>=10.0 (lower-bound) guard=1,009,730 solved=False sound=True
+94f9d214-nor-recolor               ratio>=10.0 (lower-bound) guard=5,231,740 solved=False sound=True
+fafffa47-nor-recolor               ratio>=10.0 (lower-bound) guard=5,237,270 solved=False sound=True

@@ -1,0 +1,47 @@
+====================================================================================================
+A4  LOOP OVERHEAD vs RUNG COUNT   (end-to-end / marginal: what the loop costs above the ideal)
+====================================================================================================
+  rungs=1  overhead= 2.22x  synthetic al2-rot90-calibration          marginal=       27 end-to-end=        60
+  rungs=2  overhead= 2.00x  real      94f9d214-nor-halves            marginal=2,001,048 end-to-end= 4,002,148
+  rungs=2  overhead= 2.00x  real      fafffa47-nor-halves            marginal=2,001,048 end-to-end= 4,002,148
+  rungs=2  overhead= 2.18x  synthetic al21-dag-siblings              marginal=      431 end-to-end=       940
+  rungs=2  overhead= 3.02x  synthetic al20-recolor-telescope         marginal=   36,279 end-to-end=   109,595
+  rungs=2  overhead= 3.02x  synthetic al19-fanin-recolor             marginal=   47,807 end-to-end=   144,465
+  rungs=2  overhead= 3.03x  synthetic al15-shift-frame               marginal=   18,627 end-to-end=    56,405
+  rungs=2  overhead= 3.10x  synthetic al18-fanin-rotate              marginal=    2,161 end-to-end=     6,705
+  rungs=2  overhead= 3.11x  synthetic al16-layout-nest               marginal=    1,817 end-to-end=     5,655
+  rungs=2  overhead= 3.73x  synthetic al1-mirror                     marginal=   53,711 end-to-end=   200,280
+  rungs=2  overhead= 7.94x  real      dae9d2b5-split-halves-lean     marginal=  288,179 end-to-end= 2,288,863
+  rungs=3  overhead= 0.30x  real      dae9d2b5-split-asym-lean       marginal=  330,286 end-to-end=    98,809
+  rungs=3  overhead= 4.04x  synthetic al17-shift-frame-tall          marginal=   26,677 end-to-end=   107,772
+  rungs=4  overhead= 3.00x  real      dae9d2b5-split-recolor-lean    marginal=  100,973 end-to-end=   302,961
+  rungs=4  overhead= 3.08x  real      dae9d2b5-split-recolor         marginal=2,500,789 end-to-end= 7,690,929
+  rungs=4  overhead=10.51x  real      fafffa47-nor-recolor           marginal=  523,727 end-to-end= 5,504,883
+  rungs=4  overhead=10.52x  real      94f9d214-nor-recolor           marginal=  523,174 end-to-end= 5,505,471
+
+  mean overhead by rung count:
+    1 rungs: 2.22x   (n=1, spread 2.22-2.22)
+    2 rungs: 3.31x   (n=10, spread 2.00-7.94)
+    3 rungs: 2.17x   (n=2, spread 0.30-4.04)
+    4 rungs: 6.78x   (n=4, spread 3.00-10.52)
+
+====================================================================================================
+A5  ENABLEMENT -- what a rung bought when it did NOT buy speed
+====================================================================================================
+  rungs worth < 2x in cost-to-first: 25
+    ...of which STILL enabled tasks the layer above could not otherwise reach: 18
+    ...of which enabled nothing at all: 7
+
+====================================================================================================
+A6  REAL vs SYNTHETIC
+====================================================================================================
+  real      admitted= 8  loop-overhead mean 4.92x  climb iters mean 3.1
+  synthetic admitted= 9  loop-overhead mean 3.05x  climb iters mean 2.9
+
+====================================================================================================
+A7  THE LEARNED-vs-ORACLE GAP
+====================================================================================================
+  rungs across all admitted ladders: 43
+  recovered:                          43  (100.0%)
+  NOT recovered:                      0
+  minted abstractions matching NO intended rung (junk): 8

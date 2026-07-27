@@ -1,0 +1,33 @@
+94f9d214-nor-halves                pinned=3  schedule=[2, 2, 4]  max=4  <-- CLIMB CUT OFF (pinned < top depth)
+94f9d214-nor-recolor               pinned=3  schedule=[2, 2, 2, 2, 3]  max=3
+al1-mirror                         pinned=2  schedule=[2, 2, 2]  max=2
+al10-skippable                     pinned=4  schedule=[4, 4]  max=4
+al11-greedy-trap                   pinned=2  schedule=[2, 2, 2, 2, 2, 2]  max=2
+al12-unlearnable                   pinned=2  schedule=[2, 2]  max=2
+al13-symmetry-repair               pinned=3  schedule=[2, 3, 2]  max=3
+al14-cell-row-grid                 pinned=3  schedule=[3, 3, 3, 2]  max=3
+al15-shift-frame                   pinned=2  schedule=[2, 2, 2]  max=2
+al16-layout-nest                   pinned=2  schedule=[2, 2, 2]  max=2
+al17-shift-frame-tall              pinned=2  schedule=[2, 2, 2, 2]  max=2
+al18-fanin-rotate                  pinned=2  schedule=[2, 2, 2]  max=2
+al19-fanin-recolor                 pinned=2  schedule=[2, 2, 2]  max=2
+al2-rot90-calibration              pinned=2  schedule=[2, 2]  max=2
+al20-recolor-telescope             pinned=2  schedule=[2, 2, 2]  max=2
+al21-dag-siblings                  pinned=2  schedule=[2, 2, 2]  max=2
+al3-quad-symmetrize                pinned=4  schedule=[4, 3, 3, 3]  max=4
+al4-mask-crop                      pinned=4  schedule=[4, 4, 3, 3]  max=4
+al5-perceiver-chain                pinned=3  schedule=[3, 3, 3, 2]  max=3
+al6-mirror-tall                    pinned=3  schedule=[2, 3, 3, 3, 2]  max=3
+al7-fast-tower                     pinned=2  schedule=[2, 2, 2, 2, 2, 2]  max=2
+al8-lean-perceiver                 pinned=3  schedule=[3, 3, 3, 2]  max=3
+al9-decoy                          pinned=2  schedule=[2, 2, 2, 2, 2, 2]  max=2
+dae9d2b5-halves-union              pinned=3  schedule=[3, 3, 3]  max=3
+dae9d2b5-split-asym-lean           pinned=3  schedule=[2, 2, 2, 3]  max=3
+dae9d2b5-split-halves              pinned=3  schedule=[2, 2, 3]  max=3
+dae9d2b5-split-halves-lean         pinned=3  schedule=[2, 2, 3]  max=3
+dae9d2b5-split-recolor             pinned=2  schedule=[2, 2, 2, 2, 2]  max=2
+dae9d2b5-split-recolor-lean        pinned=2  schedule=[2, 2, 2, 2, 2]  max=2
+fafffa47-nor-halves                pinned=3  schedule=[2, 2, 4]  max=4  <-- CLIMB CUT OFF (pinned < top depth)
+fafffa47-nor-recolor               pinned=3  schedule=[2, 2, 2, 2, 3]  max=3
+
+affected: 2

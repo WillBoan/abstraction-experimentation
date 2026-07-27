@@ -1,0 +1,52 @@
+   speedup  kind      ladder                         rung             #const const-types
+  1987.94x  real      dae9d2b5-split-recolor         recolored_east        2 color
+  1814.99x  real      dae9d2b5-split-recolor         recolored_west        2 color
+    60.72x  real      fafffa47-nor-recolor           recolored_north       2 color
+    60.48x  real      94f9d214-nor-recolor           recolored_north       2 color
+    56.45x  real      dae9d2b5-split-recolor-lean    recolored_east        2 color
+    56.22x  real      dae9d2b5-split-asym-lean       recolored_west        2 color
+    56.22x  real      dae9d2b5-split-recolor-lean    recolored_west        2 color
+    52.14x  synthetic al17-shift-frame-tall          shift2                0 -
+    39.10x  synthetic al5-perceiver-chain            swap_stack            0 -
+    38.07x  synthetic al19-fanin-recolor             recol                 2 color
+    34.61x  real      94f9d214-nor-recolor           recolored_south       2 color
+    34.61x  real      fafffa47-nor-recolor           recolored_south       2 color
+    31.10x  synthetic al5-perceiver-chain            swap_mirror           0 -
+    30.36x  synthetic al15-shift-frame               framed                2 color,int
+    30.36x  synthetic al17-shift-frame-tall          frame1                2 color,int
+    21.64x  synthetic al20-recolor-telescope         recol                 2 color
+    17.04x  synthetic al18-fanin-rotate              rot                   0 -
+     5.54x  synthetic al16-layout-nest               stack                 0 -
+     3.42x  synthetic al1-mirror                     mirror_recolor        0 -
+     3.17x  synthetic al21-dag-siblings              mirror_flip           0 -
+     1.33x  synthetic al2-rot90-calibration          rot90                 0 -
+     1.25x  synthetic al18-fanin-rotate              pair                  1 offset
+     1.22x  synthetic al16-layout-nest               pair                  1 offset
+     1.19x  synthetic al5-perceiver-chain            swap_extremes         0 -
+     1.19x  real      dae9d2b5-split-recolor         east                  1 int
+     1.18x  real      dae9d2b5-split-recolor         west                  1 int
+     1.07x  real      dae9d2b5-split-asym-lean       east                  1 int
+     1.07x  real      dae9d2b5-split-halves-lean     east                  1 int
+     1.07x  real      dae9d2b5-split-recolor-lean    east                  1 int
+     1.05x  real      dae9d2b5-split-asym-lean       west                  1 int
+     1.05x  real      dae9d2b5-split-halves-lean     west                  1 int
+     1.05x  real      dae9d2b5-split-recolor-lean    west                  1 int
+     1.04x  synthetic al19-fanin-recolor             pair                  1 offset
+     1.04x  real      94f9d214-nor-halves            south                 1 int
+     1.04x  real      94f9d214-nor-recolor           south                 1 int
+     1.04x  real      fafffa47-nor-halves            south                 1 int
+     1.04x  real      fafffa47-nor-recolor           south                 1 int
+     1.03x  real      94f9d214-nor-halves            north                 1 int
+     1.03x  real      94f9d214-nor-recolor           north                 1 int
+     1.03x  real      fafffa47-nor-halves            north                 1 int
+     1.03x  real      fafffa47-nor-recolor           north                 1 int
+     1.03x  synthetic al20-recolor-telescope         pair                  1 offset
+     1.01x  synthetic al15-shift-frame               shift_stack           1 offset
+     1.01x  synthetic al17-shift-frame-tall          shift1                1 offset
+     1.01x  synthetic al1-mirror                     rot180                0 -
+     1.00x  synthetic al21-dag-siblings              mirror_h              0 -
+
+SPLIT BY WHETHER THE RUNG BINDS A LARGE-BATTERY CONSTANT (colour / offset / coord)
+binds a large-battery constant               n=19  min    1.01x  median    34.61x  max   1987.94x
+binds none (structural or small-int only)    n=27  min    1.00x  median     1.07x  max     52.14x
+  separation: worst large-battery 1.01x vs best structural 52.14x -> OVERLAP

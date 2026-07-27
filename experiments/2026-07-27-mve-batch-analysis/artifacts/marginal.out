@@ -1,0 +1,55 @@
+kind      ladder                         rung               to_first w/o    with   speedup  paid-full ratio
+real      dae9d2b5-split-recolor         recolored_east           616262     310  1987.94x           0.9106
+real      dae9d2b5-split-recolor         recolored_west           559018     308  1814.99x           0.9079
+real      fafffa47-nor-recolor           recolored_north           30604     504    60.72x           0.9994
+real      94f9d214-nor-recolor           recolored_north           30484     504    60.48x           0.9992
+real      dae9d2b5-split-recolor-lean    recolored_east            17498     310    56.45x           0.9994
+real      dae9d2b5-split-asym-lean       recolored_west            17316     308    56.22x           0.0644
+real      dae9d2b5-split-recolor-lean    recolored_west            17316     308    56.22x           0.9994
+synthetic al17-shift-frame-tall          shift2                     7716     148    52.14x           0.9563
+synthetic al5-perceiver-chain            swap_stack                13488     345    39.10x           2.5155
+synthetic al19-fanin-recolor             recol                     10202     268    38.07x           0.9649
+real      94f9d214-nor-recolor           recolored_south           17650     510    34.61x           0.0278
+real      fafffa47-nor-recolor           recolored_south           17650     510    34.61x           0.0449
+synthetic al5-perceiver-chain            swap_mirror                7527     242    31.10x           1.0000
+synthetic al15-shift-frame               framed                     4432     146    30.36x           0.9553
+synthetic al17-shift-frame-tall          frame1                     4432     146    30.36x           0.9553
+synthetic al20-recolor-telescope         recol                      5756     266    21.64x           0.9664
+synthetic al18-fanin-rotate              rot                         852      50    17.04x           0.8541
+synthetic al16-layout-nest               stack                       266      48     5.54x           0.8427
+synthetic al1-mirror                     mirror_recolor              938     274     3.42x           0.2618
+synthetic al21-dag-siblings              mirror_flip                  38      12     3.17x           0.7165
+synthetic al2-rot90-calibration          rot90                         8       6     1.33x           0.5385
+synthetic al18-fanin-rotate              pair                         60      48     1.25x           0.8427
+synthetic al16-layout-nest               pair                         56      46     1.22x           0.8293
+synthetic al5-perceiver-chain            swap_extremes               274     230     1.19x           1.0000
+real      dae9d2b5-split-recolor         east                        362     304     1.19x           0.9050
+real      dae9d2b5-split-recolor         west                        358     304     1.18x           0.9019
+real      dae9d2b5-split-asym-lean       east                        324     304     1.07x           0.9994
+real      dae9d2b5-split-halves-lean     east                        324     304     1.07x           0.0699
+real      dae9d2b5-split-recolor-lean    east                        324     304     1.07x           0.9990
+real      dae9d2b5-split-asym-lean       west                        320     304     1.05x           1.0869
+real      dae9d2b5-split-halves-lean     west                        320     304     1.05x           0.9994
+real      dae9d2b5-split-recolor-lean    west                        320     304     1.05x           0.9990
+synthetic al19-fanin-recolor             pair                        276     266     1.04x           0.9643
+real      94f9d214-nor-halves            south                       524     506     1.04x           0.0066
+real      94f9d214-nor-recolor           south                       524     506     1.04x           1.1693
+real      fafffa47-nor-halves            south                       524     506     1.04x           0.0106
+real      fafffa47-nor-recolor           south                       524     506     1.04x           1.1693
+real      94f9d214-nor-halves            north                       520     504     1.03x           0.9992
+real      94f9d214-nor-recolor           north                       520     504     1.03x           1.1290
+real      fafffa47-nor-halves            north                       520     504     1.03x           0.9994
+real      fafffa47-nor-recolor           north                       520     504     1.03x           1.1246
+synthetic al20-recolor-telescope         pair                        272     264     1.03x           0.9658
+synthetic al15-shift-frame               shift_stack                 146     144     1.01x           0.9542
+synthetic al17-shift-frame-tall          shift1                      146     144     1.01x           0.9542
+synthetic al1-mirror                     rot180                      228     226     1.01x           0.9755
+synthetic al21-dag-siblings              mirror_h                     10      10     1.00x           0.6703
+
+46 rungs across 18 ladders
+  speedup >= 2x :  20  (43%)
+  speedup <  2x :  26  (57%)
+  min 1.00x  median 1.22x  max 1987.94x
+
+paid-full `ratio` spread (the currency the report warns is near-task-independent):
+  min 0.0066  max 2.5155   -> spread 2.5089

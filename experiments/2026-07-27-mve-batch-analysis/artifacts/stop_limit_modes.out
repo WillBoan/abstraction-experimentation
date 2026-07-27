@@ -1,0 +1,8 @@
+== 94f9d214-nor-recolor: TOP at L_4, depth 3, max_pool 150
+   solution_limit=None mode=generation-end solved=    1 considered= 9,242,001  first_idx=473987   257.7s
+   solution_limit=1    mode=generation-end solved=    1 considered= 9,242,001  first_idx=473987   252.4s
+   solution_limit=1    mode=immediate      solved=    1 considered=   473,988  first_idx=473987    18.1s
+== dae9d2b5-split-recolor-lean: TOP at L_4, depth 2, max_pool 30
+   solution_limit=None mode=generation-end solved=    1 considered=    20,125  first_idx=320     0.8s
+   solution_limit=1    mode=generation-end solved=    1 considered=    20,125  first_idx=320     0.8s
+   solution_limit=1    mode=immediate      solved=    1 considered=       321  first_idx=320     0.0s

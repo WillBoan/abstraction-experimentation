@@ -1,0 +1,18 @@
+valid ladders: 11 of 18  (2 real)
+
+== FINDING 1: marginal rung value (valid runs only)
+   n=26  min 1.00x  median 3.17x  max 1987.94x
+   worth < 2x: 13/26 (50%)   [was 57% on all runs]
+   top 5: ['1988x recolored_east', '1815x recolored_west', '56x recolored_east', '56x recolored_west', '52x shift2']
+
+== FINDING 2: the learned-vs-oracle gap (valid runs only)
+   rungs 26  recovered 26 (100%)  junk mints 0
+
+== FINDING 3: real vs synthetic (valid runs only)
+   real       n=2  loop-overhead 3.00-3.08x  mean 3.04x
+   synthetic  n=9  loop-overhead 2.18-4.04x  mean 3.05x
+
+== FINDING 4: the granularity curves
+   dae9d2b5   valid members 1/3  ['dae9d2b5-split-recolor-lean']
+   94f9d214   valid members 0/2  -- NO VALID CURVE
+   fafffa47   valid members 0/2  -- NO VALID CURVE

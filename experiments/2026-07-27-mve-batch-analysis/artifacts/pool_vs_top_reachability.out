@@ -1,0 +1,8 @@
+== 94f9d214-nor-recolor  schedule=(2, 2, 2, 2, 3)  top searched at depth 3
+   max_pool=  30  solved=    0  considered=   23,754
+   max_pool=  60  solved=    0  considered=  702,470
+   max_pool= 150  solved=    1  considered=5,000,000
+== dae9d2b5-split-halves-lean  schedule=(2, 2, 3)  top searched at depth 3
+   max_pool=  30  solved=    0  considered=   29,047
+   max_pool=  60  solved=    0  considered=  660,559
+   max_pool= 150  solved=    1  considered=5,000,000

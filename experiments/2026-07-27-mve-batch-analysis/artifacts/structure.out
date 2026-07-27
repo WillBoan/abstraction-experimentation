@@ -1,0 +1,32 @@
+MARGINAL VALUE BY POSITION IN THE LADDER
+rung feeds the TOP                 n=27  min     1.00x  median    21.64x  max   1987.94x
+rung feeds ANOTHER RUNG            n=19  min     1.01x  median     1.05x  max     31.10x
+
+Every rung that feeds another rung, sorted by value (the low band):
+     31.10x  synthetic al5-perceiver-chain            swap_mirror      -> swap_stack
+     30.36x  synthetic al17-shift-frame-tall          frame1           -> shift2
+      1.25x  synthetic al18-fanin-rotate              pair             -> rot
+      1.22x  synthetic al16-layout-nest               pair             -> stack
+      1.19x  synthetic al5-perceiver-chain            swap_extremes    -> swap_mirror
+      1.19x  real      dae9d2b5-split-recolor         east             -> recolored_east
+      1.18x  real      dae9d2b5-split-recolor         west             -> recolored_west
+      1.07x  real      dae9d2b5-split-recolor-lean    east             -> recolored_east
+
+Overlap test: does ANY rung-fed rung beat ANY top-fed rung?
+   best rung-fed = 31.10x ; worst top-fed = 1.00x -> OVERLAP
+   overlapping cases:
+     top-fed but low:   1.00x  al21-dag-siblings / mirror_h
+     top-fed but low:   1.03x  94f9d214-nor-halves / north
+     top-fed but low:   1.03x  fafffa47-nor-halves / north
+     top-fed but low:   1.04x  94f9d214-nor-halves / south
+     top-fed but low:   1.04x  fafffa47-nor-halves / south
+     top-fed but low:   1.05x  dae9d2b5-split-halves-lean / west
+     top-fed but low:   1.07x  dae9d2b5-split-asym-lean / east
+     top-fed but low:   1.07x  dae9d2b5-split-halves-lean / east
+     top-fed but low:   1.33x  al2-rot90-calibration / rot90
+     top-fed but low:   3.17x  al21-dag-siblings / mirror_flip
+     top-fed but low:   3.42x  al1-mirror / mirror_recolor
+     top-fed but low:   5.54x  al16-layout-nest / stack
+     top-fed but low:  17.04x  al18-fanin-rotate / rot
+     top-fed but low:  21.64x  al20-recolor-telescope / recol
+     top-fed but low:  30.36x  al15-shift-frame / framed

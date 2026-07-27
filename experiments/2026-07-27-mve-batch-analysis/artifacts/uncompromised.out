@@ -1,0 +1,31 @@
+VALID FOR LOOP OVERHEAD (uncompromised, admitted, top reached)
+  rungs  overhead kind       ladder                           marginal  end-to-end
+      1     2.22x synthetic  al2-rot90-calibration                  27          60
+      2     2.18x synthetic  al21-dag-siblings                     431         940
+      2     3.02x synthetic  al20-recolor-telescope             36,279     109,595
+      2     3.02x synthetic  al19-fanin-recolor                 47,807     144,465
+      2     3.03x synthetic  al15-shift-frame                   18,627      56,405
+      2     3.10x synthetic  al18-fanin-rotate                   2,161       6,705
+      2     3.11x synthetic  al16-layout-nest                    1,817       5,655
+      2     3.73x synthetic  al1-mirror                         53,711     200,280
+      3     4.04x synthetic  al17-shift-frame-tall              26,677     107,772
+      4     3.00x real       dae9d2b5-split-recolor-lean       100,973     302,961
+      4     3.08x real       dae9d2b5-split-recolor          2,500,789   7,690,929
+
+  n = 11   real = 2   synthetic = 9
+  min 2.18x  median 3.03x  max 4.04x
+
+  by rung count:
+    1 rungs: mean 2.22x  (n=1, 2.22-2.22)
+    2 rungs: mean 3.03x  (n=7, 2.18-3.73)
+    3 rungs: mean 4.04x  (n=1, 4.04-4.04)
+    4 rungs: mean 3.04x  (n=2, 3.00-3.08)
+
+EXCLUDED (7):
+  94f9d214-nor-halves              compromised: solution-limit
+  94f9d214-nor-recolor             compromised: solution-limit
+  al5-perceiver-chain              not admitted
+  dae9d2b5-split-asym-lean         compromised: solution-limit
+  dae9d2b5-split-halves-lean       compromised: solution-limit
+  fafffa47-nor-halves              compromised: solution-limit
+  fafffa47-nor-recolor             compromised: solution-limit

@@ -46,6 +46,27 @@ One row per candidate Ladder for the Abstraction Ladder Experiments ([ABSTRACTIO
 
 ## Real-ARC cohort — `dae9d2b5` ([MVE-PLAN-2026-07-25.md](MVE-PLAN-2026-07-25.md))
 
+> **STATUS (2026-07-27, after the batch analysis + fix).** The batch analysis found that six of the
+> eight members below never solved their TOP task — `solved=False`, **uncensored**, at the full
+> oracle library — because `max_pool` 30 starved a depth-3 search. `admitted` did not contradict it:
+> admission is `tractable_jumps` + `no_skip_paths`, both statements about RUNGS, so a ladder can be
+> admitted, recover every rung and score health 1.0 while unable to reach its own goal.
+>
+> **Fixed for four of the six** by a per-level pool (`run.py::pool_for_depth`) plus an immediate stop
+> limit, validated jointly against the certified `dae9d2b5-split-recolor`. The two NOR `-halves`
+> members have a **depth-4** top and now censor at their 2M `considered_limit` — a budget question,
+> not a reachability one.
+>
+> **Cost columns below are NOT comparable across members.** The six re-certified members carry the
+> `solution-limit` Compromise Option, which (found 2026-07-27, by measurement) also invalidates the
+> **loop-overhead factor** — it is a ratio across two stages that an early stop truncates
+> differently, and one member reported 0.30x, i.e. end-to-end *below* marginal. **The granularity
+> curves are retracted**: valid members are `dae9d2b5` 1 of 3, `94f9d214` 0 of 2, `fafffa47` 0 of 2.
+> Rung-level results — jump tractability, skip-freeness, recovery, demonstration health — stand
+> throughout. Full account: [experiments/2026-07-27-mve-batch-analysis/](../../experiments/2026-07-27-mve-batch-analysis/notebook.md).
+
+
+
 One task (`dae9d2b5`, arc1-train), three members, all anchored against ground truth
 (`test_real_arc_anchoring.py`). The `split_*` pair is a **granularity pair**: same floor, same top,
 same shared budget — only the cut density differs, which is what licenses the cost comparison.
@@ -59,8 +80,50 @@ and `split_h: (Grid) -> List[Grid]` is what removes that. The pair prices what t
 | [dae9d2b5-split-recolor](ladders/dae9d2b5-split-recolor/spec.md) | merge two halves, cut at 4 rungs (fine) | `{split_h, nth, overlay, map_color}` | 5 · [2,2] · 4 | run (2026-07-27) | **admitted** | **The program's first certified real-ARC ladder.** All 4 jumps tractable, no skip paths, demonstration health 1.0/1.0/1.0/1.0; the learned climb converged at iteration 2 with **all four rungs recovered** (no junk, no cascade). RQ1 **>= 10x** (raw arm censored at 25,007,890). Loop-overhead 3.08x. Depth compression `d_raw` 4 -> max jump depth 2. Every level runs at depth **2** (derived schedule `[2,2,2,2,2]`), which is the whole design: the base `b` is pinned by the top's vocabulary, so a spine's only lever is the exponent at each level. Cells exhaust at 230k-342k. |
 | [dae9d2b5-split-halves](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-split-halves.ladder) | the same competence, cut at 2 rungs (coarse) | `{split_h, nth, overlay, map_color}` | 3 · [3,3] · 4 | probed | wake/sleep clean; skip **inconclusive** | The coarse arm at `max_pool` 150, kept as the record of what that pool costs: folding the recolours into the top makes it d3, so the schedule is `[2,2,3]` and the skip test must reach d4. Both rungs wake AS-INTENDED and sleep recovers each — but every skip search **censors** at the pair's shared 2M budget, where the fine member's *exhausted*. Certified instead as `-lean` below, at a calibrated pool rather than an escalated budget. |
 | [dae9d2b5-split-recolor-lean](ladders/dae9d2b5-split-recolor-lean/spec.md) | **budget calibration** of `split-recolor` (`max_pool` 30) | `{split_h, nth, overlay, map_color}` | 5 · [2,2] · 4 | run (2026-07-27) | **admitted** | The arm that licenses running everything else cheaply. One variable changed (`max_pool` 150 -> 30) and the verdict profile is **byte-identical** to its parent: 4/4 tractable, no skip paths, health 1.0 throughout, all four rungs recovered by the same mints, same climb trace, same RQ1 `>= 10x`, same depth compression. Cost is **25.4x** lower (end-to-end 302,961 vs 7,690,929); wall clock 1m51s vs ~45min. The pool was measured to SATURATE around 60, so 150 was buying nothing. Caveat stated in-file: a smaller pool weakens the skip search too, so this is evidence only as a *paired* comparison against a parent certified at the expensive setting. |
-| [dae9d2b5-split-halves-lean](ladders/dae9d2b5-split-halves-lean/spec.md) | the coarse cut at the calibrated pool | `{split_h, nth, overlay, map_color}` | 3 · [3,3] · 4 | run (2026-07-27) | **admitted** | Completes the **granularity pair** at a budget where both members conclude — 2/2 tractable, no skip paths, health 1.0/1.0, both rungs recovered. ~22s (no raw arm: it is the same task, same floor, same `d_raw` as its cohort sibling, so RQ1 is cited once per cohort, per MVE-PLAN). **The pair's direction is budget-dependent, which is the finding**: at pool 150 the coarse cut was *more* expensive (censored where fine exhausted), at pool 30 it is *cheaper* (marginal 72,165 vs 100,973), because its extra depth only bites while the base is large. Loop-overhead 2.16x vs the fine arm's 3.00x. |
-| [dae9d2b5-halves-union](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-halves-union.ladder) | merge two halves over the REGION-tier floor (baseline) | `{halves_h, head, nth, crop_rect, overlay, map_color}` | 3 · [3,4] · 5 | tasks-drafted | not run — superseded | Lints clean, and the first DAG in the registry — which is what surfaced the level-vs-consumer bug al21 now guards. **The open question was breadth, not depth**: optimally pruned, rung 1 costs **4** considered; on the full 6-primitive floor, **21,149,854**. Kept unrun on purpose: it is the baseline the `split_h` redesign is measured against, and certifying it is a multi-hour run that would buy nothing the pair above does not. |
+| [dae9d2b5-split-halves-lean](ladders/dae9d2b5-split-halves-lean/spec.md) | the coarse cut at the calibrated pool | `{split_h, nth, overlay, map_color}` | 3 · [3,3] · 4 | run (2026-07-27) | **admitted** | The curve's **2-rung** point — 2/2 tractable, no skip paths, health 1.0/1.0, both rungs recovered, ~22s (no raw arm: same task, same floor, same `d_raw` as its cohort siblings, so RQ1 is cited once per cohort per MVE-PLAN). **The pair's direction is budget-dependent, which is the finding**: at pool 150 the coarse cut was *more* expensive (censored where fine exhausted), at pool 30 it is *cheaper*, because its extra depth only bites while the base is large. |
+| [dae9d2b5-split-asym-lean](ladders/dae9d2b5-split-asym-lean/spec.md) | the same competence, cut at 3 rungs (asymmetric) | `{split_h, nth, overlay, map_color}` | 4 · [3,2] · 4 | run (2026-07-27) | **admitted** | The curve's **3-rung** middle point, and the reason it is a curve rather than two endpoints. The cut is necessarily ASYMMETRIC (`recolored_west` is a rung, its mirror sibling is inlined): on a two-branch DAG the branches are interchangeable, so "half of each" is not a cut-set. 3/3 tractable, no skip paths, health 1.0 throughout, 3/3 rungs recovered, 29s. Its uniform window is degenerate `[3,2]` — valid only under the DERIVED schedule `[2,2,2,3]`, which is per-rung budgets earning their keep on a real task. |
+
+**RETRACTED — the `dae9d2b5` granularity curve as first reported.** These numbers came from runs that never reached the top, and are kept only as the record of what was claimed. Two of the three members are no longer measurement-valid; there is currently **no valid granularity curve** for any cohort:
+
+| cut density | certificate | rungs recovered | laddered marginal | end-to-end | loop-overhead |
+| --- | --- | --- | --- | --- | --- |
+| 2 rungs | admitted | 2/2 | 72,165 | 155,709 | 2.16x |
+| 3 rungs | admitted | 3/3 | 92,985 | 246,325 | 2.65x |
+| 4 rungs | admitted | 4/4 | 100,973 | 302,961 | 3.00x |
+
+The retired baseline the redesign is measured against:
+
+| Ladder | Anchor competence | Floor | Shape (h · window · `d_raw`) | Status | Verdict | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| [dae9d2b5-halves-union](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-halves-union.ladder) | merge two halves over the REGION-tier floor | `{halves_h, head, nth, crop_rect, overlay, map_color}` | 3 · [3,4] · 5 | tasks-drafted | not run — superseded | Lints clean, and the first DAG in the registry — which is what surfaced the level-vs-consumer bug al21 now guards. **The open question was breadth, not depth**: optimally pruned, rung 1 costs **4** considered; on the full 6-primitive floor, **21,149,854**. Kept unrun on purpose — certifying it is a multi-hour run that would buy nothing the curve above does not. What it actually paid for was PLUMBING DEPTH: naming a half through the region tier is d3, of which two levels are type conversion. |
+
+## Real-ARC cohorts — the vertical-NOR family (`94f9d214`, `fafffa47`)
+
+Two tasks, **one rule** (a `2h x w` grid, north half one colour and south half another; the answer holds colour 2 exactly where NEITHER half is filled), differing only in the north palette (3 vs 9). Both `d_raw` 5.
+
+This is the **cohort template** working: one floor, one spine, one demo generator ([`gen_nor_ladders.py`](../../experiments/2026-07-27-mve-ladder-cohorts/artifacts/gen_nor_ladders.py)), instantiated per task — so the marginal cost of the *second* task is a constant. NOR is expressed without the mask tier: `swap_colors` inverts at the grid level (recolour each half to the target, `overlay` them, then swap 0 with the target), which keeps every rung Grid-valued and keeps the ternary `paint_through_mask` out of the floor.
+
+Floor throughout: `{split_v, nth, overlay, map_color, swap_colors}`, `max_pool` 30. RQ1 is purchased once per cohort (raw arm on the 4-rung member only); the 2-rung members run `--raw-arm-k 0`.
+
+> **STATUS (2026-07-27, after the batch analysis + fix — same caveat as the `dae9d2b5` note above.)**
+> The cost columns below are the RETRACTED first-run numbers, kept as the record of what was
+> claimed; the runs behind them never reached their tops. As of the re-certification, the current
+> committed reports read: `nor-recolor` reaches its top on both tasks (chain and climb; to-first
+> ~474k) under the `solution-limit` compromise, so its marginal/end-to-end/loop-overhead are NOT
+> the values below and loop-overhead is invalid; both `nor-halves` members still **never reach
+> their top** (depth-4 top, censored at 2M in chain and climb — their pinned `depth_limit: 3` also
+> caps the CLIMB below the top's depth 4, the same defect class fixed on
+> `dae9d2b5-split-asym-lean`). Rung-level verdicts (tractable, skip-free, health, recovery) stand
+> throughout.
+
+| Ladder | Task | Cut | Shape (h · window · `d_raw`) | Status | Verdict | Cost (marginal · end-to-end · loop-overhead) |
+| --- | --- | --- | --- | --- | --- | --- |
+| [94f9d214-nor-halves](ladders/94f9d214-nor-halves/spec.md) | `94f9d214` | 2 rungs | 3 · [3,4] · 5 | run (2026-07-27) | **admitted** — 2/2, no skip paths, health 1.0, 2/2 recovered | 60,247 · 135,186 · 2.24x |
+| [94f9d214-nor-recolor](ladders/94f9d214-nor-recolor/spec.md) | `94f9d214` | 4 rungs | 5 · [2,3] · 5 | run (2026-07-27) | **admitted** — 4/4, no skip paths, health 1.0, 4/4 recovered | 120,146 · 465,928 · 3.88x · RQ1 **>= 10x** |
+| [fafffa47-nor-halves](ladders/fafffa47-nor-halves/spec.md) | `fafffa47` | 2 rungs | 3 · [3,4] · 5 | run (2026-07-27) | **admitted** — 2/2, no skip paths, health 1.0, 2/2 recovered | 71,905 · 154,982 · 2.16x |
+| [fafffa47-nor-recolor](ladders/fafffa47-nor-recolor/spec.md) | `fafffa47` | 4 rungs | 5 · [2,3] · 5 | run (2026-07-27) | **admitted** — 4/4, no skip paths, health 1.0, 4/4 recovered | 136,442 · 502,020 · 3.68x · RQ1 **>= 10x** |
+
+~~Both cohorts reproduce the `dae9d2b5` curve's shape: cost and loop-overhead rise monotonically with cut density, and rung recovery is complete at every density — three independent tasks, same qualitative answer.~~ **RETRACTED 2026-07-27** (contradicted the validity note above): there is currently no valid granularity curve in any cohort; the runs behind these curves either never reached their tops or carry a compromise that invalidates loop-overhead. What survives across all three tasks is rung-level: complete rung recovery and clean rung certificates at every cut density. See [experiments/2026-07-27-mve-batch-analysis/](../../experiments/2026-07-27-mve-batch-analysis/notebook.md).
 
 ## Rejected — the collapse findings
 

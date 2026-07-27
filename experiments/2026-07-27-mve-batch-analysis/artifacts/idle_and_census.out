@@ -1,0 +1,15 @@
+================================================================================================
+A8a  RUNGS THAT BOUGHT NEITHER SPEED (<2x) NOR REACHABILITY (enabled nothing)
+================================================================================================
+  real      94f9d214-nor-halves            r_1 north            speedup=1.03x  enabled=[]
+  real      94f9d214-nor-halves            r_2 south            speedup=1.04x  enabled=[]
+  synthetic al21-dag-siblings              r_1 mirror_h         speedup=1.00x  enabled=[]
+  real      dae9d2b5-split-asym-lean       r_2 east             speedup=1.07x  enabled=[]
+  real      dae9d2b5-split-halves-lean     r_1 west             speedup=1.05x  enabled=[]
+  real      fafffa47-nor-halves            r_1 north            speedup=1.03x  enabled=[]
+  real      fafffa47-nor-halves            r_2 south            speedup=1.04x  enabled=[]
+
+================================================================================================
+A8b  DOES THE STATIC BREADTH CENSUS RANK AGAINST MEASURED COST? (per-rung, real ladders)
+================================================================================================
+   b1 full  b1 min       tax  measured to-first  ladder / rung

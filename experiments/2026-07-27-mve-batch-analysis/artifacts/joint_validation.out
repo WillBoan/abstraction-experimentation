@@ -1,0 +1,10 @@
+elapsed 348.7s
+admitted        : True
+tractable_jumps : {1: True, 2: True, 3: True, 4: True}
+no_skip_paths   : {1: True, 2: True, 3: True, 4: True}
+demo health     : {1: 1.0, 2: 1.0, 3: 1.0, 4: 1.0}
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-williamboan-Documents-Career-Transition---Projects-abstraction-experimentation/9aa1a508-bcd0-438d-9eb9-8c1dbbef1dfa/scratchpad/joint.py", line 24, in <module>
+    print("recovered       :", [(r.rung, r.recovered) for r in (res.learn.rung_recovery if res.learn else [])]
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'LearnActivityResult' object has no attribute 'rung_recovery'
