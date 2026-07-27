@@ -1,0 +1,2551 @@
+{
+  "certificate": {
+    "admitted": true,
+    "demonstration_health": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 1.0
+    },
+    "no_skip_paths": {
+      "1": true,
+      "2": true,
+      "3": true,
+      "4": true
+    },
+    "tractable_jumps": {
+      "1": true,
+      "2": true,
+      "3": true,
+      "4": true
+    }
+  },
+  "climb_executed": true,
+  "climb_trace": [
+    {
+      "antiunify_pair_count": 3,
+      "converged": false,
+      "iteration": 0,
+      "minted": [
+        "abs0",
+        "abs1"
+      ],
+      "proposal_count": 7,
+      "wake_considered": 100815,
+      "wake_solved": [
+        "east-00",
+        "east-01",
+        "west-00",
+        "west-01"
+      ]
+    },
+    {
+      "antiunify_pair_count": 18,
+      "converged": false,
+      "iteration": 1,
+      "minted": [
+        "abs2",
+        "abs3"
+      ],
+      "proposal_count": 13,
+      "wake_considered": 100987,
+      "wake_solved": [
+        "east-00",
+        "east-01",
+        "recolored_east-00",
+        "recolored_east-01",
+        "recolored_west-00",
+        "recolored_west-01",
+        "west-00",
+        "west-01"
+      ]
+    },
+    {
+      "antiunify_pair_count": 10,
+      "converged": true,
+      "iteration": 2,
+      "minted": [],
+      "proposal_count": 4,
+      "wake_considered": 101159,
+      "wake_solved": [
+        "dae9d2b5",
+        "east-00",
+        "east-01",
+        "recolored_east-00",
+        "recolored_east-01",
+        "recolored_west-00",
+        "recolored_west-01",
+        "west-00",
+        "west-01"
+      ]
+    }
+  ],
+  "comparisons": {
+    "enablement": {
+      "1": [
+        "recolored_west-00",
+        "recolored_west-01"
+      ],
+      "2": [
+        "recolored_east-00",
+        "recolored_east-01"
+      ],
+      "3": [],
+      "4": [
+        "dae9d2b5"
+      ]
+    },
+    "loop_overhead_factor": 3.000415952779456,
+    "marginal_rung_value": [
+      {
+        "censored": true,
+        "cost_with_rung": 18838,
+        "cost_without_rung": 18820,
+        "layer_above": "recolored_west",
+        "own_tasks_speedup": 1.0526315789473684,
+        "own_tasks_to_first_with": 304,
+        "own_tasks_to_first_without": 320,
+        "ratio": 0.9990444845525003,
+        "rung": "west"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 18856,
+        "cost_without_rung": 18838,
+        "layer_above": "recolored_east",
+        "own_tasks_speedup": 1.0657894736842106,
+        "own_tasks_to_first_with": 304,
+        "own_tasks_to_first_without": 324,
+        "ratio": 0.9990453966907086,
+        "rung": "east"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 20113,
+        "cost_without_rung": 20101,
+        "layer_above": "top",
+        "own_tasks_speedup": 56.22077922077922,
+        "own_tasks_to_first_with": 308,
+        "own_tasks_to_first_without": 17316,
+        "ratio": 0.9994033709541092,
+        "rung": "recolored_west"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 20125,
+        "cost_without_rung": 20113,
+        "layer_above": "top",
+        "own_tasks_speedup": 56.44516129032258,
+        "own_tasks_to_first_with": 310,
+        "own_tasks_to_first_without": 17498,
+        "ratio": 0.9994037267080745,
+        "rung": "recolored_east"
+      }
+    ],
+    "vocabulary_tax": [
+      {
+        "at_full_library": 18892,
+        "at_own_level": 18820,
+        "factor": 1.0038257173219978,
+        "rung": "west"
+      },
+      {
+        "at_full_library": 24358,
+        "at_own_level": 24298,
+        "factor": 1.0024693390402502,
+        "rung": "east"
+      },
+      {
+        "at_full_library": 18892,
+        "at_own_level": 18856,
+        "factor": 1.0019092066185828,
+        "rung": "recolored_west"
+      },
+      {
+        "at_full_library": 18892,
+        "at_own_level": 18874,
+        "factor": 1.0009536929108827,
+        "rung": "recolored_east"
+      }
+    ]
+  },
+  "compromises": [],
+  "cost": {
+    "amortization_ratio_considered": null,
+    "amortization_ratio_estimated": {
+      "high": 4597.350757133095,
+      "low": 225.26474404048608
+    },
+    "budget_compression_depth": {
+      "max_jump_depth": 2,
+      "raw_depth": 4
+    },
+    "jump_costs": {
+      "east": 24298,
+      "recolored_east": 18874,
+      "recolored_west": 18856,
+      "west": 18820
+    },
+    "jump_costs_to_first": {
+      "east": 324,
+      "recolored_east": 17498,
+      "recolored_west": 17316,
+      "west": 320
+    },
+    "laddered_end_to_end_considered": 302961,
+    "laddered_marginal_considered": 100973,
+    "laddered_marginal_to_first": 35778,
+    "off_chain_top_solved": false,
+    "raw_arm": {
+      "amortization_ratio": 10.0,
+      "amortization_ratio_kind": "lower-bound",
+      "conditions": {
+        "depth_limit": 4,
+        "max_pool": 200000,
+        "solution_limit": 1
+      },
+      "guard_per_task": 1009730,
+      "k": 10,
+      "laddered_marginal": 100973,
+      "saturated_at": null,
+      "solved": false,
+      "sound": true,
+      "spend_considered": 1009730
+    },
+    "raw_censored": true,
+    "raw_considered": 20077,
+    "raw_estimate": {
+      "available": true,
+      "caveats": [
+        "THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells",
+        "accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)",
+        "finite-space floors: both fits over-project (up to 3.71x) once the space is exhausted",
+        "error compounds per extrapolated round and is floor-dependent even at a 1-round gap",
+        "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
+        "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
+      ],
+      "d_raw": 4,
+      "estimate_high": 464208298,
+      "estimate_low": 22745657,
+      "growth_ratio_geometric": 33.27,
+      "growth_ratio_last": 152.12,
+      "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
+      "observed_composed": [
+        18,
+        131,
+        19928
+      ],
+      "observed_considered": 20077,
+      "observed_through_depth": 2,
+      "rounds_extrapolated": 2,
+      "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
+    },
+    "raw_limit_censored": false,
+    "raw_solved": false,
+    "top_jump_cost": 20125,
+    "top_jump_cost_to_first": 320
+  },
+  "cost_matrix": [
+    {
+      "columns": {
+        "0": {
+          "b_eff": 6.55,
+          "by_primitive": [
+            {
+              "considered": 12137,
+              "primitive": "__const__",
+              "share": 0.9998352417826839
+            },
+            {
+              "considered": 12079,
+              "primitive": "map_color",
+              "share": 0.9950572534805173
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9144081061042919
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.0015652030645028421
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0007414119779223989
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 161,
+          "considered": 12139,
+          "first_solution_index": 161,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 6.6,
+          "by_primitive": [
+            {
+              "considered": 12144,
+              "primitive": "__const__",
+              "share": 0.9995884434932917
+            },
+            {
+              "considered": 11976,
+              "primitive": "map_color",
+              "share": 0.9857601448678903
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9136554448925838
+            },
+            {
+              "considered": 3021,
+              "primitive": "west",
+              "share": 0.2486624413531978
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.00156391472549181
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0007408017120750679
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 162,
+          "considered": 12149,
+          "first_solution_index": 162,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 6.65,
+          "by_primitive": [
+            {
+              "considered": 12149,
+              "primitive": "__const__",
+              "share": 0.9991775639444033
+            },
+            {
+              "considered": 11731,
+              "primitive": "map_color",
+              "share": 0.9647997368204622
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9129040217123119
+            },
+            {
+              "considered": 3022,
+              "primitive": "east",
+              "share": 0.2485401760013159
+            },
+            {
+              "considered": 3022,
+              "primitive": "west",
+              "share": 0.2485401760013159
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.001562628505633687
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 152,
+          "considered": 12159,
+          "first_solution_index": 152,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 6.7,
+          "by_primitive": [
+            {
+              "considered": 12152,
+              "primitive": "__const__",
+              "share": 0.99860300764237
+            },
+            {
+              "considered": 11284,
+              "primitive": "map_color",
+              "share": 0.9272742213822007
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9121538335113814
+            },
+            {
+              "considered": 3023,
+              "primitive": "east",
+              "share": 0.24841811159503657
+            },
+            {
+              "considered": 3023,
+              "primitive": "recolored_west",
+              "share": 0.24841811159503657
+            },
+            {
+              "considered": 3023,
+              "primitive": "west",
+              "share": 0.24841811159503657
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 152,
+          "considered": 12169,
+          "first_solution_index": 152,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 6.75,
+          "by_primitive": [
+            {
+              "considered": 12153,
+              "primitive": "__const__",
+              "share": 0.9978651777650054
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9114048772477215
+            },
+            {
+              "considered": 10575,
+              "primitive": "map_color",
+              "share": 0.8682978898103293
+            },
+            {
+              "considered": 3024,
+              "primitive": "east",
+              "share": 0.24829624763937927
+            },
+            {
+              "considered": 3024,
+              "primitive": "recolored_east",
+              "share": 0.24829624763937927
+            },
+            {
+              "considered": 3024,
+              "primitive": "recolored_west",
+              "share": 0.24829624763937927
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 152,
+          "considered": 12179,
+          "first_solution_index": 152,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "east",
+      "task_id": "east-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 6.55,
+          "by_primitive": [
+            {
+              "considered": 12137,
+              "primitive": "__const__",
+              "share": 0.9998352417826839
+            },
+            {
+              "considered": 12079,
+              "primitive": "map_color",
+              "share": 0.9950572534805173
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9144081061042919
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.0015652030645028421
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0007414119779223989
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 161,
+          "considered": 12139,
+          "first_solution_index": 161,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 6.6,
+          "by_primitive": [
+            {
+              "considered": 12144,
+              "primitive": "__const__",
+              "share": 0.9995884434932917
+            },
+            {
+              "considered": 11976,
+              "primitive": "map_color",
+              "share": 0.9857601448678903
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9136554448925838
+            },
+            {
+              "considered": 3021,
+              "primitive": "west",
+              "share": 0.2486624413531978
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.00156391472549181
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0007408017120750679
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 162,
+          "considered": 12149,
+          "first_solution_index": 162,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 6.65,
+          "by_primitive": [
+            {
+              "considered": 12149,
+              "primitive": "__const__",
+              "share": 0.9991775639444033
+            },
+            {
+              "considered": 11731,
+              "primitive": "map_color",
+              "share": 0.9647997368204622
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9129040217123119
+            },
+            {
+              "considered": 3022,
+              "primitive": "east",
+              "share": 0.2485401760013159
+            },
+            {
+              "considered": 3022,
+              "primitive": "west",
+              "share": 0.2485401760013159
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.001562628505633687
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 152,
+          "considered": 12159,
+          "first_solution_index": 152,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 6.7,
+          "by_primitive": [
+            {
+              "considered": 12152,
+              "primitive": "__const__",
+              "share": 0.99860300764237
+            },
+            {
+              "considered": 11284,
+              "primitive": "map_color",
+              "share": 0.9272742213822007
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9121538335113814
+            },
+            {
+              "considered": 3023,
+              "primitive": "east",
+              "share": 0.24841811159503657
+            },
+            {
+              "considered": 3023,
+              "primitive": "recolored_west",
+              "share": 0.24841811159503657
+            },
+            {
+              "considered": 3023,
+              "primitive": "west",
+              "share": 0.24841811159503657
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 152,
+          "considered": 12169,
+          "first_solution_index": 152,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 6.75,
+          "by_primitive": [
+            {
+              "considered": 12153,
+              "primitive": "__const__",
+              "share": 0.9978651777650054
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9114048772477215
+            },
+            {
+              "considered": 10575,
+              "primitive": "map_color",
+              "share": 0.8682978898103293
+            },
+            {
+              "considered": 3024,
+              "primitive": "east",
+              "share": 0.24829624763937927
+            },
+            {
+              "considered": 3024,
+              "primitive": "recolored_east",
+              "share": 0.24829624763937927
+            },
+            {
+              "considered": 3024,
+              "primitive": "recolored_west",
+              "share": 0.24829624763937927
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 152,
+          "considered": 12179,
+          "first_solution_index": 152,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "east",
+      "task_id": "east-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 6.55,
+          "by_primitive": [
+            {
+              "considered": 12137,
+              "primitive": "__const__",
+              "share": 0.9998352417826839
+            },
+            {
+              "considered": 12079,
+              "primitive": "map_color",
+              "share": 0.9950572534805173
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9144081061042919
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.0015652030645028421
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0007414119779223989
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 12139,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 6.6,
+          "by_primitive": [
+            {
+              "considered": 12144,
+              "primitive": "__const__",
+              "share": 0.9995884434932917
+            },
+            {
+              "considered": 11976,
+              "primitive": "map_color",
+              "share": 0.9857601448678903
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9136554448925838
+            },
+            {
+              "considered": 3021,
+              "primitive": "west",
+              "share": 0.2486624413531978
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.00156391472549181
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0007408017120750679
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 12149,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 6.65,
+          "by_primitive": [
+            {
+              "considered": 12149,
+              "primitive": "__const__",
+              "share": 0.9991775639444033
+            },
+            {
+              "considered": 11731,
+              "primitive": "map_color",
+              "share": 0.9647997368204622
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9129040217123119
+            },
+            {
+              "considered": 3022,
+              "primitive": "east",
+              "share": 0.2485401760013159
+            },
+            {
+              "considered": 3022,
+              "primitive": "west",
+              "share": 0.2485401760013159
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.001562628505633687
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 11377,
+          "considered": 12159,
+          "first_solution_index": 11377,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 6.7,
+          "by_primitive": [
+            {
+              "considered": 12152,
+              "primitive": "__const__",
+              "share": 0.99860300764237
+            },
+            {
+              "considered": 11284,
+              "primitive": "map_color",
+              "share": 0.9272742213822007
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9121538335113814
+            },
+            {
+              "considered": 3023,
+              "primitive": "east",
+              "share": 0.24841811159503657
+            },
+            {
+              "considered": 3023,
+              "primitive": "recolored_west",
+              "share": 0.24841811159503657
+            },
+            {
+              "considered": 3023,
+              "primitive": "west",
+              "share": 0.24841811159503657
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 11378,
+          "considered": 12169,
+          "first_solution_index": 11378,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 6.75,
+          "by_primitive": [
+            {
+              "considered": 12153,
+              "primitive": "__const__",
+              "share": 0.9978651777650054
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9114048772477215
+            },
+            {
+              "considered": 10575,
+              "primitive": "map_color",
+              "share": 0.8682978898103293
+            },
+            {
+              "considered": 3024,
+              "primitive": "east",
+              "share": 0.24829624763937927
+            },
+            {
+              "considered": 3024,
+              "primitive": "recolored_east",
+              "share": 0.24829624763937927
+            },
+            {
+              "considered": 3024,
+              "primitive": "recolored_west",
+              "share": 0.24829624763937927
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 154,
+          "considered": 12179,
+          "first_solution_index": 154,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "recolored_east",
+      "task_id": "recolored_east-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 5.95,
+          "by_primitive": [
+            {
+              "considered": 6679,
+              "primitive": "__const__",
+              "share": 0.9997006436162251
+            },
+            {
+              "considered": 6617,
+              "primitive": "map_color",
+              "share": 0.9904205957192037
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8741206406226613
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.002843885645861398
+            },
+            {
+              "considered": 11,
+              "primitive": "nth",
+              "share": 0.001646460110761862
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 6681,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 6.0,
+          "by_primitive": [
+            {
+              "considered": 6684,
+              "primitive": "__const__",
+              "share": 0.9992525041112273
+            },
+            {
+              "considered": 6512,
+              "primitive": "map_color",
+              "share": 0.9735386455374495
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8730751980864105
+            },
+            {
+              "considered": 1959,
+              "primitive": "west",
+              "share": 0.29286888922110926
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.0028404843773359245
+            },
+            {
+              "considered": 11,
+              "primitive": "nth",
+              "share": 0.0016444909552997457
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 6689,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 6.05,
+          "by_primitive": [
+            {
+              "considered": 6687,
+              "primitive": "__const__",
+              "share": 0.9985067940869046
+            },
+            {
+              "considered": 6265,
+              "primitive": "map_color",
+              "share": 0.935493504554278
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8720322532477228
+            },
+            {
+              "considered": 1960,
+              "primitive": "east",
+              "share": 0.2926683589667015
+            },
+            {
+              "considered": 1960,
+              "primitive": "west",
+              "share": 0.2926683589667015
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.00283709123488129
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 6119,
+          "considered": 6697,
+          "first_solution_index": 6119,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 6.09,
+          "by_primitive": [
+            {
+              "considered": 6688,
+              "primitive": "__const__",
+              "share": 0.9974645786726324
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8709917971662938
+            },
+            {
+              "considered": 5816,
+              "primitive": "map_color",
+              "share": 0.8674123788217748
+            },
+            {
+              "considered": 1961,
+              "primitive": "east",
+              "share": 0.2924683072334079
+            },
+            {
+              "considered": 1961,
+              "primitive": "recolored_west",
+              "share": 0.2924683072334079
+            },
+            {
+              "considered": 1961,
+              "primitive": "west",
+              "share": 0.2924683072334079
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 6120,
+          "considered": 6705,
+          "first_solution_index": 6120,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 6.14,
+          "by_primitive": [
+            {
+              "considered": 6687,
+              "primitive": "__const__",
+              "share": 0.9961269179204528
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8699538209444362
+            },
+            {
+              "considered": 5105,
+              "primitive": "map_color",
+              "share": 0.7604647698495457
+            },
+            {
+              "considered": 1962,
+              "primitive": "east",
+              "share": 0.2922687323104424
+            },
+            {
+              "considered": 1962,
+              "primitive": "recolored_east",
+              "share": 0.2922687323104424
+            },
+            {
+              "considered": 1962,
+              "primitive": "recolored_west",
+              "share": 0.2922687323104424
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 156,
+          "considered": 6713,
+          "first_solution_index": 156,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "recolored_east",
+      "task_id": "recolored_east-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 6.55,
+          "by_primitive": [
+            {
+              "considered": 12137,
+              "primitive": "__const__",
+              "share": 0.9998352417826839
+            },
+            {
+              "considered": 12079,
+              "primitive": "map_color",
+              "share": 0.9950572534805173
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9144081061042919
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.0015652030645028421
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0007414119779223989
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 12139,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 6.6,
+          "by_primitive": [
+            {
+              "considered": 12144,
+              "primitive": "__const__",
+              "share": 0.9995884434932917
+            },
+            {
+              "considered": 11976,
+              "primitive": "map_color",
+              "share": 0.9857601448678903
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9136554448925838
+            },
+            {
+              "considered": 3021,
+              "primitive": "west",
+              "share": 0.2486624413531978
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.00156391472549181
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0007408017120750679
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 11286,
+          "considered": 12149,
+          "first_solution_index": 11286,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 6.65,
+          "by_primitive": [
+            {
+              "considered": 12149,
+              "primitive": "__const__",
+              "share": 0.9991775639444033
+            },
+            {
+              "considered": 11731,
+              "primitive": "map_color",
+              "share": 0.9647997368204622
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9129040217123119
+            },
+            {
+              "considered": 3022,
+              "primitive": "east",
+              "share": 0.2485401760013159
+            },
+            {
+              "considered": 3022,
+              "primitive": "west",
+              "share": 0.2485401760013159
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.001562628505633687
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 11287,
+          "considered": 12159,
+          "first_solution_index": 11287,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 6.7,
+          "by_primitive": [
+            {
+              "considered": 12152,
+              "primitive": "__const__",
+              "share": 0.99860300764237
+            },
+            {
+              "considered": 11284,
+              "primitive": "map_color",
+              "share": 0.9272742213822007
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9121538335113814
+            },
+            {
+              "considered": 3023,
+              "primitive": "east",
+              "share": 0.24841811159503657
+            },
+            {
+              "considered": 3023,
+              "primitive": "recolored_west",
+              "share": 0.24841811159503657
+            },
+            {
+              "considered": 3023,
+              "primitive": "west",
+              "share": 0.24841811159503657
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 153,
+          "considered": 12169,
+          "first_solution_index": 153,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 6.75,
+          "by_primitive": [
+            {
+              "considered": 12153,
+              "primitive": "__const__",
+              "share": 0.9978651777650054
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9114048772477215
+            },
+            {
+              "considered": 10575,
+              "primitive": "map_color",
+              "share": 0.8682978898103293
+            },
+            {
+              "considered": 3024,
+              "primitive": "east",
+              "share": 0.24829624763937927
+            },
+            {
+              "considered": 3024,
+              "primitive": "recolored_east",
+              "share": 0.24829624763937927
+            },
+            {
+              "considered": 3024,
+              "primitive": "recolored_west",
+              "share": 0.24829624763937927
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 153,
+          "considered": 12179,
+          "first_solution_index": 153,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "recolored_west",
+      "task_id": "recolored_west-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 5.95,
+          "by_primitive": [
+            {
+              "considered": 6679,
+              "primitive": "__const__",
+              "share": 0.9997006436162251
+            },
+            {
+              "considered": 6617,
+              "primitive": "map_color",
+              "share": 0.9904205957192037
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8741206406226613
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.002843885645861398
+            },
+            {
+              "considered": 11,
+              "primitive": "nth",
+              "share": 0.001646460110761862
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 6681,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 6.0,
+          "by_primitive": [
+            {
+              "considered": 6684,
+              "primitive": "__const__",
+              "share": 0.9992525041112273
+            },
+            {
+              "considered": 6512,
+              "primitive": "map_color",
+              "share": 0.9735386455374495
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8730751980864105
+            },
+            {
+              "considered": 1959,
+              "primitive": "west",
+              "share": 0.29286888922110926
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.0028404843773359245
+            },
+            {
+              "considered": 11,
+              "primitive": "nth",
+              "share": 0.0016444909552997457
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 6028,
+          "considered": 6689,
+          "first_solution_index": 6028,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 6.05,
+          "by_primitive": [
+            {
+              "considered": 6687,
+              "primitive": "__const__",
+              "share": 0.9985067940869046
+            },
+            {
+              "considered": 6265,
+              "primitive": "map_color",
+              "share": 0.935493504554278
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8720322532477228
+            },
+            {
+              "considered": 1960,
+              "primitive": "east",
+              "share": 0.2926683589667015
+            },
+            {
+              "considered": 1960,
+              "primitive": "west",
+              "share": 0.2926683589667015
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.00283709123488129
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 6029,
+          "considered": 6697,
+          "first_solution_index": 6029,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 6.09,
+          "by_primitive": [
+            {
+              "considered": 6688,
+              "primitive": "__const__",
+              "share": 0.9974645786726324
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8709917971662938
+            },
+            {
+              "considered": 5816,
+              "primitive": "map_color",
+              "share": 0.8674123788217748
+            },
+            {
+              "considered": 1961,
+              "primitive": "east",
+              "share": 0.2924683072334079
+            },
+            {
+              "considered": 1961,
+              "primitive": "recolored_west",
+              "share": 0.2924683072334079
+            },
+            {
+              "considered": 1961,
+              "primitive": "west",
+              "share": 0.2924683072334079
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 155,
+          "considered": 6705,
+          "first_solution_index": 155,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 6.14,
+          "by_primitive": [
+            {
+              "considered": 6687,
+              "primitive": "__const__",
+              "share": 0.9961269179204528
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8699538209444362
+            },
+            {
+              "considered": 5105,
+              "primitive": "map_color",
+              "share": 0.7604647698495457
+            },
+            {
+              "considered": 1962,
+              "primitive": "east",
+              "share": 0.2922687323104424
+            },
+            {
+              "considered": 1962,
+              "primitive": "recolored_east",
+              "share": 0.2922687323104424
+            },
+            {
+              "considered": 1962,
+              "primitive": "recolored_west",
+              "share": 0.2922687323104424
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 155,
+          "considered": 6713,
+          "first_solution_index": 155,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "recolored_west",
+      "task_id": "recolored_west-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 7.28,
+          "by_primitive": [
+            {
+              "considered": 20075,
+              "primitive": "__const__",
+              "share": 0.9999003835234348
+            },
+            {
+              "considered": 20021,
+              "primitive": "map_color",
+              "share": 0.9972107386561737
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.938387209244409
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.0009463565273696269
+            },
+            {
+              "considered": 7,
+              "primitive": "nth",
+              "share": 0.0003486576679782836
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 20077,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 7.33,
+          "by_primitive": [
+            {
+              "considered": 20084,
+              "primitive": "__const__",
+              "share": 0.9997511075713077
+            },
+            {
+              "considered": 19920,
+              "primitive": "map_color",
+              "share": 0.9915874359101996
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.9378266713126586
+            },
+            {
+              "considered": 4323,
+              "primitive": "west",
+              "share": 0.21519239384737918
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.0009457912290308128
+            },
+            {
+              "considered": 7,
+              "primitive": "nth",
+              "share": 0.00034844940016924683
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 20089,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 7.39,
+          "by_primitive": [
+            {
+              "considered": 20091,
+              "primitive": "__const__",
+              "share": 0.9995025123128203
+            },
+            {
+              "considered": 19677,
+              "primitive": "map_color",
+              "share": 0.978906522063579
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.9372668026466345
+            },
+            {
+              "considered": 4324,
+              "primitive": "east",
+              "share": 0.21511367593652056
+            },
+            {
+              "considered": 4324,
+              "primitive": "west",
+              "share": 0.21511367593652056
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.0009452266056415103
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 20101,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "3": {
+          "b_eff": 7.44,
+          "by_primitive": [
+            {
+              "considered": 20096,
+              "primitive": "__const__",
+              "share": 0.9991547755183214
+            },
+            {
+              "considered": 19232,
+              "primitive": "map_color",
+              "share": 0.9561974842141898
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.9367076020484264
+            },
+            {
+              "considered": 4325,
+              "primitive": "east",
+              "share": 0.21503505195644607
+            },
+            {
+              "considered": 4325,
+              "primitive": "recolored_west",
+              "share": 0.21503505195644607
+            },
+            {
+              "considered": 4325,
+              "primitive": "west",
+              "share": 0.21503505195644607
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 20113,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "4": {
+          "b_eff": 7.5,
+          "by_primitive": [
+            {
+              "considered": 20099,
+              "primitive": "__const__",
+              "share": 0.9987080745341614
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.9361490683229814
+            },
+            {
+              "considered": 18525,
+              "primitive": "map_color",
+              "share": 0.9204968944099379
+            },
+            {
+              "considered": 4326,
+              "primitive": "east",
+              "share": 0.21495652173913044
+            },
+            {
+              "considered": 4326,
+              "primitive": "recolored_east",
+              "share": 0.21495652173913044
+            },
+            {
+              "considered": 4326,
+              "primitive": "recolored_west",
+              "share": 0.21495652173913044
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 320,
+          "considered": 20125,
+          "first_solution_index": 320,
+          "solve_generation": 2,
+          "solved": true
+        }
+      },
+      "rung": "top",
+      "task_id": "dae9d2b5"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 6.55,
+          "by_primitive": [
+            {
+              "considered": 12137,
+              "primitive": "__const__",
+              "share": 0.9998352417826839
+            },
+            {
+              "considered": 12079,
+              "primitive": "map_color",
+              "share": 0.9950572534805173
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9144081061042919
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.0015652030645028421
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0007414119779223989
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 160,
+          "considered": 12139,
+          "first_solution_index": 160,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 6.6,
+          "by_primitive": [
+            {
+              "considered": 12144,
+              "primitive": "__const__",
+              "share": 0.9995884434932917
+            },
+            {
+              "considered": 11976,
+              "primitive": "map_color",
+              "share": 0.9857601448678903
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9136554448925838
+            },
+            {
+              "considered": 3021,
+              "primitive": "west",
+              "share": 0.2486624413531978
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.00156391472549181
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0007408017120750679
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 151,
+          "considered": 12149,
+          "first_solution_index": 151,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 6.65,
+          "by_primitive": [
+            {
+              "considered": 12149,
+              "primitive": "__const__",
+              "share": 0.9991775639444033
+            },
+            {
+              "considered": 11731,
+              "primitive": "map_color",
+              "share": 0.9647997368204622
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9129040217123119
+            },
+            {
+              "considered": 3022,
+              "primitive": "east",
+              "share": 0.2485401760013159
+            },
+            {
+              "considered": 3022,
+              "primitive": "west",
+              "share": 0.2485401760013159
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.001562628505633687
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 151,
+          "considered": 12159,
+          "first_solution_index": 151,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 6.7,
+          "by_primitive": [
+            {
+              "considered": 12152,
+              "primitive": "__const__",
+              "share": 0.99860300764237
+            },
+            {
+              "considered": 11284,
+              "primitive": "map_color",
+              "share": 0.9272742213822007
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9121538335113814
+            },
+            {
+              "considered": 3023,
+              "primitive": "east",
+              "share": 0.24841811159503657
+            },
+            {
+              "considered": 3023,
+              "primitive": "recolored_west",
+              "share": 0.24841811159503657
+            },
+            {
+              "considered": 3023,
+              "primitive": "west",
+              "share": 0.24841811159503657
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 151,
+          "considered": 12169,
+          "first_solution_index": 151,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 6.75,
+          "by_primitive": [
+            {
+              "considered": 12153,
+              "primitive": "__const__",
+              "share": 0.9978651777650054
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.9114048772477215
+            },
+            {
+              "considered": 10575,
+              "primitive": "map_color",
+              "share": 0.8682978898103293
+            },
+            {
+              "considered": 3024,
+              "primitive": "east",
+              "share": 0.24829624763937927
+            },
+            {
+              "considered": 3024,
+              "primitive": "recolored_east",
+              "share": 0.24829624763937927
+            },
+            {
+              "considered": 3024,
+              "primitive": "recolored_west",
+              "share": 0.24829624763937927
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 151,
+          "considered": 12179,
+          "first_solution_index": 151,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "west",
+      "task_id": "west-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 5.95,
+          "by_primitive": [
+            {
+              "considered": 6679,
+              "primitive": "__const__",
+              "share": 0.9997006436162251
+            },
+            {
+              "considered": 6617,
+              "primitive": "map_color",
+              "share": 0.9904205957192037
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8741206406226613
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.002843885645861398
+            },
+            {
+              "considered": 11,
+              "primitive": "nth",
+              "share": 0.001646460110761862
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 160,
+          "considered": 6681,
+          "first_solution_index": 160,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 6.0,
+          "by_primitive": [
+            {
+              "considered": 6684,
+              "primitive": "__const__",
+              "share": 0.9992525041112273
+            },
+            {
+              "considered": 6512,
+              "primitive": "map_color",
+              "share": 0.9735386455374495
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8730751980864105
+            },
+            {
+              "considered": 1959,
+              "primitive": "west",
+              "share": 0.29286888922110926
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.0028404843773359245
+            },
+            {
+              "considered": 11,
+              "primitive": "nth",
+              "share": 0.0016444909552997457
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 153,
+          "considered": 6689,
+          "first_solution_index": 153,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 6.05,
+          "by_primitive": [
+            {
+              "considered": 6687,
+              "primitive": "__const__",
+              "share": 0.9985067940869046
+            },
+            {
+              "considered": 6265,
+              "primitive": "map_color",
+              "share": 0.935493504554278
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8720322532477228
+            },
+            {
+              "considered": 1960,
+              "primitive": "east",
+              "share": 0.2926683589667015
+            },
+            {
+              "considered": 1960,
+              "primitive": "west",
+              "share": 0.2926683589667015
+            },
+            {
+              "considered": 19,
+              "primitive": "split_h",
+              "share": 0.00283709123488129
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 153,
+          "considered": 6697,
+          "first_solution_index": 153,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 6.09,
+          "by_primitive": [
+            {
+              "considered": 6688,
+              "primitive": "__const__",
+              "share": 0.9974645786726324
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8709917971662938
+            },
+            {
+              "considered": 5816,
+              "primitive": "map_color",
+              "share": 0.8674123788217748
+            },
+            {
+              "considered": 1961,
+              "primitive": "east",
+              "share": 0.2924683072334079
+            },
+            {
+              "considered": 1961,
+              "primitive": "recolored_west",
+              "share": 0.2924683072334079
+            },
+            {
+              "considered": 1961,
+              "primitive": "west",
+              "share": 0.2924683072334079
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 153,
+          "considered": 6705,
+          "first_solution_index": 153,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 6.14,
+          "by_primitive": [
+            {
+              "considered": 6687,
+              "primitive": "__const__",
+              "share": 0.9961269179204528
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.8699538209444362
+            },
+            {
+              "considered": 5105,
+              "primitive": "map_color",
+              "share": 0.7604647698495457
+            },
+            {
+              "considered": 1962,
+              "primitive": "east",
+              "share": 0.2922687323104424
+            },
+            {
+              "considered": 1962,
+              "primitive": "recolored_east",
+              "share": 0.2922687323104424
+            },
+            {
+              "considered": 1962,
+              "primitive": "recolored_west",
+              "share": 0.2922687323104424
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 153,
+          "considered": 6713,
+          "first_solution_index": 153,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "west",
+      "task_id": "west-01"
+    }
+  ],
+  "ladder": {
+    "budgets": [
+      {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      }
+    ],
+    "distractors": [],
+    "heldout_corpus": {
+      "content_hash": "56fe21f8b78a6825",
+      "name": "dae9d2b5-split-recolor-lean:heldout",
+      "task_count": 5
+    },
+    "reference_config": {
+      "attempts_per_test": 2,
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "constraints": [],
+      "cost": {
+        "kind": "ProgramSize"
+      },
+      "learn": {
+        "curriculum": null,
+        "early_stop": true,
+        "iterations": 5,
+        "kind": "LearnSpec",
+        "learn_engine": {
+          "kind": "GreedyMDLLearnEngine",
+          "metric": {
+            "bits_per_primitive": 1.0,
+            "cost": {
+              "kind": "ProgramSize"
+            },
+            "kind": "CompressionMetric"
+          },
+          "name_prefix": "abs",
+          "proposer": {
+            "bound_var_safe": false,
+            "kind": "AntiunifyPairs"
+          },
+          "selector": {
+            "kind": "GreedyMDL"
+          }
+        },
+        "reset_programs_each_wake": true,
+        "score_each_wake": false,
+        "wake_schedule": "full"
+      },
+      "library": {
+        "name": "dae9d2b5-split-L0",
+        "primitives": [
+          {
+            "name": "split_h",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": {
+              "args": [
+                "grid"
+              ],
+              "con": "list"
+            },
+            "variadic_param": null
+          },
+          {
+            "name": "nth",
+            "param_types": [
+              {
+                "args": [
+                  {
+                    "var": "a"
+                  }
+                ],
+                "con": "list"
+              },
+              "int"
+            ],
+            "return_type": {
+              "var": "a"
+            },
+            "variadic_param": null
+          },
+          {
+            "name": "overlay",
+            "param_types": [
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": "grid"
+          },
+          {
+            "name": "map_color",
+            "param_types": [
+              "grid",
+              "color",
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          }
+        ],
+        "version": 1
+      },
+      "search_engine": {
+        "constant_sources": [
+          "finite-enumerate-scalars"
+        ],
+        "function_hole_fill_mode": "none",
+        "function_sample_size": 4,
+        "inverse_semantics_propagation": false,
+        "kind": "BottomUpSearchEngine",
+        "polymorphism_instantiation": "monomorphize",
+        "unpinned_type_var_mode": "reject"
+      }
+    },
+    "rungs": [
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "west"
+            },
+            "task_id": "west-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "west"
+            },
+            "task_id": "west-01"
+          }
+        ],
+        "level": 1,
+        "name": "west",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "split_h"
+            },
+            {
+              "op": "const",
+              "value": 0,
+              "value_type": "int"
+            }
+          ],
+          "op": "apply",
+          "primitive": "nth"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "east"
+            },
+            "task_id": "east-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "east"
+            },
+            "task_id": "east-01"
+          }
+        ],
+        "level": 2,
+        "name": "east",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "split_h"
+            },
+            {
+              "op": "const",
+              "value": 1,
+              "value_type": "int"
+            }
+          ],
+          "op": "apply",
+          "primitive": "nth"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_west"
+            },
+            "task_id": "recolored_west-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_west"
+            },
+            "task_id": "recolored_west-01"
+          }
+        ],
+        "level": 3,
+        "name": "recolored_west",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "west"
+            },
+            {
+              "op": "const",
+              "value": 4,
+              "value_type": "color"
+            },
+            {
+              "op": "const",
+              "value": 6,
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "map_color"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_east"
+            },
+            "task_id": "recolored_east-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_east"
+            },
+            "task_id": "recolored_east-01"
+          }
+        ],
+        "level": 4,
+        "name": "recolored_east",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "east"
+            },
+            {
+              "op": "const",
+              "value": 3,
+              "value_type": "color"
+            },
+            {
+              "op": "const",
+              "value": 6,
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "map_color"
+        }
+      }
+    ],
+    "top": {
+      "reference_solutions": [
+        {
+          "args": [
+            {
+              "op": "const",
+              "value": 0,
+              "value_type": "color"
+            },
+            {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_west"
+            },
+            {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_east"
+            }
+          ],
+          "op": "apply",
+          "primitive": "overlay"
+        }
+      ],
+      "task_ids": [
+        "dae9d2b5"
+      ]
+    },
+    "train_corpus": {
+      "content_hash": "63d1ff6e4f772d35",
+      "name": "dae9d2b5-split-recolor-lean:train",
+      "task_count": 9
+    }
+  },
+  "probe_cap": 512,
+  "rung_recovery": [
+    {
+      "level": 1,
+      "matched_by": [
+        "abs1"
+      ],
+      "recovered": true,
+      "rung": "west"
+    },
+    {
+      "level": 2,
+      "matched_by": [
+        "abs0"
+      ],
+      "recovered": true,
+      "rung": "east"
+    },
+    {
+      "level": 3,
+      "matched_by": [
+        "abs3"
+      ],
+      "recovered": true,
+      "rung": "recolored_west"
+    },
+    {
+      "level": 4,
+      "matched_by": [
+        "abs2"
+      ],
+      "recovered": true,
+      "rung": "recolored_east"
+    }
+  ],
+  "shape": {
+    "height": 5,
+    "lint_ok": true,
+    "max_jump_depth": 2,
+    "raw_depth_profile": [
+      4
+    ],
+    "validity_window": [
+      2,
+      2
+    ]
+  },
+  "wake_schedule": "full"
+}

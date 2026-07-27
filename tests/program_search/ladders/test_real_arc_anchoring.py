@@ -24,6 +24,10 @@ _ANCHORED: dict[str, tuple[str, str]] = {
     # densities. Both must reproduce the real task, or the pair compares two different things.
     "dae9d2b5-split-recolor": ("arc1-train", "dae9d2b5"),
     "dae9d2b5-split-halves": ("arc1-train", "dae9d2b5"),
+    # The `lean` arms differ from their parents only in `max_pool`, so they must still solve the
+    # real task -- a budget calibration that changed WHAT is computed would be worthless.
+    "dae9d2b5-split-recolor-lean": ("arc1-train", "dae9d2b5"),
+    "dae9d2b5-split-halves-lean": ("arc1-train", "dae9d2b5"),
 }
 
 
