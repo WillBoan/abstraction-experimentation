@@ -278,6 +278,38 @@ def test_floor_if_summoner_is_exercised_by_an_if_node() -> None:
     assert used.ok
 
 
+def test_primitive_necessity_maps_a_carried_primitive_to_the_level_that_needs_it() -> None:
+    # The calibration case, and the reason the check exists: `dae9d2b5-halves-union` carries
+    # `overlay` and `map_color` -- neither of which any RUNG mentions -- from L_0, where the search
+    # runs at depth 3. Measured 21,149,854 considered against 4 with those pruned away.
+    shape = make_ladder("dae9d2b5-halves-union").lint()
+    finding = next(f for f in shape.findings if f.code == "primitive-necessity")
+    assert not finding.ok and finding.severity == "warn"  # an observation, never a gate
+    assert "overlay: needed at L_2 (top), carried from L_0 -- depth 3" in finding.detail
+    assert "map_color: needed at L_2 (top), carried from L_0 -- depth 3" in finding.detail
+    # `halves_h` is needed by the very first search, so it is carried nowhere and never named.
+    assert "halves_h" not in finding.detail
+
+
+def test_primitive_necessity_separates_the_exponent_reason_from_the_base_one() -> None:
+    # The two reasons are independent, one per side of `(primitives x constants)^depth`. Pinning
+    # the budget to 2 removes every DEPTH reason -- and `overlay`/`map_color` are still flagged,
+    # on arity alone. That is not pedantry: `dae9d2b5-split-recolor` runs every level at depth 2
+    # and `overlay` still took 98.8% of a 230,497-considered cell, which a depth-only check missed.
+    spec = make_ladder("dae9d2b5-halves-union")
+    budget = dataclasses.replace(spec.reference_config.budget, depth_limit=2)
+    shallow = dataclasses.replace(
+        spec,
+        reference_config=dataclasses.replace(spec.reference_config, budget=budget),
+        depth_schedule_mode=DepthScheduleMode.PINNED,
+    )
+    finding = next(f for f in shallow.lint().findings if f.code == "primitive-necessity")
+    assert not finding.ok
+    assert "-- depth" not in finding.detail  # the exponent reason is gone at a depth-2 schedule
+    assert "overlay" in finding.detail and "arity 3" in finding.detail
+    assert "nth" not in finding.detail  # binary, carried, and genuinely cheap: not flagged
+
+
 def test_free_param_variation_counts_every_call_site() -> None:
     # Variation that lives only in the SECOND call site of each demo must count: the proposer
     # sees every occurrence, and the old first-call-only read produced a false positive here.

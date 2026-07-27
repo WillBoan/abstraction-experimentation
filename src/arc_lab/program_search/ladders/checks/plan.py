@@ -70,6 +70,7 @@ CHECK_PLAN: tuple[LadderCheck, ...] = (
     advisories.NotAllTelescope(),
     advisories.NoLambdaInTemplates(),
     advisories.FloorFullyExercised(),
+    advisories.PrimitiveNecessity(),
     vocab.HofHolesFillable(),
     # Structure (S) + Learnability (L), historically last: distinctness, then the MDL proxy.
     structure.RungDistinct(),

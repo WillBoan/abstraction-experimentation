@@ -5,7 +5,7 @@
 Every static check a `.ladder` file is held to, in the order they run. This file is GENERATED from the checks themselves (each one declares its code, family, stage and severity in its class body), so it cannot drift from what the lint actually does.
 
 - **4 syntax checks** run over the parsed document, before anything resolves. They are pure predicates over what the file says, so the editor reports all of them at once on their exact spans; a strict load raises the first and stops.
-- **29 lint checks** run over the resolved ladder: 22 error-class, 7 advisory. Most are parametrised per rung or per task, so a real ladder runs many more instances.
+- **30 lint checks** run over the resolved ladder: 22 error-class, 8 advisory. Most are parametrised per rung or per task, so a real ladder runs many more instances.
 - **10 of those are corpus-backed** -- they read the generated task grids, or evaluate a subterm on them. `lint(corpus_backed=False)` skips exactly these and NAMES them in `LadderShape.skipped_checks`, which is what lets a draft over assumed primitives be linted at all.
 - **Severity** is the check's default; two checks decide it per finding (`constant-subterm`, `proposer-compat` -- see their rows).
 
@@ -34,7 +34,7 @@ Everything a file answers on its own. A rule belongs here only if it needs nothi
 | 4   | `tasks-exist`           | corpus     | error    | Every demonstration and top task id resolves in the train corpus.                 |
 | 5   | `min-2-train-examples`  | corpus     | warn     | Every demonstrating task shows at least two train examples.                       |
 | 6   | `rung-referenced`       | structural | error    | Every rung is reachable from the top (some higher rung or top solution calls it). |
-| 28  | `rung-distinct`         | structural | error    | No two rungs unfold to the same floor-level template.                             |
+| 29  | `rung-distinct`         | structural | error    | No two rungs unfold to the same floor-level template.                             |
 
 ### Depth sandwich (D) -- the tractability claims
 
@@ -54,7 +54,7 @@ Everything a file answers on its own. A rule belongs here only if it needs nothi
 | #   | code              | stage      | severity | what it checks                                                                     |
 | --- | ----------------- | ---------- | -------- | ---------------------------------------------------------------------------------- |
 | 15  | `proposer-compat` | structural | error    | The configured proposer can serve every demonstration kind the rungs are shown at. |
-| 29  | `mdl-break-even`  | corpus     | error    | Minting each rung pays for itself in bits on its own demonstrations.               |
+| 30  | `mdl-break-even`  | corpus     | error    | Minting each rung pays for itself in bits on its own demonstrations.               |
 
 ### Demonstration plan (P) -- what the tasks show
 
@@ -71,17 +71,18 @@ Everything a file answers on its own. A rule belongs here only if it needs nothi
 
 ### Advisories (A) -- observations, not defects
 
-| #   | code                     | stage      | severity | what it checks                                                                |
-| --- | ------------------------ | ---------- | -------- | ----------------------------------------------------------------------------- |
-| 24  | `not-all-telescope`      | structural | warn     | At least one rung recombines rather than piping a single lower-rung call.     |
-| 25  | `no-lambda-in-templates` | structural | warn     | No rung template contains a lambda (whose reachability depth cannot certify). |
-| 26  | `floor-fully-exercised`  | structural | warn     | Every floor primitive is used by some rung, demonstration, distractor or top. |
+| #   | code                     | stage      | severity | what it checks                                                                       |
+| --- | ------------------------ | ---------- | -------- | ------------------------------------------------------------------------------------ |
+| 24  | `not-all-telescope`      | structural | warn     | At least one rung recombines rather than piping a single lower-rung call.            |
+| 25  | `no-lambda-in-templates` | structural | warn     | No rung template contains a lambda (whose reachability depth cannot certify).        |
+| 26  | `floor-fully-exercised`  | structural | warn     | Every floor primitive is used by some rung, demonstration, distractor or top.        |
+| 27  | `primitive-necessity`    | structural | warn     | Floor primitives carried below the level that needs them, where the carry is costly. |
 
 ### Vocabulary (V) -- config coherence
 
 | #   | code                 | stage      | severity | what it checks                                                           |
 | --- | -------------------- | ---------- | -------- | ------------------------------------------------------------------------ |
-| 27  | `hof-holes-fillable` | structural | warn     | Every higher-order floor primitive has fillable holes under this config. |
+| 28  | `hof-holes-fillable` | structural | warn     | Every higher-order floor primitive has fillable holes under this config. |
 
 ## Run order
 
@@ -118,6 +119,7 @@ S4. `task-ids-unique`
 24. `not-all-telescope`
 25. `no-lambda-in-templates`
 26. `floor-fully-exercised`
-27. `hof-holes-fillable`
-28. `rung-distinct`
-29. `mdl-break-even`
+27. `primitive-necessity`
+28. `hof-holes-fillable`
+29. `rung-distinct`
+30. `mdl-break-even`

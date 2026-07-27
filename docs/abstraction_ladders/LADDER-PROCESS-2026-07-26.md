@@ -14,9 +14,9 @@ Written after the first real-ARC ladder ([`dae9d2b5-halves-union`](../../src/arc
 cost ~ (primitives x constants) ^ depth
 ```
 
-Depth is the exponent and no pruning beats it. Breadth is the base, and it is the one that actually bit: on `dae9d2b5-halves-union` rung 1, depth was fixed at 3 while the base alone moved the cost from **4** to **21,149,854** — a 5.3-million-fold spread over the *same* rung at the *same* depth.
+Depth is the exponent and no pruning beats it. Breadth is the base, and it is the one that actually bit: on `dae9d2b5-halves-union` rung 1, depth was fixed at 3 while the base alone moved the cost from **4** to **21,149,854** — a 5.3-million-fold spread over the _same_ rung at the _same_ depth.
 
-Both axes are now instrumented ([BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md)): the depth schedule per level and the round-1 breadth census, both printed by `lint-ladder` in ~1s. The instrument *ordering* in §3 and the breadth items in §5 are corollaries of this line; the instrument *contracts* (what each can prove) are not — they come from what each instrument observes.
+Both axes are now instrumented ([BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md)): the depth schedule per level and the round-1 breadth census, both printed by `lint-ladder` in ~1s. The instrument _ordering_ in §3 and the breadth items in §5 are corollaries of this line; the instrument _contracts_ (what each can prove) are not — they come from what each instrument observes.
 
 ## 2. Building a ladder
 
@@ -24,9 +24,9 @@ Both axes are now instrumented ([BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-0
 
 **This order is the finding, not a preference.** Every 2026-07-25 breadth wall traces to the reverse: floors inherited from authoring convenience, rungs then bent to fit them.
 
-1. **Anchor the term first — the hard gate.** Hand-author the solution program for the real task and verify it against *all* train examples and the held-out tests, then pin it as a test. Nothing downstream is worth building until this holds; it was the most solid single step of the whole 2026-07-25/26 arc, and everything else derives from the term.
+1. **Anchor the term first — the hard gate.** Hand-author the solution program for the real task and verify it against _all_ train examples and the held-out tests, then pin it as a test. Nothing downstream is worth building until this holds; it was the most solid single step of the whole 2026-07-25/26 arc, and everything else derives from the term.
 2. **Cut the term into competences.** Read the natural cut-sets off the verified term and name each one. If you cannot name a rung in three words, it is a fragment of a competence, not a rung.
-3. **Then choose the smallest floor** that puts each cut at depth 2–3, preferring *perceived* geometry over *computed* (§5). The floor is chosen to serve the cuts — never inherited and then worked around.
+3. **Then choose the smallest floor** that puts each cut at depth 2–3, preferring _perceived_ geometry over _computed_ (§5). The floor is chosen to serve the cuts — never inherited and then worked around.
 4. **Author demonstrations last.** They are the plan's dominant cost centre, so they are the last thing to commit to a spine that might still move.
 5. **Register the expected profile, then verify** — lint, probe, `diff-ladder` for any member derived from another (membership/equivalence, picking the validator the floor relationship licenses — [LADDER-RELATIONSHIPS](LADDER-RELATIONSHIPS-2026-07-23.md)), taskgen, run, analyse (§3 for the order, §4 when something fires). Write the predicted per-rung verdict profile down **before** `run-ladder`: a profile is evidence only against a stated expectation, and a prediction cannot be retro-fitted ([MVE-PLAN](MVE-PLAN-2026-07-25.md)).
 
@@ -36,12 +36,12 @@ Start a ladder, or the next variant of one, with `arc-lab new-ladder <name> [--f
 
 Soundness is not worth much on a task that measures nothing. Two selection criteria beyond the task screen in [MVE-PLAN-2026-07-25.md](MVE-PLAN-2026-07-25.md):
 
-- **Demo-pool cheapness.** Rungs demonstrable with task-realizable, full-solution *Grid* demos are the cheap case. Fragment-demoed rungs (any non-Grid rung must be wrapped, and the wrapper's depth is what the wake pays) are a deliberate sample, never an accident.
+- **Demo-pool cheapness.** Rungs demonstrable with task-realizable, full-solution _Grid_ demos are the cheap case. Fragment-demoed rungs (any non-Grid rung must be wrapped, and the wrapper's depth is what the wake pays) are a deliberate sample, never an accident.
 - **Floor leverage.** Prefer families where one perceived-geometry producer unlocks several tasks — one `panels`-style producer serving the whole separator/two-halves family beats a bespoke floor per task.
 
 ### Declare withheld primitives
 
-A floor designed around a known solution **manufactures** raw-intractability. That is the method, not a flaw — but say so in the `.ladder` header: which primitives were deliberately withheld, and why. Undeclared, every RQ1 amortization bound reads as an absolute claim about search when it is a claim *relative to a floor you chose*.
+A floor designed around a known solution **manufactures** raw-intractability. That is the method, not a flaw — but say so in the `.ladder` header: which primitives were deliberately withheld, and why. Undeclared, every RQ1 amortization bound reads as an absolute claim about search when it is a claim _relative to a floor you chose_.
 
 ### Done looks like
 
@@ -75,7 +75,7 @@ The session's own contrast: `dae9d2b5-3-recolor-rungs` was killed by **one lint,
 
 **Pruning is a bound, never a measurement.** A pruned cell chose its library AND its constant values by reading the answer. It prices a floor and sizes a guard; it is never a run whose cost may be quoted (§6, `pruned-library`).
 
-**Pruning has two halves and neither subsumes the other.** Dropping a primitive drops its types' whole constant battery for free — which is the entire story on `dae9d2b5-halves-union`'s `west` (round-1 width 1,211 -> 1). It is *no* story on al14's `move_cell_up`, where every primitive the program uses survives and the width does not move at all (300 -> 300) until the constant VALUES are restricted (-> 12). A cell offering only library pruning reports "this rung is expensive" where the truth is "its constant battery is"; the probe does both.
+**Pruning has two halves and neither subsumes the other.** Dropping a primitive drops its types' whole constant battery for free — which is the entire story on `dae9d2b5-halves-union`'s `west` (round-1 width 1,211 -> 1). It is _no_ story on al14's `move_cell_up`, where every primitive the program uses survives and the width does not move at all (300 -> 300) until the constant VALUES are restricted (-> 12). A cell offering only library pruning reports "this rung is expensive" where the truth is "its constant battery is"; the probe does both.
 
 **The breadth census is an indicator, never a prediction.** Exact for round 1 and it understates badly at depth: `dae9d2b5-halves-union` r_1 reads 1,211x statically against ~5.3e6 measured at depth 3. Use it to rank floors and to compare a ladder against itself.
 
@@ -99,12 +99,15 @@ The session's own contrast: `dae9d2b5-3-recolor-rungs` was killed by **one lint,
 
 ### Tractability triage
 
-1. **Read what you already have.** `by_primitive` (shares overlap — not a partition), `first_solution_index` vs `considered`, `generations`, the retained programs. On 2026-07-25 all of it was available from the first run, unread for hours, while mechanisms were asserted instead.
-2. **Read the breadth census.** A large `b1 (full)` / `b1 (min)` ratio, or a `10 minted / 0 used` battery row, explains most fat cells outright and names the primitive responsible.
-3. **Ablate to the minimum.** The probe's floor-tax cell does this automatically; do it by hand for a different cut.
-4. **Ask the human** — any one of these is a trigger:
+**The question is not simply "is this rung expensive". It is "which primitive is expensive, what makes it necessary, and can that thing search shallower".** Cost attributes to _primitives_; primitives are necessitated by _pieces of the ladder_; and it is the piece, not the primitive, that you can move. Run it in that order:
+
+1. **Attribute the cost to primitives.** `by_primitive` (shares overlap — not a partition), `first_solution_index` vs `considered`, `generations`, the retained programs. On 2026-07-25 all of it was available from the first run, unread for hours, while mechanisms were asserted instead. Statically, `lint-ladder`'s breadth census says the same thing without a search: a large `b1 (full)` / `b1 (min)` ratio, or a `10 minted / 0 used` battery row, names the responsible primitive outright.
+2. **Map each expensive primitive to the piece of the ladder that necessitates it** — `primitive-necessity` prints this: which level's search first has to compose it, and which levels carry it below that, at what budget. The floor is one library for the whole climb, so a primitive only the _top_ needs is still in the pool (and still minting its types' constant battery) at every level beneath it.
+3. **Restructure the piece, or drop the primitive.** In order of preference: make the piece that needs it search at depth 2 (§5); express the competence without it; or accept the tax and record it. Note what this rules out — _the rung that is expensive is usually not the rung to redesign_: on `dae9d2b5-halves-union` the fat cells were `west`/`east`, and the fix was neither of them (it was the plumbing that made them d3, and the top's vocabulary).
+4. **Ablate to the minimum.** The probe's floor-tax cell does this automatically; do it by hand for a different cut.
+5. **Ask the human** — any one of these is a trigger:
    - a second escalation of any budget or guard;
-   - an expected duration over ~10 minutes (estimate *before* launching, §7);
+   - an expected duration over ~10 minutes (estimate _before_ launching, §7);
    - a measurement that contradicts a written claim in a doc or docstring;
    - two consecutive redesigns of the same rung;
    - **a gate and a natural design disagreeing** (§5).
@@ -114,9 +117,11 @@ The session's own contrast: `dae9d2b5-3-recolor-rungs` was killed by **one lint,
 Heuristics, explicitly not rules. Each is a scar.
 
 - **Run the algebraic skip-audit as a design step, before any probe.** Actively try to prove each rung skippable by hand: is there a law letting a consumer reroute around it (`map_color` distributing over `overlay`)? Is there a sibling reachable at the same depth from the floor (`4347f46a-1`'s four shift rungs, skippable by construction)? **Both 2026-07-25 skip findings were hand-derivable** — and both were found by an expensive probe instead.
-- **When a gate and a natural design disagree, the prior is that the gate measures the wrong thing.** The folded `recolored_west`/`recolored_east` rungs are the type case: they were collapsed into the top purely to pass skip-freeness — a gate [CERTIFICATE-PROFILE](CERTIFICATE-PROFILE-2026-07-24.md) already said should be a verdict profile — and per-rung budgets later made the 4-rung form both valid *and cheaper*. The machinery was wrong; deforming the design to satisfy it destroyed the better ladder. This is an ask-the-human trigger, not a licence to ignore gates.
+- **When a gate and a natural design disagree, the prior is that the gate measures the wrong thing.** The folded `recolored_west`/`recolored_east` rungs are the type case: they were collapsed into the top purely to pass skip-freeness — a gate [CERTIFICATE-PROFILE](CERTIFICATE-PROFILE-2026-07-24.md) already said should be a verdict profile — and per-rung budgets later made the 4-rung form both valid _and cheaper_. The machinery was wrong; deforming the design to satisfy it destroyed the better ladder. This is an ask-the-human trigger, not a licence to ignore gates.
 - **Never collapse a natural rung to satisfy a gate.** The corollary of the above.
-- **Anticipate the constant battery when choosing floor primitives.** Minting is gated on whether *any* floor primitive mentions a type, so one colour-taking primitive buys *every* rung the full ten-colour battery. Prefer **perceived** geometry (`halves_h`, region producers) over **computed** (`floordiv(width(g), 2)`): the arithmetic then never enters the search space at all. `lint-ladder` prices this before you commit.
+- **Anticipate the constant battery when choosing floor primitives.** Minting is gated on whether _any_ floor primitive mentions a type, so one colour-taking primitive buys _every_ rung the full ten-colour battery. Prefer **perceived** geometry (`halves_h`, region producers) over **computed** (`floordiv(width(g), 2)`): the arithmetic then never enters the search space at all. `lint-ladder` prices this before you commit.
+- **An expensive primitive may sit in the floor — but it should only ever meet the search at depth 2.** The base `b` is pinned by the TOP (every primitive the top needs is in the pool at every level, and no rung redesign removes it), so what rung design actually controls is the _exponent at each level_. That is the whole lever: at a fixed fat `b`, depth 2 vs depth 3 was the difference between ~10⁴ and ~2x10⁷ considered on `dae9d2b5`. Read `primitive-necessity` against the depth schedule and, where they collide, restructure — the usual culprit is **plumbing**, a level spent converting between types rather than computing anything (`crop_rect(g, head(halves_h(g)))` spends two of its three levels turning `List[Rect]` into a `Grid`; a `split_h: (Grid) -> List[Grid]` producer makes the same competence d2).
+- **Prefer a producer that returns what the consumer wants.** A `Rect`-returning producer is right when the rect is used as an _address_ (a paste target). When every consumer immediately crops it, the Grid-returning form is the perceived-geometry version and saves a level everywhere it is used.
 - **Depth-1 is not a rung** — a bare primitive already in the layer below buys no depth.
 - **A non-Grid rung must be demonstrated through a wrapper**, and the wrapper's depth is what the wake pays. A real cost, not an accounting artefact.
 
@@ -140,8 +145,8 @@ General habits, listed because these are the ones that cost real time here.
 
 - **Estimate a run's duration BEFORE launching, from the cost you already know.** The estimate is a decision input, not a postscript; a run whose cost you would not have approved is one you should not have started. (2026-07-26: launched a chain and only then read the log to find it was a 6–10 hour job — with the per-cell cost in the plan's own Context section.)
 - **When a verification is expensive, ask whether a cheap permanent instrument buys the same evidence.** [`al21-dag-siblings`](../../src/arc_lab/program_search/ladders/registry/al21-dag-siblings.ladder) certifies the DAG reading end to end in 0.26s inside `make check`, forever; the multi-hour real-task chain would have added "and it also holds here", once.
-- **Never pipe long-running output through a buffering filter.** `tail`/`head`/`sort` swallow everything until exit, so a live job looks dead (hit three times in one session, twice *after* diagnosing it). Write to a file and read that. Background long runs; do not chain sleeps to poll.
-- **Probe cells are cached**, so a re-probe of an unchanged rung is free — but the *first* probe of a fat floor costs what the enumeration costs. Lint before probing.
+- **Never pipe long-running output through a buffering filter.** `tail`/`head`/`sort` swallow everything until exit, so a live job looks dead (hit three times in one session, twice _after_ diagnosing it). Write to a file and read that. Background long runs; do not chain sleeps to poll.
+- **Probe cells are cached**, so a re-probe of an unchanged rung is free — but the _first_ probe of a fat floor costs what the enumeration costs. Lint before probing.
 
 ## 8. Artifacts & provenance
 
@@ -159,9 +164,9 @@ General habits, listed because these are the ones that cost real time here.
 
 **Probe — floor tax:** `clean` · `rung-too-expensive` · `floor-too-broad`.
 
-**Structure:** `skippable` (static, from lint: the consumer's double-jump fits the budget, so a skip *could* exist — a verdict-profile data point, not a gate; distinct from the certificate's `no_skip_paths = False`, where a skip path was empirically *found*, which fails admission) · `chain` vs `DAG` · `telescope` vs `recombination` (fan-in > 1).
+**Structure:** `skippable` (static, from lint: the consumer's double-jump fits the budget, so a skip _could_ exist — a verdict-profile data point, not a gate; distinct from the certificate's `no_skip_paths = False`, where a skip path was empirically _found_, which fails admission) · `chain` vs `DAG` · `telescope` vs `recombination` (fan-in > 1).
 
-**Certificate:** `tractable_jumps` · `no_skip_paths` — **tri-state**: `True` none found, `False` found, `None` inconclusive because a search censored; `None` fails admission exactly as `False` does · `demonstration_health` (fraction solved *and* routed through the rung's own dependencies).
+**Certificate:** `tractable_jumps` · `no_skip_paths` — **tri-state**: `True` none found, `False` found, `None` inconclusive because a search censored; `None` fails admission exactly as `False` does · `demonstration_health` (fraction solved _and_ routed through the rung's own dependencies).
 
 **Learning:** `recovered` (a mint behaviourally matches the intended rung) · `junk` (mints nothing intended) · `cascade` (a wrong mint that later mints build on).
 

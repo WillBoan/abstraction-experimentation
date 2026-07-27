@@ -170,6 +170,29 @@ def _halves_v(grid: Grid) -> tuple[Rect, ...]:
     )
 
 
+def _split_h(grid: Grid) -> tuple[Grid, ...]:
+    """The two halves side by side (west, east), as GRIDS -- the ``concat_h`` inverse proper.
+
+    The same split as :func:`_halves_h`, delivered in the type its consumers actually want. Naming
+    a half through the region tier costs two levels of plumbing (``crop_rect(g, head(halves_h(g)))``
+    is depth 3, and only ONE of those levels computes anything), and depth is the exponent in
+    ``(primitives x constants)^depth``: on ``dae9d2b5`` that plumbing was the difference between a
+    ~21M-considered enumeration and a few thousand. Returning grids makes the same competence
+    depth 2.
+
+    The region form stays, and is still the right one when the half is used as an ADDRESS -- a
+    paste target needs the ``Rect``, and cropping it back out would be a round trip. Prefer this
+    form when every consumer immediately crops.
+    """
+    return tuple(_crop_rect(grid, rect) for rect in _halves_h(grid))
+
+
+def _split_v(grid: Grid) -> tuple[Grid, ...]:
+    """The two halves stacked (north, south), as grids -- the ``concat_v`` inverse. See
+    :func:`_split_h`."""
+    return tuple(_crop_rect(grid, rect) for rect in _halves_v(grid))
+
+
 def _squares_of_size(grid: Grid, size: int) -> tuple[Rect, ...]:
     """Every axis-aligned ``size`` x ``size`` square, row-major. O(n^2) -- the affordable form."""
     if size < 1:
@@ -334,6 +357,8 @@ HALVES_H = Primitive(
 HALVES_V = Primitive(
     name="halves_v", param_types=(GRID,), return_type=list_type(RECT), impl=_halves_v
 )
+SPLIT_H = Primitive(name="split_h", param_types=(GRID,), return_type=list_type(GRID), impl=_split_h)
+SPLIT_V = Primitive(name="split_v", param_types=(GRID,), return_type=list_type(GRID), impl=_split_v)
 SQUARES_OF_SIZE = Primitive(
     name="squares_of_size",
     param_types=(GRID, INT),
@@ -382,6 +407,8 @@ REGION_PRIMITIVES = (
     QUADRANTS,
     HALVES_H,
     HALVES_V,
+    SPLIT_H,
+    SPLIT_V,
     SQUARES_OF_SIZE,
     SQUARES,
     FILLED_SQUARES,

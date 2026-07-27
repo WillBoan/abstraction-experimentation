@@ -47,9 +47,22 @@ ladder dae9d2b5-halves-union
 #
 # **Withheld primitives** (declared per LADDER-PROCESS-2026-07-26 -- a floor designed around a known
 # solution manufactures raw-intractability, which is the method, so the RQ1 bound below is
-# FLOOR-RELATIVE, not absolute): no `split_h`/`panels` producer (which would make each half-crop
-# depth 1 and the whole ladder trivial), no Mask algebra (`overlay` covers the merge), and no
-# arithmetic on dimensions (`floordiv`/`width`) -- the first version's cost centre.
+# FLOOR-RELATIVE, not absolute): no `split_h`/`panels` producer, no Mask algebra (`overlay` covers
+# the merge), and no arithmetic on dimensions (`floordiv`/`width`) -- the first version's cost centre.
+#
+# **That withholding rationale was wrong, and measuring it is what produced the successor.** This
+# header claimed a `split_h` producer "would make each half-crop depth 1 and the whole ladder
+# trivial". Measured 2026-07-27: `nth(split_h(g), 0)` is **depth 2**, not 1 -- `split_h` returns a
+# `List[Grid]`, so naming one half still costs a composition. It satisfies `proper-composition`,
+# and the ladder built on it certifies with four real rungs.
+#
+# **RETIRED 2026-07-27 -- kept as the measured BASELINE for `dae9d2b5-split-recolor`.** What this
+# floor actually pays for is PLUMBING DEPTH: `crop_rect(g, head(halves_h(g)))` is d3 and only ONE
+# of those three levels computes anything, the other two converting `List[Rect] -> Rect -> Grid`.
+# A `Rect`-returning producer is the right choice when the rect is used as an ADDRESS; when every
+# consumer immediately crops it, the Grid-returning form saves a level everywhere. The successor
+# runs every level at depth 2 and is ADMITTED; this ladder is deliberately never run, because
+# certifying it is a multi-hour enumeration that would buy nothing the pair does not.
 
 # **The guard is sized to a MEASURED cost, not guessed.** Proving `no_skip_paths` needs the depth-3
 # enumeration to run to EXHAUSTION -- a censored skip search proves nothing -- and that search

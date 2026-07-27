@@ -20,6 +20,10 @@ from arc_lab.program_search.ladders.registry import ladder_paths, load_ladder
 #: (al1-al20) has no row and is not checked.
 _ANCHORED: dict[str, tuple[str, str]] = {
     "dae9d2b5-halves-union": ("arc1-train", "dae9d2b5"),
+    # The granularity pair over the Grid-valued half-split floor: same task, same top, two cut
+    # densities. Both must reproduce the real task, or the pair compares two different things.
+    "dae9d2b5-split-recolor": ("arc1-train", "dae9d2b5"),
+    "dae9d2b5-split-halves": ("arc1-train", "dae9d2b5"),
 }
 
 
