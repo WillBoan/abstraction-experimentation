@@ -166,6 +166,12 @@ def test_static_lint_records_the_batch_s_known_defects() -> None:
         "raw-intractable",
         "rewrite-shallow[rot90]",
     ]
+    # The two `proposer-compat` entries were ADDED 2026-07-27 by a deliberate correction to
+    # `_PROPOSER_CAPABILITIES`: the `FrequentSubtree` family was credited with `full_solution`,
+    # which its root-excluding miner makes structurally impossible. al4 is the batch's only
+    # `FrequentSubtree` ladder, and the corrected check flags exactly its two `full_solution` rungs
+    # while clearing the `fragment_identical` one -- which is precisely the recovery pattern its
+    # real run produced ("r1 only"), now predicted statically. See experiments/2026-07-27-*/ S19a.
     assert failing["al4-mask-crop"] == [
         "constant-subterm[flatten_content-00]",
         "constant-subterm[flatten_content-01]",
@@ -175,6 +181,8 @@ def test_static_lint_records_the_batch_s_known_defects() -> None:
         "constant-subterm[stamp-01]",
         "constant-subterm[top-00]",
         "heldout-distinct[nonbg_mask-heldout-00]",
+        "proposer-compat[flatten_content]",
+        "proposer-compat[stamp]",
     ]
     assert failing["al5-perceiver-chain"] == [
         "constant-subterm[swap_extremes-00]",

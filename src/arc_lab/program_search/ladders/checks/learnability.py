@@ -19,17 +19,25 @@ from arc_lab.program_search.substrate.abstraction import unfold_program
 #: What each proposer (by class name -- avoids importing the dep-gated Stitch shim) can serve.
 #: Keyed to :class:`~..spec.DemonstrationKind`, which IS the section 2 mapping: the demonstration
 #: kind a rung is shown at is exactly the proposer it requires.
+#:
+#: **The two miners are COMPLEMENTARY, not nested (corrected 2026-07-27).** This table used to give
+#: the ``FrequentSubtree`` family ``FULL_SOLUTION`` as well, modelling it as a superset of
+#: ``AntiunifyPairs``. It is not: :meth:`~...learn.antiunify.FrequentSubtree.propose` mines
+#: ``list(program.walk())[1:]`` -- each program's own ROOT excluded -- so a rung demonstrated as a
+#: whole solution is exactly the one template it can never offer. ``AntiunifyPairs`` generalises
+#: whole programs and so has the mirror-image blind spot. Only ``StitchProposer`` serves both.
+#:
+#: That entry was not cosmetic: it let ``proposer-compat`` PASS a ladder no configured machinery
+#: could climb. It retrodicts `al4-mask-crop` exactly -- the batch's only ``FrequentSubtree``
+#: ladder, whose r1 is ``fragment_identical`` and whose r2/r3 are ``full_solution``, and whose real
+#: run recovered "r1 only". Measured per proposer in
+#: ``experiments/2026-07-27-mve-completion/artifacts/proposer_compat_defect.py``.
+_FRAGMENT_MINERS = frozenset({DemonstrationKind.FRAGMENT_IDENTICAL})
 _PROPOSER_CAPABILITIES: dict[str, frozenset[DemonstrationKind]] = {
     "AntiunifyPairs": frozenset({DemonstrationKind.FULL_SOLUTION}),
-    "FrequentSubtree": frozenset(
-        {DemonstrationKind.FULL_SOLUTION, DemonstrationKind.FRAGMENT_IDENTICAL}
-    ),
-    "TypeScopedFrequentSubtree": frozenset(
-        {DemonstrationKind.FULL_SOLUTION, DemonstrationKind.FRAGMENT_IDENTICAL}
-    ),
-    "SearchScopedFrequentSubtree": frozenset(
-        {DemonstrationKind.FULL_SOLUTION, DemonstrationKind.FRAGMENT_IDENTICAL}
-    ),
+    "FrequentSubtree": _FRAGMENT_MINERS,
+    "TypeScopedFrequentSubtree": _FRAGMENT_MINERS,
+    "SearchScopedFrequentSubtree": _FRAGMENT_MINERS,
     "StitchProposer": frozenset(DemonstrationKind),
 }
 
