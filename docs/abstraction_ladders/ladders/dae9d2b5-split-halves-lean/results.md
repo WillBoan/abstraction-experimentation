@@ -12,12 +12,15 @@
 | 1    | yes       | yes          | 1.0                  |
 | 2    | yes       | yes          | 1.0                  |
 
+> **COMPROMISE OPTIONS IN EFFECT (1).** This run traded cost for claim strength. Every figure below is qualified by these, and must carry the label wherever it is quoted:
+> - **`solution-limit`** (early stop at the first solution(s)) -- saves: large, whenever solutions are found well below `depth_limit` -- the run stops paying instead of enumerating the rest of the budget. FORFEITS: `cheapest_solution_index`, cost-to-exhaust, and a complete `by_primitive` attribution. RQ1 SURVIVES: `first_solution_index` is exact either way.
+
 ## Climb trace
 
-| iter | wake solved                                   | considered (all tasks) | minted         | converged |
-| ---- | --------------------------------------------- | ---------------------- | -------------- | --------- |
-| 0    | 4: `east-00`, `east-01`, `west-00`, `west-01` | 63,175                 | `abs0`, `abs1` | no        |
-| 1    | 4: `east-00`, `east-01`, `west-00`, `west-01` | 92,534                 | -              | yes       |
+| iter | wake solved                                               | considered (all tasks) | minted         | converged |
+| ---- | --------------------------------------------------------- | ---------------------- | -------------- | --------- |
+| 0    | 4: `east-00`, `east-01`, `west-00`, `west-01`             | 2,000,720              | `abs0`, `abs1` | no        |
+| 1    | 5: `dae9d2b5`, `east-00`, `east-01`, `west-00`, `west-01` | 288,143                | -              | yes       |
 
 ## Rung recovery
 
@@ -28,13 +31,13 @@
 
 ## Cost matrix (considered count per task x library)
 
-| task       | rung | L_0      | L_1      | L_2      |
-| ---------- | ---- | -------- | -------- | -------- |
-| `east-00`  | east | 12,139 * | 12,149 * | 17,589 * |
-| `east-01`  | east | 12,139 * | 12,149 * | 17,589 * |
-| `dae9d2b5` | top  | 20,077   | 20,089   | 29,047   |
-| `west-00`  | west | 12,139 * | 12,149 * | 17,589 * |
-| `west-01`  | west | 6,681 *  | 6,689 *  | 10,720 * |
+| task       | rung | L_0    | L_1    | L_2       |
+| ---------- | ---- | ------ | ------ | --------- |
+| `east-00`  | east | 162 *  | 163 *  | 153 *     |
+| `east-01`  | east | 162 *  | 163 *  | 153 *     |
+| `dae9d2b5` | top  | 20,077 | 20,089 | 287,531 * |
+| `west-00`  | west | 161 *  | 152 *  | 152 *     |
+| `west-01`  | west | 161 *  | 154 *  | 154 *     |
 
 - `*` = the search solved that task in that column; a bare number is cost-paid-full on an unsolved task (a censored lower bound on what solving would cost).
 - `!` = that search was cut short by a `Budget.considered_limit`, so its number is the limit itself, not a measurement -- and its `unsolved` says nothing about whether a solution exists within the budget.
@@ -43,20 +46,21 @@
 
 ## Per-task solutions (solved cells only)
 
-| task      | library | solve generation | first solution index | cheapest solution index | considered | b_eff |
-| --------- | ------- | ---------------- | -------------------- | ----------------------- | ---------- | ----- |
-| `east-00` | L_0     | 2                | 161                  | 161                     | 12,139     | 6.55  |
-| `east-00` | L_1     | 2                | 162                  | 162                     | 12,149     | 6.6   |
-| `east-00` | L_2     | 1                | 152                  | 152                     | 17,589     | 6.65  |
-| `east-01` | L_0     | 2                | 161                  | 161                     | 12,139     | 6.55  |
-| `east-01` | L_1     | 2                | 162                  | 162                     | 12,149     | 6.6   |
-| `east-01` | L_2     | 1                | 152                  | 152                     | 17,589     | 6.65  |
-| `west-00` | L_0     | 2                | 160                  | 160                     | 12,139     | 6.55  |
-| `west-00` | L_1     | 1                | 151                  | 151                     | 12,149     | 6.6   |
-| `west-00` | L_2     | 1                | 151                  | 151                     | 17,589     | 6.65  |
-| `west-01` | L_0     | 2                | 160                  | 160                     | 6,681      | 5.95  |
-| `west-01` | L_1     | 1                | 153                  | 153                     | 6,689      | 6.0   |
-| `west-01` | L_2     | 1                | 153                  | 153                     | 10,720     | 6.05  |
+| task       | library | solve generation | first solution index | cheapest solution index | considered | b_eff  |
+| ---------- | ------- | ---------------- | -------------------- | ----------------------- | ---------- | ------ |
+| `east-00`  | L_0     | 2                | 161                  | 161                     | 162        | 6.55   |
+| `east-00`  | L_1     | 2                | 162                  | 162                     | 163        | 6.6    |
+| `east-00`  | L_2     | 1                | 152                  | 152                     | 153        | -      |
+| `east-01`  | L_0     | 2                | 161                  | 161                     | 162        | 6.55   |
+| `east-01`  | L_1     | 2                | 162                  | 162                     | 163        | 6.6    |
+| `east-01`  | L_2     | 1                | 152                  | 152                     | 153        | -      |
+| `dae9d2b5` | L_2     | 3                | 287,530              | 287,530                 | 287,531    | 125.23 |
+| `west-00`  | L_0     | 2                | 160                  | 160                     | 161        | 6.55   |
+| `west-00`  | L_1     | 1                | 151                  | 151                     | 152        | -      |
+| `west-00`  | L_2     | 1                | 151                  | 151                     | 152        | -      |
+| `west-01`  | L_0     | 2                | 160                  | 160                     | 161        | 5.95   |
+| `west-01`  | L_1     | 1                | 153                  | 153                     | 154        | -      |
+| `west-01`  | L_2     | 1                | 153                  | 153                     | 154        | -      |
 
 - `first solution index` / `cheapest solution index`: the `candidate_index` at which the first / the globally-cheapest solution was absorbed (the solution sink -- exact, and independent of later pool eviction).
 - `solve generation`: the composition round the accepted solution was built at (round 0 = leaves).
@@ -64,34 +68,34 @@
 
 ## Spend attribution (`by_primitive`)
 
-| task       | library | spend by primitive (shares OVERLAP)                                                                                                                 |
-| ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `east-00`  | L_0     | `__const__` 12,137 (100.0%), `map_color` 12,079 (99.5%), `overlay` 11,100 (91.4%), `split_h` 19 (0.2%), `nth` 9 (0.1%)                              |
-| `east-00`  | L_1     | `__const__` 12,144 (100.0%), `map_color` 11,976 (98.6%), `overlay` 11,100 (91.4%), `west` 3,021 (24.9%), `split_h` 19 (0.2%), `nth` 9 (0.1%)        |
-| `east-00`  | L_2     | `__const__` 17,567 (99.9%), `overlay` 16,100 (91.5%), `map_color` 13,531 (76.9%), `east` 7,891 (44.9%), `west` 7,891 (44.9%), `split_h` 41 (0.2%)   |
-| `east-01`  | L_0     | `__const__` 12,137 (100.0%), `map_color` 12,079 (99.5%), `overlay` 11,100 (91.4%), `split_h` 19 (0.2%), `nth` 9 (0.1%)                              |
-| `east-01`  | L_1     | `__const__` 12,144 (100.0%), `map_color` 11,976 (98.6%), `overlay` 11,100 (91.4%), `west` 3,021 (24.9%), `split_h` 19 (0.2%), `nth` 9 (0.1%)        |
-| `east-01`  | L_2     | `__const__` 17,567 (99.9%), `overlay` 16,100 (91.5%), `map_color` 13,531 (76.9%), `east` 7,891 (44.9%), `west` 7,891 (44.9%), `split_h` 41 (0.2%)   |
-| `dae9d2b5` | L_0     | `__const__` 20,075 (100.0%), `map_color` 20,021 (99.7%), `overlay` 18,840 (93.8%), `split_h` 19 (0.1%), `nth` 7 (0.0%)                              |
-| `dae9d2b5` | L_1     | `__const__` 20,084 (100.0%), `map_color` 19,920 (99.2%), `overlay` 18,840 (93.8%), `west` 4,323 (21.5%), `split_h` 19 (0.1%), `nth` 7 (0.0%)        |
-| `dae9d2b5` | L_2     | `__const__` 29,025 (99.9%), `overlay` 27,360 (94.2%), `map_color` 24,997 (86.1%), `east` 12,131 (41.8%), `west` 12,131 (41.8%), `split_h` 37 (0.1%) |
-| `west-00`  | L_0     | `__const__` 12,137 (100.0%), `map_color` 12,079 (99.5%), `overlay` 11,100 (91.4%), `split_h` 19 (0.2%), `nth` 9 (0.1%)                              |
-| `west-00`  | L_1     | `__const__` 12,144 (100.0%), `map_color` 11,976 (98.6%), `overlay` 11,100 (91.4%), `west` 3,021 (24.9%), `split_h` 19 (0.2%), `nth` 9 (0.1%)        |
-| `west-00`  | L_2     | `__const__` 17,567 (99.9%), `overlay` 16,100 (91.5%), `map_color` 13,531 (76.9%), `east` 7,891 (44.9%), `west` 7,891 (44.9%), `split_h` 41 (0.2%)   |
-| `west-01`  | L_0     | `__const__` 6,679 (100.0%), `map_color` 6,617 (99.0%), `overlay` 5,840 (87.4%), `split_h` 19 (0.3%), `nth` 11 (0.2%)                                |
-| `west-01`  | L_1     | `__const__` 6,684 (99.9%), `map_color` 6,512 (97.4%), `overlay` 5,840 (87.3%), `west` 1,959 (29.3%), `split_h` 19 (0.3%), `nth` 11 (0.2%)           |
-| `west-01`  | L_2     | `__const__` 10,698 (99.8%), `overlay` 9,440 (88.1%), `map_color` 6,665 (62.2%), `west` 5,631 (52.5%), `east` 5,620 (52.4%), `split_h` 34 (0.3%)     |
+| task       | library | spend by primitive (shares OVERLAP)                                                                                                                     |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `east-00`  | L_0     | `__const__` 160 (98.8%), `map_color` 109 (67.3%), `overlay` 30 (18.5%), `split_h` 12 (7.4%), `nth` 2 (1.2%)                                             |
+| `east-00`  | L_1     | `__const__` 159 (97.5%), `map_color` 108 (66.3%), `overlay` 30 (18.4%), `split_h` 12 (7.4%), `nth` 2 (1.2%), `west` 2 (1.2%)                            |
+| `east-00`  | L_2     | `__const__` 149 (97.4%), `map_color` 100 (65.4%), `overlay` 30 (19.6%), `east` 1 (0.7%), `split_h` 1 (0.7%), `west` 1 (0.7%)                            |
+| `east-01`  | L_0     | `__const__` 160 (98.8%), `map_color` 109 (67.3%), `overlay` 30 (18.5%), `split_h` 12 (7.4%), `nth` 2 (1.2%)                                             |
+| `east-01`  | L_1     | `__const__` 159 (97.5%), `map_color` 108 (66.3%), `overlay` 30 (18.4%), `split_h` 12 (7.4%), `nth` 2 (1.2%), `west` 2 (1.2%)                            |
+| `east-01`  | L_2     | `__const__` 149 (97.4%), `map_color` 100 (65.4%), `overlay` 30 (19.6%), `east` 1 (0.7%), `split_h` 1 (0.7%), `west` 1 (0.7%)                            |
+| `dae9d2b5` | L_0     | `__const__` 20,075 (100.0%), `map_color` 20,021 (99.7%), `overlay` 18,840 (93.8%), `split_h` 19 (0.1%), `nth` 7 (0.0%)                                  |
+| `dae9d2b5` | L_1     | `__const__` 20,084 (100.0%), `map_color` 19,920 (99.2%), `overlay` 18,840 (93.8%), `west` 4,323 (21.5%), `split_h` 19 (0.1%), `nth` 7 (0.0%)            |
+| `dae9d2b5` | L_2     | `__const__` 287,517 (100.0%), `map_color` 286,991 (99.8%), `overlay` 284,141 (98.8%), `west` 29,642 (10.3%), `east` 28,419 (9.9%), `split_h` 313 (0.1%) |
+| `west-00`  | L_0     | `__const__` 159 (98.8%), `map_color` 109 (67.7%), `overlay` 30 (18.6%), `split_h` 11 (6.8%), `nth` 1 (0.6%)                                             |
+| `west-00`  | L_1     | `__const__` 149 (98.0%), `map_color` 100 (65.8%), `overlay` 30 (19.7%), `split_h` 1 (0.7%), `west` 1 (0.7%)                                             |
+| `west-00`  | L_2     | `__const__` 149 (98.0%), `map_color` 100 (65.8%), `overlay` 30 (19.7%), `split_h` 1 (0.7%), `west` 1 (0.7%)                                             |
+| `west-01`  | L_0     | `__const__` 159 (98.8%), `map_color` 107 (66.5%), `overlay` 30 (18.6%), `split_h` 9 (5.6%), `nth` 1 (0.6%)                                              |
+| `west-01`  | L_1     | `__const__` 151 (98.1%), `map_color` 100 (64.9%), `overlay` 30 (19.5%), `split_h` 1 (0.6%), `west` 1 (0.6%)                                             |
+| `west-01`  | L_2     | `__const__` 151 (98.1%), `map_color` 100 (64.9%), `overlay` 30 (19.5%), `split_h` 1 (0.6%), `west` 1 (0.6%)                                             |
 
 - Shares **overlap and are not a partition**: one composition counts in every bucket it touches, so a depth-3 program over three primitives appears three times. Read a share as "what fraction of the spend involved this primitive".
 - A primitive at ~100% that the task's own solution never calls is the floor-tax signature: the cell is paying for vocabulary it cannot use. Cross-check against the round-1 breadth census in `spec.md`, and against `probe-ladder`'s floor tax, which measures the same thing directly.
 
 ## Cost (considered counts)
 
-- Laddered marginal: 72,165
-  - jump `west`: 18,820
-  - jump `east`: 24,298
-  - top jump: 29,047
-- Laddered end-to-end: 155,709 (every wake re-searches every task)
+- Laddered marginal: 288,179
+  - jump `west`: 322
+  - jump `east`: 326
+  - top jump: 287,531
+- Laddered end-to-end: 2,288,863 (every wake re-searches every task)
 - Raw (Floor on the top tasks, reference budget): 20,077 -- a full-budget FAILURE at the reference budget, not a raw cost (the top is unreachable raw by design); the raw ARM below is the RQ1 authority
 - Amortization considered-ratio (reference-budget raw): n/a -- see the raw arm under RQ1
 - Depth compression: d_raw 4 -> max jump depth 2
@@ -103,10 +107,10 @@
 
 - **cost-paid-full**: the whole budgeted enumeration. With no early stop, every search pays it whether it solves at candidate 100 or not at all -- so it is nearly task-independent and it cannot show what a rung buys in cost terms.
 - **cost-to-first**: the `candidate_index` where the first solution was absorbed -- what an early-stopping search would have paid. This is the currency the rung-value comparisons below should be read in.
-- Laddered marginal, cost-paid-full: 72,165 vs cost-to-first: n/a (a jump is censored)
+- Laddered marginal, cost-paid-full: 288,179 vs cost-to-first: 288,174
   - jump `west`: 320
   - jump `east`: 324
-  - top jump: censored
+  - top jump: 287,530
 
 ### Raw vs laddered (RQ1)
 
@@ -122,16 +126,16 @@
 
 ### Marginal vs end-to-end laddered cost
 
-- Marginal (jump costs only, the idealized bound): 72,165
-- End-to-end (every wake re-searches every task, incl. full-budget failures): 155,709
-- **Loop-overhead factor**: 2.16x -- what today's loop mechanics cost above the ideal (re-search + overshoot + termination + learned-vs-oracle gap)
+- Marginal (jump costs only, the idealized bound): 288,179
+- End-to-end (every wake re-searches every task, incl. full-budget failures): 2,288,863
+- **Loop-overhead factor**: 7.94x -- what today's loop mechanics cost above the ideal (re-search + overshoot + termination + learned-vs-oracle gap)
 
 ### Marginal rung value
 
 | rung   | own tasks, cost-to-first without | with | **speedup** | layer above (paid-full) | censored |
 | ------ | -------------------------------- | ---- | ----------- | ----------------------- | -------- |
 | `west` | 320                              | 304  | **1.05x**   | 1.00x vs `top`          | yes      |
-| `east` | 324                              | 304  | **1.07x**   | 0.69x vs `top`          | yes      |
+| `east` | 324                              | 304  | **1.07x**   | 0.07x vs `top`          | yes      |
 
 - **The speedup column is the honest measure**: the rung's own demonstrating tasks, in cost-to-first, with vs without the rung gifted. Both sides are solved by construction, so it is uncensored.
 - The layer-above column is cost-paid-full on a CENSORED comparison (the layer above is unsolved without the rung -- that IS the double-jump claim), so it is not a speedup: a value near or below 1.0x there means the rung bought **reachability**, not cost. Read Enablement for that, never this number.
@@ -140,15 +144,15 @@
 
 | rung's tasks | at own level | at full library L_k | factor |
 | ------------ | ------------ | ------------------- | ------ |
-| `west`       | 18,820       | 28,309              | 1.50x  |
-| `east`       | 24,298       | 35,178              | 1.45x  |
+| `west`       | 322          | 306                 | 0.95x  |
+| `east`       | 326          | 306                 | 0.94x  |
 
 - These tasks never use the rungs above them, so the increase is pure tax: a wider round-0 leaf set and more compositions per round. It is paid INSIDE every later jump.
 
 ### Enablement (newly solvable per gifted rung)
 
 - `L_1` (vs `L_0`): nothing new
-- `L_2` (vs `L_1`): nothing new
+- `L_2` (vs `L_1`): `dae9d2b5`
 
 ### Rung necessity: learning path vs search path
 

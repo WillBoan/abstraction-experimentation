@@ -48,7 +48,13 @@ SOLUTION_LIMIT = CompromiseOption(
     saves="large, whenever solutions are found well below `depth_limit` -- the run stops paying "
     "instead of enumerating the rest of the budget",
     forfeits="`cheapest_solution_index`, cost-to-exhaust, and a complete `by_primitive` "
-    "attribution. RQ1 SURVIVES: `first_solution_index` is exact either way",
+    "attribution. **AND the loop-overhead factor** -- added 2026-07-27 after it was found missing "
+    "from this list by measurement, not by review: `laddered_marginal` is read off the CHAIN and "
+    "`laddered_end_to_end` off the CLIMB, and an early stop truncates the two at different points, "
+    "so their ratio stops comparing like with like. Observed range moved 2.16-3.88x -> 0.30-10.52x, "
+    "including a member reporting end-to-end BELOW marginal (0.30x), which is impossible for a "
+    "quantity defined as re-search overhead. Do not quote loop overhead from a run carrying this "
+    "option. RQ1 SURVIVES: `first_solution_index` is exact either way",
     when_justified="a cell whose only question is cost-to-first, or a guarded baseline arm where "
     "exhausting is the thing being avoided (the raw arm runs `solution_limit=1` by design)",
     severity="narrows",

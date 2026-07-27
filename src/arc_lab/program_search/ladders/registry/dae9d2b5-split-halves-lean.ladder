@@ -53,11 +53,23 @@ ladder dae9d2b5-split-halves-lean
 # **25.4x less** total spend and 1m51s instead of ~45min. This is that calibration applied to the
 # coarse arm, so the granularity curve is measured at a budget where BOTH members conclude.
 
+# **Stop limit (2026-07-27).** `solution_limit: 1` at `immediate` mode: a cell stops at its first
+# solution instead of enumerating the rest of its budget. Measured 19.5x-63x on these cells, and
+# `first_solution_index` is IDENTICAL either way -- so cost-to-first, the currency every rung-value
+# and RQ1 comparison is read in, is exactly preserved. Skip searches are unaffected: they do not
+# solve, so they exhaust regardless, which is what `no_skip_paths` requires. Validated as a PAIR
+# with the per-level pool against `dae9d2b5-split-recolor`'s certified profile (identical verdicts,
+# identical rung recovery). A registered Compromise Option -- `compromises_in(config)` detects it
+# from the config and banners the report; it forfeits `cheapest_solution_index`, cost-to-exhaust
+# and complete `by_primitive`.
+
 config {
     budget.depth_limit: 3
     budget.max_arity: 3
     budget.max_pool: 30
     budget.considered_limit: 2000000
+    budget.solution_limit: 1
+    budget.solution_limit_mode: 'immediate'
     search_engine.constant_sources: ['finite-enumerate-scalars']
 }
 

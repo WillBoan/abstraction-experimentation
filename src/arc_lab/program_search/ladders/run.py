@@ -47,6 +47,29 @@ from arc_lab.program_search.substrate.library import Library
 #: report checks the arm's funnels and withdraws soundness if any complete round composed zero.
 RAW_ARM_POOL = 200_000
 
+#: How much the retained pool must grow per extra round of composition, on top of the ladder's
+#: configured ``max_pool``. A depth-``d`` search can only compose at round ``d`` what it RETAINED at
+#: round ``d-1``, so a pool sized for a shallow level starves a deeper one -- and the failure is
+#: silent: the search exhausts, reports ``unsolved``, and nothing says the target was reachable in
+#: principle.
+#:
+#: **Measured 2026-07-27**, on ``94f9d214-nor-recolor``'s depth-3 top over ``L_4`` (and reproduced on
+#: ``dae9d2b5-split-halves-lean``): pool 30 -> unsolved (23,754 exhaustive) · pool 60 -> unsolved
+#: (702,470 exhaustive) · pool 150 -> SOLVED. The ladders that broke all had a ``3`` in their depth
+#: schedule; the two that did not, did not. So the step is fitted to exactly two points (depth 2 at
+#: 1x, depth 3 at 5x) and extrapolated geometrically -- a heuristic, not a law. It is safe in the
+#: direction that matters (too large costs time, too small loses reachability), and ``top_reachable``
+#: on the certificate is the backstop that makes a future miss loud instead of silent.
+POOL_GROWTH_PER_ROUND = 5
+
+#: The depth the ladder's configured ``max_pool`` is taken to be sized for.
+POOL_BASE_DEPTH = 2
+
+
+def pool_for_depth(configured: int, depth: int) -> int:
+    """The retained-pool cap a level running at ``depth`` needs, given the ladder's setting."""
+    return int(configured * POOL_GROWTH_PER_ROUND ** max(0, depth - POOL_BASE_DEPTH))
+
 
 @dataclass(frozen=True, slots=True)
 class LadderChainResult:
@@ -112,8 +135,19 @@ def run_ladder_chain(spec: LadderSpec, *, runs_root: Path | None = None) -> Ladd
     """
     shape = spec.lint()
     oracle_chain: dict[int, RunRecord] = {}
+    configured_pool = spec.reference_config.budget.max_pool
     for level in range(len(spec.rungs) + 1):  # L_0 (Floor) through L_k (all bridging rungs)
-        budget = replace(spec.reference_config.budget, depth_limit=shape.depth_schedule[level])
+        depth = shape.depth_schedule[level]
+        # The pool travels WITH the depth schedule, for the same reason the schedule exists: a level
+        # is budgeted for what IT must find. A single pool sized for the shallow levels silently
+        # starves the deep one (see `pool_for_depth`); sized for the deep one it overpays everywhere
+        # else, and -- because run identity is Config x Corpus -- moves every level's `run_id`.
+        # Per-level keeps the unchanged levels cache-valid.
+        budget = replace(
+            spec.reference_config.budget,
+            depth_limit=depth,
+            max_pool=pool_for_depth(configured_pool, depth),
+        )
         config = spec.reference_config.with_(
             library=spec.oracle_library(level), budget=budget, learn=None
         )
@@ -145,8 +179,21 @@ def run_ladder(
     off_chain: RunRecord | None = None
     raw_arm: RawArm | None = None
     if certificate.admitted or climb_rejected:
+        # The climb searches at the ladder's pinned `depth_limit`, so it needs the pool that depth
+        # requires -- the same reason the chain scales per level. Without this a ladder whose top is
+        # a round deeper than its rungs certifies on a chain that reached the top and then fails to
+        # LEARN it, which is the same silent starvation one stage later.
+        climb_config = spec.reference_config.with_(
+            budget=replace(
+                spec.reference_config.budget,
+                max_pool=pool_for_depth(
+                    spec.reference_config.budget.max_pool,
+                    spec.reference_config.budget.depth_limit,
+                ),
+            )
+        )
         learn = run_search_learn(
-            spec.reference_config, spec.train_corpus, spec.heldout_corpus, runs_root=runs_root
+            climb_config, spec.train_corpus, spec.heldout_corpus, runs_root=runs_root
         )
         off_chain = execute(
             RunSpec(
