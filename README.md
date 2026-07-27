@@ -1,26 +1,12 @@
 # arc-lab
 
-A sandbox for experimenting with the [ARC-AGI](https://arcprize.org) benchmarks
-(ARC-AGI-1 and ARC-AGI-2) — and, from there, with ML, program synthesis, and
-abstraction formation more broadly.
+A sandbox for experimenting with the [ARC-AGI](https://arcprize.org) benchmarks (ARC-AGI-1 and ARC-AGI-2) — and, from there, with ML, program synthesis, and abstraction formation more broadly.
 
-The load-bearing idea: **machinery is data**. There are no solver classes — a
-run is a frozen, content-hashed `RunSpec = Config × Corpus`, where `Config` is
-the machinery itself (`library × search_engine × budget × constraints × cost ×
-attempts_per_test × learn?`) expressed as data. The execution layer drives it
-directly: every run gets a `run_id` that is a pure function of its spec, is
-executed exactly once, and lands in `runs/` — a gitignored, regenerable cache —
-crash-safe and resumable. Rerunning anything already computed is free.
+The load-bearing idea: **machinery is data**. There are no solver classes — a run is a frozen, content-hashed `RunSpec = Config × Corpus`, where `Config` is the machinery itself (`library × search_engine × budget × constraints × cost × attempts_per_test × learn?`) expressed as data. The execution layer drives it directly: every run gets a `run_id` that is a pure function of its spec, is executed exactly once, and lands in `runs/` — a gitignored, regenerable cache — crash-safe and resumable. Rerunning anything already computed is free.
 
-On top of search sits **wake–sleep library learning**: wake = program search
-over a corpus; sleep = a learn engine compressing the found solutions into new
-library abstractions under MDL governance. Studies then grid learned vs.
-hand-written vs. target libraries across budgets and corpora to measure
-enablement, search-effort speedup, and transfer.
+On top of search sits **wake–sleep library learning**: wake = program search over a corpus; sleep = a learn engine compressing the found solutions into new library abstractions under MDL governance. Studies then grid learned vs. hand-written vs. target libraries across budgets and corpora to measure enablement, search-effort speedup, and transfer.
 
-The activity/run model (RunSpec · activities · `runs/` layout) is
-[EXECUTION.md](EXECUTION.md); the search-engine and substrate design is
-[ARCHITECTURE.md](ARCHITECTURE.md).
+The activity/run model (RunSpec · activities · `runs/` layout) is [EXECUTION.md](EXECUTION.md); the search-engine and substrate design is [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Layout
 
@@ -85,37 +71,28 @@ uv run arc-lab estimate d4 --corpus arc1-train      # worst-case search-cost cei
 uv run arc-lab -vv search ...                       # -v INFO / -vv DEBUG trace on stderr
 ```
 
-**Presets** (`d4` · `sym` · `synth` · `beam`) are named `Config`s in
-`execution/presets.py`. A `--corpus` is a dataset (`arc1-train`), a testbed
-(`e1-rot90`), or a testbed split (`e1-rot90:train` / `:heldout`).
+**Presets** (`d4` · `sym` · `synth` · `beam`) are named `Config`s in `execution/presets.py`. A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed split (`e1-rot90:train` / `:heldout`).
 
-**Overrides:** any `Config` field is settable by dotted path — `--set
-budget.max_depth=4` — and the `<config>` argument may also be a JSON file
-`{"preset": ..., "set": {...}}`. Precedence: `defaults < preset < config file
-< --set`. Every override mints its own `run_id`, so the cache never collides.
+**Overrides:** any `Config` field is settable by dotted path — `--set budget.max_depth=4` — and the `<config>` argument may also be a JSON file `{"preset": ..., "set": {...}}`. Precedence: `defaults < preset < config file < --set`. Every override mints its own `run_id`, so the cache never collides.
 
 ## Datasets
 
-| Name         | Contents                          |
-|--------------|-----------------------------------|
-| `arc1-train` | ARC-AGI-1 training (400 tasks)    |
-| `arc1-eval`  | ARC-AGI-1 evaluation (400 tasks)  |
-| `arc2-train` | ARC-AGI-2 training (1000 tasks)   |
-| `arc2-eval`  | ARC-AGI-2 evaluation (120 tasks)  |
+| Name         | Contents                         |
+| ------------ | -------------------------------- |
+| `arc1-train` | ARC-AGI-1 training (400 tasks)   |
+| `arc1-eval`  | ARC-AGI-1 evaluation (400 tasks) |
+| `arc2-train` | ARC-AGI-2 training (1000 tasks)  |
+| `arc2-eval`  | ARC-AGI-2 evaluation (120 tasks) |
 
 Both use the same JSON schema, so one loader handles both.
 
 ## Manual play
 
-The ARC-AGI-1 repo ships its official testing interface, vendored here at
-[`data/arc-agi-1/apps/testing_interface.html`](data/arc-agi-1/apps/testing_interface.html).
-Open it in Chrome and load any task JSON from `data/` to solve it by hand.
+The ARC-AGI-1 repo ships its official testing interface, vendored here at [`data/arc-agi-1/apps/testing_interface.html`](data/arc-agi-1/apps/testing_interface.html). Open it in Chrome and load any task JSON from `data/` to solve it by hand.
 
 ## Extending
 
-Recipes — add a primitive, a search engine, a machinery preset, a constraint or
-cost, a learn engine, a study, a CLI command — live in
-[CLAUDE.md](CLAUDE.md#recipes), the working contract for this repo.
+Recipes — add a primitive, a search engine, a machinery preset, a constraint or cost, a learn engine, a study, a CLI command — live in [CLAUDE.md](CLAUDE.md#recipes), the working contract for this repo.
 
 ## Documentation
 
