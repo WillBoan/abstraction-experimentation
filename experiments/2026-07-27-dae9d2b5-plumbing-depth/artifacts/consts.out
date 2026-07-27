@@ -1,0 +1,5 @@
+COLOR minted: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+INT minted: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+  depth 1: west(input)                      solved=True considered=153 best=west(input)
+  depth 2: map_color(west(input),4,6)       solved=True considered=282,419 best=map_color(west(input), 4, 6)
+  depth 1: map_color(input,4,6)             solved=True considered=153 best=map_color(input, 4, 6)

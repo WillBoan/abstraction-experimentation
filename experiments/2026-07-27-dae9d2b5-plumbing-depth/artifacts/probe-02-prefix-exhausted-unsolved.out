@@ -1,0 +1,17 @@
+note: guard raised 50,000 -> 3,000,000. This buys a longer search, NOT a stronger verdict -- the probe convicts, only the certificate acquits. If a cell is INCONCLUSIVE, run `run-ladder` rather than escalating here.
+r_3 `recolored_west` over `dae9d2b5-split-L0+west+east` — FAILED
+
+| probe | task              | verdict  | gen | considered | depth (found/intended) |
+| ----- | ----------------- | -------- | --- | ---------- | ---------------------- |
+| wake  | recolored_west-00 | unsolved | -   | 230497     | -                      |
+| wake  | recolored_west-01 | unsolved | -   | 230501     | -                      |
+| skip  | dae9d2b5          | no-skip  | -   | 230493     | -                      |
+- one round deeper (depth_limit 3): ~6,515 considered, calibrated on this cell's funnel; dominated by map_color: grid(138) x color(6) x color(6)
+
+- floor tax (recolored_west-00): pruned 11 vs full 230,497 = **20,954x** [clean]
+  kept ['map_color', 'west']; dropped ['east', 'nth', 'overlay', 'split_h']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 230,495 (100.0%), map_color 230,437 (100.0%), overlay 227,640 (98.8%), split_h 37 (0.0%), nth 9 (0.0%)
+  ! wake recolored_west-00: UNSOLVED — the jump is not affordable here (230497 considered)
+  ! wake recolored_west-01: UNSOLVED — the jump is not affordable here (230501 considered)
+
+0/1 rungs probe clean

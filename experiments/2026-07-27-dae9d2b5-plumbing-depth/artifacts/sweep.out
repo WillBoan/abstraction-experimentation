@@ -1,0 +1,24 @@
+al1-mirror: map_color: needed at L_1 (mirror_recolor), carried from L_0 -- arity 3, superlinear in the pool at any depth
+al10-skippable: clean
+al11-greedy-trap: clean
+al12-unlearnable: clean
+al13-symmetry-repair: transpose: needed at L_2 (top), carried from L_0 -- depth 3
+al14-cell-row-grid: clean
+al15-shift-frame: pad: needed at L_1 (framed), carried from L_0 -- arity 3, superlinear in the pool at any depth
+al16-layout-nest: clean
+al17-shift-frame-tall: pad: needed at L_1 (frame1), carried from L_0 -- arity 3, superlinear in the pool at any depth
+al18-fanin-rotate: clean
+al19-fanin-recolor: map_color: needed at L_1 (recol), carried from L_0 -- arity 3, superlinear in the pool at any depth
+al2-rot90-calibration: clean
+al20-recolor-telescope: map_color: needed at L_1 (recol), carried from L_0 -- arity 3, superlinear in the pool at any depth
+al21-dag-siblings: clean
+al3-quad-symmetrize: clean
+al4-mask-crop: paint_through_mask: needed at L_1 (flatten_content), carried from L_0 -- depth 4; arity 3, superlinear in the pool at any depth; flip_h: needed at L_2
+al5-perceiver-chain: flip_h: needed at L_1 (swap_mirror), carried from L_0 -- depth 3; flip_v: needed at L_2 (swap_stack), carried from L_0 -- depth 3
+al6-mirror-tall: map_color: needed at L_1 (norm_mirror), carried from L_0 -- arity 3, superlinear in the pool at any depth; least_common_color: needed at L_2 (norm_sta
+al7-fast-tower: clean
+al8-lean-perceiver: flip_h: needed at L_1 (swap_mir), carried from L_0 -- depth 3; flip_v: needed at L_2 (swap_stk), carried from L_0 -- depth 3
+al9-decoy: clean
+dae9d2b5-halves-union: nth: needed at L_1 (east), carried from L_0 -- depth 3; overlay: needed at L_2 (top), carried from L_0 -- depth 3; arity 3, superlinear in the pool at
+dae9d2b5-split-halves: overlay: needed at L_2 (top), carried from L_0 -- arity 3, superlinear in the pool at any depth; map_color: needed at L_2 (top), carried from L_0 -- a
+dae9d2b5-split-recolor: overlay: needed at L_4 (top), carried from L_0 -- arity 3, superlinear in the pool at any depth; map_color: needed at L_2 (recolored_west), carried fr

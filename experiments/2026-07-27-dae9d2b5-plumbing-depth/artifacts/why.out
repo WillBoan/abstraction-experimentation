@@ -1,0 +1,7 @@
+L_2 entries: ['split_h', 'nth', 'overlay', 'map_color', 'west', 'east']
+template: map_color(west(#0), 4, 6)
+demo: recolored_west-00 solution: recolored_west(input)
+TARGET over L_2: map_color(west(input), 4, 6)
+  depth: 2 needs: 2
+  train 0: match=True  in=(3, 6) out=(3, 3)
+  train 1: match=True  in=(4, 8) out=(4, 4)

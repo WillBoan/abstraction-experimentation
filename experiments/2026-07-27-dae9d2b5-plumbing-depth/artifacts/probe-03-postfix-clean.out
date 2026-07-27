@@ -1,0 +1,63 @@
+r_1 `west` over `dae9d2b5-split-L0` — OK
+
+| probe | task              | verdict     | gen | considered | depth (found/intended) |
+| ----- | ----------------- | ----------- | --- | ---------- | ---------------------- |
+| wake  | west-00           | as-intended | 2   | 230497     | 2/2                    |
+| wake  | west-01           | as-intended | 2   | 230501     | 2/2                    |
+| skip  | recolored_west-00 | no-skip     | -   | 230497     | -                      |
+| skip  | recolored_west-01 | no-skip     | -   | 230501     | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 3): ~4,745 considered, calibrated on this cell's funnel; dominated by map_color: grid(139) x color(5) x color(5)
+
+- floor tax (west-00): pruned 4 vs full 230,497 = **57,624x** [clean]
+  kept ['nth', 'split_h']; dropped ['map_color', 'overlay']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 230,495 (100.0%), map_color 230,437 (100.0%), overlay 227,640 (98.8%), split_h 37 (0.0%), nth 9 (0.0%)
+
+r_2 `east` over `dae9d2b5-split-L0+west` — OK
+
+| probe | task              | verdict     | gen | considered | depth (found/intended) |
+| ----- | ----------------- | ----------- | --- | ---------- | ---------------------- |
+| wake  | east-00           | as-intended | 2   | 255577     | 2/2                    |
+| wake  | east-01           | as-intended | 2   | 255577     | 2/2                    |
+| skip  | recolored_east-00 | no-skip     | -   | 255577     | -                      |
+| skip  | recolored_east-01 | no-skip     | -   | 255581     | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 3): ~4,885 considered, calibrated on this cell's funnel; dominated by map_color: grid(139) x color(5) x color(5)
+
+- floor tax (east-00): pruned 4 vs full 255,577 = **63,894x** [clean]
+  kept ['nth', 'split_h']; dropped ['map_color', 'overlay', 'west']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 255,572 (100.0%), map_color 255,404 (99.9%), overlay 252,590 (98.8%), west 25,080 (9.8%), split_h 38 (0.0%), nth 9 (0.0%)
+
+r_3 `recolored_west` over `dae9d2b5-split-L0+west+east` — OK
+
+| probe | task              | verdict     | gen | considered | depth (found/intended) |
+| ----- | ----------------- | ----------- | --- | ---------- | ---------------------- |
+| wake  | recolored_west-00 | as-intended | 2   | 282419     | 2/2                    |
+| wake  | recolored_west-01 | as-intended | 2   | 282423     | 2/2                    |
+| skip  | dae9d2b5          | no-skip     | -   | 282415     | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 3): ~5,025 considered, calibrated on this cell's funnel; dominated by map_color: grid(139) x color(5) x color(5)
+
+- floor tax (recolored_west-00): pruned 18 vs full 282,419 = **15,690x** [clean]
+  kept ['map_color', 'west']; dropped ['east', 'nth', 'overlay', 'split_h']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 282,409 (100.0%), map_color 281,991 (99.8%), overlay 279,300 (98.9%), east 26,842 (9.5%), west 26,842 (9.5%), split_h 39 (0.0%)
+
+r_4 `recolored_east` over `dae9d2b5-split-L0+west+east+recolored_west` — OK
+
+| probe | task              | verdict     | gen | considered | depth (found/intended) |
+| ----- | ----------------- | ----------- | --- | ---------- | ---------------------- |
+| wake  | recolored_east-00 | as-intended | 2   | 311083     | 2/2                    |
+| wake  | recolored_east-01 | as-intended | 2   | 311087     | 2/2                    |
+| skip  | dae9d2b5          | no-skip     | -   | 311079     | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 3): ~3,930 considered, calibrated on this cell's funnel; dominated by map_color: grid(140) x color(4) x color(4)
+
+- floor tax (recolored_east-00): pruned 18 vs full 311,083 = **17,282x** [clean]
+  kept ['east', 'map_color']; dropped ['nth', 'overlay', 'recolored_west', 'split_h', 'west']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 311,066 (100.0%), map_color 310,198 (99.7%), overlay 307,830 (99.0%), east 28,664 (9.2%), recolored_west 28,664 (9.2%), west 28,664 (9.2%)
+
+4/4 rungs probe clean

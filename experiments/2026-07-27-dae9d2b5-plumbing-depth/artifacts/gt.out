@@ -1,0 +1,11 @@
+west  d= 2 needs= 2
+rw    d= 3 needs= 3
+top   d= 4 needs= 4
+  train 0: OK  in=(3, 6) out=(3, 3)
+  train 1: OK  in=(3, 6) out=(3, 3)
+  train 2: OK  in=(3, 6) out=(3, 3)
+  train 3: OK  in=(3, 6) out=(3, 3)
+  train 4: OK  in=(3, 6) out=(3, 3)
+  TEST 5: OK  in=(3, 6) out=(3, 3)
+  TEST 6: OK  in=(3, 6) out=(3, 3)
+7/7 match ground truth

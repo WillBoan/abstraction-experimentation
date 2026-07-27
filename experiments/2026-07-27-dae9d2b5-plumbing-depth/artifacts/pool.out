@@ -1,0 +1,4 @@
+max_pool=  150  solved=True  considered=282,419  best=map_color(west(input), 4, 6)
+max_pool=  400  solved=True  considered=282,419  best=map_color(west(input), 4, 6)
+max_pool= 1000  solved=True  considered=282,419  best=map_color(west(input), 4, 6)
+max_pool= 4000  solved=True  considered=282,419  best=map_color(west(input), 4, 6)

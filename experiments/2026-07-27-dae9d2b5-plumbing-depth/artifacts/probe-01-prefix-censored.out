@@ -1,0 +1,73 @@
+r_1 `west` over `dae9d2b5-split-L0` — FAILED
+
+| probe | task              | verdict      | gen | considered | depth (found/intended) |
+| ----- | ----------------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | west-00           | as-intended  | 2   | 50000      | 2/2                    |
+| wake  | west-01           | as-intended  | 2   | 50000      | 2/2                    |
+| skip  | recolored_west-00 | inconclusive | -   | 50000      | -                      |
+| skip  | recolored_west-01 | inconclusive | -   | 50000      | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 3): ~4,746 considered, calibrated on this cell's funnel; dominated by map_color: grid(139) x color(5) x color(5)
+
+- floor tax (west-00): pruned 4 vs full 50,000 = **12,500x** [floor-too-broad]
+  kept ['nth', 'split_h']; dropped ['map_color', 'overlay']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 49,998 (100.0%), map_color 49,940 (99.9%), overlay 49,843 (99.7%), split_h 37 (0.1%), nth 9 (0.0%)
+  ! the pruned cell is clean and the FULL cell censored: the rung is fine, the floor is too broad. The dropped primitives above are the bill.
+  ! skip recolored_west-00: INCONCLUSIVE — the search was censored, so "unsolved" is a budget fact, not a verdict. This is a NON-RESULT BY DESIGN, not a defect to tune away: raising the guard cannot turn it into an acquittal, only into a longer wait. `run-ladder` is the authority.
+  ! skip recolored_west-01: INCONCLUSIVE — the search was censored, so "unsolved" is a budget fact, not a verdict. This is a NON-RESULT BY DESIGN, not a defect to tune away: raising the guard cannot turn it into an acquittal, only into a longer wait. `run-ladder` is the authority.
+
+r_2 `east` over `dae9d2b5-split-L0+west` — FAILED
+
+| probe | task              | verdict      | gen | considered | depth (found/intended) |
+| ----- | ----------------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | east-00           | as-intended  | 2   | 50000      | 2/2                    |
+| wake  | east-01           | as-intended  | 2   | 50000      | 2/2                    |
+| skip  | recolored_east-00 | inconclusive | -   | 50000      | -                      |
+| skip  | recolored_east-01 | inconclusive | -   | 50000      | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 3): ~4,862 considered, calibrated on this cell's funnel; dominated by map_color: grid(138) x color(5) x color(5)
+
+- floor tax (east-00): pruned 4 vs full 50,000 = **12,500x** [floor-too-broad]
+  kept ['nth', 'split_h']; dropped ['map_color', 'overlay', 'west']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 49,998 (100.0%), map_color 49,940 (99.9%), overlay 49,843 (99.7%), split_h 37 (0.1%), nth 9 (0.0%)
+  ! the pruned cell is clean and the FULL cell censored: the rung is fine, the floor is too broad. The dropped primitives above are the bill.
+  ! skip recolored_east-00: INCONCLUSIVE — the search was censored, so "unsolved" is a budget fact, not a verdict. This is a NON-RESULT BY DESIGN, not a defect to tune away: raising the guard cannot turn it into an acquittal, only into a longer wait. `run-ladder` is the authority.
+  ! skip recolored_east-01: INCONCLUSIVE — the search was censored, so "unsolved" is a budget fact, not a verdict. This is a NON-RESULT BY DESIGN, not a defect to tune away: raising the guard cannot turn it into an acquittal, only into a longer wait. `run-ladder` is the authority.
+
+r_3 `recolored_west` over `dae9d2b5-split-L0+west+east` — FAILED
+
+| probe | task              | verdict      | gen | considered | depth (found/intended) |
+| ----- | ----------------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | recolored_west-00 | censored     | -   | 50000      | -                      |
+| wake  | recolored_west-01 | censored     | -   | 50000      | -                      |
+| skip  | dae9d2b5          | inconclusive | -   | 50000      | -                      |
+- one round deeper (depth_limit 3): ~6,521 considered, calibrated on this cell's funnel; dominated by map_color: grid(138) x color(6) x color(6)
+
+- floor tax (recolored_west-00): pruned 11 vs full 50,000 = **4,545x** [floor-too-broad]
+  kept ['map_color', 'west']; dropped ['east', 'nth', 'overlay', 'split_h']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 49,998 (100.0%), map_color 49,940 (99.9%), overlay 49,843 (99.7%), split_h 37 (0.1%), nth 9 (0.0%)
+  ! the pruned cell is clean and the FULL cell censored: the rung is fine, the floor is too broad. The dropped primitives above are the bill.
+  ! wake recolored_west-00: CENSORED — the jump is not affordable here (50000 considered)
+  ! wake recolored_west-01: CENSORED — the jump is not affordable here (50000 considered)
+  ! skip dae9d2b5: INCONCLUSIVE — the search was censored, so "unsolved" is a budget fact, not a verdict. This is a NON-RESULT BY DESIGN, not a defect to tune away: raising the guard cannot turn it into an acquittal, only into a longer wait. `run-ladder` is the authority.
+
+r_4 `recolored_east` over `dae9d2b5-split-L0+west+east+recolored_west` — FAILED
+
+| probe | task              | verdict      | gen | considered | depth (found/intended) |
+| ----- | ----------------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | recolored_east-00 | censored     | -   | 50000      | -                      |
+| wake  | recolored_east-01 | censored     | -   | 50000      | -                      |
+| skip  | dae9d2b5          | inconclusive | -   | 50000      | -                      |
+- one round deeper (depth_limit 3): ~6,662 considered, calibrated on this cell's funnel; dominated by map_color: grid(138) x color(6) x color(6)
+
+- floor tax (recolored_east-00): pruned 11 vs full 50,000 = **4,545x** [floor-too-broad]
+  kept ['east', 'map_color']; dropped ['nth', 'overlay', 'recolored_west', 'split_h', 'west']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 49,996 (100.0%), map_color 49,884 (99.8%), overlay 49,841 (99.7%), recolored_west 4,941 (9.9%), split_h 38 (0.1%), nth 9 (0.0%)
+  ! the pruned cell is clean and the FULL cell censored: the rung is fine, the floor is too broad. The dropped primitives above are the bill.
+  ! wake recolored_east-00: CENSORED — the jump is not affordable here (50000 considered)
+  ! wake recolored_east-01: CENSORED — the jump is not affordable here (50000 considered)
+  ! skip dae9d2b5: INCONCLUSIVE — the search was censored, so "unsolved" is a budget fact, not a verdict. This is a NON-RESULT BY DESIGN, not a defect to tune away: raising the guard cannot turn it into an acquittal, only into a longer wait. `run-ladder` is the authority.
+
+0/4 rungs probe clean

@@ -1,0 +1,35 @@
+r_1 `west` over `dae9d2b5-split-L0` — FAILED
+
+| probe | task     | verdict      | gen | considered | depth (found/intended) |
+| ----- | -------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | west-00  | as-intended  | 2   | 2000000    | 2/2                    |
+| wake  | west-01  | as-intended  | 2   | 2000000    | 2/2                    |
+| skip  | dae9d2b5 | inconclusive | -   | 2000000    | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 4): ~4,745 considered, calibrated on this cell's funnel; dominated by map_color: grid(139) x color(5) x color(5)
+
+- floor tax (west-00): pruned 5 vs full 2,000,000 = **400,000x** [floor-too-broad]
+  kept ['nth', 'split_h']; dropped ['map_color', 'overlay']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 1,999,998 (100.0%), map_color 1,999,786 (100.0%), overlay 1,996,825 (99.8%), split_h 111,267 (5.6%), nth 111,166 (5.6%)
+  ! the pruned cell is clean and the FULL cell censored: the rung is fine, the floor is too broad. The dropped primitives above are the bill.
+  ! skip dae9d2b5: INCONCLUSIVE — the search was censored, so "unsolved" is a budget fact, not a verdict. This is a NON-RESULT BY DESIGN, not a defect to tune away: raising the guard cannot turn it into an acquittal, only into a longer wait. `run-ladder` is the authority.
+
+r_2 `east` over `dae9d2b5-split-L0+west` — FAILED
+
+| probe | task     | verdict      | gen | considered | depth (found/intended) |
+| ----- | -------- | ------------ | --- | ---------- | ---------------------- |
+| wake  | east-00  | as-intended  | 2   | 2000000    | 2/2                    |
+| wake  | east-01  | as-intended  | 2   | 2000000    | 2/2                    |
+| skip  | dae9d2b5 | inconclusive | -   | 2000000    | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 4): ~4,903 considered, calibrated on this cell's funnel; dominated by map_color: grid(139) x color(5) x color(5)
+
+- floor tax (east-00): pruned 5 vs full 2,000,000 = **400,000x** [floor-too-broad]
+  kept ['nth', 'split_h']; dropped ['map_color', 'overlay', 'west']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 1,999,994 (100.0%), map_color 1,999,564 (100.0%), overlay 1,996,688 (99.8%), west 925,758 (46.3%), split_h 55,901 (2.8%), nth 55,800 (2.8%)
+  ! the pruned cell is clean and the FULL cell censored: the rung is fine, the floor is too broad. The dropped primitives above are the bill.
+  ! skip dae9d2b5: INCONCLUSIVE — the search was censored, so "unsolved" is a budget fact, not a verdict. This is a NON-RESULT BY DESIGN, not a defect to tune away: raising the guard cannot turn it into an acquittal, only into a longer wait. `run-ladder` is the authority.
+
+0/2 rungs probe clean
