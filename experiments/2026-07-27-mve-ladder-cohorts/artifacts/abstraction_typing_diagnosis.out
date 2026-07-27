@@ -1,0 +1,10 @@
+
+== dae9d2b5-split-recolor: west
+   param_types: ['grid'] ->  grid
+   template: nth(split_h(#0), 0)
+   depth-1 search for west(input): solved=True considered=152 best=west(input)
+
+== dae9d2b5-halves-union: west
+   param_types: ['grid'] ->  grid
+   template: crop_rect(#0, head(halves_h(#0)))
+   depth-1 search for west(input): solved=True considered=152 best=west(input)

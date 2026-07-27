@@ -28,6 +28,13 @@ _ANCHORED: dict[str, tuple[str, str]] = {
     # real task -- a budget calibration that changed WHAT is computed would be worthless.
     "dae9d2b5-split-recolor-lean": ("arc1-train", "dae9d2b5"),
     "dae9d2b5-split-halves-lean": ("arc1-train", "dae9d2b5"),
+    "dae9d2b5-split-asym-lean": ("arc1-train", "dae9d2b5"),
+    # The vertical-NOR cohort: one rule, two palettes, one generated spine. Both tasks anchor
+    # against their own ground truth or the "same skeleton, different task" claim is empty.
+    "94f9d214-nor-recolor": ("arc1-train", "94f9d214"),
+    "94f9d214-nor-halves": ("arc1-train", "94f9d214"),
+    "fafffa47-nor-recolor": ("arc1-train", "fafffa47"),
+    "fafffa47-nor-halves": ("arc1-train", "fafffa47"),
 }
 
 

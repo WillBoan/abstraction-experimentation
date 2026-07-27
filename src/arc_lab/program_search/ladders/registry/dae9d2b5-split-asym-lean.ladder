@@ -1,0 +1,179 @@
+ladder dae9d2b5-split-asym-lean
+
+# ``dae9d2b5-split-asym-lean``: the MIDDLE point of the `dae9d2b5` granularity curve -- the same
+# competence cut at THREE rungs, between `split-halves-lean` (2) and `split-recolor-lean` (4).
+#
+# The cut is deliberately ASYMMETRIC: `recolored_west` is a rung, its mirror-image sibling
+# `recolored_east` is inlined into the top. That is what a genuine intermediate cut density looks
+# like on a two-branch DAG -- there is no symmetric 3-rung cut, because the two branches are
+# interchangeable and cutting "half of each" is not a cut-set. It also makes the curve a curve
+# rather than two endpoints, which is what RQ2 asks for.
+#
+# Everything else is held fixed against the other two members -- same task, same floor, same
+# `max_pool` 30, same `considered_limit`, and the demonstrations are the SAME FILES the 4-rung
+# member uses (its `recolored_east` demos simply go unused). Only the cut moves.
+#
+# The competence: an ``h x 2w`` grid carries colour 4 on its left half and 3 on its right; the
+# answer is the ``h x w`` grid holding 6 wherever EITHER half is non-blank. Verified against
+# arc1-train ground truth (all 5 train + both held-out tests) before authoring
+# (``test_real_arc_anchoring.py``).
+#
+# The spine: the two halves, then each half recoloured, then the top merges them. Two independent
+# branches meeting at the top -- a DAG with fan-in 2 there, not a telescope.
+#
+# **Why this floor: every rung searches at depth 2.** Cost is ``(primitives x constants)^depth``,
+# and the base ``b`` is pinned by the TOP -- every primitive the top needs sits in the pool at every
+# level below it, and no rung redesign removes it. So the only lever a spine has is the EXPONENT at
+# each level, and this floor puts every one of them at 2:
+#
+# - ``split_h: (Grid) -> List[Grid]`` returns the halves in the type its consumers want. Naming a
+#   half through the region tier costs two levels of pure plumbing
+#   (``crop_rect(g, head(halves_h(g)))`` is d3, and only ONE of those levels computes anything).
+#   The predecessor ``dae9d2b5-halves-union`` paid exactly that, and its two d3 levels measured
+#   **21,149,854 considered** against **4** optimally pruned -- a cost that was never about
+#   ``overlay`` and never about the task, only about plumbing depth meeting a floor the top's
+#   vocabulary had already widened.
+# - ``overlay`` is the grid-level OR, so combining the halves needs no Mask rung: every rung is
+#   Grid-valued, every demonstration is a FULL SOLUTION (so ``AntiunifyPairs`` serves it and
+#   ``jump-affordable`` needs no wrapper), and no addressing battery is minted.
+#
+# ``primitive-necessity`` reads clean here for the reason that matters: ``overlay`` and
+# ``map_color`` are still carried from L_0 for the top's sake, but they only ever meet a depth-2
+# search, where an extra base term is a rounding error rather than an exponent.
+#
+# **Withheld primitives** (the honest declaration -- a floor designed around a known solution
+# MANUFACTURES raw-intractability, and undeclared that makes the RQ1 bound read as absolute):
+# nothing here was removed to make the task hard. The floor is the minimum the top needs, and
+# ``d_raw`` 4 against a derived budget of 2 falls out of that. What IS withheld is any single-step
+# half-merger (no ``union_halves``-style primitive exists, and none was added), plus the region-tier
+# route (``halves_h`` / ``crop_rect`` / ``head``), which is strictly more expensive here and would
+# only re-buy the plumbing this floor exists to remove.
+#
+# **Skip-audit, by hand, before any probe** (LADDER-PROCESS section 5): every rung is d2 and every
+# consumer is d2, so inlining any rung into its consumer costs d3 against a level budget of 2 --
+# skip-freeness is automatic, exactly the per-rung-budget argument (``d_c + d_r - 1 > d_c`` reduces
+# to ``d_r >= 2``, which ``proper-composition`` enforces). The sibling trap that convicted
+# ``4347f46a-1``'s four shift rungs does NOT apply: siblings were reachable there because the level
+# budget was 3, deep enough to rebuild a d2 sibling inline. Here it is 2.
+# ``map_color``-distributes-over-``overlay`` -- the law that made a ``merged`` rung skippable in
+# ``dae9d2b5-2-merge-rung`` -- is harmless here, because this spine has no merge rung to skip: the
+# distributed form IS the top.
+
+# **Stop limit (2026-07-27).** `solution_limit: 1` at `immediate` mode: a cell stops at its first
+# solution instead of enumerating the rest of its budget. Measured 19.5x-63x on these cells, and
+# `first_solution_index` is IDENTICAL either way -- so cost-to-first, the currency every rung-value
+# and RQ1 comparison is read in, is exactly preserved. Skip searches are unaffected: they do not
+# solve, so they exhaust regardless, which is what `no_skip_paths` requires. Validated as a PAIR
+# with the per-level pool against `dae9d2b5-split-recolor`'s certified profile (identical verdicts,
+# identical rung recovery). A registered Compromise Option -- `compromises_in(config)` detects it
+# from the config and banners the report; it forfeits `cheapest_solution_index`, cost-to-exhaust
+# and complete `by_primitive`.
+
+# **`depth_limit` is the CLIMB's budget and must cover the top's jump depth (2026-07-27).** The
+# chain runs the derived per-level schedule regardless, but the learned climb searches at this
+# pinned value -- pinned 2 (as first run), a depth-3 top is structurally inexpressible to the
+# climb, which then converges "cleanly" having recovered every rung and never solved the task.
+# The siblings with d3 tops pin 3 for exactly this reason.
+config {
+    budget.depth_limit: 3
+    budget.max_arity: 3
+    budget.max_pool: 30
+    budget.considered_limit: 2000000
+    budget.solution_limit: 1
+    budget.solution_limit_mode: 'immediate'
+    search_engine.constant_sources: ['finite-enumerate-scalars']
+}
+
+floor dae9d2b5-split-L0 {
+    use split_h:   (Grid) -> List[Grid]
+    use nth:       (List[a], Int) -> a
+    use overlay:   (Color, Grid...) -> Grid
+    use map_color: (Grid, Color, Color) -> Grid
+}
+
+rung {
+    west(g: Grid) -> Grid = nth(split_h(g), 0)
+
+    task west-00 {
+        solution: west(input)
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        test  [[4,0,3,3],[0,4,0,0]]
+    }
+    task west-01 {
+        solution: west(input)
+        train [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+        train [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+    }
+    heldout task west-heldout {
+        solution: west(input)
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+    }
+}
+
+rung {
+    east(g: Grid) -> Grid = nth(split_h(g), 1)
+
+    task east-00 {
+        solution: east(input)
+        train [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        test  [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+    }
+    task east-01 {
+        solution: east(input)
+        train [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+        train [[4,0,0,0,0,3],[0,4,0,0,3,0],[0,0,4,3,0,0],[4,4,4,0,0,0]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0]]
+    }
+    heldout task east-heldout {
+        solution: east(input)
+        train [[4,0,0,3],[0,4,3,0],[4,0,0,0],[0,4,3,3],[4,4,3,0]]
+        train [[4,0,0,4,0,3,0,0,0,3],[0,4,0,4,0,0,3,0,3,0]]
+        test  [[4,0,0,0,4,0,0,0,0,3],[0,4,0,4,0,0,0,3,0,0],[0,0,4,0,0,0,3,0,0,0],[4,4,4,4,0,3,0,0,0,0]]
+    }
+}
+
+rung {
+    recolored_west(g: Grid) -> Grid = map_color(west(g), 4, 6)
+
+    task recolored_west-00 {
+        solution: recolored_west(input)
+        train [[0,0,4,0,3,0],[4,4,0,0,3,0],[0,0,0,0,3,0]]
+        train [[0,0,0,4,0,3,0,0],[0,4,4,0,0,3,0,0],[4,0,0,0,0,3,0,0],[0,0,4,4,0,3,0,0]]
+        test  [[4,0,0,0,0,3],[0,0,4,0,0,3]]
+    }
+    task recolored_west-01 {
+        solution: recolored_west(input)
+        train [[0,4,4,3,0,0],[4,0,0,3,0,0],[0,0,4,3,0,0],[4,4,0,3,0,0],[0,0,0,3,0,0]]
+        train [[0,0,4,4,0,0,3,0,3,0],[4,4,0,0,0,0,3,0,3,0]]
+        test  [[0,0,0,4,0,3,0,0],[0,4,4,0,0,3,0,0],[4,0,0,0,0,3,0,0]]
+    }
+    heldout task recolored_west-heldout {
+        solution: recolored_west(input)
+        train [[4,0,0,0,0,3],[0,0,4,0,0,3],[4,4,0,0,0,3],[0,0,0,0,0,3]]
+        train [[4,4,0,0,0,3,0,3,0,0],[0,0,0,4,4,3,0,3,0,0],[0,4,4,0,0,3,0,3,0,0]]
+        test  [[0,4,4,0,3,0,0,3],[4,0,0,0,3,0,0,3],[0,0,4,4,3,0,0,3],[4,4,0,0,3,0,0,3],[0,0,0,4,3,0,0,3]]
+    }
+}
+
+top {
+    task dae9d2b5 {
+        solution: overlay(0, recolored_west(input), map_color(east(input), 3, 6))
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,4,3,3,0],[4,0,0,3,0,0],[0,0,4,3,0,0]]
+        train [[0,0,4,0,3,0],[0,4,4,3,0,3],[4,4,0,0,0,3]]
+        train [[4,4,0,3,0,0],[0,0,0,0,0,3],[4,0,0,0,0,0]]
+        train [[0,0,0,0,3,0],[4,0,0,0,0,0],[0,0,4,3,3,0]]
+        test  [[0,4,4,3,0,0],[4,0,0,3,3,0],[0,4,0,3,0,0]]
+    }
+    heldout task dae9d2b5-heldout {
+        solution: overlay(0, recolored_west(input), map_color(east(input), 3, 6))
+        train [[0,0,4,0,3,0],[0,4,0,3,3,3],[4,0,0,3,0,0]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+    }
+}

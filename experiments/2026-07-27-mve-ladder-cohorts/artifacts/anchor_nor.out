@@ -1,0 +1,10 @@
+
+94f9d214: north colours [3], south colours [1]
+  term d=5 needs=5
+  swap_colors(overlay(0, map_color(nth(split_v(input), 0), 3, 2), map_color(nth(split_v(input), 1), 1, 2)), 0, 2)
+  ground truth: 5/5 match
+
+fafffa47: north colours [9], south colours [1]
+  term d=5 needs=5
+  swap_colors(overlay(0, map_color(nth(split_v(input), 0), 9, 2), map_color(nth(split_v(input), 1), 1, 2)), 0, 2)
+  ground truth: 6/6 match

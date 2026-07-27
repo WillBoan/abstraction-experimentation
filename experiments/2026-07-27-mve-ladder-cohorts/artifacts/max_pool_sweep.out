@@ -1,0 +1,6 @@
+max_pool=  20  considered=      153    0.0s  as_intended=False  best=None
+max_pool=  30  considered=   12,159    0.4s  as_intended=True  best=map_color(west(input), 4, 6)
+max_pool=  40  considered=   86,289    2.8s  as_intended=True  best=map_color(west(input), 4, 6)
+max_pool=  60  considered=  282,419    9.5s  as_intended=True  best=map_color(west(input), 4, 6)
+max_pool= 100  considered=  282,419    9.6s  as_intended=True  best=map_color(west(input), 4, 6)
+max_pool= 150  considered=  282,419    9.6s  as_intended=True  best=map_color(west(input), 4, 6)

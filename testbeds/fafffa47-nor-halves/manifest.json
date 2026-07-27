@@ -1,0 +1,47 @@
+{
+  "name": "fafffa47-nor-halves",
+  "note": "Generated from fafffa47-nor-halves.ladder",
+  "content_hash": "f20767aeeef42682",
+  "tasks": [
+    {
+      "task_id": "north-00",
+      "label": "north",
+      "split": "train"
+    },
+    {
+      "task_id": "north-01",
+      "label": "north",
+      "split": "train"
+    },
+    {
+      "task_id": "north-heldout",
+      "label": "north",
+      "split": "heldout"
+    },
+    {
+      "task_id": "south-00",
+      "label": "south",
+      "split": "train"
+    },
+    {
+      "task_id": "south-01",
+      "label": "south",
+      "split": "train"
+    },
+    {
+      "task_id": "south-heldout",
+      "label": "south",
+      "split": "heldout"
+    },
+    {
+      "task_id": "fafffa47",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "fafffa47-heldout",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}
