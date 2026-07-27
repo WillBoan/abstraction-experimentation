@@ -69,6 +69,8 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 - **CFG-4** `library` is not a settable path (the floor section owns it). Unsetting `learn` is forbidden.
 - **CFG-5** Duplicate paths are errors. Unknown paths are errors (**delegated** to the override machinery).
 - **CFG-6** Values naming registered components (proposer, engines) use their serde `kind` strings.
+- **CFG-7** Paths under the reserved `ladder.` namespace set the LADDER's own settings, not its `Config`'s, and are routed past the override machinery. They live in this block because it is where a reader looks for "how is this ladder set up", but a plain SEARCH run has no rungs, so they are not `Config` fields. One path so far:
+  - `ladder.depth_schedule: 'derived' | 'pinned'` (default `derived`) — the budget regime. `derived` gives each oracle-chain level the smallest `depth_limit` that puts what that level must find in reach (`L_j` carries rung `j+1`'s `jump_needs`, `L_k` the top's); `pinned` gives every level `budget.depth_limit`, uniformly. A ladder whose rungs differ in depth generally has NO valid uniform budget, which is what `derived` dissolves; it is also cheaper, since cost is exponential in `depth_limit`. Set `pinned` only where the uniform budget is the ladder's content ([`al10-skippable`](../../src/arc_lab/program_search/ladders/registry/al10-skippable.ladder) is the sole case: budget-induced skippability is a phenomenon derived budgets cannot produce). The resolved schedule is reported in each ladder's `spec.md`.
 
 ### RNG — rungs
 

@@ -12,8 +12,18 @@ ladder al10-skippable
 # certificate (``no_skip_paths`` false -- the reframe's own gate, unchanged). That is the control
 # working, not a defect. What it measures is what rung-necessity enforcement actually buys --
 # settling empirically what the design doc settled by fiat.
+#
+# **This ladder declares `ladder.depth_schedule: 'pinned'`, and is the only one that does.** Since
+# 2026-07-26 the default regime is a DERIVED per-level schedule, under which `L_0` would carry
+# `rot90`'s own `jump_needs` of 2 rather than 4 -- and the skip path this control exists to exhibit
+# would simply not be reachable. That is the machinery working: budget-induced skippability is a
+# hazard of a single uniform budget, and per-level budgets close it. Keeping the control means
+# keeping the regime that can produce it, so the uniform budget is stated explicitly here rather
+# than inherited. The contrast is now itself the measurement: this file pinned vs derived is a
+# head-to-head on what the depth schedule buys.
 
 config {
+    ladder.depth_schedule: 'pinned'
     budget.depth_limit: 4
     budget.max_pool: 4000
     learn.iterations: 4

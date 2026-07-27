@@ -36,12 +36,25 @@ ladder dae9d2b5-halves-union
 # So no floor primitive takes an Offset or Coord and no addressing battery is minted. A corollary: no
 # composite INT/COLOR/BOOL subterm exists in any unfolded solution, so ``constant-subterm`` cannot
 # fire, and the top task is the five real ARC grids verbatim.
+#
+# **This floor is still fat, and the header used to claim otherwise.** Corrected 2026-07-26: the
+# depth-3 enumeration is not "dominated by `overlay`'s quadratic grid product" -- that mechanism was
+# asserted against the tool's own attribution and never measured. It is dominated by BREADTH THE
+# RUNG NEVER USES. `map_color`/`overlay` are needed by the TOP, not by `west`/`east`, and their
+# presence in `L_0` is what mints the COLOR battery at all: `lint-ladder` reads `color: 10 minted /
+# 0 used` and a round-1 tax of ~1,211x, and the probe MEASURES 4 considered pruned against
+# 21,149,854 full. Depth was never the problem.
+#
+# **Withheld primitives** (declared per LADDER-PROCESS-2026-07-26 -- a floor designed around a known
+# solution manufactures raw-intractability, which is the method, so the RQ1 bound below is
+# FLOOR-RELATIVE, not absolute): no `split_h`/`panels` producer (which would make each half-crop
+# depth 1 and the whole ladder trivial), no Mask algebra (`overlay` covers the merge), and no
+# arithmetic on dimensions (`floordiv`/`width`) -- the first version's cost centre.
 
-# **The guard is sized to a MEASURED cost, not guessed.** Proving `no_skip_paths` needs the
-# depth-3 enumeration to run to EXHAUSTION -- a censored skip search proves nothing -- and that
-# search measures **22,153,716 considered**, dominated by `overlay`'s quadratic grid product
-# (10 x G^2, the price of having a grid-level OR at all). Guards below ~25M return INCONCLUSIVE
-# rather than `no-skip`. At 30M the probe reports 1/1 rungs clean.
+# **The guard is sized to a MEASURED cost, not guessed.** Proving `no_skip_paths` needs the depth-3
+# enumeration to run to EXHAUSTION -- a censored skip search proves nothing -- and that search
+# measures **22,153,716 considered**. Guards below ~25M return INCONCLUSIVE rather than `no-skip`.
+# The guard is high because the FLOOR is broad, not because the rungs are deep; see above.
 
 config {
     budget.depth_limit: 3

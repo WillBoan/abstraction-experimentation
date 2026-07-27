@@ -45,6 +45,7 @@ from arc_lab.program_search.search.tracking import (
     OUTCOME_NAMES,
     Outcome,
     SearchTracker,
+    SolutionRecord,
     funnel_outcomes,
 )
 from arc_lab.program_search.substrate.library import Library
@@ -276,9 +277,26 @@ def _make_tracker(
     )
 
 
-def _search_with_tracker(
-    task: Task, config: Config, library: Library, tracker: SearchTracker
+def search_once(
+    task: Task, config: Config, library: Library, tracker: SearchTracker | None = None
 ) -> SearchResult:
+    """Drive ``config``'s engine over one task's TRAIN examples — the single call site.
+
+    The whole of "how the execution layer searches": which arguments come off the ``Config``, that
+    only ``train_examples`` are passed (the blindness seam — a solver structurally cannot see the
+    test examples), and that ``library`` is an explicit override rather than ``config.library``, so
+    a caller searching under a different library says so.
+
+    Public, and deliberately the LOWEST layer of the stack, because two things need exactly this
+    and nothing above it. ``_run_task`` wraps it with predict/score and a trace row; the ladder
+    PROBE (``ladders/probe.py``) wants the search alone — it records nothing by design, and must
+    not touch test grids. Before 2026-07-26 the probe reimplemented this call, so the probe and the
+    climb could silently drift apart; their agreement was verified once (2026-07-22) and never
+    again. Sharing the call makes drift impossible rather than checked.
+
+    What the layers ABOVE add — caching, crash-safe resume, and a ``runs/`` record — is exactly
+    what the probe does not want, which is why the seam is here and not at ``execute``.
+    """
     return config.search_engine.run(
         train_examples=task.train,
         library=library,
@@ -437,6 +455,76 @@ def _search_stats(stats: SearchStats) -> dict[str, object]:
     }
 
 
+def search_result_from_row(row: Mapping[str, object]) -> SearchResult | None:
+    """Rebuild a :class:`SearchResult` from one trace row — the exact inverse of
+    :func:`_search_stats` (plus the row's ``programs``).
+
+    Kept adjacent to the writer on purpose: these two are one serialisation format, and a field
+    added to :class:`SearchStats` without a line here degrades SILENTLY (the reader would fill a
+    default and the caller would read a plausible wrong number rather than an error). The
+    round-trip is pinned field-by-field in ``tests/.../test_probe_seam.py``, which drives the same
+    cell through the engine directly and through a recorded run and requires the two to agree.
+
+    ``None`` when the row has no ``search_stats`` — the task errored, and ``_run_task`` records
+    that as a scored row with no search block rather than aborting the run.
+    """
+    stats_data = row.get("search_stats")
+    if not isinstance(stats_data, Mapping):
+        return None
+    total = stats_data.get("total")
+    total = total if isinstance(total, Mapping) else {}
+    outcomes = {str(k): int(v) for k, v in total.items() if k != "considered"}
+    solutions = stats_data.get("solutions")
+    solutions = solutions if isinstance(solutions, Mapping) else {}
+    records = solutions.get("records")
+    programs = row.get("programs")
+    return SearchResult(
+        ranked_programs=tuple(
+            Program.from_dict(p) for p in (programs if isinstance(programs, list) else [])
+        ),
+        stats=SearchStats(
+            engine=str(stats_data.get("engine", "")),
+            considered=int(total.get("considered", 0)),
+            accepted=int(outcomes.get(Outcome.ACCEPTED.value, 0)),
+            outcomes=outcomes,
+            by_primitive={
+                str(name): {str(k): int(v) for k, v in counts.items()}
+                for name, counts in (stats_data.get("by_primitive") or {}).items()
+                if isinstance(counts, Mapping)
+            },
+            solved_at_generation=_opt_int(stats_data.get("solved_at_generation")),
+            generations=tuple(
+                dict(g) for g in (stats_data.get("generations") or []) if isinstance(g, Mapping)
+            ),
+            censored=bool(stats_data.get("censored")),
+            stopped_early=bool(stats_data.get("stopped_early")),
+            censored_at_generation=_opt_int(stats_data.get("censored_at_generation")),
+            first_solution_index=_opt_int(solutions.get("first_index")),
+            cheapest_solution_index=_opt_int(solutions.get("cheapest_index")),
+            solution_count=int(solutions.get("count", 0) or 0),
+            solutions_truncated=bool(solutions.get("truncated")),
+            solutions=tuple(
+                SolutionRecord(
+                    candidate_index=int(r["candidate_index"]),
+                    generation=int(r["generation"]),
+                    cost=int(r["cost"]),
+                    program=Program.from_dict(r["program"]),
+                )
+                for r in (records if isinstance(records, list) else [])
+                if isinstance(r, Mapping)
+            ),
+            # Not serialised (it is `len(ranked_programs)` by construction, and `_search_stats`
+            # omits it), so it is recovered from the programs the row carries rather than defaulted
+            # to 0 -- which would make every rebuilt result read `solved == False`.
+            returned_solution_count=len(programs) if isinstance(programs, list) else 0,
+        ),
+    )
+
+
+def _opt_int(value: object) -> int | None:
+    return int(value) if isinstance(value, int) else None
+
+
 def merge_search_stats(
     search_stats: Iterable[Mapping[str, object]],
 ) -> dict[str, object]:
@@ -491,7 +579,7 @@ def _run_task(
     started = time.perf_counter()
     tracker, sink = _make_tracker(trace, capture_path, task.task_id)
     try:
-        result = _search_with_tracker(task, config, config.library, tracker)
+        result = search_once(task, config, config.library, tracker)
         solved, per_test = _predict_and_score(
             task,
             result.ranked_programs,
@@ -730,7 +818,7 @@ def _wake(
             else None
         )
         tracker, sink = _make_tracker(trace, capture_path, task.task_id)
-        result = _search_with_tracker(task, config, library, tracker)
+        result = search_once(task, config, library, tracker)
         if sink is not None:
             sink.close()
         considered += result.stats.considered

@@ -6,13 +6,14 @@ Derived from `al4-mask-crop.ladder` (in `program_search/ladders/registry/`) -- t
 
 - Height: 4 (3 bridging rungs + top)
 - Floor library: `al4-L0` (9 primitives)
-- Pinned `depth_limit` (the reference config's cap -- every sandwich claim below is stated against it): 4
-- Validity window: `depth_limit` in [4, 4] (inclusive)
+- Depth schedule (`derived`): the `depth_limit` each oracle-chain level runs at, `L_0` first -- [4, 4, 3, 3]. Every sandwich claim below is stated against ITS OWN level's entry.
+- Pinned `depth_limit` (what the source file states): 4
+- Uniform validity window: `depth_limit` in [4, 4] (inclusive)
 - Raw depth profile (top solutions unfolded to `L_0`): [12]
 
 ## Verification
 
-- Static lint (what this file asserts): **FAILED** -- 84 checks (errors: 8, warnings: 1)
+- Static lint (what this file asserts): **FAILED** -- 82 checks (errors: 8, warnings: 1)
   - ERROR `heldout-distinct[nonbg_mask-heldout-00]`: identical train examples to the train task 'nonbg_mask-00'
   - ERROR `constant-subterm[nonbg_mask-00]`: train-constant subterms beaten by an enumerated literal: most_common_color(input)=0
   - ERROR `constant-subterm[nonbg_mask-01]`: train-constant subterms beaten by an enumerated literal: most_common_color(input)=0
@@ -26,7 +27,7 @@ Derived from `al4-mask-crop.ladder` (in `program_search/ladders/registry/`) -- t
 
 ## Shape
 
-- Overall: chain with recombination (max fan-in 3)
+- Overall: chain, recombination (max fan-in 3)
 - Off-spine: none
 - Dependencies (lower-rung calls, with multiplicity):
   - r_1 `nonbg_mask`: floor primitives only
@@ -36,18 +37,33 @@ Derived from `al4-mask-crop.ladder` (in `program_search/ladders/registry/`) -- t
 
 ## Rung spine
 
-| level | rung              | d_i | needs | double-jump | fan-in | demos | kind               |
-| ----- | ----------------- | --- | ----- | ----------- | ------ | ----- | ------------------ |
-| 1     | `nonbg_mask`      | 3   | 3     | 8           | 0      | 2     | fragment_identical |
-| 2     | `flatten_content` | 4   | 4     | 6           | 3      | 2     | full_solution      |
-| 3     | `stamp`           | 3   | 3     | 5           | 2      | 2     | full_solution      |
-| top   | (goal layer)      | 3   | 3     | -           | 1      | 1     | -                  |
+| level | rung              | L_i-1 | d_i | needs | d_tmpl | tmpl needs | double-jump | dj needs | fan-in | demos | kind               |
+| ----- | ----------------- | ----- | --- | ----- | ------ | ---------- | ----------- | -------- | ------ | ----- | ------------------ |
+| 1     | `nonbg_mask`      | 4     | 4   | 4     | 3      | 3          | 8           | 8        | 0      | 2     | fragment_identical |
+| 2     | `flatten_content` | 4     | 4   | 4     | 4      | 4          | 6           | 6        | 3      | 2     | full_solution      |
+| 3     | `stamp`           | 3     | 3   | 3     | 3      | 3          | 5           | 5        | 2      | 2     | full_solution      |
+| top   | (goal layer)      | 3     | 3   | 3     | -      | -          | -           | -        | 1      | 1     | -                  |
 
-- `d_i`: the GENERATION the engine composes the template at over `L_{i-1}`, a leaf being 0 (top row: of the reference solutions over `L_k`). The design doc's jump depth, and the unit `solved_at_generation` reports in.
-- `needs`: the smallest `depth_limit` that puts it in REACH -- the quantity every affordability claim above is stated in. Equal to `d_i` for a first-order template; larger when a lambda body needs its own descended budget (`analysis/depth.py`).
-- `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
+- `L_i-1`: the `depth_limit` the level BELOW this rung runs at -- the budget every claim in this row is stated against (the ladder's depth schedule, above).
+- `d_i`: the GENERATION the engine composes this rung's DEEPEST DEMONSTRATION at over `L_{i-1}`, a leaf being 0 (top row: of the reference solutions over `L_k`). The demonstration, not the template, because that is what the wake searches for. The design doc's jump depth, and the unit `solved_at_generation` reports in.
+- `needs`: the smallest `depth_limit` that puts it in REACH -- the quantity every affordability claim above, and the validity window, is stated in. Equal to `d_i` for a first-order target; larger when a lambda body needs its own descended budget (`analysis/depth.py`).
+- `d_tmpl`: depth of the rung TEMPLATE -- what sleep has to mint. Equals `d_i` unless a demonstration WRAPS the rung (any non-Grid rung must be wrapped, since a task solution has to produce a Grid), which costs `d_tmpl + (wrapper depth - 1)`.
+- `double-jump`: depth of the shallowest consumer TARGET above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
 - `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
+
+## Floor breadth (round 1)
+
+| level | rung              | b1 (full) | b1 (min) | ratio | battery                   |
+| ----- | ----------------- | --------- | -------- | ----- | ------------------------- |
+| 1     | `nonbg_mask`      | 13        | 1        | 13.0x | color: 10 minted / 0 used |
+| 2     | `flatten_content` | 14        | 1        | 14.0x | color: 10 minted / 1 used |
+| 3     | `stamp`           | 24        | 5        | 4.8x  | color: 10 minted / 2 used |
+
+- `b1`: candidates the FIRST composition round builds -- the typed-census model the cost forecaster uses, so variadic arities and polymorphic slots count exactly as the engine counts them.
+- `b1 (min)`: the same round with the library cut to the primitives this rung's demonstration references AND the constants cut to the values it uses. The irreducible width of this rung on this floor.
+- **An indicator, not a prediction.** Round 1 is exact and UNDERSTATES badly, because the tax compounds with depth: `dae9d2b5-halves-union` r_1 reads 1,211x here and MEASURED ~5.3e6 at depth 3 -- round 1 understated it ~4,000-fold. Use these to rank floors and to compare a ladder against itself; only `arc-lab probe-ladder` measures.
+- `battery`: constant leaves minted per type, against how many this rung uses. Minting is gated on whether ANY floor primitive mentions the type, so one colour-taking primitive buys every rung the full ten-colour battery.
 
 ## Top Rung (goal layer -- nothing is minted here)
 
@@ -85,3 +101,16 @@ The frozen ladder default with the source file's `config` block applied -- the e
   - early_stop: `True`
   - reset_programs_each_wake: `True`
   - score_each_wake: `False`
+  - wake_schedule: `full`
+  - curriculum: `None`
+
+al4-mask-crop: FAILED -- 82 checks (8 errors, 1 warnings)
+  ERROR heldout-distinct[nonbg_mask-heldout-00]: identical train examples to the train task 'nonbg_mask-00'
+  ERROR constant-subterm[nonbg_mask-00]: train-constant subterms beaten by an enumerated literal: most_common_color(input)=0
+  ERROR constant-subterm[nonbg_mask-01]: train-constant subterms beaten by an enumerated literal: most_common_color(input)=0
+  ERROR constant-subterm[flatten_content-00]: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
+  ERROR constant-subterm[flatten_content-01]: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
+  ERROR constant-subterm[stamp-00]: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
+  ERROR constant-subterm[stamp-01]: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
+  ERROR constant-subterm[top-00]: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
+  warn  floor-fully-exercised: floor primitives no rung, demonstration, distractor or top solution uses: ['least_common_color', 'mask_union', 'mask_intersect']

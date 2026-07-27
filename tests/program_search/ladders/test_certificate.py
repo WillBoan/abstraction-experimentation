@@ -16,33 +16,29 @@ from pathlib import Path
 from typing import Any, cast
 
 from arc_lab.program_search.execution.model.run_record import RunRecord
+from arc_lab.program_search.execution.model.study_spec import TargetAbstraction
 from arc_lab.program_search.ladders.certificate import (
     LadderCertificate,
     certify,
     search_censored_ids,
 )
-
-
-@dataclass(frozen=True)
-class _Demo:
-    task_id: str
-
-
-@dataclass(frozen=True)
-class _Rung:
-    name: str
-    demonstrations: tuple[_Demo, ...]
-
-
-@dataclass(frozen=True)
-class _Top:
-    task_ids: tuple[str, ...]
+from arc_lab.program_search.ladders.spec import (
+    Demonstration,
+    DemonstrationKind,
+    Rung,
+    TopRung,
+)
+from arc_lab.program_search.substrate.program import Apply, Input, Program
 
 
 @dataclass(frozen=True)
 class _Spec:
-    rungs: tuple[_Rung, ...]
-    top: _Top
+    """Stand-in for ``LadderSpec``: ``certify`` reads only ``rungs`` and ``top``, but reads them
+    STRUCTURALLY (templates and stated solutions, for the consumer graph), so those are the real
+    types -- a bare ``task_id`` bag would no longer tell it who consumes whom."""
+
+    rungs: tuple[Rung, ...]
+    top: TopRung
 
 
 @dataclass(frozen=True)
@@ -51,18 +47,57 @@ class _Result:
     oracle_chain: dict[int, RunRecord]
 
 
+def _call(name: str, inner: Program | None = None) -> Program:
+    return Apply(primitive=name, args=(inner or Input(),))
+
+
+def _rung(name: str, level: int, template: Program, *task_ids: str) -> Rung:
+    """A rung whose demonstrations ARE the rung applied to the input (kind FULL_SOLUTION)."""
+    return Rung(
+        level=level,
+        target_abstraction=TargetAbstraction(name=name, template=template),
+        demonstrations=tuple(
+            Demonstration(
+                task_id=task_id, kind=DemonstrationKind.FULL_SOLUTION, solution=_call(name)
+            )
+            for task_id in task_ids
+        ),
+    )
+
+
 #: One bridging rung: L_0 must solve `rung1a`/`rung1b`, and must NOT solve the top task `top1`
 #: (that would be a skip path). Minimal shape that exercises every verdict.
 _SPEC = _Spec(
-    rungs=(_Rung(name="r1", demonstrations=(_Demo("rung1a"), _Demo("rung1b"))),),
-    top=_Top(task_ids=("top1",)),
+    rungs=(_rung("r1", 1, _call("rot90", _call("rot90")), "rung1a", "rung1b"),),
+    top=TopRung(task_ids=("top1",), reference_solutions=(_call("flip_h", _call("r1")),)),
 )
 
 
-def _record(tmp_path: Path, name: str, rows: dict[str, tuple[bool, bool]]) -> RunRecord:
-    """A RunRecord whose trace says, per task id, ``(solved, censored)``."""
+#: Two INDEPENDENT branches under one top: `east` is level 2 but never calls `west`. Every
+#: level-adjacent reading (`rungs[i]`, `rungs[level-2]`) names a sibling here, not a consumer.
+_DAG_SPEC = _Spec(
+    rungs=(
+        _rung("west", 1, _call("crop_left"), "west-a", "west-b"),
+        _rung("east", 2, _call("crop_right"), "east-a", "east-b"),
+    ),
+    top=TopRung(
+        task_ids=("top1",),
+        reference_solutions=(Apply(primitive="overlay", args=(_call("west"), _call("east"))),),
+    ),
+)
+
+
+def _record(
+    tmp_path: Path,
+    name: str,
+    rows: dict[str, tuple[bool, bool]],
+    programs: dict[str, Program] | None = None,
+) -> RunRecord:
+    """A RunRecord whose trace says, per task id, ``(solved, censored)`` -- plus, optionally, the
+    retained cheapest program (what ``demonstration_health`` reads)."""
     run_dir = tmp_path / name
     run_dir.mkdir(parents=True, exist_ok=True)
+    retained = programs or {}
     lines = [
         json.dumps(
             {
@@ -71,6 +106,7 @@ def _record(tmp_path: Path, name: str, rows: dict[str, tuple[bool, bool]]) -> Ru
                     "solved_at_generation": 1 if solved else None,
                     "censored": censored,
                 },
+                **({"programs": [retained[task_id].to_dict()]} if task_id in retained else {}),
             }
         )
         for task_id, (solved, censored) in rows.items()
@@ -178,6 +214,67 @@ def test_a_censored_demonstration_is_not_a_tractable_jump(tmp_path: Path) -> Non
     )
     assert cert.tractable_jumps == {1: False}
     assert not cert.admitted
+
+
+def test_a_sibling_branch_is_not_a_consumer(tmp_path: Path) -> None:
+    """The DAG fix. `east` is rung 2 but composes over the bare floor, and the only thing consuming
+    either branch is the top. Read by level, `no_skip[1]` would probe `east`'s tasks (a sibling, so
+    the answer says nothing about whether `west` is skippable) and `demonstration_health[2]` would
+    demand `east`'s retained solution call `west` -- scoring a correct ladder 0.0."""
+    cert = _certify(
+        _Result(
+            spec=_DAG_SPEC,
+            oracle_chain={
+                0: _record(
+                    tmp_path,
+                    "L0",
+                    {"west-a": (True, False), "west-b": (True, False), "top1": (False, False)},
+                ),
+                1: _record(
+                    tmp_path,
+                    "L1",
+                    {"east-a": (True, False), "east-b": (True, False), "top1": (False, False)},
+                ),
+                2: _record(tmp_path, "L2", {"top1": (True, False)}),
+            },
+        )
+    )
+    assert cert.tractable_jumps == {1: True, 2: True}
+    assert cert.no_skip_paths == {1: True, 2: True}  # both probe the top, their actual consumer
+    assert cert.demonstration_health == {1: 1.0, 2: 1.0}  # neither branch depends on the other
+    assert cert.admitted
+
+
+def test_health_still_demands_the_dependencies_a_rung_does_have(tmp_path: Path) -> None:
+    """The other side of the same read: on a real chain, a retained solution that routes AROUND the
+    rung below is still unhealthy -- the demonstration then teaches a shortcut, not the composition.
+    `r2`'s template calls `r1`, so its demonstrations must be solved THROUGH `r1` at `L_1`."""
+    spec = _Spec(
+        rungs=(
+            _rung("r1", 1, _call("rot90", _call("rot90")), "rung1a"),
+            _rung("r2", 2, _call("flip_h", _call("r1")), "rung2a", "rung2b"),
+        ),
+        top=TopRung(task_ids=("top1",), reference_solutions=(_call("flip_v", _call("r2")),)),
+    )
+    cert = _certify(
+        _Result(
+            spec=spec,
+            oracle_chain={
+                0: _record(tmp_path, "L0", {"rung1a": (True, False), "rung2a": (False, False)}),
+                1: _record(
+                    tmp_path,
+                    "L1",
+                    {"rung2a": (True, False), "rung2b": (True, False), "top1": (False, False)},
+                    programs={
+                        "rung2a": _call("flip_h", _call("r1")),  # routes through r1
+                        "rung2b": _call("transpose"),  # a floor-only shortcut
+                    },
+                ),
+                2: _record(tmp_path, "L2", {"top1": (True, False)}),
+            },
+        )
+    )
+    assert cert.demonstration_health[2] == 0.5
 
 
 def test_stopped_early_is_not_censored(tmp_path: Path) -> None:

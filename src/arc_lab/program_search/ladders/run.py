@@ -104,11 +104,19 @@ class LadderResult:
 
 
 def run_ladder_chain(spec: LadderSpec, *, runs_root: Path | None = None) -> LadderChainResult:
-    """Stage 1: lint + the oracle chain ``L_0..L_k`` -- the certificate's entire evidence base."""
+    """Stage 1: lint + the oracle chain ``L_0..L_k`` -- the certificate's entire evidence base.
+
+    Each level runs at ITS OWN ``depth_limit`` (``LadderShape.depth_schedule``): ``L_j`` serves rung
+    ``j+1``, so it carries that rung's ``jump_needs``, and ``L_k`` the top's. Read off the lint
+    shape rather than recomputed -- the unfolds are already paid for there.
+    """
     shape = spec.lint()
     oracle_chain: dict[int, RunRecord] = {}
     for level in range(len(spec.rungs) + 1):  # L_0 (Floor) through L_k (all bridging rungs)
-        config = spec.reference_config.with_(library=spec.oracle_library(level), learn=None)
+        budget = replace(spec.reference_config.budget, depth_limit=shape.depth_schedule[level])
+        config = spec.reference_config.with_(
+            library=spec.oracle_library(level), budget=budget, learn=None
+        )
         oracle_chain[level] = execute(
             RunSpec(config=config, corpus=spec.train_corpus), runs_root=runs_root
         )
@@ -236,7 +244,13 @@ def _considered_by_task(record: RunRecord) -> dict[str, int]:
 
 
 def _off_chain_library(spec: LadderSpec) -> Library:
-    """Floor + the top bridging rung only, the rung expressed over the floor (``unfold_program``)."""
+    """Floor + the top bridging rung only, the rung expressed over the floor (``unfold_program``).
+
+    ``rungs[-1]`` is a LEVEL read, matching what the arm asks: "what does the ladder's TOPMOST
+    abstraction buy on its own, without the scaffolding under it?". On a DAG with independent
+    branches that deliberately omits the sibling branches -- the arm is a read-side comparison
+    label (al19/al20), never an admission input, so it under-credits rather than mis-certifies.
+    """
     floor = spec.floor()
     top_rung = spec.rungs[-1]
     over_floor = unfold_program(top_rung.template, spec.oracle_library(len(spec.rungs)))

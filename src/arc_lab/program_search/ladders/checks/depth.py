@@ -1,10 +1,19 @@
-"""Depth sandwich (D): the tractability claims, every one anchored at the reference budget.
+"""Depth sandwich (D): the tractability claims, every one anchored at the budget its LEVEL runs at.
 
 The sandwich is two-sided. *Affordable*: every intended jump, and the top over ``L_k``, must be in
-REACH at the pinned ``depth_limit``. *Intractable*: skipping any rung -- and the raw top unfolded
-to the floor -- must NOT be. Both sides are stated in ``min_depth_limit`` (the smallest budget that
-reaches a program), which equals ``compositional_depth`` for a first-order template and exceeds it
-when a lambda body needs its own descended budget.
+REACH. *Intractable*: skipping any rung -- and the raw top unfolded to the floor -- must NOT be.
+Both sides are stated in ``min_depth_limit`` (the smallest budget that reaches a program), which
+equals ``compositional_depth`` for a first-order template and exceeds it when a lambda body needs
+its own descended budget.
+
+The budget each claim is read against is ``CheckContext.limit_at(level)``, never one pinned number:
+a claim about rung ``i`` is a claim about the ``L_{i-1}`` search, and under the default DERIVED
+depth schedule (``spec.DepthScheduleMode``) that search runs at rung ``i``'s own ``jump_needs``.
+Under ``PINNED`` every level returns the same value and these checks read exactly as they did
+before. The consequence worth naming: DERIVED satisfies ``jump-affordable`` and
+``top-affordable-with-ladder`` BY CONSTRUCTION -- the budget is derived from the need those checks
+test -- so under that regime they report rather than gate, and ``double-jump-intractable`` (the
+per-rung sandwich, ``jump_needs < double_jump_needs``) is what a rung can still fail.
 
 Both sides are also stated over the programs the ladder's searches will ACTUALLY run, never over
 the rung templates: a rung's own bound comes from its DEMONSTRATION TARGETS, and a consumer's from
@@ -51,7 +60,7 @@ class JumpAffordable(LadderCheck):
     code = "jump-affordable"
     category = Category.DEPTH
     stage = CheckStage.STRUCTURAL
-    summary = "Every rung's demonstrations are in reach over L_{i-1} at the pinned depth_limit."
+    summary = "Every rung's demonstrations are in reach over L_{i-1} at that level's depth_limit."
 
     def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
         for shape in ctx.rung_shapes:
@@ -60,10 +69,11 @@ class JumpAffordable(LadderCheck):
                 if shape.deepest_demonstration is not None
                 else "template (no demonstrations declared)"
             )
+            limit = ctx.limit_at(shape.level - 1)
             yield self.finding(
-                shape.jump_needs <= ctx.ref_limit,
+                shape.jump_needs <= limit,
                 f"{source} needs depth_limit {shape.jump_needs} (d={shape.jump_depth}) "
-                f"over L_{shape.level - 1}, have {ctx.ref_limit}",
+                f"over L_{shape.level - 1}, have {limit}",
                 subject=shape.name,
             )
 
@@ -126,10 +136,11 @@ class DoubleJumpIntractable(LadderCheck):
                 continue
             cid, shallow = min(inlined, key=lambda item: min_depth_limit(item[1]))
             need = min_depth_limit(shallow)
+            limit = ctx.limit_at(rung.level - 1)
             yield self.finding(
-                need > ctx.ref_limit,
+                need > limit,
                 f"skipping it reaches `{cid}` at depth_limit {need} "
-                f"(inlined depth {compositional_depth(shallow)}), must exceed {ctx.ref_limit}",
+                f"(inlined depth {compositional_depth(shallow)}), must exceed {limit}",
                 subject=rung.name,
             )
 
@@ -141,17 +152,25 @@ class TopAffordableWithLadder(LadderCheck):
     summary = "Every top reference solution is in reach over L_k at the pinned depth_limit."
 
     def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
+        limit = ctx.limit_at(ctx.k)
         for solution, d_top in zip(ctx.spec.top.reference_solutions, ctx.top_depths, strict=True):
             need = min_depth_limit(solution)
             yield self.finding(
-                need <= ctx.ref_limit,
-                f"top over L_{ctx.k} needs depth_limit {need} (d={d_top}), have {ctx.ref_limit}",
+                need <= limit,
+                f"top over L_{ctx.k} needs depth_limit {need} (d={d_top}), have {limit}",
             )
 
 
 class TopUsesTopRung(LadderCheck):
     """The Top Rung's whole definition: its solutions USE the top bridging rung as a fragment. A
-    top that never calls ``r_k`` isn't standing on the ladder at all."""
+    top that never calls ``r_k`` isn't standing on the ladder at all.
+
+    ``rungs[-1]`` here is a LEVEL read and deliberately stays one: the claim is about the ladder's
+    HEIGHT (the top must reach the full climb, not stop partway), which is a level property. On a
+    DAG with independent branches every branch's tip is still required to be called -- the last
+    level is the one that cannot be reached without everything below it having a consumer, which
+    ``rung-referenced`` enforces separately.
+    """
 
     code = "top-uses-top-rung"
     category = Category.DEPTH
@@ -171,14 +190,17 @@ class RawIntractable(LadderCheck):
     code = "raw-intractable"
     category = Category.DEPTH
     stage = CheckStage.STRUCTURAL
-    summary = "No top solution is reachable from the bare floor at the pinned depth_limit."
+    summary = "No top solution is reachable from the bare floor at that level's depth_limit."
 
     def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
+        # The bare floor IS `L_0`, so this is stated at level 0's budget -- the one the chain's
+        # floor search, which carries the top tasks alongside rung 1's, actually runs at.
+        limit = ctx.limit_at(0)
         for unfolded, d_raw in zip(ctx.unfolded_top, ctx.raw_depth_profile, strict=True):
             need = min_depth_limit(unfolded)
             yield self.finding(
-                need > ctx.ref_limit,
-                f"d_raw={d_raw} needs depth_limit {need}, must exceed {ctx.ref_limit}",
+                need > limit,
+                f"d_raw={d_raw} needs depth_limit {need}, must exceed {limit}",
             )
 
 
@@ -195,12 +217,13 @@ class TopDoubleJumpIntractable(LadderCheck):
     summary = "No top solution is reachable over L_{k-1} (with the top rung skipped)."
 
     def run(self, ctx: CheckContext) -> Iterator[LintFinding]:
+        limit = ctx.limit_at(ctx.k - 1)
         for skipped in ctx.skipped_top:
             need = min_depth_limit(skipped)
             yield self.finding(
-                need > ctx.ref_limit,
+                need > limit,
                 f"top over L_{ctx.k - 1} depth {compositional_depth(skipped)} needs depth_limit "
-                f"{need}, must exceed {ctx.ref_limit}",
+                f"{need}, must exceed {limit}",
             )
 
 
@@ -241,7 +264,7 @@ class RewriteShallow(LadderCheck):
             rewrite_verdicts(
                 rung_consumers,
                 ctx.libraries,
-                ctx.ref_limit,
+                [ctx.limit_at(rung.level - 1) for rung in ctx.rungs],
                 ctx.probe_inputs,
             )
         )

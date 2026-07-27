@@ -9,7 +9,11 @@ from arc_lab.program_search.ladders.checks.demonstrations import rung_argument_c
 from arc_lab.program_search.ladders.graph import consumer_programs
 from arc_lab.program_search.ladders.registry import make_ladder
 from arc_lab.program_search.ladders.shape import LadderShape, LintFinding
-from arc_lab.program_search.ladders.spec import Demonstration, DemonstrationKind
+from arc_lab.program_search.ladders.spec import (
+    Demonstration,
+    DemonstrationKind,
+    DepthScheduleMode,
+)
 from arc_lab.program_search.search.search_engine import BottomUpSearchEngine
 from arc_lab.program_search.substrate.primitives.control import IF
 from arc_lab.program_search.substrate.program import Apply, Const, If, Input, Param
@@ -190,12 +194,23 @@ def test_lint_catches_a_top_that_never_uses_the_top_rung() -> None:
 
 def test_lint_catches_a_budget_that_makes_the_raw_top_reachable() -> None:
     # A budget deep enough to reach the raw top (d_raw=4) breaks the raw-intractable claim.
+    # PINNED, necessarily: a derived schedule sets L_0 from rung 1's own need, so an
+    # over-generous uniform budget is a hazard only the pinned regime can have (which is why
+    # `al10-skippable`, the control built on exactly this hazard, pins too).
     spec = make_ladder("al1-mirror")
     deep = dataclasses.replace(spec.reference_config.budget, depth_limit=5)
-    bad = dataclasses.replace(spec, reference_config=spec.reference_config.with_(budget=deep))
+    bad = dataclasses.replace(
+        spec,
+        reference_config=spec.reference_config.with_(budget=deep),
+        depth_schedule_mode=DepthScheduleMode.PINNED,
+    )
     shape = bad.lint()
     assert not shape.ok
     assert any(finding.code == "raw-intractable" and not finding.ok for finding in shape.findings)
+    # Derived: the same file is clean, because L_0 carries rung 1's need (2), not the file's 5.
+    derived = dataclasses.replace(bad, depth_schedule_mode=DepthScheduleMode.DERIVED)
+    assert derived.lint().depth_schedule == (2, 2, 2)
+    assert not any(f.code == "raw-intractable" and not f.ok for f in derived.lint().findings)
 
 
 def test_lint_catches_the_al14_literal_collapse_statically() -> None:

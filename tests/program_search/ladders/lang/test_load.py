@@ -7,6 +7,7 @@ exactly -- the drift guard that replaced the per-ladder Python modules.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from pathlib import Path
 
@@ -17,7 +18,7 @@ from arc_lab.program_search.ladders.lang.load import ladder_tasks, resolve, stru
 from arc_lab.program_search.ladders.lang.parse import parse_document
 from arc_lab.program_search.ladders.registry import ladder_paths, load_ladder, make_ladder
 from arc_lab.program_search.ladders.shape import LadderShape, LintFinding
-from arc_lab.program_search.ladders.spec import DemonstrationKind
+from arc_lab.program_search.ladders.spec import DemonstrationKind, DepthScheduleMode
 from arc_lab.program_search.substrate.program import If
 
 REPO = Path(__file__).resolve().parents[4]
@@ -272,10 +273,14 @@ def test_the_two_future_proofing_checks_are_dormant_on_the_batch() -> None:
 #: A rung returning a non-Grid value must be demonstrated through a WRAPPER (a task solution has
 #: to produce a Grid), so the wake searches for the wrapper, not the template. Here the template is
 #: depth 2 -- affordable at the pinned `depth_limit` 2 -- while the demo it is shown at is depth 3.
+#: `pinned` deliberately: under the default DERIVED schedule the level's budget IS the demo's need,
+#: so `jump-affordable` cannot fail and the same fact surfaces in the schedule instead (asserted
+#: below). Pinning is what keeps the CHECK under test.
 _WRAPPED_RUNG = """
 ladder t2
 
 config {
+    ladder.depth_schedule: 'pinned'
     budget.depth_limit: 2
 }
 
@@ -337,6 +342,12 @@ def test_jump_affordable_measures_the_demonstration_not_the_template() -> None:
     assert (rung_shape.jump_depth, rung_shape.jump_needs) == (3, 3)
     assert rung_shape.depth_source == "demonstrations"
 
+    # Same fact, the other regime: DERIVED reads the level's budget off the demo too, so `L_0` is
+    # raised to 3 rather than left at the file's 2 -- the schedule ABSORBS what the pinned lint
+    # reports as an error. A template-sourced reading would have left it at 2 in both regimes.
+    derived = dataclasses.replace(spec, depth_schedule_mode=DepthScheduleMode.DERIVED)
+    assert derived.lint(corpus_backed=False).depth_schedule[0] == 3
+
 
 def test_where_demo_sourced_depth_departs_from_the_template_batch_wide() -> None:
     """Pinned: the batch is Grid-valued and demoed as full solutions almost everywhere, so demo
@@ -355,7 +366,9 @@ def test_where_demo_sourced_depth_departs_from_the_template_batch_wide() -> None
     }
     assert apart == {("al4-mask-crop", "nonbg_mask", 3, 4)}
     assert all(
-        s.depth_source == "demonstrations" for name in ladder_paths() for s in _lint_shape(name).rungs
+        s.depth_source == "demonstrations"
+        for name in ladder_paths()
+        for s in _lint_shape(name).rungs
     )
 
 

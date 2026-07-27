@@ -57,6 +57,40 @@ def consumer_graph(rungs: Sequence[Rung], top: TopRung) -> dict[str, list[str]]:
     }
 
 
+def consumer_task_ids(rungs: Sequence[Rung], top: TopRung) -> dict[str, list[str]]:
+    """For each rung, the TASK IDS of "the layer above it" -- what the empirical reads (the
+    certificate's skip check, the report's marginal rung value) must search for under ``L_{i-1}``.
+
+    Rung consumers take precedence and the top is the fallback, mirroring how the static lint
+    splits the same claim: ``double-jump-intractable`` measures rung consumers and skips a rung the
+    top alone consumes, leaving that case to ``top-double-jump-intractable``. On a chain this is
+    byte-identical to the ``rungs[i]``-then-``top`` reading it replaces (rung ``i<k`` is consumed by
+    ``r_{i+1}``; ``r_k`` only by the top); on a DAG it names the *actual* consumers instead of a
+    level-adjacent sibling that may never call the rung at all.
+    """
+    demos_by_rung = {rung.name: [d.task_id for d in rung.demonstrations] for rung in rungs}
+    out: dict[str, list[str]] = {}
+    for name, consumers in consumer_graph(rungs, top).items():
+        above = [cid for cid in consumers if not cid.startswith("top:")]
+        ids = (
+            [tid for cid in above for tid in demos_by_rung.get(cid, ())]
+            if above
+            else [cid[len("top:") :] for cid in consumers]
+        )
+        out[name] = list(dict.fromkeys(ids))
+    return out
+
+
+def rung_calls(program: Program, rung_names: Sequence[str]) -> set[str]:
+    """Which of ``rung_names`` the program calls -- its rung DEPENDENCIES, without multiplicity."""
+    names = set(rung_names)
+    return {
+        node.primitive
+        for node in program.walk()
+        if isinstance(node, Apply) and node.primitive in names
+    }
+
+
 def is_chain(consumers: dict[str, list[str]], rung_names: Sequence[str]) -> bool:
     """Do the rung->rung edges form the simple spine ``r_1 <- ... <- r_k``?
 

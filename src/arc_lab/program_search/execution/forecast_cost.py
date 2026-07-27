@@ -208,6 +208,21 @@ def forecast_cost(
     return forecast
 
 
+def round_terms(
+    library: Library,
+    census: Mapping[Type, int],
+    max_arity: int,
+) -> list[tuple[Primitive, int]]:
+    """Per primitive, how many tuples the FIRST composition round builds over ``census``.
+
+    The public entry to the typed-census model for callers that want round 1 over a census they
+    supply rather than a whole forecast -- the ladder breadth census, which prices the same round
+    under four different libraries/leaf sets. Round 1 has no previous round, so the new-layer
+    restriction is vacuous and this is a plain product per primitive.
+    """
+    return _round_terms(library, census, {}, max_arity)
+
+
 def _round_terms(
     library: Library,
     census: Mapping[Type, int],

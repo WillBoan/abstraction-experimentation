@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from arc_lab.program_search.ladders.breadth import RungBreadth
 from arc_lab.program_search.ladders.diagnostics import Range
 
 
@@ -110,9 +111,14 @@ class LadderShape:
     #: floor (the top solutions can differ, so this is a profile, not a scalar).
     raw_depth_profile: tuple[int, ...]
     rungs: tuple[RungShape, ...]
-    #: ``(lower, upper)`` — inclusive, in ``depth_limit`` units: the ``depth_limit`` values at
-    #: which every jump is affordable and no inlined double-jump (nor the raw top) is reachable.
-    #: Empty as ``(lo, hi)`` with ``lo > hi`` when no budget satisfies both (a degenerate ladder).
+    #: ``(lower, upper)`` — inclusive, in ``depth_limit`` units: the UNIFORM ``depth_limit`` values
+    #: at which every jump is affordable and no inlined double-jump (nor the raw top) is reachable.
+    #: Empty as ``(lo, hi)`` with ``lo > hi`` when no single budget satisfies both.
+    #:
+    #: This is the ``PINNED`` regime's quantity. Under the default DERIVED schedule an empty window
+    #: is NOT a degenerate ladder -- it says only that no ONE budget serves every level, which is
+    #: exactly the constraint per-level budgets remove. Read :attr:`depth_schedule` for what the
+    #: ladder actually runs at.
     validity_window: tuple[int, int]
     #: ``True`` iff the rung dependency edges form the simple spine ``r_1 <- ... <- r_k`` (each
     #: rung consumed only by its immediate successor). ``False`` is a DAG: a rung feeds more than
@@ -123,6 +129,17 @@ class LadderShape:
     #: draft over assumed primitives). Empty on a full run. Named, never silently dropped, so a
     #: clean structural lint is never mistaken for a verified-sound ladder.
     skipped_checks: tuple[str, ...] = ()
+    #: The ``depth_limit`` per oracle-chain level, ``L_0 .. L_k`` (length ``height``) -- what the
+    #: chain, the probe and every depth claim above actually run at. Under ``PINNED`` every entry
+    #: is the reference config's value; under ``DERIVED`` each is the smallest budget that puts
+    #: what that level must find in reach. The counterpart to :attr:`validity_window`, which is the
+    #: same question asked of one UNIFORM budget. (Last only because slots+defaults order it so.)
+    depth_schedule: tuple[int, ...] = ()
+    #: Per-rung round-1 breadth census (``ladders/breadth.py``) -- the WIDTH axis to the depth
+    #: schedule's height. Empty on a structural-tier lint (the constant battery needs the grids).
+    #: An INDICATOR: exact for round 1, and it understates badly at depth, so it ranks floors
+    #: rather than forecasting runs.
+    breadth: tuple[RungBreadth, ...] = ()
 
     @property
     def ok(self) -> bool:

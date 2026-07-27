@@ -19,6 +19,7 @@ from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.grid import Grid
 from arc_lab.program_search.analysis.depth import compositional_depth, min_depth_limit
 from arc_lab.program_search.ladders import graph
+from arc_lab.program_search.ladders.breadth import RungBreadth, rung_breadth
 from arc_lab.program_search.ladders.shape import RungShape
 from arc_lab.program_search.substrate.abstraction import unfold_program
 from arc_lab.program_search.substrate.library import Library
@@ -49,8 +50,36 @@ class CheckContext:
 
     @property
     def ref_limit(self) -> int:
-        """The pinned reference ``depth_limit`` -- every sandwich claim is stated against it."""
+        """The pinned reference ``depth_limit`` -- what a ``PINNED`` ladder runs every level at.
+
+        Under the default ``DERIVED`` regime this is no longer the budget any level runs at; it
+        survives as the value the source file states and as the ``PINNED`` fallback. Every sandwich
+        claim is stated against :meth:`limit_at` instead.
+        """
         return self.spec.reference_config.budget.depth_limit
+
+    @cached_property
+    def depth_schedule(self) -> tuple[int, ...]:
+        """The ``depth_limit`` per oracle-chain level, ``L_0 .. L_k`` (see
+        :class:`~..spec.DepthScheduleMode`).
+
+        ``L_j`` serves rung ``j+1``: its search must find that rung's demonstrations and must NOT
+        find that rung's consumers. So its budget is the rung's ``jump_needs`` -- the smallest that
+        puts the jump in reach, and therefore the largest one that leaves the most double-jumps out
+        of it. ``L_k`` faces no rung above and carries the top's own need.
+        """
+        from arc_lab.program_search.ladders.spec import DepthScheduleMode
+
+        if self.spec.depth_schedule_mode is DepthScheduleMode.PINNED:
+            return (self.ref_limit,) * (self.k + 1)
+        top = max(self.top_needs, default=self.ref_limit)
+        return (*(shape.jump_needs for shape in self.rung_shapes), top)
+
+    def limit_at(self, level: int) -> int:
+        """The ``depth_limit`` the ``L_level`` search runs at -- the budget every depth claim about
+        that level (affordability of the rung above, intractability of skipping it) is stated in."""
+        schedule = self.depth_schedule
+        return schedule[level] if 0 <= level < len(schedule) else self.ref_limit
 
     @cached_property
     def full_lib(self) -> Library:
@@ -184,6 +213,10 @@ class CheckContext:
     @cached_property
     def skipped_top(self) -> tuple[Program, ...]:
         """Every top reference solution with ``r_k`` inlined -- the top over ``L_{k-1}``."""
+        # `rungs[-1]` is a LEVEL read, and correct as one on a DAG too: `L_{k-1}` is defined as the
+        # floor plus rungs 1..k-1, so the one rung to inline is exactly the level-k rung, whoever
+        # calls it. (Contrast the consumer-graph reads in `certificate.py`, which ask who consumes
+        # a rung -- a question levels cannot answer.)
         expand = frozenset({self.rungs[-1].name})
         return tuple(
             unfold_program(sol, self.full_lib, expand=expand)
@@ -290,7 +323,9 @@ class CheckContext:
             binding = max(targets, key=lambda item: min_depth_limit(item[1])) if targets else None
             template_depth = compositional_depth(rung.template)
             template_needs = min_depth_limit(rung.template)
-            shallowest = min(inlined, key=lambda item: min_depth_limit(item[1])) if inlined else None
+            shallowest = (
+                min(inlined, key=lambda item: min_depth_limit(item[1])) if inlined else None
+            )
             shapes.append(
                 RungShape(
                     level=rung.level,
@@ -317,6 +352,41 @@ class CheckContext:
                 )
             )
         return tuple(shapes)
+
+    @cached_property
+    def rung_breadth(self) -> tuple[RungBreadth, ...]:
+        """Per rung, the round-1 breadth census over the library its search actually runs on.
+
+        Corpus-backed: the constant battery is a function of grid size, so a rung whose first
+        demonstration is not in the corpus (a draft, or a structural-tier lint) is skipped rather
+        than priced against imaginary grids. An INDICATOR -- see :mod:`..breadth`.
+        """
+        if not self.corpus_backed:
+            return ()
+        engine = self.spec.reference_config.search_engine
+        sources = getattr(engine, "constant_sources", ())
+        max_arity = self.spec.reference_config.budget.max_arity
+        out: list[RungBreadth] = []
+        for rung in self.rungs:
+            targets = self.demo_targets[rung.name]
+            if not targets:
+                continue
+            task_id, target = targets[0]
+            entry = self.by_id.get(task_id)
+            if entry is None:
+                continue
+            out.append(
+                rung_breadth(
+                    level=rung.level,
+                    name=rung.name,
+                    library=self.libraries[rung.level - 1],
+                    program=target,
+                    grids=[ex.input for ex in entry.task.train],
+                    constant_sources=tuple(sources),
+                    max_arity=max_arity,
+                )
+            )
+        return tuple(out)
 
     @cached_property
     def validity_window(self) -> tuple[int, int]:

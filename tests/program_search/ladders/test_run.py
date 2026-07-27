@@ -44,6 +44,46 @@ def test_ladder1_climbs_recovers_both_rungs_and_is_admitted(tmp_path: Path) -> N
     assert isinstance(shape, dict) and shape["lint_ok"] is True
 
 
+def test_a_dag_is_certified_against_its_consumers_not_its_levels(tmp_path: Path) -> None:
+    """The DAG end-to-end lock (``al21-dag-siblings``: two independent branches under one top).
+
+    Both readings of "the layer above rung i" agree on a chain, so the whole al1-al20 batch could
+    not tell them apart. Here they disagree, and the level reading fails in BOTH directions at once:
+
+    - ``no_skip_paths[1]`` would probe rung 2's tasks under ``L_0`` -- and rung 2 composes over the
+      bare floor, so ``L_0`` solves them trivially and the ladder is REJECTED for a "skip path"
+      that is really just a sibling being independently reachable;
+    - ``demonstration_health[2]`` would demand rung 2's retained solution call rung 1, which it has
+      no reason to do, scoring a correct ladder 0.0.
+
+    Cheap by construction (a 4-primitive floor at ``depth_limit`` 2), because the real-task DAG
+    that exposed this (``dae9d2b5-halves-union``) is a multi-hour chain and can guard nothing here.
+    """
+    result = run_ladder(make_ladder("al21-dag-siblings"), runs_root=tmp_path)
+
+    shape = result.shape
+    assert shape.is_chain is False
+    assert shape.depth_schedule == (2, 2, 2)
+
+    cert = result.certificate
+    assert cert.no_skip_paths == {1: True, 2: True}  # both probe the TOP, their actual consumer
+    assert cert.demonstration_health == {1: 1.0, 2: 1.0}  # neither branch depends on the other
+    assert cert.tractable_jumps == {1: True, 2: True}
+    assert cert.admitted and result.climbed
+
+    report = create_ladder_report(result)
+    recovery = report["rung_recovery"]
+    assert isinstance(recovery, list)
+    assert all(isinstance(row, dict) and row["recovered"] for row in recovery)
+    # The report's marginal-value view names the consumer too, not `rungs[i]`: on this shape both
+    # rungs' layer above is the top, and rung 1's is NOT "mirror_flip".
+    comparisons = report["comparisons"]
+    assert isinstance(comparisons, dict)
+    rung_value = comparisons["marginal_rung_value"]
+    assert isinstance(rung_value, list)
+    assert [row["layer_above"] for row in rung_value] == ["top", "top"]
+
+
 def test_a_rejected_ladder_never_pays_for_the_climb(tmp_path: Path) -> None:
     # al10 is the control whose top is deliberately reachable without the rung (al2's floor at
     # depth_limit 4), so its certificate rejects on a skip path. Staged run_ladder must stop

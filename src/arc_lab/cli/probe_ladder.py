@@ -1,9 +1,18 @@
-"""``arc-lab probe-ladder``: drive one ladder's rungs through the real engine, without a run.
+"""``arc-lab probe-ladder``: drive one ladder's rungs through the real engine, one cell at a time.
 
 The design-time inner loop between lint and the certificate. Unlike ``run-ladder`` (a full climb
-plus the oracle chain, recorded and cached), this searches ONE rung cell at a time in process,
-records nothing, and prints what search actually retained -- so a collapsed rung, a task collision
-or a wrong mint is visible while the `.ladder` file is still being written.
+plus the oracle chain, gated on a certificate and writing the ladder's artifacts), this searches
+ONE rung cell at a time and prints what search actually retained -- so a collapsed rung, a task
+collision or a wrong mint is visible while the `.ladder` file is still being written.
+
+Each cell IS a recorded run (2026-07-26), so re-probing an unchanged rung is a cache hit rather
+than a fresh enumeration and a crash mid-sweep resumes. They are namespaced as probe cells and
+hidden from ``arc-lab runs`` unless you ask (`--probes`): scratch, not results.
+
+**The probe convicts; only the certificate acquits.** An INCONCLUSIVE cell is a non-result by
+design -- raising ``--guard`` buys a longer search, never a verdict. Lint first: it settles
+statically, in ~1s, everything it can see, including the breadth census that usually explains an
+expensive cell before it is run.
 
 Exits non-zero when any probed rung fails, so it works in a script or a hook.
 """
@@ -25,11 +34,12 @@ def probe_ladder_command(
     level: int = typer.Option(
         None, "--level", "-l", help="Probe only this rung level (1..k); omit for every rung."
     ),
-    considered_limit: int = typer.Option(
+    guard: int = typer.Option(
         None,
-        "--considered-limit",
-        help="Override the reference budget's compute guard for this probe (a censored probe is "
-        "inconclusive, so raise it when a cell censors).",
+        "--guard",
+        help="Override the compute guard for this probe. RAISING IT CANNOT PRODUCE AN "
+        "ACQUITTAL -- an INCONCLUSIVE cell is a non-result by design, and a bigger guard buys a "
+        "longer wait, not a verdict. Lower it for a fast smoke probe; only `run-ladder` acquits.",
     ),
 ) -> None:
     try:
@@ -41,8 +51,17 @@ def probe_ladder_command(
         raise typer.Exit(code=1) from exc
 
     budget = spec.reference_config.budget
-    if considered_limit is not None:
-        budget = dataclasses.replace(budget, considered_limit=considered_limit)
+    if guard is not None:
+        # `considered_limit` is `None` for an unguarded budget, which no raise can exceed.
+        current = budget.considered_limit
+        if current is not None and guard > current:
+            typer.echo(
+                f"note: guard raised {current:,} -> {guard:,}. This buys a longer "
+                "search, NOT a stronger verdict -- the probe convicts, only the certificate "
+                "acquits. If a cell is INCONCLUSIVE, run `run-ladder` rather than escalating here.",
+                err=True,
+            )
+        budget = dataclasses.replace(budget, considered_limit=guard)
     if level is not None and not 1 <= level <= len(spec.rungs):
         raise typer.BadParameter(f"level must be 1..{len(spec.rungs)} for {name}")
 

@@ -38,16 +38,16 @@ Everything a file answers on its own. A rule belongs here only if it needs nothi
 
 ### Depth sandwich (D) -- the tractability claims
 
-| #   | code                          | stage      | severity | what it checks                                                                   |
-| --- | ----------------------------- | ---------- | -------- | -------------------------------------------------------------------------------- |
-| 7   | `jump-affordable`             | structural | error    | Every rung's demonstrations are in reach over L_{i-1} at the pinned depth_limit. |
-| 8   | `proper-composition`          | structural | error    | Every rung composes over the layer below rather than restating a bare primitive. |
-| 9   | `double-jump-intractable`     | structural | warn     | Skipping a rung leaves every higher rung out of reach at the pinned depth_limit. |
-| 10  | `top-affordable-with-ladder`  | structural | error    | Every top reference solution is in reach over L_k at the pinned depth_limit.     |
-| 11  | `top-uses-top-rung`           | structural | error    | Every top reference solution calls the top bridging rung.                        |
-| 12  | `raw-intractable`             | structural | error    | No top solution is reachable from the bare floor at the pinned depth_limit.      |
-| 13  | `top-double-jump-intractable` | structural | warn     | No top solution is reachable over L_{k-1} (with the top rung skipped).           |
-| 14  | `rewrite-shallow`             | corpus     | error    | No known equation re-expresses the layer above a skipped rung shallowly.         |
+| #   | code                          | stage      | severity | what it checks                                                                     |
+| --- | ----------------------------- | ---------- | -------- | ---------------------------------------------------------------------------------- |
+| 7   | `jump-affordable`             | structural | error    | Every rung's demonstrations are in reach over L_{i-1} at that level's depth_limit. |
+| 8   | `proper-composition`          | structural | error    | Every rung composes over the layer below rather than restating a bare primitive.   |
+| 9   | `double-jump-intractable`     | structural | warn     | Skipping a rung leaves every higher rung out of reach at the pinned depth_limit.   |
+| 10  | `top-affordable-with-ladder`  | structural | error    | Every top reference solution is in reach over L_k at the pinned depth_limit.       |
+| 11  | `top-uses-top-rung`           | structural | error    | Every top reference solution calls the top bridging rung.                          |
+| 12  | `raw-intractable`             | structural | error    | No top solution is reachable from the bare floor at that level's depth_limit.      |
+| 13  | `top-double-jump-intractable` | structural | warn     | No top solution is reachable over L_{k-1} (with the top rung skipped).             |
+| 14  | `rewrite-shallow`             | corpus     | error    | No known equation re-expresses the layer above a skipped rung shallowly.           |
 
 ### Learnability (L) -- can this machinery mint it?
 

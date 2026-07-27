@@ -41,6 +41,7 @@ from arc_lab.program_search.ladders.lang.type_syntax import (
 from arc_lab.program_search.ladders.spec import (
     Demonstration,
     DemonstrationKind,
+    DepthScheduleMode,
     Distractor,
     LadderSpec,
     Rung,
@@ -289,6 +290,7 @@ def _spec_with_corpora(loaded: LoadedLadder, train: Corpus, heldout: Corpus) -> 
         train_corpus=train,
         heldout_corpus=heldout,
         budgets=(loaded.config.budget,),
+        depth_schedule_mode=_depth_schedule_mode(loaded.document),
     )
 
 
@@ -435,11 +437,37 @@ def _template(block: RungBlock, below: Library) -> Program:
     return template
 
 
+#: The ``config`` block's LADDER-scoped namespace: settings that belong to the ladder rather than
+#: to its ``Config``. They live in the same block because that is where a reader looks for "how is
+#: this ladder set up", but they are routed here rather than through ``apply_overrides`` -- a plain
+#: SEARCH run has no rungs, so a per-level budget regime is not a ``Config`` field.
+_LADDER_SCOPE = "ladder."
+
+
+def _depth_schedule_mode(document: LadderDocument) -> DepthScheduleMode:
+    """``ladder.depth_schedule`` -- the budget regime, ``derived`` unless the file says otherwise."""
+    entry = next(
+        (e for e in document.config if e.path == f"{_LADDER_SCOPE}depth_schedule"),
+        None,
+    )
+    if entry is None:
+        return DepthScheduleMode.DERIVED
+    try:
+        return DepthScheduleMode(entry.value)
+    except ValueError:
+        known = ", ".join(mode.value for mode in DepthScheduleMode)
+        raise LadderFormatError(
+            f"unknown `ladder.depth_schedule` {entry.value!r}; known: {known}", line=entry.line
+        ) from None
+
+
 def _config(document: LadderDocument, floor: Library) -> Config:
     """The reference config: the frozen ladder default + this file's overrides (spec CFG)."""
     overrides: dict[str, object] = {}
     for entry in document.config:
         # spec CFG-5 (no duplicate path) is `config-paths-unique`, a SYNTAX check.
+        if entry.path.startswith(_LADDER_SCOPE):
+            continue  # a ladder-scoped setting, not a Config field -- see `_ladder_settings`
         if entry.path == "library" or entry.path.startswith("library."):  # spec CFG-4
             raise LadderFormatError(
                 "`library` is not settable: the `floor` section owns it", line=entry.line

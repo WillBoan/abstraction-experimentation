@@ -1,0 +1,99 @@
+ladder al21-dag-siblings
+
+# ``al21-dag-siblings`` (instrument): the batch's cheap DAG -- two INDEPENDENT branches meeting at
+# the top, over a floor small enough that its whole oracle chain runs in seconds.
+#
+# **Why it exists.** Every al1-al20 ladder is a chain or a near-chain, so four separate places in
+# the ladder machinery could read "the layer above rung i" as ``rungs[i]`` -- the next rung BY LEVEL
+# -- and never be wrong. On a DAG that index names a SIBLING, and the certificate then asks a rung
+# about a dependency that does not exist: ``dae9d2b5-halves-union`` scored its second rung's
+# demonstration health 0.0 for not calling a rung it has no reason to call (fixed 2026-07-26).
+#
+# ``dae9d2b5-halves-union`` is the real-task DAG, but its chain is a multi-hour enumeration, so it
+# cannot guard anything in ``make check``. This ladder is the same SHAPE at a cost CI can pay: the
+# level reading and the consumer-graph reading disagree here, and the test asserts the second.
+#
+# **The shape.** ``mirror_h`` and ``mirror_flip`` are both depth 2 over the bare floor and neither
+# calls the other -- ``mirror_flip`` is level 2 only because levels are file order. Both produce an
+# ``h x 2w`` grid, so the top can stack them. Read by level, rung 1's skip probe would target rung
+# 2's tasks (which says nothing about whether rung 1 is skippable) and rung 2's health would demand
+# it route through rung 1; read by consumer, both probe the top, which is what actually consumes
+# them, and neither has a dependency to route through.
+#
+# **The sandwich**, at the derived schedule ``[2, 2, 2]``: every jump is depth 2, the top over
+# ``L_2`` is depth 2, and every double-jump -- plus the raw top -- is depth 3. A pure instrument:
+# nothing here is a research question, it is a regression guard with a certificate.
+
+# The ladder default's `depth_limit: 2` is already what the derived schedule computes here, so the
+# block states only the pool -- small, because a 4-primitive floor at depth 2 has nowhere to go.
+config {
+    budget.max_pool: 400
+}
+
+floor al21-L0 {
+    use concat_h: (Grid, Grid) -> Grid
+    use concat_v: (Grid, Grid) -> Grid
+    use flip_h:   (Grid) -> Grid
+    use flip_v:   (Grid) -> Grid
+}
+
+rung {
+    mirror_h(g: Grid) -> Grid = concat_h(g, flip_h(g))
+
+    task mirror_h-00 {
+        solution: mirror_h(input)
+        train [[1, 2], [3, 4]]
+        train [[5, 6], [7, 8]]
+        test  [[2, 4], [6, 8]]
+    }
+    task mirror_h-01 {
+        solution: mirror_h(input)
+        train [[2, 3], [4, 5]]
+        train [[6, 7], [8, 9]]
+        test  [[3, 5], [7, 9]]
+    }
+    heldout task mirror_h-heldout-00 {
+        solution: mirror_h(input)
+        train [[3, 4], [5, 6]]
+        train [[7, 8], [9, 1]]
+        test  [[4, 6], [8, 1]]
+    }
+}
+
+rung {
+    mirror_flip(g: Grid) -> Grid = concat_h(flip_v(g), flip_v(g))
+
+    task mirror_flip-00 {
+        solution: mirror_flip(input)
+        train [[1, 3], [5, 7]]
+        train [[2, 4], [6, 8]]
+        test  [[3, 5], [7, 9]]
+    }
+    task mirror_flip-01 {
+        solution: mirror_flip(input)
+        train [[4, 5], [6, 7]]
+        train [[8, 9], [1, 2]]
+        test  [[5, 6], [7, 8]]
+    }
+    heldout task mirror_flip-heldout-00 {
+        solution: mirror_flip(input)
+        train [[9, 8], [7, 6]]
+        train [[5, 4], [3, 2]]
+        test  [[1, 9], [8, 7]]
+    }
+}
+
+top {
+    task top-00 {
+        solution: concat_v(mirror_h(input), mirror_flip(input))
+        train [[1, 2], [3, 4]]
+        train [[5, 6], [7, 8]]
+        test  [[2, 4], [6, 8]]
+    }
+    heldout task top-heldout-00 {
+        solution: concat_v(mirror_h(input), mirror_flip(input))
+        train [[2, 3], [4, 5]]
+        train [[6, 7], [8, 9]]
+        test  [[3, 5], [7, 9]]
+    }
+}

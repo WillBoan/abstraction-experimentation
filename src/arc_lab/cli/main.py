@@ -28,6 +28,7 @@ from . import (
     lint_checks,
     lint_ladder,
     lsp,
+    new_ladder,
     probe_ladder,
     run_study,
     runs,
@@ -83,6 +84,7 @@ app.command(name="learn")(learn.learn)
 app.command(name="run-study")(run_study.run_study_command)
 app.command(name="run-ladder")(ladder.run_ladder_command)
 app.command(name="lint-ladder")(lint_ladder.lint_ladder_command)
+app.command(name="new-ladder")(new_ladder.new_ladder_command)
 app.command(name="lint-checks")(lint_checks.lint_checks_command)
 app.command(name="diff-ladder")(diff_ladder.diff_ladder_command)
 app.command(name="ladder-seeds")(ladder_seeds.ladder_seeds_command)

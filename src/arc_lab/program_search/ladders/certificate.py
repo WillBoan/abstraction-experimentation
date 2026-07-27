@@ -4,10 +4,17 @@ The linter is static; the guarantees that need a search live here (pure reads ov
 ``L_0..L_k`` runs):
 
 - **jump tractable** -- ``L_{i-1}`` search-solves every rung-``i`` demonstrating task;
-- **no skip path** -- ``L_{i-1}`` solves *zero* rung-``(i+1)`` tasks (the top tasks for the last
-  rung), so each rung is genuinely necessary and no unintended shortcut exists;
-- **demonstration health** -- the retained solution actually routes through the rung below (uses
-  ``r_{i-1}``), so what the demonstrations teach is the intended composition.
+- **no skip path** -- ``L_{i-1}`` solves *zero* tasks of the layer that CONSUMES rung ``i``, so each
+  rung is genuinely necessary and no unintended shortcut exists;
+- **demonstration health** -- the retained solution actually routes through the rung's own
+  DEPENDENCIES, so what the demonstrations teach is the intended composition.
+
+Both of the latter read the **consumer graph** (``ladders/graph.py``), never a level offset. "The
+layer above rung ``i``" is the rungs that call it (the top tasks when nothing but the top does), and
+"the rung below" is the rungs its template and demonstrations call. The two readings coincide on a
+chain and diverge on a DAG, where ``rungs[i]`` / ``rungs[i-2]`` name a *sibling* -- for
+``dae9d2b5-halves-union`` (``west`` and ``east`` are independent branches under one top) the level
+reading scored ``east``'s health 0.0 for not calling a rung it has no reason to call.
 
 A ladder is **admitted** to the batch iff every jump is tractable and no skip path exists.
 
@@ -29,7 +36,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from arc_lab.program_search.execution.model.run_record import RunRecord
-from arc_lab.program_search.ladders.spec import LadderSpec
+from arc_lab.program_search.ladders import graph
+from arc_lab.program_search.ladders.spec import Rung
 from arc_lab.program_search.substrate.program import Apply, PrimRef, Program
 
 if TYPE_CHECKING:  # runtime import would cycle: run.py certifies between its two stages
@@ -61,7 +69,8 @@ def certify(result: LadderChainResult) -> LadderCertificate:
     solved_below = {level: _search_solved_ids(rec) for level, rec in result.oracle_chain.items()}
     censored_below = {level: search_censored_ids(rec) for level, rec in result.oracle_chain.items()}
     programs_below = {level: _accepted_programs(rec) for level, rec in result.oracle_chain.items()}
-    k = len(spec.rungs)
+    above_ids = graph.consumer_task_ids(spec.rungs, spec.top)
+    rung_names = [rung.name for rung in spec.rungs]
 
     tractable: dict[int, bool] = {}
     no_skip: dict[int, bool | None] = {}
@@ -72,46 +81,50 @@ def certify(result: LadderChainResult) -> LadderCertificate:
         censored = censored_below[i - 1]
         # A censored task is not a tractable jump: we never showed L_{i-1} can solve it.
         tractable[i] = bool(rung_ids) and all(tid in solved for tid in rung_ids)
-        next_ids = (
-            [demo.task_id for demo in spec.rungs[i].demonstrations]
-            if i < k
-            else list(spec.top.task_ids)
-        )
+        next_ids = above_ids[rung.name]
         if any(tid in solved for tid in next_ids):
             no_skip[i] = False  # a skip path exists -- a real defect, censoring cannot mask it
         elif any(tid in censored for tid in next_ids):
             no_skip[i] = None  # unsolved, but the search was cut short: inconclusive, not a pass
         else:
             no_skip[i] = True
-        health[i] = _demonstration_health(i, rung_ids, solved, programs_below[i - 1], spec)
+        health[i] = _demonstration_health(rung, rung_names, solved, programs_below[i - 1])
     return LadderCertificate(
         tractable_jumps=tractable, no_skip_paths=no_skip, demonstration_health=health
     )
 
 
 def _demonstration_health(
-    level: int,
-    rung_ids: list[str],
+    rung: Rung,
+    rung_names: list[str],
     solved: set[str],
     programs: Mapping[str, Program],
-    spec: LadderSpec,
 ) -> float:
-    """Fraction of a rung's demonstrations that are solved and (for level >= 2) whose retained
-    solution routes through the rung below -- so the demonstration teaches the intended composition,
-    not a shortcut that happens to match."""
-    if not rung_ids:
+    """Fraction of a rung's demonstrations that are solved and whose retained solution routes
+    through that demonstration's own rung DEPENDENCIES -- so the demonstration teaches the intended
+    composition, not a shortcut that happens to match.
+
+    A demonstration's dependencies are the lower rungs its intended program touches: the ones the
+    rung TEMPLATE calls, plus any the demonstration's own wrapper calls around it (rung ``i`` itself
+    excluded -- the search under ``L_{i-1}`` cannot use it, which is the point). When that set is
+    empty the demonstration composes over the bare floor and being solved is the whole claim -- true
+    of every rung-1 demonstration, and on a DAG of any branch rooted at the floor.
+    """
+    demos = rung.demonstrations
+    if not demos:
         return 0.0
-    below_name = spec.rungs[level - 2].name if level >= 2 else None
+    template_deps = graph.rung_calls(rung.template, rung_names)
     healthy = 0
-    for tid in rung_ids:
-        if tid not in solved:
+    for demo in demos:
+        if demo.task_id not in solved:
             continue
-        program = programs.get(tid)
-        if below_name is None:
-            healthy += 1  # rung 1 uses only floor primitives; solved is enough
-        elif program is not None and below_name in _primitive_names(program):
+        wrapper_deps = graph.rung_calls(demo.solution, rung_names) - {rung.name}
+        expected = template_deps | wrapper_deps
+        program = programs.get(demo.task_id)
+        routed = program is not None and expected <= _primitive_names(program)
+        if not expected or routed:  # no dependencies to route through, or it routed through them
             healthy += 1
-    return healthy / len(rung_ids)
+    return healthy / len(demos)
 
 
 def _primitive_names(program: Program) -> set[str]:

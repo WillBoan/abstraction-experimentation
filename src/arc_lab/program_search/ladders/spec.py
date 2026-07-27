@@ -30,6 +30,30 @@ from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.program import Apply, Program
 
 
+class DepthScheduleMode(enum.Enum):
+    """How a ladder's per-level ``depth_limit`` is set -- the ladder's budget REGIME.
+
+    ``DERIVED`` (the default) gives every level of the oracle chain the smallest budget that puts
+    what that level must find in reach: ``L_j`` serves rung ``j+1``, so it carries that rung's
+    ``jump_needs``, and ``L_k`` carries the top's. ``PINNED`` gives every level the reference
+    config's ``budget.depth_limit``, uniformly -- the pre-2026-07-26 regime.
+
+    The distinction is not cosmetic. A uniform budget must be at once deep enough for the DEEPEST
+    jump and shallow enough that the SHALLOWEST double-jump stays out of reach; a ladder whose
+    rungs differ in depth can have no such value, and its validity window comes out empty. Derived
+    budgets dissolve that: each level is judged against its own rung. They are also cheaper, since
+    cost is exponential in ``depth_limit`` and every over-budgeted level was paying for reach it
+    did not use.
+
+    ``PINNED`` remains expressible because for one ladder the uniform budget IS the content:
+    ``al10-skippable`` exists to show a rung made unnecessary by an over-generous budget, which is
+    a phenomenon derived budgets structurally cannot produce.
+    """
+
+    DERIVED = "derived"
+    PINNED = "pinned"
+
+
 class DemonstrationKind(enum.Enum):
     """How a demonstrating task's solution relates to its rung's target abstraction — which is
     exactly the proposer the rung requires (the §2 mapping)."""
@@ -113,6 +137,10 @@ class LadderSpec:
     budgets: tuple[Budget, ...]  # RQ2 sweep; the reference budget must be one of them
     #: Off-spine tasks (LADDER-FORMAT.md DST) -- empty for every ladder but the controls.
     distractors: tuple[Distractor, ...] = ()
+    #: The budget regime (``ladder.depth_schedule`` in the source file). See
+    #: :class:`DepthScheduleMode` -- ``DERIVED`` by default, ``PINNED`` only where the uniform
+    #: budget is the ladder's point.
+    depth_schedule_mode: DepthScheduleMode = DepthScheduleMode.DERIVED
 
     def __post_init__(self) -> None:
         if self.reference_config.learn is None:
@@ -133,6 +161,18 @@ class LadderSpec:
         return oracle_libraries(self.floor(), [(r.name, r.template) for r in self.rungs[:level]])[
             -1
         ]
+
+    def depth_schedule(self) -> tuple[int, ...]:
+        """The ``depth_limit`` each oracle-chain level runs at, ``L_0`` first, ``L_k`` last.
+
+        Derived from the ladder's own structure under :attr:`DepthScheduleMode.DERIVED`, and the
+        pinned value repeated under ``PINNED``. Cheap enough to call directly (it needs the demo
+        targets, not a full lint), but every caller that also lints should read
+        ``LadderShape.depth_schedule`` instead of paying for the unfolds twice.
+        """
+        from arc_lab.program_search.ladders.checks.context import CheckContext
+
+        return CheckContext(self, corpus_backed=False).depth_schedule
 
     def rung_tasks(self, level: int) -> tuple[AnnotatedTask, ...]:
         """The train-corpus entries demonstrating rung ``level`` (resolved by demonstration id)."""
@@ -202,9 +242,17 @@ class LadderSpec:
             "",
             f"- Height: {shape.height} ({k} bridging rungs + top)",
             f"- Floor library: `{floor.name}` ({len(floor.primitives)} primitives)",
-            f"- Pinned `depth_limit` (the reference config's cap -- every sandwich claim below "
-            f"is stated against it): {pinned}",
-            f"- Validity window: `depth_limit` in [{lo}, {hi}] (inclusive)",
+            f"- Depth schedule (`{self.depth_schedule_mode.value}`): the `depth_limit` each "
+            f"oracle-chain level runs at, `L_0` first -- {list(shape.depth_schedule)}. Every "
+            f"sandwich claim below is stated against ITS OWN level's entry.",
+            f"- Pinned `depth_limit` (what the source file states): {pinned}",
+            f"- Uniform validity window: `depth_limit` in [{lo}, {hi}] (inclusive)"
+            + (
+                ""
+                if lo <= hi
+                else " -- EMPTY, i.e. no single budget serves every level. Not a defect under a "
+                "derived schedule; that is the constraint per-level budgets remove."
+            ),
             f"- Raw depth profile (top solutions unfolded to `L_0`): "
             f"{list(shape.raw_depth_profile)}",
         ]
@@ -265,18 +313,40 @@ class LadderSpec:
             rung.name: "/".join(sorted({d.kind.value for d in rung.demonstrations})) or "-"
             for rung in self.rungs
         }
+        # All SIX depth quantities here, where width is free -- `lint-ladder`'s terminal table
+        # keeps the four that carry the claims. Every affordability statement is made in a
+        # `needs` column (`min_depth_limit`); the `d_` columns are the display depths, which
+        # differ only when a lambda body needs its own descended budget.
         rows = [
-            ["level", "rung", "d_i", "needs", "d_tmpl", "double-jump", "fan-in", "demos", "kind"]
+            [
+                "level",
+                "rung",
+                "L_i-1",
+                "d_i",
+                "needs",
+                "d_tmpl",
+                "tmpl needs",
+                "double-jump",
+                "dj needs",
+                "fan-in",
+                "demos",
+                "kind",
+            ]
         ]
         for s in shape.rungs:
             rows.append(
                 [
                     str(s.level),
                     f"`{s.name}`",
+                    str(shape.depth_schedule[s.level - 1])
+                    if s.level - 1 < len(shape.depth_schedule)
+                    else "-",
                     str(s.jump_depth),
                     str(s.jump_needs),
                     str(s.template_depth),
+                    str(s.template_needs),
                     "-" if s.double_jump_depth is None else str(s.double_jump_depth),
+                    "-" if s.double_jump_needs is None else str(s.double_jump_needs),
                     str(s.fan_in),
                     str(s.demonstration_count),
                     kinds.get(s.name, "-"),
@@ -286,8 +356,11 @@ class LadderSpec:
             [
                 "top",
                 "(goal layer)",
+                str(shape.depth_schedule[-1]) if shape.depth_schedule else "-",
                 _span(top_depths),
                 _span(top_needs),
+                "-",
+                "-",
                 "-",
                 "-",
                 _span(top_fan_ins),
@@ -301,6 +374,8 @@ class LadderSpec:
             "",
             *table(rows),
             "",
+            "- `L_i-1`: the `depth_limit` the level BELOW this rung runs at -- the budget every "
+            "claim in this row is stated against (the ladder's depth schedule, above).",
             "- `d_i`: the GENERATION the engine composes this rung's DEEPEST DEMONSTRATION at over "
             "`L_{i-1}`, a leaf being 0 (top row: of the reference solutions over `L_k`). The "
             "demonstration, not the template, because that is what the wake searches for. The "
@@ -320,6 +395,48 @@ class LadderSpec:
             "- `kind`: the demonstration kind DERIVED from each task's solution shape "
             "(LADDER-FORMAT.md DRV-2), not declared anywhere",
         ]
+
+        if shape.breadth:
+            breadth_rows = [["level", "rung", "b1 (full)", "b1 (min)", "ratio", "battery"]]
+            for entry in shape.breadth:
+                ratio = entry.ratio
+                battery = (
+                    ", ".join(
+                        f"{b.type_name}: {b.minted} minted / {b.used} used" for b in entry.battery
+                    )
+                    or "none"
+                )
+                breadth_rows.append(
+                    [
+                        str(entry.level),
+                        f"`{entry.name}`",
+                        f"{entry.b1_full:,}",
+                        f"{entry.b1_min:,}",
+                        "-" if ratio is None else f"{ratio:,.1f}x",
+                        battery,
+                    ]
+                )
+            lines += [
+                "",
+                "## Floor breadth (round 1)",
+                "",
+                *table(breadth_rows),
+                "",
+                "- `b1`: candidates the FIRST composition round builds -- the typed-census model "
+                "the cost forecaster uses, so variadic arities and polymorphic slots count exactly "
+                "as the engine counts them.",
+                "- `b1 (min)`: the same round with the library cut to the primitives this rung's "
+                "demonstration references AND the constants cut to the values it uses. The "
+                "irreducible width of this rung on this floor.",
+                "- **An indicator, not a prediction.** Round 1 is exact and UNDERSTATES badly, "
+                "because the tax compounds with depth: `dae9d2b5-halves-union` r_1 reads 1,211x "
+                "here and MEASURED ~5.3e6 at depth 3 -- round 1 understated it ~4,000-fold. Use "
+                "these to rank floors and to compare a ladder against itself; only "
+                "`arc-lab probe-ladder` measures.",
+                "- `battery`: constant leaves minted per type, against how many this rung uses. "
+                "Minting is gated on whether ANY floor primitive mentions the type, so one "
+                "colour-taking primitive buys every rung the full ten-colour battery.",
+            ]
 
         lines += ["", "## Top Rung (goal layer -- nothing is minted here)", ""]
         for (tid, _), d_top, need_top in zip(top_pairs, top_depths, top_needs, strict=True):

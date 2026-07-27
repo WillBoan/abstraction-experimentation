@@ -1,0 +1,47 @@
+{
+  "name": "al21-dag-siblings",
+  "note": "Generated from al21-dag-siblings.ladder",
+  "content_hash": "cc1e9d067183e6d7",
+  "tasks": [
+    {
+      "task_id": "mirror_h-00",
+      "label": "mirror_h",
+      "split": "train"
+    },
+    {
+      "task_id": "mirror_h-01",
+      "label": "mirror_h",
+      "split": "train"
+    },
+    {
+      "task_id": "mirror_h-heldout-00",
+      "label": "mirror_h",
+      "split": "heldout"
+    },
+    {
+      "task_id": "mirror_flip-00",
+      "label": "mirror_flip",
+      "split": "train"
+    },
+    {
+      "task_id": "mirror_flip-01",
+      "label": "mirror_flip",
+      "split": "train"
+    },
+    {
+      "task_id": "mirror_flip-heldout-00",
+      "label": "mirror_flip",
+      "split": "heldout"
+    },
+    {
+      "task_id": "top-00",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "top-heldout-00",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

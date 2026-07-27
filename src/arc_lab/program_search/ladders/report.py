@@ -18,8 +18,10 @@ from typing import Any
 
 from arc_lab.program_search.analysis.behavioral import MAX_PROBE_COMBOS, matches_target
 from arc_lab.program_search.execution.model.run_record import RunRecord
+from arc_lab.program_search.ladders import graph
 from arc_lab.program_search.ladders._render import table
 from arc_lab.program_search.ladders.certificate import search_censored_ids
+from arc_lab.program_search.ladders.compromise import compromises_in
 from arc_lab.program_search.ladders.run import LadderResult
 from arc_lab.program_search.substrate.abstraction import make_abstraction
 
@@ -198,12 +200,10 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
     # / cost(layer above | L_i). The numerator is usually CENSORED (the layer above is unsolved at
     # L_{i-1} by design -- that is the double-jump claim), so the ratio is a lower bound.
     rung_value: list[dict[str, object]] = []
+    consumers = graph.consumer_graph(spec.rungs, spec.top)
+    consumer_ids = graph.consumer_task_ids(spec.rungs, spec.top)
     for i, rung in enumerate(spec.rungs, start=1):
-        above_ids = (
-            [demo.task_id for demo in spec.rungs[i].demonstrations]
-            if i < k
-            else list(spec.top.task_ids)
-        )
+        above_ids = consumer_ids[rung.name]
         below = sum(considered[i - 1].get(tid, 0) for tid in above_ids)
         at = sum(considered[i].get(tid, 0) for tid in above_ids)
         censored = not all(tid in solved[i - 1] for tid in above_ids)
@@ -216,7 +216,12 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
         rung_value.append(
             {
                 "rung": rung.name,
-                "layer_above": "top" if i == k else spec.rungs[i].name,
+                # Named from the consumer graph, not the level: on a DAG a rung's layer above may
+                # be several rungs, or the top directly (`graph.consumer_task_ids`).
+                "layer_above": ", ".join(
+                    cid for cid in consumers[rung.name] if not cid.startswith("top:")
+                )
+                or "top",
                 "cost_without_rung": below,
                 "cost_with_rung": at,
                 "ratio": (below / at) if at else None,
@@ -278,6 +283,21 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
             if spec.reference_config.learn is not None
             else None
         ),
+        # Every Compromise Option this run is under, DETECTED from the config rather than declared
+        # (`ladders/compromise.py`) -- a label you must remember to set is the one that gets
+        # forgotten, and an unlabelled compromised number is how an assisted measurement ends up
+        # compared against an honest one.
+        "compromises": [
+            {
+                "code": option.code,
+                "label": option.label,
+                "saves": option.saves,
+                "forfeits": option.forfeits,
+                "when_justified": option.when_justified,
+                "severity": option.severity,
+            }
+            for option in compromises_in(spec.reference_config)
+        ],
         "climb_trace": climb,
         "rung_recovery": recovery,
         "probe_cap": MAX_PROBE_COMBOS,
@@ -396,15 +416,32 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
             "arms only): `arc-lab run-ladder <name> --climb-rejected`.",
         ]
 
-    schedule = report.get("wake_schedule")
-    if isinstance(schedule, str) and schedule != "full":
+    # Compromise Options, banner-first: every number below this point was produced under them, so
+    # the label must precede the numbers rather than sit in a footnote (`ladders/compromise.py`).
+    options = report.get("compromises") or []
+    if isinstance(options, list) and options:
+        voids = [o for o in options if isinstance(o, dict) and o.get("severity") == "voids-cost"]
         lines += [
             "",
-            f"> **ARM LABEL: wake schedule `{schedule}`** -- the climb's end-to-end cost, "
-            "loop-overhead factor, and what sleep saw were measured under assistance "
-            "(design doc 3.7). Do not compare them against full-wake cells; recovery claims "
-            "need an honest `full` cell too.",
+            f"> **COMPROMISE OPTIONS IN EFFECT ({len(options)}).** This run traded cost for "
+            "claim strength. Every figure below is qualified by these, and must carry the label "
+            "wherever it is quoted:",
         ]
+        for option in options:
+            if not isinstance(option, dict):
+                continue
+            lines.append(
+                f"> - **`{option.get('code')}`** ({option.get('label')}) -- "
+                f"saves: {option.get('saves')}. FORFEITS: {option.get('forfeits')}."
+            )
+        if voids:
+            lines.append("> ")
+            lines.append(
+                "> **Cost comparisons in this report are VOID.** At least one option above "
+                "(`" + "`, `".join(str(o.get("code")) for o in voids) + "`) makes the measured "
+                "spend a fact about a search nobody could have run. Learnability readings "
+                "(recovery / junk / cascade) still stand."
+            )
 
     climb_rows = [["iter", "wake solved", "considered (all tasks)", "minted", "converged"]]
     for entry in report.get("climb_trace") or []:

@@ -6,13 +6,14 @@ Derived from `al8-lean-perceiver.ladder` (in `program_search/ladders/registry/`)
 
 - Height: 4 (3 bridging rungs + top)
 - Floor library: `al8-L0` (5 primitives)
-- Pinned `depth_limit` (the reference config's cap -- every sandwich claim below is stated against it): 3
-- Validity window: `depth_limit` in [3, 3] (inclusive)
+- Depth schedule (`derived`): the `depth_limit` each oracle-chain level runs at, `L_0` first -- [3, 3, 3, 2]. Every sandwich claim below is stated against ITS OWN level's entry.
+- Pinned `depth_limit` (what the source file states): 3
+- Uniform validity window: `depth_limit` in [3, 3] (inclusive)
 - Raw depth profile (top solutions unfolded to `L_0`): [8]
 
 ## Verification
 
-- Static lint (what this file asserts): **OK** -- 81 checks (errors: 0, warnings: 5)
+- Static lint (what this file asserts): **OK** -- 78 checks (errors: 0, warnings: 5)
   - warn `constant-subterm[swap_ext-00]`: train-constant subterms (fictional depth; value not mintable here): least_common_color(input)=2
   - warn `constant-subterm[swap_mir-00]`: train-constant subterms (fictional depth; value not mintable here): most_common_color(input)=1
   - warn `constant-subterm[swap_stk-00]`: train-constant subterms (fictional depth; value not mintable here): most_common_color(flip_v(input))=2, most_common_color(input)=2
@@ -32,18 +33,33 @@ Derived from `al8-lean-perceiver.ladder` (in `program_search/ladders/registry/`)
 
 ## Rung spine
 
-| level | rung         | d_i | needs | double-jump | fan-in | demos | kind          |
-| ----- | ------------ | --- | ----- | ----------- | ------ | ----- | ------------- |
-| 1     | `swap_ext`   | 3   | 3     | 5           | 0      | 2     | full_solution |
-| 2     | `swap_mir`   | 3   | 3     | 5           | 1      | 2     | full_solution |
-| 3     | `swap_stk`   | 3   | 3     | 4           | 1      | 2     | full_solution |
-| top   | (goal layer) | 2   | 2     | -           | 1      | 1     | -             |
+| level | rung         | L_i-1 | d_i | needs | d_tmpl | tmpl needs | double-jump | dj needs | fan-in | demos | kind          |
+| ----- | ------------ | ----- | --- | ----- | ------ | ---------- | ----------- | -------- | ------ | ----- | ------------- |
+| 1     | `swap_ext`   | 3     | 3   | 3     | 3      | 3          | 5           | 5        | 0      | 2     | full_solution |
+| 2     | `swap_mir`   | 3     | 3   | 3     | 3      | 3          | 5           | 5        | 1      | 2     | full_solution |
+| 3     | `swap_stk`   | 3     | 3   | 3     | 3      | 3          | 4           | 4        | 1      | 2     | full_solution |
+| top   | (goal layer) | 2     | 2   | 2     | -      | -          | -           | -        | 1      | 1     | -             |
 
-- `d_i`: the GENERATION the engine composes the template at over `L_{i-1}`, a leaf being 0 (top row: of the reference solutions over `L_k`). The design doc's jump depth, and the unit `solved_at_generation` reports in.
-- `needs`: the smallest `depth_limit` that puts it in REACH -- the quantity every affordability claim above is stated in. Equal to `d_i` for a first-order template; larger when a lambda body needs its own descended budget (`analysis/depth.py`).
-- `double-jump`: depth of the layer above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
+- `L_i-1`: the `depth_limit` the level BELOW this rung runs at -- the budget every claim in this row is stated against (the ladder's depth schedule, above).
+- `d_i`: the GENERATION the engine composes this rung's DEEPEST DEMONSTRATION at over `L_{i-1}`, a leaf being 0 (top row: of the reference solutions over `L_k`). The demonstration, not the template, because that is what the wake searches for. The design doc's jump depth, and the unit `solved_at_generation` reports in.
+- `needs`: the smallest `depth_limit` that puts it in REACH -- the quantity every affordability claim above, and the validity window, is stated in. Equal to `d_i` for a first-order target; larger when a lambda body needs its own descended budget (`analysis/depth.py`).
+- `d_tmpl`: depth of the rung TEMPLATE -- what sleep has to mint. Equals `d_i` unless a demonstration WRAPS the rung (any non-Grid rung must be wrapped, since a task solution has to produce a Grid), which costs `d_tmpl + (wrapper depth - 1)`.
+- `double-jump`: depth of the shallowest consumer TARGET above with this rung inlined -- what skipping this rung would cost in depth (for the last rung, from the top solutions)
 - `fan-in`: calls to any lower rung, with multiplicity; floor calls don't count (design doc, section 2)
 - `kind`: the demonstration kind DERIVED from each task's solution shape (LADDER-FORMAT.md DRV-2), not declared anywhere
+
+## Floor breadth (round 1)
+
+| level | rung       | b1 (full) | b1 (min) | ratio | battery |
+| ----- | ---------- | --------- | -------- | ----- | ------- |
+| 1     | `swap_ext` | 4         | 2        | 2.0x  | none    |
+| 2     | `swap_mir` | 5         | 4        | 1.2x  | none    |
+| 3     | `swap_stk` | 6         | 5        | 1.2x  | none    |
+
+- `b1`: candidates the FIRST composition round builds -- the typed-census model the cost forecaster uses, so variadic arities and polymorphic slots count exactly as the engine counts them.
+- `b1 (min)`: the same round with the library cut to the primitives this rung's demonstration references AND the constants cut to the values it uses. The irreducible width of this rung on this floor.
+- **An indicator, not a prediction.** Round 1 is exact and UNDERSTATES badly, because the tax compounds with depth: `dae9d2b5-halves-union` r_1 reads 1,211x here and MEASURED ~5.3e6 at depth 3 -- round 1 understated it ~4,000-fold. Use these to rank floors and to compare a ladder against itself; only `arc-lab probe-ladder` measures.
+- `battery`: constant leaves minted per type, against how many this rung uses. Minting is gated on whether ANY floor primitive mentions the type, so one colour-taking primitive buys every rung the full ten-colour battery.
 
 ## Top Rung (goal layer -- nothing is minted here)
 
@@ -81,3 +97,12 @@ The frozen ladder default with the source file's `config` block applied -- the e
   - early_stop: `True`
   - reset_programs_each_wake: `True`
   - score_each_wake: `False`
+  - wake_schedule: `full`
+  - curriculum: `None`
+
+al8-lean-perceiver: OK -- 78 checks (0 errors, 5 warnings)
+  warn  constant-subterm[swap_ext-00]: train-constant subterms (fictional depth; value not mintable here): least_common_color(input)=2
+  warn  constant-subterm[swap_mir-00]: train-constant subterms (fictional depth; value not mintable here): most_common_color(input)=1
+  warn  constant-subterm[swap_stk-00]: train-constant subterms (fictional depth; value not mintable here): most_common_color(flip_v(input))=2, most_common_color(input)=2
+  warn  constant-subterm[top-00]: train-constant subterms (fictional depth; value not mintable here): least_common_color(flip_h(input))=1, least_common_color(input)=1
+  warn  not-all-telescope: every rung has fan-in 1 (a pure telescope)

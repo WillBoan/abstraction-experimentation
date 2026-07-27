@@ -2,11 +2,17 @@
 
 Lint asks "is this a sound ladder on paper?"; the certificate asks "did the whole ladder behave
 that way?" — but the certificate's unit of feedback is a ladder, and its cost is a full climb plus
-the oracle chain. The probe puts the same questions to ONE rung cell, in process, in seconds,
-before a testbed or a run record exists. That is what makes ladder design an inner loop: edit the
-`.ladder` file, probe the rung, edit again.
+the oracle chain. The probe puts the same questions to ONE rung cell. That is what makes ladder
+design an inner loop: edit the `.ladder` file, probe the rung, edit again.
 
-Four questions per rung ``r_i``, all against the real ``SearchEngine`` at the pinned budget:
+Each cell is an ordinary **recorded run** (``execute()``, one single-task corpus under
+``PROBE_CORPUS_PREFIX``), so it caches, resumes after a crash, and can be read back afterwards —
+and so the probe cannot drift away from the search the climb performs, because it IS that search.
+``arc-lab runs`` hides these by default (``--probes`` to see them): a cell is design-time scratch,
+not a result. What the probe still does NOT do is write a ladder artifact or gate anything.
+
+Five questions per rung ``r_i``, all against the real ``SearchEngine`` at the budget that rung's
+level runs at (``LadderSpec.depth_schedule``, not one pinned number):
 
 1. **Wake** — do ``r_i``'s demonstrations solve from ``L_{i-1}``, and is what search RETAINS the
    intended program? A cheaper retained program is the collapse the depth sandwich cannot see;
@@ -24,31 +30,50 @@ Four questions per rung ``r_i``, all against the real ``SearchEngine`` at the pi
    alongside :class:`Saturation`: whether the rounds this cell already pays for compose anything
    at all, or whether ``max_pool`` has made its depth setting decorative.
 
-Asymmetry worth stating: a clean probe does not guarantee the ladder certifies (the climb pays
-each jump under a library inflated by earlier mints, and cross-rung interactions are invisible
-here), but a dirty probe is proof it will not. The probe convicts; only the certificate acquits.
+5. **Floor tax** — the same wake search run a second time on a library PRUNED to what the rung's
+   program references, so the two cells differ only in breadth (:class:`FloorTax`). This is the
+   axis the depth sandwich cannot see: on ``dae9d2b5-halves-union`` rung 1 the pruned cell costs 4
+   considered and the full one 21,149,854, and the difference is entirely primitives and constants
+   the rung never touches. The extra cell is the CHEAP one, so this is on by default.
+
+Asymmetry worth stating, and worth stating loudly because it was violated in practice (2026-07-25:
+six escalating guard runs, over an hour, trying to turn INCONCLUSIVE into a pass): a clean probe
+does not guarantee the ladder certifies (the climb pays each jump under a library inflated by
+earlier mints, and cross-rung interactions are invisible here), but a dirty probe is proof it will
+not. **The probe convicts; only the certificate acquits.** An INCONCLUSIVE cell is therefore a
+non-result BY DESIGN, not a defect to tune away — raising ``--guard`` buys a longer search, never a
+stronger verdict. When a cell is inconclusive and the answer matters, run ``run-ladder``.
+
+Its cost tracks the enumeration it drives: cheap on a lean floor, minutes on a fat one. ``lint``
+settles statically, in ~1s, everything it can see — including the breadth census
+(``ladders/breadth.py``) that usually explains a fat cell before it is ever run. Lint first.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
+from pathlib import Path
 
+from arc_lab.core.dataset import Corpus
 from arc_lab.core.grid import Grid
 from arc_lab.core.task import Task
 from arc_lab.program_search.analysis.behavioral import matches_target
 from arc_lab.program_search.analysis.compression import SolvedTask
 from arc_lab.program_search.analysis.depth import compositional_depth
 from arc_lab.program_search.analysis.grids import discriminating_grids
+from arc_lab.program_search.execution.execute import execute, search_result_from_row
 from arc_lab.program_search.execution.forecast_cost import (
     DEFAULT_SURVIVAL,
     forecast_cost,
     survival_from,
 )
+from arc_lab.program_search.execution.model.run_spec import RunSpec
 from arc_lab.program_search.ladders import graph
 from arc_lab.program_search.ladders._render import table
 from arc_lab.program_search.ladders.spec import LadderSpec
 from arc_lab.program_search.search.budget import Budget
-from arc_lab.program_search.search.search_result import SearchResult
+from arc_lab.program_search.search.search_result import SearchResult, SearchStats
 from arc_lab.program_search.substrate.abstraction import make_abstraction, unfold_program
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.program import Program
@@ -99,6 +124,66 @@ class MintProbe:
     @property
     def arity_matches(self) -> bool:
         return self.minted_arity == self.intended_arity
+
+
+@dataclass(frozen=True, slots=True)
+class FloorTax:
+    """What the rung's search paid for vocabulary it never used -- the BREADTH axis, measured.
+
+    Two cells of the same task, same budget, same engine; only the library differs.
+
+    - **pruned**: ``L_{i-1}`` cut to the primitives the rung's intended program actually references.
+      Constants shrink with it for free -- ``leaves.policy_constants`` gates each base type on
+      ``_type_in_use(type, library)``, so dropping the only ``COLOR``-taking primitive stops the
+      whole ``COLOR`` battery being minted. This is an ORACLE cell (it reads the answer), so it can
+      never be the run's machinery; what it can do is PRICE the floor.
+    - **full**: ``L_{i-1}`` as the climb will really have it.
+
+    The diagnostic split, which is the point:
+
+    - pruned CENSORS -> the rung's own search is too expensive. Redesign the rung; a leaner floor
+      will not save it.
+    - pruned clean, full CENSORS -> the FLOOR is too broad. The rung is fine; its neighbours are
+      not, and ``by_primitive`` says which.
+    - both clean -> proceed, and :attr:`ratio` is the tax worth recording.
+
+    Measured on ``dae9d2b5-halves-union`` rung 1 (2026-07-25): 4 considered pruned, 21,149,854 full
+    -- a ratio of ~5.3e6, with ``map_color``/``overlay``/``__const__`` (none of which the rung uses)
+    carrying ~100% of the full cell. That number is why this is measured rather than assumed.
+
+    A BOUND, not the floor: pruning is by primitive, so a surviving primitive still mints its whole
+    typed constant battery even where the rung needs one value of it. ``LadderShape.breadth`` prices
+    that remaining headroom exactly, without running anything.
+    """
+
+    task_id: str
+    pruned_considered: int
+    pruned_censored: bool
+    #: ``None`` when the pruned cell censored -- the full cell is not run, because the pruned one
+    #: has already convicted and the full one can only cost more.
+    full_considered: int | None
+    full_censored: bool
+    #: Primitive names the pruned cell kept, sorted -- what the rung actually needs.
+    kept: tuple[str, ...]
+    #: Primitive names dropped, sorted -- what it was paying for.
+    dropped: tuple[str, ...]
+    #: Top ``(primitive, considered, share)`` contributors to the FULL cell, worst first.
+    full_by_primitive: tuple[tuple[str, int, float], ...] = ()
+
+    @property
+    def ratio(self) -> float | None:
+        """``full / pruned`` -- the floor tax as a factor. ``None`` if either cell is missing."""
+        if self.full_considered is None or self.pruned_considered <= 0:
+            return None
+        return self.full_considered / self.pruned_considered
+
+    @property
+    def diagnosis(self) -> str:
+        if self.pruned_censored:
+            return "rung-too-expensive"
+        if self.full_censored:
+            return "floor-too-broad"
+        return "clean"
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,6 +241,9 @@ class RungProbe:
     mint: MintProbe | None
     deeper: DepthForecast | None
     saturation: Saturation | None = None
+    #: The breadth reading: what this rung's search paid for vocabulary it never used. ``None``
+    #: when the rung has no resolvable demonstration to prune against.
+    floor_tax: FloorTax | None = None
 
     @property
     def wake_ok(self) -> bool:
@@ -199,7 +287,10 @@ class RungProbe:
                 )
             elif probe.verdict == INCONCLUSIVE:
                 lines.append(
-                    f"skip {probe.task_id}: INCONCLUSIVE — censored, so unsolved proves nothing"
+                    f"skip {probe.task_id}: INCONCLUSIVE — the search was censored, so "
+                    '"unsolved" is a budget fact, not a verdict. This is a NON-RESULT BY '
+                    "DESIGN, not a defect to tune away: raising the guard cannot turn it into "
+                    "an acquittal, only into a longer wait. `run-ladder` is the authority."
                 )
         if self.mint is not None and not self.mint.recovered:
             lines.append(
@@ -248,6 +339,35 @@ class RungProbe:
                 f"~{self.deeper.total_considered:,} considered, calibrated on this cell's funnel"
                 + (f"; dominated by {self.deeper.dominant}" if self.deeper.dominant else "")
             )
+        tax = self.floor_tax
+        if tax is not None:
+            ratio = tax.ratio
+            lines += [
+                "",
+                f"- floor tax ({tax.task_id}): pruned {tax.pruned_considered:,} vs full "
+                f"{'censored' if tax.full_considered is None else f'{tax.full_considered:,}'}"
+                + (f" = **{ratio:,.0f}x**" if ratio is not None and ratio >= 2 else "")
+                + f" [{tax.diagnosis}]",
+                f"  kept {list(tax.kept)}; dropped {list(tax.dropped)}",
+            ]
+            if tax.full_by_primitive:
+                shares = ", ".join(
+                    f"{name} {count:,} ({share:.1%})"
+                    for name, count, share in tax.full_by_primitive
+                )
+                lines.append(
+                    f"  full spend by primitive (shares OVERLAP, not a partition): {shares}"
+                )
+            if tax.diagnosis == "rung-too-expensive":
+                lines.append(
+                    "  ! the PRUNED cell censored: this rung's own search is too expensive. "
+                    "A leaner floor will not save it -- redesign the rung."
+                )
+            elif tax.diagnosis == "floor-too-broad":
+                lines.append(
+                    "  ! the pruned cell is clean and the FULL cell censored: the rung is fine, "
+                    "the floor is too broad. The dropped primitives above are the bill."
+                )
         saturation = self.saturation
         if saturation is not None and saturation.saturated:
             lines.append(
@@ -261,17 +381,32 @@ class RungProbe:
         return "\n".join(lines)
 
 
-def probe_ladder(spec: LadderSpec, *, budget: Budget | None = None) -> tuple[RungProbe, ...]:
+def probe_ladder(
+    spec: LadderSpec, *, budget: Budget | None = None, runs_root: Path | None = None
+) -> tuple[RungProbe, ...]:
     """Probe every bridging rung of ``spec``, bottom-up."""
-    return tuple(probe_rung(spec, level, budget=budget) for level in range(1, len(spec.rungs) + 1))
+    return tuple(
+        probe_rung(spec, level, budget=budget, runs_root=runs_root)
+        for level in range(1, len(spec.rungs) + 1)
+    )
 
 
-def probe_rung(spec: LadderSpec, level: int, *, budget: Budget | None = None) -> RungProbe:
+def probe_rung(
+    spec: LadderSpec, level: int, *, budget: Budget | None = None, runs_root: Path | None = None
+) -> RungProbe:
     """Probe rung ``level``: wake + collision, skip, sleep, forecast — all under ``L_{level-1}``."""
     rung = spec.rungs[level - 1]
     below = spec.oracle_library(level - 1)
     at = spec.oracle_library(level)
-    effective = budget if budget is not None else spec.reference_config.budget
+    # The probe drives the REAL engine at the budget the climb will use, so it must honour the
+    # ladder's depth schedule: level-1's search runs at this rung's own `depth_limit`, not at one
+    # pinned number (`spec.DepthScheduleMode`). An explicit `budget` overrides outright -- it is
+    # the caller saying "measure this cell", not "measure the ladder".
+    effective = budget
+    if effective is None:
+        effective = replace(
+            spec.reference_config.budget, depth_limit=spec.depth_schedule()[level - 1]
+        )
     by_id = {entry.task.task_id: entry for entry in spec.train_corpus.entries}
 
     demos = [(d.task_id, d.solution) for d in rung.demonstrations if d.task_id in by_id]
@@ -280,9 +415,10 @@ def probe_rung(spec: LadderSpec, level: int, *, budget: Budget | None = None) ->
     wake: list[TaskProbe] = []
     solved: list[SolvedTask] = []
     observed: tuple[Task, SearchResult] | None = None
+    floor_tax: FloorTax | None = None
     for task_id, stated in demos:
         entry = by_id[task_id]
-        result = _search(spec, entry.task, below, effective)
+        result = _search(spec, entry.task, below, effective, runs_root=runs_root)
         # What the ladder CLAIMS this task costs from L_{level-1}: the stated solution with this
         # rung's call sites expanded (the rung does not exist in the searched library).
         intended = unfold_program(stated, at, expand=frozenset({rung.name}))
@@ -291,6 +427,14 @@ def probe_rung(spec: LadderSpec, level: int, *, budget: Budget | None = None) ->
             solved.append(SolvedTask(annotated=entry, program=result.ranked_programs[0]))
         if observed is None:
             observed = (entry.task, result)
+        if floor_tax is None:
+            # Priced on ONE demonstration -- the first. The floor tax is a property of the LIBRARY,
+            # not of which grids it is searched against, so a second reading would buy another
+            # full-floor enumeration to say the same thing. The full cell is the wake search that
+            # just ran, so the extra cost here is exactly one PRUNED search (the cheap one).
+            floor_tax = _floor_tax(
+                spec, entry.task, intended, below, effective, result, runs_root=runs_root
+            )
 
     # Skip targets are this rung's CONSUMERS, not the next rung by level. For a chain the only
     # consumer is the immediate successor -- and r_k's consumers are the top tasks -- so this is
@@ -311,7 +455,7 @@ def probe_rung(spec: LadderSpec, level: int, *, budget: Budget | None = None) ->
         above_entry = by_id.get(task_id)
         if above_entry is None:
             continue
-        result = _search(spec, above_entry.task, below, effective)
+        result = _search(spec, above_entry.task, below, effective, runs_root=runs_root)
         found = result.ranked_programs[0] if result.ranked_programs else None
         verdict = (
             SKIP_PATH if found is not None else (INCONCLUSIVE if result.stats.censored else NO_SKIP)
@@ -337,6 +481,7 @@ def probe_rung(spec: LadderSpec, level: int, *, budget: Budget | None = None) ->
         mint=_probe_sleep(spec, rung.name, rung.template, below, tuple(solved), probe_grids),
         deeper=_forecast_deeper(spec, below, effective, observed),
         saturation=_saturation(effective, observed),
+        floor_tax=floor_tax,
     )
 
 
@@ -372,15 +517,123 @@ def _saturation(budget: Budget, observed: tuple[Task, SearchResult] | None) -> S
     )
 
 
-def _search(spec: LadderSpec, task: Task, library: Library, budget: Budget) -> SearchResult:
-    config = spec.reference_config
-    return config.search_engine.run(
-        train_examples=task.train,
-        library=library,
-        constraints=config.constraints,
-        cost=config.cost,
-        budget=budget,
+def prune_library(library: Library, program: Program) -> Library:
+    """``library`` cut to the primitives ``program`` references -- the ORACLE floor for that program.
+
+    Constants shrink with it and need no separate pass: ``leaves.policy_constants`` gates each base
+    type on ``_type_in_use(type, library)``, so a type no surviving primitive mentions stops being
+    minted at all. That is the whole of the 2026-07-25 "3 primitives, zero constants" cell.
+
+    An oracle by construction (it reads the answer), so it can price a floor and size a guard --
+    never drive a real run.
+    """
+    wanted = _referenced_primitives(program)
+    kept = tuple(p for p in library.primitives if p.name in wanted)
+    return Library(name=f"{library.name}:pruned", primitives=kept, version=library.version)
+
+
+def _referenced_primitives(program: Program) -> frozenset[str]:
+    """Every primitive name the program applies or references by name."""
+    from arc_lab.program_search.substrate.program import Apply, PrimRef
+
+    names: set[str] = set()
+    for node in program.walk():
+        if isinstance(node, Apply):
+            names.add(node.primitive)
+        elif isinstance(node, PrimRef):
+            names.add(node.name)
+    return frozenset(names)
+
+
+def _floor_tax(
+    spec: LadderSpec,
+    task: Task,
+    intended: Program,
+    below: Library,
+    budget: Budget,
+    full: SearchResult,
+    *,
+    runs_root: Path | None = None,
+) -> FloorTax:
+    """Price this rung's floor from its two cells.
+
+    ``full`` is passed in rather than searched again: it is the wake probe's own result, so the
+    reading costs exactly one extra PRUNED search -- the cheap cell by many orders of magnitude,
+    which is what makes this affordable to do on every rung by default rather than on request.
+    """
+    pruned_lib = prune_library(below, intended)
+    pruned = _search(spec, task, pruned_lib, budget, runs_root=runs_root)
+    return FloorTax(
+        task_id=task.task_id,
+        pruned_considered=pruned.stats.considered,
+        pruned_censored=pruned.stats.censored,
+        full_considered=full.stats.considered,
+        full_censored=full.stats.censored,
+        kept=tuple(sorted(pruned_lib.names())),
+        dropped=tuple(sorted(set(below.names()) - set(pruned_lib.names()))),
+        full_by_primitive=top_contributors(full),
     )
+
+
+def top_contributors(result: SearchResult, limit: int = 6) -> tuple[tuple[str, int, float], ...]:
+    """``(primitive, considered, share)`` for the biggest contributors, worst first.
+
+    Shares OVERLAP and do not sum to 1: one composition is counted in every bucket it touches, so a
+    depth-3 program built from three primitives appears three times. Read them as "what fraction of
+    the spend involved this primitive", never as a partition -- the 2026-07-25 attribution had three
+    primitives at ~100% each, which is informative and not a bug.
+    """
+    total = result.stats.considered
+    if total <= 0:
+        return ()
+    counts = {
+        name: sum(buckets.values())
+        for name, buckets in result.stats.by_primitive.items()
+        if isinstance(buckets, Mapping)
+    }
+    ranked = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:limit]
+    return tuple((name, count, count / total) for name, count in ranked)
+
+
+#: Corpus-name prefix every probe cell carries. One namespace, so ``arc-lab runs`` can keep the
+#: ledger readable (it hides these unless asked) and a sweep of design-time scratch is one glob.
+PROBE_CORPUS_PREFIX = "probe:"
+
+
+def _search(
+    spec: LadderSpec,
+    task: Task,
+    library: Library,
+    budget: Budget,
+    *,
+    runs_root: Path | None = None,
+) -> SearchResult:
+    """One probe cell, as a RECORDED RUN -- cached, crash-safe, and inspectable afterwards.
+
+    The probe's claim is that it drives the real engine; that is only true if it goes through the
+    real execution path, and it used to spell out ``engine.run(...)`` itself so the two could drift
+    (their agreement was checked once, 2026-07-22, and never again). Going through ``execute()``
+    makes drift impossible AND buys what any other run gets: a re-probe of an unchanged rung is a
+    cache hit rather than a fresh enumeration, a crash mid-cell resumes, and the cell's funnel is
+    still there tomorrow.
+
+    The result is rebuilt from the recorded trace (``execute.search_result_from_row``) rather than
+    returned by the engine directly -- so what the probe reports is exactly what was WRITTEN DOWN,
+    and a lossy field in that serialisation shows up as a wrong probe verdict rather than as an
+    invisible discrepancy. ``test_probe_seam.py`` pins the round trip field by field.
+
+    Each cell is its own single-task corpus under :data:`PROBE_CORPUS_PREFIX`, because a cell is
+    exactly "this task, this library, this budget" and one run per cell is what makes them
+    individually cacheable.
+    """
+    corpus = Corpus.of(f"{PROBE_CORPUS_PREFIX}{spec.name}:{library.name}:{task.task_id}", [task])
+    config = spec.reference_config.with_(library=library, budget=budget, learn=None)
+    record = execute(RunSpec(config=config, corpus=corpus), runs_root=runs_root)
+    row = next((r for r in record.trace_rows() if r.get("task_id") == task.task_id), None)
+    result = search_result_from_row(row) if row is not None else None
+    if result is None:  # the task errored inside the run; report it as an empty, uncensored cell
+        return SearchResult(ranked_programs=(), stats=SearchStats(engine=""))
+    return result
 
 
 def _grade_wake(

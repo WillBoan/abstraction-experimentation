@@ -164,7 +164,7 @@ def conditional_verdicts(
 def rewrite_verdicts(
     rung_consumers: Sequence[tuple[str, Sequence[tuple[str, Program]]]],
     libraries: Sequence[Library],
-    depth_limit: int,
+    depth_limits: Sequence[int],
     probe_inputs: Mapping[str, tuple[Grid, ...]],
     limits: RewriteLimits | None = None,
 ) -> tuple[Verdict, ...]:
@@ -191,12 +191,15 @@ def rewrite_verdicts(
     order -- targets arrive PRE-UNFOLDED to the floor (the caller's shared cache owns the expensive
     unfolds; al14's top is millions of node occurrences). ``libraries`` is ``L_0..L_k``;
     ``probe_inputs`` maps a rung name (its demos' train inputs) or a top task id to grids.
+    ``depth_limits`` is one budget per rung in level order -- the budget the ``L_{i-1}`` search
+    actually runs at, which under a derived depth schedule differs level to level.
     """
     active_limits = limits if limits is not None else RewriteLimits()
     full_lib = libraries[-1]
     verdicts: list[Verdict] = []
     for i, (skipped_name, consumers) in enumerate(rung_consumers, start=1):
         skip_library = libraries[i - 1]
+        depth_limit = depth_limits[i - 1]
         # ONE verdict per consumer, not per target: a consumer rung contributes a target per
         # demonstration (the same program with its parameters bound to different literals), and
         # those are one claim about one consumer, not several. The first confirmed witness convicts.
