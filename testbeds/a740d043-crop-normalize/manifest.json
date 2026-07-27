@@ -1,0 +1,32 @@
+{
+  "name": "a740d043-crop-normalize",
+  "note": "Generated from a740d043-crop-normalize.ladder",
+  "content_hash": "31053f943b9687f1",
+  "tasks": [
+    {
+      "task_id": "content_box-00",
+      "label": "content_box",
+      "split": "train"
+    },
+    {
+      "task_id": "content_box-01",
+      "label": "content_box",
+      "split": "train"
+    },
+    {
+      "task_id": "content_box-heldout",
+      "label": "content_box",
+      "split": "heldout"
+    },
+    {
+      "task_id": "a740d043",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "a740d043-heldout",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

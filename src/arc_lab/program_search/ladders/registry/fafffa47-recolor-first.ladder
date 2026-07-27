@@ -1,0 +1,144 @@
+ladder fafffa47-recolor-first
+
+# ``fafffa47-recolor-first``: a DECOMPOSITION-STRATEGY SIBLING of `fafffa47-nor-halves`,
+# same task, same floor, same 2-rung cut DENSITY -- cutting along the opposite axis.
+# The address-first cohort names the raw half as the rung (`north`/`south`) and folds the
+# recolour into the top; here the rung IS the recoloured half
+# (`recolored_north`/`recolored_south`), computed directly from `g` -- addressing folds
+# into the RUNG's own template instead of the top's.
+#
+# **Registered prediction, carried from `dae9d2b5-recolor-first`'s own (already probed):**
+# each rung's own jump needs depth 3 from the bare floor (`map_color(nth(split_v(g),i),
+# c,2)`), with NO shared reuse between the two branches -- vs address-first's d2 rungs
+# feeding a d3 top. Predicted MORE expensive overall despite a shallower (d2) top, and on
+# `dae9d2b5-recolor-first` the probe already confirmed the direction: both rungs solve
+# (alternative programs, depth 3/3) but the SKIP test censors at the cohort's 2M guard --
+# a genuinely more expensive cell, not a broken one. Predicted to repeat here.
+#
+# The competence: a ``2h x w`` grid carries colour 9 on its NORTH half and 1 on its SOUTH;
+# the answer is the ``h x w`` grid holding 2 exactly where NEITHER half is filled. Verified against
+# arc1-train ground truth before authoring (``test_real_arc_anchoring.py``); ``d_raw`` is 5.
+#
+# **A cohort template, not a bespoke build.** ``94f9d214`` and ``fafffa47`` are the SAME rule on
+# different palettes -- the only per-task input is the north half's colour (9 here, the
+# other task's is the other value). One floor, one spine, one demo generator
+# (``experiments/2026-07-27-mve-ladder-cohorts/artifacts/gen_nor_ladders.py``), instantiated twice.
+# That is the multiplier for ladder COUNT: the marginal cost of the second task is a constant.
+#
+# **NOR without the mask tier.** The obvious route -- ``mask_by_color`` + ``mask_complement`` +
+# ``paint_through_mask`` -- forces Mask-valued rungs (every demo then needs a wrapper, costing a
+# depth level: the demo-affordability law) AND puts a TERNARY mask writer in the floor, which is
+# the known breadth bomb. Instead ``swap_colors`` inverts at the GRID level: recolour each half to
+# the target, ``overlay`` them (grid-level OR), then swap 0 with the target, which turns OR into
+# NOR in one step. Every rung stays Grid-valued, so every demonstration is a full solution.
+#
+# **Withheld primitives:** the mask algebra above, and any single-step half-merger (none exists).
+# The floor is otherwise the minimum the top needs; ``d_raw`` 5 against a derived top budget of 3
+# falls out of that, so the RQ1 bound is FLOOR-RELATIVE, as always.
+#
+# **Skip-audit, by hand, before any probe:** every rung is d2 and the top is d3, so inlining any
+# rung into its consumer costs at least d3 against a level budget of 2. The
+# ``map_color``-distributes-over-``overlay`` law that convicted a merge rung on ``dae9d2b5``
+# cannot bite: the top is already stated in the distributed form, and there is no merge rung.
+# ``swap_colors`` does NOT distribute over ``overlay`` (it is not colour-wise monotone), so it
+# cannot be pushed inside the halves either.
+#
+# Budget: the pool is the 2026-07-27 calibrated value (30), licensed by the
+# ``dae9d2b5-split-recolor`` / ``-lean`` pair, which reproduced its parent's verdict profile
+# exactly at 25.4x less spend.
+
+# **Stop limit (2026-07-27).** `solution_limit: 1` at `immediate` mode: a cell stops at its first
+# solution instead of enumerating the rest of its budget. Measured 19.5x-63x on these cells, and
+# `first_solution_index` is IDENTICAL either way -- so cost-to-first, the currency every rung-value
+# and RQ1 comparison is read in, is exactly preserved. Skip searches are unaffected: they do not
+# solve, so they exhaust regardless, which is what `no_skip_paths` requires. Validated as a PAIR
+# with the per-level pool against `dae9d2b5-split-recolor`'s certified profile (identical verdicts,
+# identical rung recovery). A registered Compromise Option -- `compromises_in(config)` detects it
+# from the config and banners the report; it forfeits `cheapest_solution_index`, cost-to-exhaust
+# and complete `by_primitive`.
+
+config {
+    budget.depth_limit: 3
+    budget.max_arity: 3
+    budget.max_pool: 30
+    budget.considered_limit: 2000000
+    budget.solution_limit: 1
+    budget.solution_limit_mode: 'immediate'
+    search_engine.constant_sources: ['finite-enumerate-scalars']
+}
+
+floor nor-L0 {
+    use split_v:     (Grid) -> List[Grid]
+    use nth:         (List[a], Int) -> a
+    use overlay:     (Color, Grid...) -> Grid
+    use map_color:   (Grid, Color, Color) -> Grid
+    use swap_colors: (Grid, Color, Color) -> Grid
+}
+
+
+rung {
+    recolored_north(g: Grid) -> Grid = map_color(nth(split_v(g), 0), 9, 2)
+
+    task recolored_north-00 {
+        solution: recolored_north(input)
+        train [[0,0,9,9],[9,9,0,0],[0,0,0,9],[0,1,0,1],[0,1,0,1],[0,1,0,1]]
+        train [[0,0,0,9,9],[0,9,9,0,0],[0,1,0,0,1],[0,1,0,0,1]]
+        test  [[9,0,0],[0,0,9],[9,9,0],[0,0,0],[0,0,1],[0,0,1],[0,0,1],[0,0,1]]
+    }
+
+    task recolored_north-01 {
+        solution: recolored_north(input)
+        train [[0,9,9,0,0],[9,0,0,0,9],[0,0,9,9,0],[9,9,0,0,0],[1,0,0,1,0],[1,0,0,1,0],[1,0,0,1,0],[1,0,0,1,0]]
+        train [[0,0,9],[9,9,0],[0,0,0],[0,1,0],[0,1,0],[0,1,0]]
+        test  [[0,0,0],[0,9,9],[9,0,0],[0,0,9],[9,9,0],[0,1,0],[0,1,0],[0,1,0],[0,1,0],[0,1,0]]
+    }
+
+    heldout task recolored_north-heldout {
+        solution: recolored_north(input)
+        train [[9,0,0,0,9],[0,0,9,9,0],[0,0,1,0,1],[0,0,1,0,1]]
+        train [[9,9,0,0],[0,0,0,9],[0,9,9,0],[9,0,0,0],[0,0,9,9],[1,0,1,0],[1,0,1,0],[1,0,1,0],[1,0,1,0],[1,0,1,0]]
+        test  [[0,9,9,0],[9,0,0,0],[0,0,9,9],[1,0,0,1],[1,0,0,1],[1,0,0,1]]
+    }
+}
+
+rung {
+    recolored_south(g: Grid) -> Grid = map_color(nth(split_v(g), 1), 1, 2)
+
+    task recolored_south-00 {
+        solution: recolored_south(input)
+        train [[0,0,9,9,0],[9,9,0,0,0],[0,0,0,9,9],[0,9,9,0,0],[9,0,0,0,9],[0,1,0,1,0],[0,1,0,1,0],[0,1,0,1,0],[0,1,0,1,0],[0,1,0,1,0]]
+        train [[0,0,0,9],[0,9,9,0],[9,0,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]]
+        test  [[9,0,0,0],[0,0,9,9],[0,0,1,0],[0,0,1,0]]
+    }
+
+    task recolored_south-01 {
+        solution: recolored_south(input)
+        train [[0,9,9],[9,0,0],[1,0,0],[1,0,0]]
+        train [[0,0,9,9],[9,9,0,0],[0,0,0,9],[0,9,9,0],[0,1,0,1],[0,1,0,1],[0,1,0,1],[0,1,0,1]]
+        test  [[0,0,0,9,9],[0,9,9,0,0],[9,0,0,0,9],[0,0,9,9,0],[9,9,0,0,0],[0,1,0,0,1],[0,1,0,0,1],[0,1,0,0,1],[0,1,0,0,1],[0,1,0,0,1]]
+    }
+
+    heldout task recolored_south-heldout {
+        solution: recolored_south(input)
+        train [[9,0,0],[0,0,9],[9,9,0],[0,0,1],[0,0,1],[0,0,1]]
+        train [[9,9,0,0,0],[0,0,0,9,9],[0,9,9,0,0],[9,0,0,0,9],[0,0,9,9,0],[1,0,1,0,0],[1,0,1,0,0],[1,0,1,0,0],[1,0,1,0,0],[1,0,1,0,0]]
+        test  [[0,9,9,0],[9,0,0,0],[0,0,9,9],[9,9,0,0],[1,0,0,1],[1,0,0,1],[1,0,0,1],[1,0,0,1]]
+    }
+}
+
+top {
+    task fafffa47 {
+        solution: swap_colors(overlay(0, recolored_north(input), recolored_south(input)), 0, 2)
+        train [[0,9,9],[0,9,9],[9,9,9],[0,1,0],[0,0,1],[1,1,1]]
+        train [[9,0,9],[0,9,9],[0,0,9],[1,0,1],[1,0,0],[1,0,0]]
+        train [[0,9,0],[9,0,9],[9,0,0],[0,0,0],[0,0,1],[1,0,0]]
+        train [[0,0,9],[9,9,9],[0,9,0],[1,0,0],[0,1,1],[0,0,1]]
+        test  [[0,9,0],[0,9,9],[0,9,9],[0,0,0],[1,1,1],[1,0,1]]
+    }
+    heldout task fafffa47-heldout {
+        solution: swap_colors(overlay(0, recolored_north(input), recolored_south(input)), 0, 2)
+        train [[9,0,9],[0,0,9],[9,0,9],[0,1,1],[0,1,0],[1,0,0]]
+        train [[0,9,9],[0,9,9],[9,9,9],[0,1,0],[0,0,1],[1,1,1]]
+        test  [[9,0,9],[0,9,9],[0,0,9],[1,0,1],[1,0,0],[1,0,0]]
+    }
+}

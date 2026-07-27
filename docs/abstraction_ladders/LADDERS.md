@@ -64,6 +64,18 @@ One row per candidate Ladder for the Abstraction Ladder Experiments ([ABSTRACTIO
 > curves are retracted**: valid members are `dae9d2b5` 1 of 3, `94f9d214` 0 of 2, `fafffa47` 0 of 2.
 > Rung-level results — jump tractability, skip-freeness, recovery, demonstration health — stand
 > throughout. Full account: [experiments/2026-07-27-mve-batch-analysis/](../../experiments/2026-07-27-mve-batch-analysis/notebook.md).
+>
+> **UPDATE (2026-07-27, later — [experiments/2026-07-27-mve-completion/](../../experiments/2026-07-27-mve-completion/notebook.md)).**
+> A FOURTH top-unreachable instance, one stage deeper: `split-asym-lean`'s CLIMB was cut off by a
+> pinned `depth_limit: 2` against its depth-3 top (the chain runs the derived schedule and was
+> immune). Fixed and re-run — the climb now solves the top at iteration 1; chain cells cache-hit
+> byte-exactly. The depth-4 question is PRICED, no longer open: the NOR `-halves` top is not found
+> within **30M** considered (15x the budget), so those members are **censored-by-design bounds**,
+> not fixable-with-budget. The granularity curves are **re-bought in cost-to-first** (exact under
+> either stop mode) — all three cohorts now carry measured multi-point curves; see the curve note
+> after the NOR table. Machinery added (surface-only): `top_reachable` (chain + climb) in every
+> report, the loop-overhead factor auto-forfeited under the compromises that invalidate it, and a
+> static `climb-budget-covers-top` check naming the pinned-depth misconfiguration at lint time.
 
 
 
@@ -81,7 +93,7 @@ and `split_h: (Grid) -> List[Grid]` is what removes that. The pair prices what t
 | [dae9d2b5-split-halves](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-split-halves.ladder) | the same competence, cut at 2 rungs (coarse) | `{split_h, nth, overlay, map_color}` | 3 · [3,3] · 4 | probed | wake/sleep clean; skip **inconclusive** | The coarse arm at `max_pool` 150, kept as the record of what that pool costs: folding the recolours into the top makes it d3, so the schedule is `[2,2,3]` and the skip test must reach d4. Both rungs wake AS-INTENDED and sleep recovers each — but every skip search **censors** at the pair's shared 2M budget, where the fine member's *exhausted*. Certified instead as `-lean` below, at a calibrated pool rather than an escalated budget. |
 | [dae9d2b5-split-recolor-lean](ladders/dae9d2b5-split-recolor-lean/spec.md) | **budget calibration** of `split-recolor` (`max_pool` 30) | `{split_h, nth, overlay, map_color}` | 5 · [2,2] · 4 | run (2026-07-27) | **admitted** | The arm that licenses running everything else cheaply. One variable changed (`max_pool` 150 -> 30) and the verdict profile is **byte-identical** to its parent: 4/4 tractable, no skip paths, health 1.0 throughout, all four rungs recovered by the same mints, same climb trace, same RQ1 `>= 10x`, same depth compression. Cost is **25.4x** lower (end-to-end 302,961 vs 7,690,929); wall clock 1m51s vs ~45min. The pool was measured to SATURATE around 60, so 150 was buying nothing. Caveat stated in-file: a smaller pool weakens the skip search too, so this is evidence only as a *paired* comparison against a parent certified at the expensive setting. |
 | [dae9d2b5-split-halves-lean](ladders/dae9d2b5-split-halves-lean/spec.md) | the coarse cut at the calibrated pool | `{split_h, nth, overlay, map_color}` | 3 · [3,3] · 4 | run (2026-07-27) | **admitted** | The curve's **2-rung** point — 2/2 tractable, no skip paths, health 1.0/1.0, both rungs recovered, ~22s (no raw arm: same task, same floor, same `d_raw` as its cohort siblings, so RQ1 is cited once per cohort per MVE-PLAN). **The pair's direction is budget-dependent, which is the finding**: at pool 150 the coarse cut was *more* expensive (censored where fine exhausted), at pool 30 it is *cheaper*, because its extra depth only bites while the base is large. |
-| [dae9d2b5-split-asym-lean](ladders/dae9d2b5-split-asym-lean/spec.md) | the same competence, cut at 3 rungs (asymmetric) | `{split_h, nth, overlay, map_color}` | 4 · [3,2] · 4 | run (2026-07-27) | **admitted** | The curve's **3-rung** middle point, and the reason it is a curve rather than two endpoints. The cut is necessarily ASYMMETRIC (`recolored_west` is a rung, its mirror sibling is inlined): on a two-branch DAG the branches are interchangeable, so "half of each" is not a cut-set. 3/3 tractable, no skip paths, health 1.0 throughout, 3/3 rungs recovered, 29s. Its uniform window is degenerate `[3,2]` — valid only under the DERIVED schedule `[2,2,2,3]`, which is per-rung budgets earning their keep on a real task. |
+| [dae9d2b5-split-asym-lean](ladders/dae9d2b5-split-asym-lean/spec.md) | the same competence, cut at 3 rungs (asymmetric) | `{split_h, nth, overlay, map_color}` | 4 · [3,2] · 4 | run (2026-07-27) | **admitted** | The curve's **3-rung** middle point, and the reason it is a curve rather than two endpoints. The cut is necessarily ASYMMETRIC (`recolored_west` is a rung, its mirror sibling is inlined): on a two-branch DAG the branches are interchangeable, so "half of each" is not a cut-set. 3/3 tractable, no skip paths, health 1.0 throughout, 3/3 rungs recovered, 29s. Its uniform window is degenerate `[3,2]` — valid only under the DERIVED schedule `[2,2,2,3]`, which is per-rung budgets earning their keep on a real task. ⚠ **2026-07-27 later:** the first run pinned `depth_limit: 2`, cutting the CLIMB off from the d3 top (the fourth top-unreachable instance; the climb converged without ever solving the task). Fixed to 3, re-run: climb solves the top at iteration 1; to-first marginal unchanged (330,279). |
 
 **RETRACTED — the `dae9d2b5` granularity curve as first reported.** These numbers came from runs that never reached the top, and are kept only as the record of what was claimed. Two of the three members are no longer measurement-valid; there is currently **no valid granularity curve** for any cohort:
 
@@ -113,8 +125,10 @@ Floor throughout: `{split_v, nth, overlay, map_color, swap_colors}`, `max_pool` 
 > the values below and loop-overhead is invalid; both `nor-halves` members still **never reach
 > their top** (depth-4 top, censored at 2M in chain and climb — their pinned `depth_limit: 3` also
 > caps the CLIMB below the top's depth 4, the same defect class fixed on
-> `dae9d2b5-split-asym-lean`). Rung-level verdicts (tractable, skip-free, health, recovery) stand
-> throughout.
+> `dae9d2b5-split-asym-lean`). **Priced 2026-07-27:** the d4 top is not found within **30M**
+> considered (15x the budget), so these are **censored-by-design bounds** — and the bound is
+> itself the curve's coarse point (`>= 63x` over the 4-rung top, minimum). Rung-level verdicts
+> (tractable, skip-free, health, recovery) stand throughout.
 
 | Ladder | Task | Cut | Shape (h · window · `d_raw`) | Status | Verdict | Cost (marginal · end-to-end · loop-overhead) |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -122,8 +136,71 @@ Floor throughout: `{split_v, nth, overlay, map_color, swap_colors}`, `max_pool` 
 | [94f9d214-nor-recolor](ladders/94f9d214-nor-recolor/spec.md) | `94f9d214` | 4 rungs | 5 · [2,3] · 5 | run (2026-07-27) | **admitted** — 4/4, no skip paths, health 1.0, 4/4 recovered | 120,146 · 465,928 · 3.88x · RQ1 **>= 10x** |
 | [fafffa47-nor-halves](ladders/fafffa47-nor-halves/spec.md) | `fafffa47` | 2 rungs | 3 · [3,4] · 5 | run (2026-07-27) | **admitted** — 2/2, no skip paths, health 1.0, 2/2 recovered | 71,905 · 154,982 · 2.16x |
 | [fafffa47-nor-recolor](ladders/fafffa47-nor-recolor/spec.md) | `fafffa47` | 4 rungs | 5 · [2,3] · 5 | run (2026-07-27) | **admitted** — 4/4, no skip paths, health 1.0, 4/4 recovered | 136,442 · 502,020 · 3.68x · RQ1 **>= 10x** |
+| [94f9d214-nor-merged](ladders/94f9d214-nor-merged/spec.md) | `94f9d214` | **5 rungs** (finest; adds `merged`, top drops to d2) | 6 · [2,2] · 5 | run (2026-07-27) | **admitted, UNCOMPROMISED** — 5/5, no skip paths, health 1.0, 5/5 recovered, **top reached (chain + climb)** | marginal 144,085 exhaust / **62,640** to-first · top-to-first 12,647 · loop-overhead **4.00x** (valid) · `off_chain_top_solved` True (telescoping top, recorded) |
+| [fafffa47-nor-merged](ladders/fafffa47-nor-merged/spec.md) | `fafffa47` | **5 rungs** (template twin — cost: one colour constant) | 6 · [2,2] · 5 | run (2026-07-27) | **admitted, UNCOMPROMISED** — 5/5, no skip paths, health 1.0, 5/5 recovered, **top reached (chain + climb)** | marginal 152,233 exhaust / **70,698** to-first · top-to-first 20,585 · loop-overhead **4.00x** (valid) |
+
+| [dae9d2b5-half-param](ladders/dae9d2b5-half-param/spec.md) | the same competence, cut BIND-LATE (one arity-2 `half` rung replaces the `west`/`east` siblings) | `{split_h, nth, overlay, map_color}` | 4 · [2,2] · 4 | run (2026-07-27) | **admitted**, top reached (chain + climb) — but **rung recovery 2/3**: `half` NOT recovered | The parameterization axis (MVE-PLAN's bind-early/bind-late sub-cohort choice), sampled for the first time. **Cost is a wash** vs `split-recolor-lean`: to-first 35,987 vs 35,778 (+0.6%), loop-overhead 2.99 vs 3.00 — the wider library entry and the one-fewer entry nearly cancel, and the whole difference sits in the CHAIN (the only arm whose library really holds the arity-2 rung; the census predicted it statically, +9 base terms vs +1). **The finding is learnability**: sleep specialises into two arity-1 mints instead of the parameterized one. Verified to be GOVERNANCE not proposer reach — `AntiunifyPairs` DID offer `nth(split_h(#0), #1)` (matches-target) and `GreedyMDL` discarded it. Sharpest detail: the two members' per-iteration climb costs are **byte-identical**, because sleep's two mints ARE `west`/`east` — **the bind-late ladder collapses into the bind-early one under learning**. Full account: [experiments/2026-07-27-mve-completion/](../../experiments/2026-07-27-mve-completion/notebook.md) §S16. |
+
+**The granularity curves, re-bought in cost-to-first (2026-07-27, [experiments/2026-07-27-mve-completion/](../../experiments/2026-07-27-mve-completion/notebook.md)).** `first_solution_index` is exact under either stop mode, so to-first quantities compare legally across the mixed-mode members; validity per point = admitted + chain top found + climb top solved. All three cohorts: **cost is a step function in the residual top-jump depth, not in rung count** — d2-top members 36-71k marginal-to-first, d3-top members 288-524k, d4-top members `> 30M` (probed bound; the 2-rung NOR cut is censored-by-design at the cohort budget). Within equal top depth the direction mildly reverses (larger library base). The registered prediction that the 5-rung members' `merged` rung would be convicted as a skip path was **refuted** — the skip search runs at the consumer's derived budget (d2), where no bypass exists; `no_skip_paths` is a budget-relative necessity claim.
 
 ~~Both cohorts reproduce the `dae9d2b5` curve's shape: cost and loop-overhead rise monotonically with cut density, and rung recovery is complete at every density — three independent tasks, same qualitative answer.~~ **RETRACTED 2026-07-27** (contradicted the validity note above): there is currently no valid granularity curve in any cohort; the runs behind these curves either never reached their tops or carry a compromise that invalidates loop-overhead. What survives across all three tasks is rung-level: complete rung recovery and clean rung certificates at every cut density. See [experiments/2026-07-27-mve-batch-analysis/](../../experiments/2026-07-27-mve-batch-analysis/notebook.md).
+
+### Decomposition-strategy siblings — probed, not run (2026-07-27)
+
+MVE-PLAN wave 2's deferred axis, sampled for the first time: same task, same floor, same cut
+DENSITY as an already-admitted member, but naming the RECOLOURED half as the rung (folding
+addressing into the rung's own template) instead of the raw half (folding recolour into the top).
+Full account: [experiments/2026-07-27-mve-completion/](../../experiments/2026-07-27-mve-completion/notebook.md) §S12.
+
+While probing the first of these, found and fixed two probe-machinery defects (scoped to the
+advisory pre-run probe only — no certified ladder's admission verdict was ever wrong, since
+`run_ladder`'s chain has independently done per-level depth+pool derivation since 2026-07-27):
+`probe_rung` never scaled `max_pool` with a rung's own derived depth (only `run.py`'s chain got
+that fix), and the CLI separately always built one flat pinned-config `Budget` for every probed
+level, bypassing the per-level derivation entirely regardless of the first fix.
+
+| Ladder | Task | Cut | Shape | Status | Finding |
+| --- | --- | --- | --- | --- | --- |
+| [dae9d2b5-recolor-first](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-recolor-first.ladder) | `dae9d2b5` | 2 rungs, recolor-first | `[3,3,2]` | probed, tasks-drafted | Registered prediction CONFIRMED: more expensive than address-first at the same density. Both rungs wake-solve (`alternative`, d3/d3) but the guard is essentially exhausted at 2M; skip test `inconclusive`. |
+| [94f9d214-recolor-first](../../src/arc_lab/program_search/ladders/registry/94f9d214-recolor-first.ladder) | `94f9d214` | 2 rungs, recolor-first | `[3,3,2]` | probed, tasks-drafted | REFINES the prediction: rungs are cheap (314k/345k, well under guard); only the SKIP test (proving no bypass) censors at 2M. Different bottleneck than `dae9d2b5`'s reading. |
+| [fafffa47-recolor-first](../../src/arc_lab/program_search/ladders/registry/fafffa47-recolor-first.ladder) | `fafffa47` | 2 rungs, recolor-first | `[3,3,2]` | probed, tasks-drafted | Byte-identical considered counts to `94f9d214-recolor-first` — cohort-template symmetry confirmed exactly. |
+| [dae9d2b5-recolor-solo](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-recolor-solo.ladder) | `dae9d2b5` | **1 rung** (coarsest endpoint) | `[3,4]` | probed, tasks-drafted | Lints clean (0 errors) — refutes the prediction that it might fail `raw-intractable` statically. Probes inconclusive (500k smoke guard), matching the d4-cost wall found on the NOR `-halves` members: the coarse end of the curve is bounded by cost, not by a structural defect. |
+
+**Reading.** None of the four probe clean at the cohort's standard 2M guard, so none were run —
+per LADDER-PROCESS, an INCONCLUSIVE probe is a non-result, not something to chase with a bigger
+guard. All four stay in the registry with committed testbeds (the `dae9d2b5-halves-union`
+precedent: a kept, reproducible finding, not a deleted attempt). The net result across both
+decomposition axes is now the same shape the granularity curve itself showed: **cost tracks the
+depth of whatever search is left over — the SPECIFIC search (wake vs skip) that inherits the
+deepest jump — not which side of the ladder (rung vs top) that search happens to sit on.**
+
+## Real-ARC — `a740d043` (crop-and-recolour): a SECOND task family, convicted (2026-07-27)
+
+The batch's first real task that is not two-halves geometry: perceive the non-background content,
+crop to its bounding box, recolour the background to 0. Anchored 4/4 against ground truth before
+any authoring (`tests/program_search/ladders/test_a740d043_anchor.py`). Full account:
+[experiments/2026-07-27-mve-completion/](../../experiments/2026-07-27-mve-completion/notebook.md) §S19.
+
+| Ladder | Task | Cut | Shape | Status | Finding |
+| --- | --- | --- | --- | --- | --- |
+| [a740d043-crop-normalize](../../src/arc_lab/program_search/ladders/registry/a740d043-crop-normalize.ladder) | `a740d043` | 1 rung (`content_box`), Rect route | `[3,2]`, `d_raw` 4 | lint-clean, **probe-convicted** | Lints OK (0 errors); probe finds a SKIP PATH in ~2s — `L_0` solves the top as `crop_rect(map_color(input, 1, 0), bbox(nonbg_mask(input)))`, depth 3, correct on all 4 examples. `map_color` **commutes** with `crop_rect`, so the true raw depth is 3, not the authored 4. |
+
+**The law it makes explicit.** *A competence that factors into commuting operations cannot be
+laddered by cutting between them* — the skip search simply reorders them. For `a740d043` that
+exhausts the design space (cut between crop and recolour → skip path; cut inside the crop →
+`Mask`/`Rect`-valued rungs → wrapper demos → `al4-mask-crop`'s retired shape; cut nowhere → the rung
+is the task), so **this task admits no ladder over the current substrate**. It also explains
+retroactively why the two-halves family ladders at all: split → recolour → merge → invert does *not*
+commute (you cannot invert before merging), which makes the batch's task choice load-bearing rather
+than incidental — and it is the same law that convicted the `dae9d2b5` merge rung, now general.
+
+**A limitation of the static gate, worth stating.** The linted `d_raw` is the depth of the
+**authored** route inlined — an *upper bound* on the true raw depth, since nothing static looks for
+a cheaper algebraically-equivalent route. Only the probe finds it. That is the gate layering working
+as designed, not a machinery gap; but a reader of `spec.md` should not take `d_raw` as measured.
+
+Kept in the registry with its committed testbed, as a reproducible finding (the
+`dae9d2b5-halves-union` precedent). The wrong hand skip-audit is corrected in the file itself.
 
 ## Rejected — the collapse findings
 
@@ -132,7 +209,7 @@ The 2026-07-20 certificate screen rejected these. The rejections are the batch's
 | Ladder | Anchor competence | Floor | Shape (h · window · `d_raw`) | Status | Verdict | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | [al3-quad-symmetrize](ladders/al3-quad-symmetrize/worksheet.md) | nested symmetric tower (quad → band → tower) | `{concat_h, concat_v, flip_h, flip_v}` | 4 · [4,4] · 10 | retired | **rejected** — skip paths at r2, r3 (r1 inconclusive) | All three rungs _were_ recovered — it failed on structure, not learning. The **self-similar-doubling collapse**: a self-contained doubler `D` makes `D(D(g))` reach two rungs up. |
-| [al4-mask-crop](ladders/al4-mask-crop/worksheet.md) | normalize a scene (mask → crop → flatten → stamp) | 9 mask/colour prims; withholds `nonbg_mask`/`crop_to_content`/`bbox_mask` | 4 · [4,4] · **12** | retired | **rejected** — r2 intractable; skip paths at r1, r3 | Deepest static `d_raw` in the batch. The only ladder on `FrequentSubtree` (a `fragment_identical` r1 demoed via a `crop_to_content` wrapper) — a cross-ladder confound. Rung recovery: r1 only. |
+| [al4-mask-crop](ladders/al4-mask-crop/worksheet.md) | normalize a scene (mask → crop → flatten → stamp) | 9 mask/colour prims; withholds `nonbg_mask`/`crop_to_content`/`bbox_mask` | 4 · [4,4] · **12** | retired | **rejected** — r2 intractable; skip paths at r1, r3 | Deepest static `d_raw` in the batch. The only ladder on `FrequentSubtree` (a `fragment_identical` r1 demoed via a `crop_to_content` wrapper) — a cross-ladder confound. Rung recovery: r1 only. **2026-07-27: statically retrodicted.** `proposer-compat`'s capability table wrongly credited `FrequentSubtree` with `full_solution`; corrected, it flags exactly r2/r3 (both `full_solution`) and clears r1 — i.e. it would have predicted "r1 only" in ~1s, before the run. See §S19a. |
 | [al5-perceiver-chain](ladders/al5-perceiver-chain/worksheet.md) | recolour relative to perceived colours, chained | `{map_color, most_common_color, least_common_color, flip_h, flip_v}` | 4 · [3,3] · 8 | retired | **rejected** — skip paths at r1, r3; **zero** rung recovery | The **Family-B collapse**: raw solved outright at L_0 despite a static `d_raw` of 8 — cheap perception means there is no gap to climb. Full artifacts committed. |
 | [al6-mirror-tall](ladders/al6-mirror-tall/worksheet.md) | normalize-and-mirror, stacked (AL1's competence, four rungs) | al5's floor | 5 · [3,3] · 9 | retired | **rejected** — r4 intractable; skip paths at r1–r3 | Family-B again, at height 5. Recovery: r1 only. Free params reach 3 at r4 — it walled, which was the measurement. |
 | [al7-fast-tower](ladders/al7-fast-tower/spec.md) | mirror-and-stack tower (6 levels) | `{concat_h, concat_v, flip_h, flip_v}` | 6 · [2,2] · 7 | retired | **rejected** — skip paths at r3, r4, r5 | **The batch's most general finding.** ANY self-similar doubling satisfies `r_2k == r2^k`, so every even rung is a depth-2 composition of the rung two below. Verified **transform-independent** (a plain-`concat` tower collapses identically) — no seeding or reordering fixes it; a non-collapsing tall tower needs distinct, non-composing rung ops, ie a richer floor. All 5 rungs were recovered. |

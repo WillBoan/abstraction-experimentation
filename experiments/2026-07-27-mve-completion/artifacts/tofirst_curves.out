@@ -1,0 +1,23 @@
+
+=== dae9d2b5 — cost-to-first vs cut density (shared config: pool 30, guard 2M)
+member                           rungs top depth   top-to-first  marginal-to-first  status
+dae9d2b5-split-halves-lean           2         3        287,531            288,174  measured point
+dae9d2b5-split-asym-lean             3         3        312,320            330,279  measured point
+dae9d2b5-split-recolor-lean          4         2            321             35,778  measured point
+
+=== 94f9d214 — cost-to-first vs cut density (shared config: pool 30, guard 2M)
+member                           rungs top depth   top-to-first  marginal-to-first  status
+94f9d214-nor-halves                  2         4   > 30,000,000                  —  BOUND: top not found within guard (>= 30,000,000 probed out-of-band)
+94f9d214-nor-recolor                 4         3        473,988            523,165  measured point
+94f9d214-nor-merged                  5         2         12,647             62,640  measured point
+
+=== fafffa47 — cost-to-first vs cut density (shared config: pool 30, guard 2M)
+member                           rungs top depth   top-to-first  marginal-to-first  status
+fafffa47-nor-halves                  2         4   > 30,000,000                  —  BOUND: top not found within guard (>= 30,000,000 probed out-of-band)
+fafffa47-nor-recolor                 4         3        474,421            523,718  measured point
+fafffa47-nor-merged                  5         2         20,585             70,698  measured point
+
+Reading: cost is a STEP FUNCTION in the residual top-jump depth, not in rung count —
+d2-top members 36-71k marginal-to-first, d3-top members 288-524k, d4-top members > 30M
+(bound). Within equal top depth the direction mildly reverses (larger library base).
+Coarsening concentrates the removed rungs' work into the top's exponent.

@@ -1,0 +1,78 @@
+ladder dae9d2b5-recolor-solo
+
+# ``dae9d2b5-recolor-solo``: the COARSEST POSSIBLE cut of the `dae9d2b5` two-halves competence --
+# a single rung (`recolored_west`), everything else (the east branch AND the top-level overlay)
+# inlined. The far endpoint of the granularity axis, past which the ladder degenerates into raw.
+#
+# **Registered prediction (written before lint or probe): CENSORS, or fails `raw-intractable`.**
+# The top now composes `nth(split_h(g),1)` (addressing), `map_color(...,3,6)` (recolour) and
+# `overlay(0, rung, ...)` in ONE jump -- d4 by the same counting `dae9d2b5-recolor-first`'s rungs
+# used (d3 for one recolour from the bare floor; the top adds one more level to also address and
+# combine the second half). A d4 top on this floor is exactly the regime already priced
+# unaffordable (S5: the NOR d4 top was not found within 30,000,000 considered). Distinctly, this
+# candidate may also fail STATICALLY: a 1-rung ladder whose only rung is barely simpler than the
+# raw solution risks not clearing `raw-intractable` at all -- the whole point of a floor designed
+# around a known solution is that raw stays out of reach, and here almost nothing is withheld by
+# naming just one rung. Draft/lint/probe only, per LADDER-PROCESS: never run on a censored
+# probe -- an INCONCLUSIVE or FAILED verdict here is itself the finding (the coarsest end of the
+# curve is bounded by cost, matching the d4 NOR endpoint's bound), not something to chase with a
+# bigger guard.
+#
+# Demonstrations for `recolored_west` are the SAME FILE `recolor-first` uses; the top's grids are
+# the cohort's own anchored ground truth.
+
+config {
+    budget.depth_limit: 3
+    budget.max_arity: 3
+    budget.max_pool: 30
+    budget.considered_limit: 2000000
+    search_engine.constant_sources: ['finite-enumerate-scalars']
+}
+
+floor dae9d2b5-split-L0 {
+    use split_h:   (Grid) -> List[Grid]
+    use nth:       (List[a], Int) -> a
+    use overlay:   (Color, Grid...) -> Grid
+    use map_color: (Grid, Color, Color) -> Grid
+}
+
+rung {
+    recolored_west(g: Grid) -> Grid = map_color(nth(split_h(g), 0), 4, 6)
+
+    task recolored_west-00 {
+        solution: recolored_west(input)
+        train [[0,0,4,0,3,0],[4,4,0,0,3,0],[0,0,0,0,3,0]]
+        train [[0,0,0,4,0,3,0,0],[0,4,4,0,0,3,0,0],[4,0,0,0,0,3,0,0],[0,0,4,4,0,3,0,0]]
+        test  [[4,0,0,0,0,3],[0,0,4,0,0,3]]
+    }
+    task recolored_west-01 {
+        solution: recolored_west(input)
+        train [[0,4,4,3,0,0],[4,0,0,3,0,0],[0,0,4,3,0,0],[4,4,0,3,0,0],[0,0,0,3,0,0]]
+        train [[0,0,4,4,0,0,3,0,3,0],[4,4,0,0,0,0,3,0,3,0]]
+        test  [[0,0,0,4,0,3,0,0],[0,4,4,0,0,3,0,0],[4,0,0,0,0,3,0,0]]
+    }
+    heldout task recolored_west-heldout {
+        solution: recolored_west(input)
+        train [[4,0,0,0,0,3],[0,0,4,0,0,3],[4,4,0,0,0,3],[0,0,0,0,0,3]]
+        train [[4,4,0,0,0,3,0,3,0,0],[0,0,0,4,4,3,0,3,0,0],[0,4,4,0,0,3,0,3,0,0]]
+        test  [[0,4,4,0,3,0,0,3],[4,0,0,0,3,0,0,3],[0,0,4,4,3,0,0,3],[4,4,0,0,3,0,0,3],[0,0,0,4,3,0,0,3]]
+    }
+}
+
+top {
+    task dae9d2b5 {
+        solution: overlay(0, recolored_west(input), map_color(nth(split_h(input), 1), 3, 6))
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,4,3,3,0],[4,0,0,3,0,0],[0,0,4,3,0,0]]
+        train [[0,0,4,0,3,0],[0,4,4,3,0,3],[4,4,0,0,0,3]]
+        train [[4,4,0,3,0,0],[0,0,0,0,0,3],[4,0,0,0,0,0]]
+        train [[0,0,0,0,3,0],[4,0,0,0,0,0],[0,0,4,3,3,0]]
+        test  [[0,4,4,3,0,0],[4,0,0,3,3,0],[0,4,0,3,0,0]]
+    }
+    heldout task dae9d2b5-heldout {
+        solution: overlay(0, recolored_west(input), map_color(nth(split_h(input), 1), 3, 6))
+        train [[0,0,4,0,3,0],[0,4,0,3,3,3],[4,0,0,3,0,0]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+    }
+}

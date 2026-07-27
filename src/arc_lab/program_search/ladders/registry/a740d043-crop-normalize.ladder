@@ -1,0 +1,132 @@
+ladder a740d043-crop-normalize
+
+# ``a740d043-crop-normalize``: the crop-and-recolour competence of the real ARC task ``a740d043``
+# (arc1-train) -- the batch's SECOND real task family, and the first that is not two-halves
+# geometry. Height 2, jumps [3,2], ``d_raw`` 4.
+#
+# The competence: the background is a solid field of one colour; the answer is the bounding box of
+# the non-background content, with that background recoloured to 0. Anchored against ground truth
+# before authoring (``tests/program_search/ladders/test_a740d043_anchor.py``, 4/4 including the
+# held-out test); the rung/top terms and the demo grids are verified in
+# ``experiments/2026-07-27-mve-completion/artifacts/gen_a740d043_ladder.py``.
+#
+# **Why this family is worth its own ladder.** Every other real-task ladder in the batch
+# (``dae9d2b5``, ``94f9d214``, ``fafffa47``) is split-a-grid-and-recombine over fixed colour
+# constants. This one PERCEIVES a region and changes the grid's SHAPE, and it routes through two
+# non-Grid tiers (``Mask``, then ``Rect``) to do it. If the batch's headline generalises at all, it
+# has to survive a task that is not the two-halves shape.
+#
+# **The floor withholds the whole crop tier: ``crop_to_content``, ``crop_to_mask``, ``bbox_mask``.**
+# With ``crop_to_content`` gifted the goal sits at depth 2 and ``raw-intractable`` would fail
+# outright -- there would be no ladder. Withholding it leaves the RECT route
+# ``crop_rect(g, bbox(nonbg_mask(g)))`` as the only way through, which is what puts ``d_raw`` at 4.
+# As always the RQ1 bound is FLOOR-RELATIVE.
+#
+# **Why exactly ONE rung, and why it is Grid-valued (2026-07-27).** The natural finer cut puts rungs
+# at the ``Mask`` and ``Rect`` intermediates. It is not available: a rung whose type is not the
+# task's goal type can never be demonstrated as a whole solution, so it needs wrapper demos -- and
+# the corrected ``proposer-compat`` capability table says a single-proposer ladder cannot MIX
+# demonstration kinds across its rungs. ``AntiunifyPairs`` serves only ``full_solution`` and the
+# ``FrequentSubtree`` family only ``fragment_identical``; they are complementary, not nested.
+# Wrapper demos for every rung is exactly ``al4-mask-crop``'s shape, which is retired-rejected
+# (r2 intractable, skip paths at r1/r3). So the affordable cut of this competence is the single
+# Grid-valued ``content_box``, spanning both non-Grid tiers in one jump of depth 3.
+#
+# **The top uses the LITERAL 1, not ``most_common_color(input)`` -- deliberately.** Every example of
+# ``a740d043`` has background 1, so the perceiver form is a train-constant subterm beaten by an
+# enumerated literal, and ``constant-subterm`` rejects it. That check is right: on this corpus the
+# two terms are indistinguishable, and the anchor test pins both forms precisely so the trap is
+# recorded rather than walked into. **This ladder therefore claims the CROP abstraction only.** The
+# background normalisation is a fixed recolour here and the ladder makes no perceiver claim.
+#
+# **CONVICTED -- SKIP PATH at r1 (2026-07-27). This ladder is a recorded finding, not a member.**
+# It lints clean (0 errors) and is refuted by the probe in ~2 seconds:
+#
+#     L_0 solves the top directly: crop_rect(map_color(input, 1, 0), bbox(nonbg_mask(input)))
+#
+# verified depth 3, correct on all four examples including the held-out test.
+#
+# **My hand skip-audit above was WRONG, and the way it was wrong is the finding.** It reasoned that
+# no floor route reaches the CONTENT BOX in under 3 steps -- true, and irrelevant. A skip search
+# does not have to build the rung; it has to solve the TOP, and it may reach it by a route the
+# authored solution never takes. ``crop_rect(grid, rect)`` takes its two arguments INDEPENDENTLY,
+# so a grid-side transformation can be hoisted past it: ``map_color`` commutes with ``crop_rect``
+# (a pointwise recolour and a subrectangle selection touch disjoint aspects of a grid). Pushing the
+# recolour inside drops the top from the authored depth 4 to an actual depth 3 -- exactly the
+# rung's own jump, so the rung buys nothing and the level that can afford it can already finish.
+#
+# **The general law, which this makes explicit: a competence that factors into COMMUTING operations
+# cannot be laddered by cutting between them.** Cut between the crop and the recolour and the skip
+# search reorders them; cut inside the crop and the rungs become ``Mask``/``Rect``-valued, needing
+# the wrapper demos that make this ``al4-mask-crop``'s retired shape; cut nowhere and the rung IS
+# the task. That exhausts the design space for ``a740d043``, so this task admits no ladder here.
+# It also explains, retroactively, why the two-halves family DOES ladder: its spine
+# (split -> recolour -> merge -> invert) does not commute -- you cannot invert before merging.
+#
+# **And a limitation of the static gate, worth stating plainly:** the linted ``d_raw`` (4) is the
+# depth of the AUTHORED route inlined. It is an UPPER BOUND on the true raw depth (3), because
+# nothing static searches for a cheaper algebraically-equivalent route. Only the probe finds it --
+# which is precisely the "the probe convicts; only the certificate acquits" layering doing its job,
+# for ~2 seconds against the cost of a full run.
+#
+# Budget: pool 30 is the 2026-07-27 calibrated value; the 2M guard matches the NOR cohort.
+
+# ``depth_limit`` is the CLIMB's search budget and must cover the derived schedule's max (3, the
+# rung's jump); the chain runs the per-level schedule regardless.
+config {
+    budget.depth_limit: 3
+    budget.max_arity: 3
+    budget.max_pool: 30
+    budget.considered_limit: 2000000
+    search_engine.constant_sources: ['finite-enumerate-scalars']
+}
+
+floor a740-L0 {
+    use nonbg_mask: (Grid) -> Mask
+    use bbox:       (Mask) -> Rect
+    use crop_rect:  (Grid, Rect) -> Grid
+    use map_color:  (Grid, Color, Color) -> Grid
+}
+
+rung {
+    content_box(g: Grid) -> Grid = crop_rect(g, bbox(nonbg_mask(g)))
+
+    # Backgrounds and palettes VARY across demonstrations: `nonbg_mask` perceives the background, so
+    # holding it fixed would let an enumerated literal stand in for the perception the rung carries.
+    task content_box-00 {
+        solution: content_box(input)
+        train [[4, 4, 4, 4, 4], [4, 2, 3, 4, 4], [4, 3, 2, 4, 4], [4, 4, 4, 4, 4]]
+        train [[7, 7, 7, 7, 7, 7], [7, 7, 5, 5, 7, 7], [7, 7, 5, 6, 7, 7], [7, 7, 7, 7, 7, 7]]
+        test  [[8, 8, 8, 8], [8, 9, 8, 8], [8, 9, 2, 8], [8, 8, 8, 8]]
+    }
+
+    task content_box-01 {
+        solution: content_box(input)
+        train [[3, 3, 3, 3, 3, 3], [3, 3, 3, 6, 1, 3], [3, 3, 3, 1, 6, 3], [3, 3, 3, 3, 3, 3]]
+        train [[5, 5, 5, 5, 5], [5, 2, 2, 2, 5], [5, 5, 5, 5, 5], [5, 5, 5, 5, 5]]
+        test  [[1, 1, 1, 1, 1], [1, 1, 4, 1, 1], [1, 1, 4, 7, 1], [1, 1, 1, 1, 1]]
+    }
+
+    heldout task content_box-heldout {
+        solution: content_box(input)
+        train [[6, 6, 6, 6, 6], [6, 6, 8, 8, 6], [6, 6, 8, 3, 6], [6, 6, 6, 6, 6]]
+        train [[2, 2, 2, 2, 2, 2], [2, 9, 9, 2, 2, 2], [2, 9, 1, 2, 2, 2], [2, 2, 2, 2, 2, 2]]
+        test  [[9, 9, 9, 9], [9, 9, 9, 9], [9, 5, 3, 9], [9, 9, 9, 9]]
+    }
+}
+
+top {
+    task a740d043 {
+        solution: map_color(content_box(input), 1, 0)
+        train [[1, 1, 1, 1, 1, 1, 1], [1, 2, 2, 1, 1, 1, 1], [1, 2, 2, 3, 1, 1, 1], [1, 1, 1, 2, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]]
+        train [[1, 1, 1, 1, 1, 1, 1], [1, 1, 3, 1, 2, 1, 1], [1, 1, 3, 1, 2, 1, 1], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]]
+        train [[1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1], [1, 5, 5, 1, 1, 1], [1, 5, 5, 1, 1, 1], [1, 6, 6, 1, 1, 1], [1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1]]
+        test  [[1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1], [1, 1, 1, 2, 1, 1], [1, 1, 2, 3, 1, 1], [1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1]]
+    }
+    heldout task a740d043-heldout {
+        solution: map_color(content_box(input), 1, 0)
+        train [[1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1], [1, 1, 1, 2, 1, 1], [1, 1, 2, 3, 1, 1], [1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1]]
+        train [[1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1], [1, 5, 5, 1, 1, 1], [1, 5, 5, 1, 1, 1], [1, 6, 6, 1, 1, 1], [1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1]]
+        test  [[1, 1, 1, 1, 1, 1, 1], [1, 2, 2, 1, 1, 1, 1], [1, 2, 2, 3, 1, 1, 1], [1, 1, 1, 2, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]]
+    }
+}

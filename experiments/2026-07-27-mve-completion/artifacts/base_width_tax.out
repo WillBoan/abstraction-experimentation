@@ -1,0 +1,134 @@
+== dae9d2b5-split-recolor-lean
+  east-00                considered/level: [12139, 12149, 12159, 12169, 12179]  censored: .....
+                         growth per added rung: ['1.00x', '1.00x', '1.00x', '1.00x']
+                         b_eff/level: ['6.5', '6.6', '6.7', '6.7', '6.8']
+  recolored_east-00      considered/level: [12139, 12149, 12159, 12169, 12179]  censored: .....
+                         growth per added rung: ['1.00x', '1.00x', '1.00x', '1.00x']
+                         b_eff/level: ['6.5', '6.6', '6.7', '6.7', '6.8']
+  recolored_west-00      considered/level: [12139, 12149, 12159, 12169, 12179]  censored: .....
+                         growth per added rung: ['1.00x', '1.00x', '1.00x', '1.00x']
+                         b_eff/level: ['6.5', '6.6', '6.7', '6.7', '6.8']
+  dae9d2b5               considered/level: [20077, 20089, 20101, 20113, 20125]  censored: .....
+                         growth per added rung: ['1.00x', '1.00x', '1.00x', '1.00x']
+                         b_eff/level: ['7.3', '7.3', '7.4', '7.4', '7.5']
+  west-00                considered/level: [12139, 12149, 12159, 12169, 12179]  censored: .....
+                         growth per added rung: ['1.00x', '1.00x', '1.00x', '1.00x']
+                         b_eff/level: ['6.5', '6.6', '6.7', '6.7', '6.8']
+
+== dae9d2b5-split-recolor
+  east-00                considered/level: [230497, 255577, 282419, 311083, 341629]  censored: .....
+                         growth per added rung: ['1.11x', '1.11x', '1.10x', '1.10x']
+                         b_eff/level: ['107.3', '113.0', '118.8', '124.7', '130.7']
+  recolored_east-00      considered/level: [230497, 255577, 282419, 311083, 341629]  censored: .....
+                         growth per added rung: ['1.11x', '1.11x', '1.10x', '1.10x']
+                         b_eff/level: ['107.3', '113.0', '118.8', '124.7', '130.7']
+  recolored_west-00      considered/level: [230497, 255577, 282419, 311083, 341629]  censored: .....
+                         growth per added rung: ['1.11x', '1.11x', '1.10x', '1.10x']
+                         b_eff/level: ['107.3', '113.0', '118.8', '124.7', '130.7']
+  dae9d2b5               considered/level: [230493, 255573, 282415, 311079, 341625]  censored: .....
+                         growth per added rung: ['1.11x', '1.11x', '1.10x', '1.10x']
+                         b_eff/level: ['113.1', '119.1', '125.2', '131.4', '137.7']
+  west-00                considered/level: [230497, 255577, 282419, 311083, 341629]  censored: .....
+                         growth per added rung: ['1.11x', '1.11x', '1.10x', '1.10x']
+                         b_eff/level: ['107.3', '113.0', '118.8', '124.7', '130.7']
+
+---- synthetics (exhaustive, admitted) ----
+== al1-mirror
+  mirror-recolor-1-2     considered/level: [6743, 6912, 26401]  censored: ...
+                         growth per added rung: ['1.03x', '3.82x']
+                         b_eff/level: ['24.6', '24.9', '48.8']
+  rot180-00              considered/level: [6743, 6912, 26401]  censored: ...
+                         growth per added rung: ['1.03x', '3.82x']
+                         b_eff/level: ['24.6', '24.9', '48.8']
+  top-00                 considered/level: [6743, 6912, 26401]  censored: ...
+                         growth per added rung: ['1.03x', '3.82x']
+                         b_eff/level: ['24.6', '24.9', '48.8']
+
+== al2-rot90-calibration
+  rot90-00               considered/level: [7, 13]  censored: ..
+                         growth per added rung: ['1.86x']
+                         b_eff/level: ['2.0', '3.0']
+  top-00                 considered/level: [7, 13]  censored: ..
+                         growth per added rung: ['1.86x']
+                         b_eff/level: ['2.0', '3.0']
+
+== al15-shift-frame
+  framed-00              considered/level: [3587, 3759, 3935]  censored: ...
+                         growth per added rung: ['1.05x', '1.05x']
+                         b_eff/level: ['15.3', '15.7', '16.0']
+  shift_stack-00         considered/level: [3587, 3759, 3935]  censored: ...
+                         growth per added rung: ['1.05x', '1.05x']
+                         b_eff/level: ['15.3', '15.7', '16.0']
+  top-00                 considered/level: [3587, 3759, 3935]  censored: ...
+                         growth per added rung: ['1.05x', '1.05x']
+                         b_eff/level: ['15.3', '15.7', '16.0']
+
+== al16-layout-nest
+  pair-00                considered/level: [311, 375, 445]  censored: ...
+                         growth per added rung: ['1.21x', '1.19x']
+                         b_eff/level: ['7.6', '8.4', '9.2']
+  stack-00               considered/level: [311, 375, 445]  censored: ...
+                         growth per added rung: ['1.21x', '1.19x']
+                         b_eff/level: ['7.6', '8.4', '9.2']
+  top-00                 considered/level: [311, 375, 445]  censored: ...
+                         growth per added rung: ['1.21x', '1.19x']
+                         b_eff/level: ['7.6', '8.4', '9.2']
+
+== al17-shift-frame-tall
+  frame1-00              considered/level: [3587, 3759, 3935, 4115]  censored: ....
+                         growth per added rung: ['1.05x', '1.05x', '1.05x']
+                         b_eff/level: ['15.3', '15.7', '16.0', '16.4']
+  shift1-00              considered/level: [3587, 3759, 3935, 4115]  censored: ....
+                         growth per added rung: ['1.05x', '1.05x', '1.05x']
+                         b_eff/level: ['15.3', '15.7', '16.0', '16.4']
+  shift2-00              considered/level: [3587, 3759, 3935, 4115]  censored: ....
+                         growth per added rung: ['1.05x', '1.05x', '1.05x']
+                         b_eff/level: ['15.3', '15.7', '16.0', '16.4']
+  top-00                 considered/level: [3587, 3759, 3935, 4115]  censored: ....
+                         growth per added rung: ['1.05x', '1.05x', '1.05x']
+                         b_eff/level: ['15.3', '15.7', '16.0', '16.4']
+
+== al18-fanin-rotate
+  pair-00                considered/level: [375, 445, 521]  censored: ...
+                         growth per added rung: ['1.19x', '1.17x']
+                         b_eff/level: ['8.4', '9.2', '9.9']
+  rot-00                 considered/level: [375, 445, 521]  censored: ...
+                         growth per added rung: ['1.19x', '1.17x']
+                         b_eff/level: ['8.4', '9.2', '9.9']
+  top-00                 considered/level: [375, 445, 521]  censored: ...
+                         growth per added rung: ['1.19x', '1.17x']
+                         b_eff/level: ['8.4', '9.2', '9.9']
+
+== al19-fanin-recolor
+  pair-00                considered/level: [9285, 9629, 9979]  censored: ...
+                         growth per added rung: ['1.04x', '1.04x']
+                         b_eff/level: ['24.7', '25.2', '25.6']
+  recol-00               considered/level: [9285, 9629, 9979]  censored: ...
+                         growth per added rung: ['1.04x', '1.04x']
+                         b_eff/level: ['24.7', '25.2', '25.6']
+  top-00                 considered/level: [9285, 9629, 9979]  censored: ...
+                         growth per added rung: ['1.04x', '1.04x']
+                         b_eff/level: ['24.7', '25.2', '25.6']
+
+== al20-recolor-telescope
+  pair-00                considered/level: [7055, 7305, 7559]  censored: ...
+                         growth per added rung: ['1.04x', '1.03x']
+                         b_eff/level: ['21.5', '21.9', '22.2']
+  recol-00               considered/level: [7055, 7305, 7559]  censored: ...
+                         growth per added rung: ['1.04x', '1.03x']
+                         b_eff/level: ['21.5', '21.9', '22.2']
+  top-00                 considered/level: [7055, 7305, 7559]  censored: ...
+                         growth per added rung: ['1.04x', '1.03x']
+                         b_eff/level: ['21.5', '21.9', '22.2']
+
+== al21-dag-siblings
+  mirror_flip-00         considered/level: [61, 91, 127]  censored: ...
+                         growth per added rung: ['1.49x', '1.40x']
+                         b_eff/level: ['7.5', '9.2', '10.9']
+  mirror_h-00            considered/level: [61, 91, 127]  censored: ...
+                         growth per added rung: ['1.49x', '1.40x']
+                         b_eff/level: ['7.5', '9.2', '10.9']
+  top-00                 considered/level: [61, 91, 127]  censored: ...
+                         growth per added rung: ['1.49x', '1.40x']
+                         b_eff/level: ['7.5', '9.2', '10.9']
+

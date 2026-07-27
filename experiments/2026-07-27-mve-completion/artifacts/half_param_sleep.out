@@ -1,0 +1,18 @@
+RETAINED PROGRAMS (what sleep is fed):
+  half-w0      nth(split_h(input), 0)
+  half-w1      nth(split_h(input), 0)
+  half-e0      nth(split_h(input), 1)
+  half-e1      nth(split_h(input), 1)
+
+TARGET: half arity 2
+
+PROPOSER (AntiunifyPairs) offered 3 candidate(s):
+  arity 1  matches-target=False  nth(split_h(#0), 0)
+  arity 1  matches-target=False  nth(split_h(#0), 1)
+  arity 2  matches-target=True  nth(split_h(#0), #1)
+
+GOVERNANCE (GreedyMDLLearnEngine / GreedyMDL) kept 2:
+  abs0 arity 1  matches-target=False
+  abs1 arity 1  matches-target=False
+
+VERDICT: GOVERNANCE -- the arity-2 generalisation WAS offered and the selector discarded it.

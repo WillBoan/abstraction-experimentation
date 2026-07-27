@@ -1,0 +1,42 @@
+member                           heldout task                  floor   learned  verdict
+dae9d2b5-split-recolor-lean      dae9d2b5-heldout                 NO       yes  TOP · **ABSTRACTION BUYS THE GOAL**
+dae9d2b5-split-recolor-lean      east-heldout                    yes       yes  free at the floor
+dae9d2b5-split-recolor-lean      recolored_east-heldout           NO       yes  learned only
+dae9d2b5-split-recolor-lean      recolored_west-heldout           NO       yes  learned only
+dae9d2b5-split-recolor-lean      west-heldout                    yes       yes  free at the floor
+
+dae9d2b5-split-halves-lean       dae9d2b5-heldout                 NO       yes  TOP · **ABSTRACTION BUYS THE GOAL**
+dae9d2b5-split-halves-lean       east-heldout                    yes       yes  free at the floor
+dae9d2b5-split-halves-lean       west-heldout                    yes       yes  free at the floor
+
+dae9d2b5-split-asym-lean         dae9d2b5-heldout                 NO       yes  TOP · **ABSTRACTION BUYS THE GOAL**
+dae9d2b5-split-asym-lean         east-heldout                    yes       yes  free at the floor
+dae9d2b5-split-asym-lean         recolored_west-heldout          yes       yes  free at the floor
+dae9d2b5-split-asym-lean         west-heldout                    yes       yes  free at the floor
+
+94f9d214-nor-recolor             94f9d214-heldout                 NO       yes  TOP · **ABSTRACTION BUYS THE GOAL**
+94f9d214-nor-recolor             north-heldout                   yes       yes  free at the floor
+94f9d214-nor-recolor             recolored_north-heldout         yes       yes  free at the floor
+94f9d214-nor-recolor             recolored_south-heldout         yes       yes  free at the floor
+94f9d214-nor-recolor             south-heldout                   yes       yes  free at the floor
+
+94f9d214-nor-merged              94f9d214-heldout                 NO       yes  TOP · **ABSTRACTION BUYS THE GOAL**
+94f9d214-nor-merged              merged-heldout                   NO       yes  learned only
+94f9d214-nor-merged              north-heldout                   yes       yes  free at the floor
+94f9d214-nor-merged              recolored_north-heldout          NO       yes  learned only
+94f9d214-nor-merged              recolored_south-heldout          NO       yes  learned only
+94f9d214-nor-merged              south-heldout                   yes       yes  free at the floor
+
+fafffa47-nor-recolor             fafffa47-heldout                 NO       yes  TOP · **ABSTRACTION BUYS THE GOAL**
+fafffa47-nor-recolor             north-heldout                   yes       yes  free at the floor
+fafffa47-nor-recolor             recolored_north-heldout         yes       yes  free at the floor
+fafffa47-nor-recolor             recolored_south-heldout         yes       yes  free at the floor
+fafffa47-nor-recolor             south-heldout                   yes       yes  free at the floor
+
+fafffa47-nor-merged              fafffa47-heldout                 NO       yes  TOP · **ABSTRACTION BUYS THE GOAL**
+fafffa47-nor-merged              merged-heldout                   NO       yes  learned only
+fafffa47-nor-merged              north-heldout                   yes       yes  free at the floor
+fafffa47-nor-merged              recolored_north-heldout          NO       yes  learned only
+fafffa47-nor-merged              recolored_south-heldout          NO       yes  learned only
+fafffa47-nor-merged              south-heldout                   yes       yes  free at the floor
+

@@ -1,0 +1,28 @@
+programs: map_color(input, c, 6) for V distinct colours c, M occurrences each
+  V   M  offered  gen offered  kept      arities  verdict
+  2   1        1         True     1          [2]  GENERALISES
+  2   2        3         True     2       [1, 1]  specialises
+  2   3        3         True     2       [1, 1]  specialises
+
+  3   1        1         True     1          [2]  GENERALISES
+  3   2        4         True     4 [1, 1, 1, 2]  GENERALISES
+  3   3        4         True     4 [1, 1, 1, 2]  GENERALISES
+
+  4   1        1         True     1          [2]  GENERALISES
+  4   2        5         True     5 [1, 1, 1, 1, 2]  GENERALISES
+  4   3        5         True     5 [1, 1, 1, 1, 2]  GENERALISES
+
+  5   1        1         True     1          [2]  GENERALISES
+  5   2        6         True     6 [1, 1, 1, 1, 1, 2]  GENERALISES
+  5   3        6         True     6 [1, 1, 1, 1, 1, 2]  GENERALISES
+
+  6   1        1         True     1          [2]  GENERALISES
+  6   2        7         True     7 [1, 1, 1, 1, 1, 1, 2]  GENERALISES
+  6   3        7         True     7 [1, 1, 1, 1, 1, 1, 2]  GENERALISES
+
+  8   1        1         True     1          [2]  GENERALISES
+  8   2        9         True     9 [1, 1, 1, 1, 1, 1, 1, 1, 2]  GENERALISES
+  8   3        9         True     9 [1, 1, 1, 1, 1, 1, 1, 1, 2]  GENERALISES
+
+Reading: the column that matters is `gen offered` vs `verdict` -- wherever the arity-2 form is
+OFFERED but not kept, the loss is GOVERNANCE (S16's mechanism), not proposer reach (S15's).

@@ -1,0 +1,46 @@
+ladder                         rung                b1_full  d      tax   measured  cens
+94f9d214-nor-merged            north                 1,311  2   1311.0     20,620  
+94f9d214-nor-merged            south                 1,312  2   1312.0     20,638  
+94f9d214-nor-merged            recolored_north       1,313  2    262.6     34,460  
+94f9d214-nor-merged            recolored_south       1,314  2    262.8     20,674  
+94f9d214-nor-merged            merged                1,315  2    263.0     34,504  
+al1-mirror                     rot180                  102  2     51.0     13,486  
+al1-mirror                     mirror_recolor          103  2     20.6     13,824  
+al15-shift-frame               shift_stack              57  2     28.5      7,174  
+al15-shift-frame               framed                   58  2     29.0      7,518  
+al16-layout-nest               pair                     18  2      9.0        622  
+al16-layout-nest               stack                    19  2      9.5        750  
+al17-shift-frame-tall          shift1                   57  2     28.5      7,174  
+al17-shift-frame-tall          frame1                   58  2     29.0      7,518  
+al17-shift-frame-tall          shift2                   59  2     29.5      7,870  
+al18-fanin-rotate              pair                     19  2      9.5        750  
+al18-fanin-rotate              rot                      20  2     10.0        890  
+al19-fanin-recolor             pair                    118  2     59.0     18,570  
+al19-fanin-recolor             recol                   119  2     23.8     19,258  
+al2-rot90-calibration          rot90                     2  2      1.0         14  
+al20-recolor-telescope         pair                    117  2     58.5     14,110  
+al20-recolor-telescope         recol                   118  2     23.6     14,610  
+al21-dag-siblings              mirror_h                  4  2      2.0        122  
+al21-dag-siblings              mirror_flip               5  2      2.5        182  
+al5-perceiver-chain            swap_extremes           104  3     52.0    100,000  C
+al5-perceiver-chain            swap_mirror             105  3     26.2    100,000  C
+al5-perceiver-chain            swap_stack              115  3     12.8    100,000  C
+dae9d2b5-split-recolor         west                  1,211  2   1211.0    460,998  
+dae9d2b5-split-recolor         east                  1,212  2   1212.0    511,154  
+dae9d2b5-split-recolor         recolored_west        1,213  2    242.6    564,842  
+dae9d2b5-split-recolor         recolored_east        1,214  2    242.8    622,170  
+dae9d2b5-split-recolor-lean    west                  1,211  2   1211.0     18,820  
+dae9d2b5-split-recolor-lean    east                  1,212  2   1212.0     24,298  
+dae9d2b5-split-recolor-lean    recolored_west        1,213  2    242.6     18,856  
+dae9d2b5-split-recolor-lean    recolored_east        1,214  2    242.8     18,874  
+fafffa47-nor-merged            north                 1,311  2   1311.0     20,620  
+fafffa47-nor-merged            south                 1,312  2   1312.0     20,638  
+fafffa47-nor-merged            recolored_north       1,313  2    262.6     34,460  
+fafffa47-nor-merged            recolored_south       1,314  2    262.8     20,674  
+fafffa47-nor-merged            merged                1,315  2    263.0     34,504  
+
+uncompromised rungs: 39  usable (uncensored): 36
+spearman(b1_full, measured)        = 0.881
+spearman(tax ratio, measured)      = 0.810
+spearman(b1_full^depth, measured)  = 0.881
+spearman(b1_full, measured | d=2)  = 0.881  (n=36)

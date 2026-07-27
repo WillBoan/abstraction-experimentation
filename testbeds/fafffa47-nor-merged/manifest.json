@@ -1,0 +1,92 @@
+{
+  "name": "fafffa47-nor-merged",
+  "note": "Generated from fafffa47-nor-merged.ladder",
+  "content_hash": "f2e5a1b46d063252",
+  "tasks": [
+    {
+      "task_id": "north-00",
+      "label": "north",
+      "split": "train"
+    },
+    {
+      "task_id": "north-01",
+      "label": "north",
+      "split": "train"
+    },
+    {
+      "task_id": "north-heldout",
+      "label": "north",
+      "split": "heldout"
+    },
+    {
+      "task_id": "south-00",
+      "label": "south",
+      "split": "train"
+    },
+    {
+      "task_id": "south-01",
+      "label": "south",
+      "split": "train"
+    },
+    {
+      "task_id": "south-heldout",
+      "label": "south",
+      "split": "heldout"
+    },
+    {
+      "task_id": "recolored_north-00",
+      "label": "recolored_north",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_north-01",
+      "label": "recolored_north",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_north-heldout",
+      "label": "recolored_north",
+      "split": "heldout"
+    },
+    {
+      "task_id": "recolored_south-00",
+      "label": "recolored_south",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_south-01",
+      "label": "recolored_south",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_south-heldout",
+      "label": "recolored_south",
+      "split": "heldout"
+    },
+    {
+      "task_id": "merged-00",
+      "label": "merged",
+      "split": "train"
+    },
+    {
+      "task_id": "merged-01",
+      "label": "merged",
+      "split": "train"
+    },
+    {
+      "task_id": "merged-heldout",
+      "label": "merged",
+      "split": "heldout"
+    },
+    {
+      "task_id": "fafffa47",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "fafffa47-heldout",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

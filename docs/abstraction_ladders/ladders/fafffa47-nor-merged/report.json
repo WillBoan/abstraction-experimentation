@@ -1,0 +1,3588 @@
+{
+  "certificate": {
+    "admitted": true,
+    "demonstration_health": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 1.0,
+      "5": 1.0
+    },
+    "no_skip_paths": {
+      "1": true,
+      "2": true,
+      "3": true,
+      "4": true,
+      "5": true
+    },
+    "tractable_jumps": {
+      "1": true,
+      "2": true,
+      "3": true,
+      "4": true,
+      "5": true
+    }
+  },
+  "climb_executed": true,
+  "climb_trace": [
+    {
+      "antiunify_pair_count": 3,
+      "converged": false,
+      "iteration": 0,
+      "minted": [
+        "abs0",
+        "abs1"
+      ],
+      "proposal_count": 7,
+      "wake_considered": 151969,
+      "wake_solved": [
+        "north-00",
+        "north-01",
+        "south-00",
+        "south-01"
+      ]
+    },
+    {
+      "antiunify_pair_count": 18,
+      "converged": false,
+      "iteration": 1,
+      "minted": [
+        "abs2",
+        "abs3"
+      ],
+      "proposal_count": 13,
+      "wake_considered": 152189,
+      "wake_solved": [
+        "north-00",
+        "north-01",
+        "recolored_north-00",
+        "recolored_north-01",
+        "recolored_south-00",
+        "recolored_south-01",
+        "south-00",
+        "south-01"
+      ]
+    },
+    {
+      "antiunify_pair_count": 20,
+      "converged": false,
+      "iteration": 2,
+      "minted": [
+        "abs4"
+      ],
+      "proposal_count": 10,
+      "wake_considered": 152409,
+      "wake_solved": [
+        "merged-00",
+        "merged-01",
+        "north-00",
+        "north-01",
+        "recolored_north-00",
+        "recolored_north-01",
+        "recolored_south-00",
+        "recolored_south-01",
+        "south-00",
+        "south-01"
+      ]
+    },
+    {
+      "antiunify_pair_count": 15,
+      "converged": true,
+      "iteration": 3,
+      "minted": [],
+      "proposal_count": 5,
+      "wake_considered": 152519,
+      "wake_solved": [
+        "fafffa47",
+        "merged-00",
+        "merged-01",
+        "north-00",
+        "north-01",
+        "recolored_north-00",
+        "recolored_north-01",
+        "recolored_south-00",
+        "recolored_south-01",
+        "south-00",
+        "south-01"
+      ]
+    }
+  ],
+  "comparisons": {
+    "enablement": {
+      "1": [
+        "recolored_north-00",
+        "recolored_north-01"
+      ],
+      "2": [
+        "recolored_south-00",
+        "recolored_south-01"
+      ],
+      "3": [],
+      "4": [
+        "merged-00",
+        "merged-01"
+      ],
+      "5": [
+        "fafffa47"
+      ]
+    },
+    "loop_overhead_factor": 4.0010116072073725,
+    "loop_overhead_forfeited_by": null,
+    "marginal_rung_value": [
+      {
+        "censored": true,
+        "cost_with_rung": 34438,
+        "cost_without_rung": 34416,
+        "layer_above": "recolored_north",
+        "own_tasks_speedup": 1.0317460317460319,
+        "own_tasks_to_first_with": 504,
+        "own_tasks_to_first_without": 520,
+        "ratio": 0.999361170799698,
+        "rung": "north"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 20656,
+        "cost_without_rung": 20638,
+        "layer_above": "recolored_south",
+        "own_tasks_speedup": 1.0355731225296443,
+        "own_tasks_to_first_with": 506,
+        "own_tasks_to_first_without": 524,
+        "ratio": 0.9991285824941906,
+        "rung": "south"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 34482,
+        "cost_without_rung": 34460,
+        "layer_above": "merged",
+        "own_tasks_speedup": 60.72222222222222,
+        "own_tasks_to_first_with": 504,
+        "own_tasks_to_first_without": 30604,
+        "ratio": 0.9993619859636912,
+        "rung": "recolored_north"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 34504,
+        "cost_without_rung": 34482,
+        "layer_above": "merged",
+        "own_tasks_speedup": 34.6078431372549,
+        "own_tasks_to_first_with": 510,
+        "own_tasks_to_first_without": 17650,
+        "ratio": 0.9993623927660561,
+        "rung": "recolored_south"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 21337,
+        "cost_without_rung": 21325,
+        "layer_above": "top",
+        "own_tasks_speedup": 1.6062992125984252,
+        "own_tasks_to_first_with": 508,
+        "own_tasks_to_first_without": 816,
+        "ratio": 0.9994375966630735,
+        "rung": "merged"
+      }
+    ],
+    "vocabulary_tax": [
+      {
+        "at_full_library": 20710,
+        "at_own_level": 20620,
+        "factor": 1.004364694471387,
+        "rung": "north"
+      },
+      {
+        "at_full_library": 20710,
+        "at_own_level": 20638,
+        "factor": 1.0034887101463321,
+        "rung": "south"
+      },
+      {
+        "at_full_library": 34526,
+        "at_own_level": 34460,
+        "factor": 1.001915264074289,
+        "rung": "recolored_north"
+      },
+      {
+        "at_full_library": 20710,
+        "at_own_level": 20674,
+        "factor": 1.0017413175969818,
+        "rung": "recolored_south"
+      },
+      {
+        "at_full_library": 34526,
+        "at_own_level": 34504,
+        "factor": 1.0006376072339438,
+        "rung": "merged"
+      }
+    ]
+  },
+  "compromises": [],
+  "cost": {
+    "amortization_ratio_considered": null,
+    "amortization_ratio_estimated": {
+      "high": 105352.39298969343,
+      "low": 5681.632267642364
+    },
+    "budget_compression_depth": {
+      "max_jump_depth": 2,
+      "raw_depth": 5
+    },
+    "jump_costs": {
+      "merged": 34504,
+      "north": 20620,
+      "recolored_north": 34460,
+      "recolored_south": 20674,
+      "south": 20638
+    },
+    "jump_costs_to_first": {
+      "merged": 816,
+      "north": 520,
+      "recolored_north": 30604,
+      "recolored_south": 17650,
+      "south": 524
+    },
+    "laddered_end_to_end_considered": 609086,
+    "laddered_marginal_considered": 152233,
+    "laddered_marginal_to_first": 70698,
+    "off_chain_top_solved": true,
+    "raw_arm": null,
+    "raw_censored": true,
+    "raw_considered": 21277,
+    "raw_estimate": {
+      "available": true,
+      "caveats": [
+        "THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells",
+        "accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)",
+        "finite-space floors: both fits over-project (up to 3.71x) once the space is exhausted",
+        "error compounds per extrapolated round and is floor-dependent even at a 1-round gap",
+        "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
+        "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
+      ],
+      "d_raw": 5,
+      "estimate_high": 16038110842,
+      "estimate_low": 864931925,
+      "growth_ratio_geometric": 34.18,
+      "growth_ratio_last": 91.03,
+      "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
+      "observed_composed": [
+        18,
+        231,
+        21028
+      ],
+      "observed_considered": 21277,
+      "observed_through_depth": 2,
+      "rounds_extrapolated": 3,
+      "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
+    },
+    "raw_limit_censored": false,
+    "raw_solved": false,
+    "top_jump_cost": 21337,
+    "top_jump_cost_to_first": 20584
+  },
+  "cost_matrix": [
+    {
+      "columns": {
+        "0": {
+          "b_eff": 12.83,
+          "by_primitive": [
+            {
+              "considered": 21275,
+              "primitive": "__const__",
+              "share": 0.9999060017859661
+            },
+            {
+              "considered": 21121,
+              "primitive": "map_color",
+              "share": 0.9926681393053532
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8854631761996522
+            },
+            {
+              "considered": 1200,
+              "primitive": "swap_colors",
+              "share": 0.05639892842036001
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0008929830333223669
+            },
+            {
+              "considered": 7,
+              "primitive": "nth",
+              "share": 0.0003289937491187667
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 21277,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 12.89,
+          "by_primitive": [
+            {
+              "considered": 21284,
+              "primitive": "__const__",
+              "share": 0.9997651369251727
+            },
+            {
+              "considered": 20920,
+              "primitive": "map_color",
+              "share": 0.9826671050777397
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8849640659495515
+            },
+            {
+              "considered": 4423,
+              "primitive": "north",
+              "share": 0.20775987599229648
+            },
+            {
+              "considered": 1200,
+              "primitive": "swap_colors",
+              "share": 0.05636713795857015
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0008924796843440275
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 21289,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 12.94,
+          "by_primitive": [
+            {
+              "considered": 21291,
+              "primitive": "__const__",
+              "share": 0.9995305384723722
+            },
+            {
+              "considered": 20577,
+              "primitive": "map_color",
+              "share": 0.9660109853997465
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8844655180507958
+            },
+            {
+              "considered": 4424,
+              "primitive": "north",
+              "share": 0.20768977982254355
+            },
+            {
+              "considered": 4424,
+              "primitive": "south",
+              "share": 0.20768977982254355
+            },
+            {
+              "considered": 1200,
+              "primitive": "swap_colors",
+              "share": 0.05633538331533731
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 21301,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "3": {
+          "b_eff": 13.0,
+          "by_primitive": [
+            {
+              "considered": 21296,
+              "primitive": "__const__",
+              "share": 0.9992023647539061
+            },
+            {
+              "considered": 20032,
+              "primitive": "map_color",
+              "share": 0.9398958382208042
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8839675315535119
+            },
+            {
+              "considered": 4425,
+              "primitive": "north",
+              "share": 0.20761976258621498
+            },
+            {
+              "considered": 4425,
+              "primitive": "recolored_north",
+              "share": 0.20761976258621498
+            },
+            {
+              "considered": 4425,
+              "primitive": "south",
+              "share": 0.20761976258621498
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 21313,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "4": {
+          "b_eff": 13.06,
+          "by_primitive": [
+            {
+              "considered": 21299,
+              "primitive": "__const__",
+              "share": 0.9987807737397421
+            },
+            {
+              "considered": 19225,
+              "primitive": "map_color",
+              "share": 0.9015240328253223
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8834701055099649
+            },
+            {
+              "considered": 4426,
+              "primitive": "north",
+              "share": 0.20754982415005863
+            },
+            {
+              "considered": 4426,
+              "primitive": "recolored_north",
+              "share": 0.20754982415005863
+            },
+            {
+              "considered": 4426,
+              "primitive": "recolored_south",
+              "share": 0.20754982415005863
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 420,
+          "considered": 21325,
+          "first_solution_index": 420,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "5": {
+          "b_eff": 13.11,
+          "by_primitive": [
+            {
+              "considered": 21300,
+              "primitive": "__const__",
+              "share": 0.9982659230444767
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8829732389745513
+            },
+            {
+              "considered": 18096,
+              "primitive": "map_color",
+              "share": 0.8481042320851103
+            },
+            {
+              "considered": 4427,
+              "primitive": "merged",
+              "share": 0.20747996438112198
+            },
+            {
+              "considered": 4427,
+              "primitive": "north",
+              "share": 0.20747996438112198
+            },
+            {
+              "considered": 4427,
+              "primitive": "recolored_north",
+              "share": 0.20747996438112198
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 253,
+          "considered": 21337,
+          "first_solution_index": 253,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "merged",
+      "task_id": "merged-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.55,
+          "by_primitive": [
+            {
+              "considered": 13137,
+              "primitive": "__const__",
+              "share": 0.9998477814141107
+            },
+            {
+              "considered": 12979,
+              "primitive": "map_color",
+              "share": 0.987822513128853
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8448131516858208
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07610929294466855
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0014460765659487023
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0006849836365020169
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 13139,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 11.6,
+          "by_primitive": [
+            {
+              "considered": 13144,
+              "primitive": "__const__",
+              "share": 0.9996197429462317
+            },
+            {
+              "considered": 12776,
+              "primitive": "map_color",
+              "share": 0.9716328237888813
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8441706593657312
+            },
+            {
+              "considered": 3121,
+              "primitive": "north",
+              "share": 0.23735645296220245
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07605141075366947
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0014449768043197201
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 13149,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 11.65,
+          "by_primitive": [
+            {
+              "considered": 13149,
+              "primitive": "__const__",
+              "share": 0.9992400638346379
+            },
+            {
+              "considered": 12431,
+              "primitive": "map_color",
+              "share": 0.9446766471616385
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8435291435519416
+            },
+            {
+              "considered": 3122,
+              "primitive": "north",
+              "share": 0.2372520708260506
+            },
+            {
+              "considered": 3122,
+              "primitive": "south",
+              "share": 0.2372520708260506
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07599361653621096
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 13159,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "3": {
+          "b_eff": 11.7,
+          "by_primitive": [
+            {
+              "considered": 13152,
+              "primitive": "__const__",
+              "share": 0.998709089528438
+            },
+            {
+              "considered": 11884,
+              "primitive": "map_color",
+              "share": 0.9024223555319311
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8428886020198952
+            },
+            {
+              "considered": 3123,
+              "primitive": "north",
+              "share": 0.2371478472169489
+            },
+            {
+              "considered": 3123,
+              "primitive": "recolored_north",
+              "share": 0.2371478472169489
+            },
+            {
+              "considered": 3123,
+              "primitive": "south",
+              "share": 0.2371478472169489
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 13169,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "4": {
+          "b_eff": 11.75,
+          "by_primitive": [
+            {
+              "considered": 13153,
+              "primitive": "__const__",
+              "share": 0.9980271644282571
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.842249032551787
+            },
+            {
+              "considered": 11075,
+              "primitive": "map_color",
+              "share": 0.8403520752712649
+            },
+            {
+              "considered": 3124,
+              "primitive": "north",
+              "share": 0.23704378177403446
+            },
+            {
+              "considered": 3124,
+              "primitive": "recolored_north",
+              "share": 0.23704378177403446
+            },
+            {
+              "considered": 3124,
+              "primitive": "recolored_south",
+              "share": 0.23704378177403446
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 396,
+          "considered": 13179,
+          "first_solution_index": 396,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "5": {
+          "b_eff": 11.8,
+          "by_primitive": [
+            {
+              "considered": 13152,
+              "primitive": "__const__",
+              "share": 0.9971946318902115
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.841610432936538
+            },
+            {
+              "considered": 9944,
+              "primitive": "map_color",
+              "share": 0.7539616346955796
+            },
+            {
+              "considered": 3125,
+              "primitive": "merged",
+              "share": 0.23693987413753886
+            },
+            {
+              "considered": 3125,
+              "primitive": "north",
+              "share": 0.23693987413753886
+            },
+            {
+              "considered": 3125,
+              "primitive": "recolored_north",
+              "share": 0.23693987413753886
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 255,
+          "considered": 13189,
+          "first_solution_index": 255,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "merged",
+      "task_id": "merged-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.55,
+          "by_primitive": [
+            {
+              "considered": 13137,
+              "primitive": "__const__",
+              "share": 0.9998477814141107
+            },
+            {
+              "considered": 12979,
+              "primitive": "map_color",
+              "share": 0.987822513128853
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8448131516858208
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07610929294466855
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0014460765659487023
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0006849836365020169
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 260,
+          "considered": 13139,
+          "first_solution_index": 260,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 11.6,
+          "by_primitive": [
+            {
+              "considered": 13144,
+              "primitive": "__const__",
+              "share": 0.9996197429462317
+            },
+            {
+              "considered": 12776,
+              "primitive": "map_color",
+              "share": 0.9716328237888813
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8441706593657312
+            },
+            {
+              "considered": 3121,
+              "primitive": "north",
+              "share": 0.23735645296220245
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07605141075366947
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0014449768043197201
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 251,
+          "considered": 13149,
+          "first_solution_index": 251,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 11.65,
+          "by_primitive": [
+            {
+              "considered": 13149,
+              "primitive": "__const__",
+              "share": 0.9992400638346379
+            },
+            {
+              "considered": 12431,
+              "primitive": "map_color",
+              "share": 0.9446766471616385
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8435291435519416
+            },
+            {
+              "considered": 3122,
+              "primitive": "north",
+              "share": 0.2372520708260506
+            },
+            {
+              "considered": 3122,
+              "primitive": "south",
+              "share": 0.2372520708260506
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07599361653621096
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 251,
+          "considered": 13159,
+          "first_solution_index": 251,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 11.7,
+          "by_primitive": [
+            {
+              "considered": 13152,
+              "primitive": "__const__",
+              "share": 0.998709089528438
+            },
+            {
+              "considered": 11884,
+              "primitive": "map_color",
+              "share": 0.9024223555319311
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8428886020198952
+            },
+            {
+              "considered": 3123,
+              "primitive": "north",
+              "share": 0.2371478472169489
+            },
+            {
+              "considered": 3123,
+              "primitive": "recolored_north",
+              "share": 0.2371478472169489
+            },
+            {
+              "considered": 3123,
+              "primitive": "south",
+              "share": 0.2371478472169489
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 251,
+          "considered": 13169,
+          "first_solution_index": 251,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 11.75,
+          "by_primitive": [
+            {
+              "considered": 13153,
+              "primitive": "__const__",
+              "share": 0.9980271644282571
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.842249032551787
+            },
+            {
+              "considered": 11075,
+              "primitive": "map_color",
+              "share": 0.8403520752712649
+            },
+            {
+              "considered": 3124,
+              "primitive": "north",
+              "share": 0.23704378177403446
+            },
+            {
+              "considered": 3124,
+              "primitive": "recolored_north",
+              "share": 0.23704378177403446
+            },
+            {
+              "considered": 3124,
+              "primitive": "recolored_south",
+              "share": 0.23704378177403446
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 251,
+          "considered": 13179,
+          "first_solution_index": 251,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "5": {
+          "b_eff": 11.8,
+          "by_primitive": [
+            {
+              "considered": 13152,
+              "primitive": "__const__",
+              "share": 0.9971946318902115
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.841610432936538
+            },
+            {
+              "considered": 9944,
+              "primitive": "map_color",
+              "share": 0.7539616346955796
+            },
+            {
+              "considered": 3125,
+              "primitive": "merged",
+              "share": 0.23693987413753886
+            },
+            {
+              "considered": 3125,
+              "primitive": "north",
+              "share": 0.23693987413753886
+            },
+            {
+              "considered": 3125,
+              "primitive": "recolored_north",
+              "share": 0.23693987413753886
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 251,
+          "considered": 13189,
+          "first_solution_index": 251,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "north",
+      "task_id": "north-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 10.5,
+          "by_primitive": [
+            {
+              "considered": 7479,
+              "primitive": "__const__",
+              "share": 0.9997326560620238
+            },
+            {
+              "considered": 7317,
+              "primitive": "map_color",
+              "share": 0.9780777970859511
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7806442988905227
+            },
+            {
+              "considered": 800,
+              "primitive": "swap_colors",
+              "share": 0.10693757519048255
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0025397674107739605
+            },
+            {
+              "considered": 11,
+              "primitive": "nth",
+              "share": 0.0014703916588691352
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 260,
+          "considered": 7481,
+          "first_solution_index": 260,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 10.55,
+          "by_primitive": [
+            {
+              "considered": 7484,
+              "primitive": "__const__",
+              "share": 0.999332354119375
+            },
+            {
+              "considered": 7112,
+              "primitive": "map_color",
+              "share": 0.9496595006008813
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7798103885699025
+            },
+            {
+              "considered": 2059,
+              "primitive": "north",
+              "share": 0.2749365736413406
+            },
+            {
+              "considered": 800,
+              "primitive": "swap_colors",
+              "share": 0.10682334089998664
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.002537054346374683
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 253,
+          "considered": 7489,
+          "first_solution_index": 253,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 10.59,
+          "by_primitive": [
+            {
+              "considered": 7487,
+              "primitive": "__const__",
+              "share": 0.9986661331199146
+            },
+            {
+              "considered": 6765,
+              "primitive": "map_color",
+              "share": 0.902360944377751
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7789782579698546
+            },
+            {
+              "considered": 2060,
+              "primitive": "north",
+              "share": 0.2747765772975857
+            },
+            {
+              "considered": 2060,
+              "primitive": "south",
+              "share": 0.2747765772975857
+            },
+            {
+              "considered": 800,
+              "primitive": "swap_colors",
+              "share": 0.1067093504068294
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 253,
+          "considered": 7497,
+          "first_solution_index": 253,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 10.64,
+          "by_primitive": [
+            {
+              "considered": 7488,
+              "primitive": "__const__",
+              "share": 0.9977348434377082
+            },
+            {
+              "considered": 6216,
+              "primitive": "map_color",
+              "share": 0.8282478347768154
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7781479013990673
+            },
+            {
+              "considered": 2061,
+              "primitive": "north",
+              "share": 0.27461692205196536
+            },
+            {
+              "considered": 2061,
+              "primitive": "recolored_north",
+              "share": 0.27461692205196536
+            },
+            {
+              "considered": 2061,
+              "primitive": "south",
+              "share": 0.27461692205196536
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 253,
+          "considered": 7505,
+          "first_solution_index": 253,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 10.68,
+          "by_primitive": [
+            {
+              "considered": 7487,
+              "primitive": "__const__",
+              "share": 0.996539331824837
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7773193131904699
+            },
+            {
+              "considered": 5405,
+              "primitive": "map_color",
+              "share": 0.7194196725675496
+            },
+            {
+              "considered": 2062,
+              "primitive": "north",
+              "share": 0.27445760681485426
+            },
+            {
+              "considered": 2062,
+              "primitive": "recolored_north",
+              "share": 0.27445760681485426
+            },
+            {
+              "considered": 2062,
+              "primitive": "recolored_south",
+              "share": 0.27445760681485426
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 253,
+          "considered": 7513,
+          "first_solution_index": 253,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "5": {
+          "b_eff": 10.73,
+          "by_primitive": [
+            {
+              "considered": 7484,
+              "primitive": "__const__",
+              "share": 0.9950804414306608
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7764924877011036
+            },
+            {
+              "considered": 4272,
+              "primitive": "map_color",
+              "share": 0.5680095731950539
+            },
+            {
+              "considered": 2063,
+              "primitive": "merged",
+              "share": 0.27429863050126313
+            },
+            {
+              "considered": 2063,
+              "primitive": "north",
+              "share": 0.27429863050126313
+            },
+            {
+              "considered": 2063,
+              "primitive": "recolored_north",
+              "share": 0.27429863050126313
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 253,
+          "considered": 7521,
+          "first_solution_index": 253,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "north",
+      "task_id": "north-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 12.83,
+          "by_primitive": [
+            {
+              "considered": 21275,
+              "primitive": "__const__",
+              "share": 0.9999060017859661
+            },
+            {
+              "considered": 21121,
+              "primitive": "map_color",
+              "share": 0.9926681393053532
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8854631761996522
+            },
+            {
+              "considered": 1200,
+              "primitive": "swap_colors",
+              "share": 0.05639892842036001
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0008929830333223669
+            },
+            {
+              "considered": 7,
+              "primitive": "nth",
+              "share": 0.0003289937491187667
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 21277,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 12.89,
+          "by_primitive": [
+            {
+              "considered": 21284,
+              "primitive": "__const__",
+              "share": 0.9997651369251727
+            },
+            {
+              "considered": 20920,
+              "primitive": "map_color",
+              "share": 0.9826671050777397
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8849640659495515
+            },
+            {
+              "considered": 4423,
+              "primitive": "north",
+              "share": 0.20775987599229648
+            },
+            {
+              "considered": 1200,
+              "primitive": "swap_colors",
+              "share": 0.05636713795857015
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0008924796843440275
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 19170,
+          "considered": 21289,
+          "first_solution_index": 19170,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 12.94,
+          "by_primitive": [
+            {
+              "considered": 21291,
+              "primitive": "__const__",
+              "share": 0.9995305384723722
+            },
+            {
+              "considered": 20577,
+              "primitive": "map_color",
+              "share": 0.9660109853997465
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8844655180507958
+            },
+            {
+              "considered": 4424,
+              "primitive": "north",
+              "share": 0.20768977982254355
+            },
+            {
+              "considered": 4424,
+              "primitive": "south",
+              "share": 0.20768977982254355
+            },
+            {
+              "considered": 1200,
+              "primitive": "swap_colors",
+              "share": 0.05633538331533731
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 19171,
+          "considered": 21301,
+          "first_solution_index": 19171,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 13.0,
+          "by_primitive": [
+            {
+              "considered": 21296,
+              "primitive": "__const__",
+              "share": 0.9992023647539061
+            },
+            {
+              "considered": 20032,
+              "primitive": "map_color",
+              "share": 0.9398958382208042
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8839675315535119
+            },
+            {
+              "considered": 4425,
+              "primitive": "north",
+              "share": 0.20761976258621498
+            },
+            {
+              "considered": 4425,
+              "primitive": "recolored_north",
+              "share": 0.20761976258621498
+            },
+            {
+              "considered": 4425,
+              "primitive": "south",
+              "share": 0.20761976258621498
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 251,
+          "considered": 21313,
+          "first_solution_index": 251,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 13.06,
+          "by_primitive": [
+            {
+              "considered": 21299,
+              "primitive": "__const__",
+              "share": 0.9987807737397421
+            },
+            {
+              "considered": 19225,
+              "primitive": "map_color",
+              "share": 0.9015240328253223
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8834701055099649
+            },
+            {
+              "considered": 4426,
+              "primitive": "north",
+              "share": 0.20754982415005863
+            },
+            {
+              "considered": 4426,
+              "primitive": "recolored_north",
+              "share": 0.20754982415005863
+            },
+            {
+              "considered": 4426,
+              "primitive": "recolored_south",
+              "share": 0.20754982415005863
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 251,
+          "considered": 21325,
+          "first_solution_index": 251,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "5": {
+          "b_eff": 13.11,
+          "by_primitive": [
+            {
+              "considered": 21300,
+              "primitive": "__const__",
+              "share": 0.9982659230444767
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8829732389745513
+            },
+            {
+              "considered": 18096,
+              "primitive": "map_color",
+              "share": 0.8481042320851103
+            },
+            {
+              "considered": 4427,
+              "primitive": "merged",
+              "share": 0.20747996438112198
+            },
+            {
+              "considered": 4427,
+              "primitive": "north",
+              "share": 0.20747996438112198
+            },
+            {
+              "considered": 4427,
+              "primitive": "recolored_north",
+              "share": 0.20747996438112198
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 251,
+          "considered": 21337,
+          "first_solution_index": 251,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "recolored_north",
+      "task_id": "recolored_north-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.55,
+          "by_primitive": [
+            {
+              "considered": 13137,
+              "primitive": "__const__",
+              "share": 0.9998477814141107
+            },
+            {
+              "considered": 12979,
+              "primitive": "map_color",
+              "share": 0.987822513128853
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8448131516858208
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07610929294466855
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0014460765659487023
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0006849836365020169
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 13139,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 11.6,
+          "by_primitive": [
+            {
+              "considered": 13144,
+              "primitive": "__const__",
+              "share": 0.9996197429462317
+            },
+            {
+              "considered": 12776,
+              "primitive": "map_color",
+              "share": 0.9716328237888813
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8441706593657312
+            },
+            {
+              "considered": 3121,
+              "primitive": "north",
+              "share": 0.23735645296220245
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07605141075366947
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0014449768043197201
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 11432,
+          "considered": 13149,
+          "first_solution_index": 11432,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 11.65,
+          "by_primitive": [
+            {
+              "considered": 13149,
+              "primitive": "__const__",
+              "share": 0.9992400638346379
+            },
+            {
+              "considered": 12431,
+              "primitive": "map_color",
+              "share": 0.9446766471616385
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8435291435519416
+            },
+            {
+              "considered": 3122,
+              "primitive": "north",
+              "share": 0.2372520708260506
+            },
+            {
+              "considered": 3122,
+              "primitive": "south",
+              "share": 0.2372520708260506
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07599361653621096
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 11433,
+          "considered": 13159,
+          "first_solution_index": 11433,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 11.7,
+          "by_primitive": [
+            {
+              "considered": 13152,
+              "primitive": "__const__",
+              "share": 0.998709089528438
+            },
+            {
+              "considered": 11884,
+              "primitive": "map_color",
+              "share": 0.9024223555319311
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8428886020198952
+            },
+            {
+              "considered": 3123,
+              "primitive": "north",
+              "share": 0.2371478472169489
+            },
+            {
+              "considered": 3123,
+              "primitive": "recolored_north",
+              "share": 0.2371478472169489
+            },
+            {
+              "considered": 3123,
+              "primitive": "south",
+              "share": 0.2371478472169489
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 253,
+          "considered": 13169,
+          "first_solution_index": 253,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 11.75,
+          "by_primitive": [
+            {
+              "considered": 13153,
+              "primitive": "__const__",
+              "share": 0.9980271644282571
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.842249032551787
+            },
+            {
+              "considered": 11075,
+              "primitive": "map_color",
+              "share": 0.8403520752712649
+            },
+            {
+              "considered": 3124,
+              "primitive": "north",
+              "share": 0.23704378177403446
+            },
+            {
+              "considered": 3124,
+              "primitive": "recolored_north",
+              "share": 0.23704378177403446
+            },
+            {
+              "considered": 3124,
+              "primitive": "recolored_south",
+              "share": 0.23704378177403446
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 253,
+          "considered": 13179,
+          "first_solution_index": 253,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "5": {
+          "b_eff": 11.8,
+          "by_primitive": [
+            {
+              "considered": 13152,
+              "primitive": "__const__",
+              "share": 0.9971946318902115
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.841610432936538
+            },
+            {
+              "considered": 9944,
+              "primitive": "map_color",
+              "share": 0.7539616346955796
+            },
+            {
+              "considered": 3125,
+              "primitive": "merged",
+              "share": 0.23693987413753886
+            },
+            {
+              "considered": 3125,
+              "primitive": "north",
+              "share": 0.23693987413753886
+            },
+            {
+              "considered": 3125,
+              "primitive": "recolored_north",
+              "share": 0.23693987413753886
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 253,
+          "considered": 13189,
+          "first_solution_index": 253,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "recolored_north",
+      "task_id": "recolored_north-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 10.5,
+          "by_primitive": [
+            {
+              "considered": 7479,
+              "primitive": "__const__",
+              "share": 0.9997326560620238
+            },
+            {
+              "considered": 7317,
+              "primitive": "map_color",
+              "share": 0.9780777970859511
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7806442988905227
+            },
+            {
+              "considered": 800,
+              "primitive": "swap_colors",
+              "share": 0.10693757519048255
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0025397674107739605
+            },
+            {
+              "considered": 11,
+              "primitive": "nth",
+              "share": 0.0014703916588691352
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 7481,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 10.55,
+          "by_primitive": [
+            {
+              "considered": 7484,
+              "primitive": "__const__",
+              "share": 0.999332354119375
+            },
+            {
+              "considered": 7112,
+              "primitive": "map_color",
+              "share": 0.9496595006008813
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7798103885699025
+            },
+            {
+              "considered": 2059,
+              "primitive": "north",
+              "share": 0.2749365736413406
+            },
+            {
+              "considered": 800,
+              "primitive": "swap_colors",
+              "share": 0.10682334089998664
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.002537054346374683
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 7489,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 10.59,
+          "by_primitive": [
+            {
+              "considered": 7487,
+              "primitive": "__const__",
+              "share": 0.9986661331199146
+            },
+            {
+              "considered": 6765,
+              "primitive": "map_color",
+              "share": 0.902360944377751
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7789782579698546
+            },
+            {
+              "considered": 2060,
+              "primitive": "north",
+              "share": 0.2747765772975857
+            },
+            {
+              "considered": 2060,
+              "primitive": "south",
+              "share": 0.2747765772975857
+            },
+            {
+              "considered": 800,
+              "primitive": "swap_colors",
+              "share": 0.1067093504068294
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 6195,
+          "considered": 7497,
+          "first_solution_index": 6195,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 10.64,
+          "by_primitive": [
+            {
+              "considered": 7488,
+              "primitive": "__const__",
+              "share": 0.9977348434377082
+            },
+            {
+              "considered": 6216,
+              "primitive": "map_color",
+              "share": 0.8282478347768154
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7781479013990673
+            },
+            {
+              "considered": 2061,
+              "primitive": "north",
+              "share": 0.27461692205196536
+            },
+            {
+              "considered": 2061,
+              "primitive": "recolored_north",
+              "share": 0.27461692205196536
+            },
+            {
+              "considered": 2061,
+              "primitive": "south",
+              "share": 0.27461692205196536
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 6196,
+          "considered": 7505,
+          "first_solution_index": 6196,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 10.68,
+          "by_primitive": [
+            {
+              "considered": 7487,
+              "primitive": "__const__",
+              "share": 0.996539331824837
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7773193131904699
+            },
+            {
+              "considered": 5405,
+              "primitive": "map_color",
+              "share": 0.7194196725675496
+            },
+            {
+              "considered": 2062,
+              "primitive": "north",
+              "share": 0.27445760681485426
+            },
+            {
+              "considered": 2062,
+              "primitive": "recolored_north",
+              "share": 0.27445760681485426
+            },
+            {
+              "considered": 2062,
+              "primitive": "recolored_south",
+              "share": 0.27445760681485426
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 256,
+          "considered": 7513,
+          "first_solution_index": 256,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "5": {
+          "b_eff": 10.73,
+          "by_primitive": [
+            {
+              "considered": 7484,
+              "primitive": "__const__",
+              "share": 0.9950804414306608
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7764924877011036
+            },
+            {
+              "considered": 4272,
+              "primitive": "map_color",
+              "share": 0.5680095731950539
+            },
+            {
+              "considered": 2063,
+              "primitive": "merged",
+              "share": 0.27429863050126313
+            },
+            {
+              "considered": 2063,
+              "primitive": "north",
+              "share": 0.27429863050126313
+            },
+            {
+              "considered": 2063,
+              "primitive": "recolored_north",
+              "share": 0.27429863050126313
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 256,
+          "considered": 7521,
+          "first_solution_index": 256,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "recolored_south",
+      "task_id": "recolored_south-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.55,
+          "by_primitive": [
+            {
+              "considered": 13137,
+              "primitive": "__const__",
+              "share": 0.9998477814141107
+            },
+            {
+              "considered": 12979,
+              "primitive": "map_color",
+              "share": 0.987822513128853
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8448131516858208
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07610929294466855
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0014460765659487023
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0006849836365020169
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 13139,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 11.6,
+          "by_primitive": [
+            {
+              "considered": 13144,
+              "primitive": "__const__",
+              "share": 0.9996197429462317
+            },
+            {
+              "considered": 12776,
+              "primitive": "map_color",
+              "share": 0.9716328237888813
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8441706593657312
+            },
+            {
+              "considered": 3121,
+              "primitive": "north",
+              "share": 0.23735645296220245
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07605141075366947
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0014449768043197201
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 13149,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 11.65,
+          "by_primitive": [
+            {
+              "considered": 13149,
+              "primitive": "__const__",
+              "share": 0.9992400638346379
+            },
+            {
+              "considered": 12431,
+              "primitive": "map_color",
+              "share": 0.9446766471616385
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8435291435519416
+            },
+            {
+              "considered": 3122,
+              "primitive": "north",
+              "share": 0.2372520708260506
+            },
+            {
+              "considered": 3122,
+              "primitive": "south",
+              "share": 0.2372520708260506
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07599361653621096
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 11453,
+          "considered": 13159,
+          "first_solution_index": 11453,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 11.7,
+          "by_primitive": [
+            {
+              "considered": 13152,
+              "primitive": "__const__",
+              "share": 0.998709089528438
+            },
+            {
+              "considered": 11884,
+              "primitive": "map_color",
+              "share": 0.9024223555319311
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8428886020198952
+            },
+            {
+              "considered": 3123,
+              "primitive": "north",
+              "share": 0.2371478472169489
+            },
+            {
+              "considered": 3123,
+              "primitive": "recolored_north",
+              "share": 0.2371478472169489
+            },
+            {
+              "considered": 3123,
+              "primitive": "south",
+              "share": 0.2371478472169489
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 11454,
+          "considered": 13169,
+          "first_solution_index": 11454,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 11.75,
+          "by_primitive": [
+            {
+              "considered": 13153,
+              "primitive": "__const__",
+              "share": 0.9980271644282571
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.842249032551787
+            },
+            {
+              "considered": 11075,
+              "primitive": "map_color",
+              "share": 0.8403520752712649
+            },
+            {
+              "considered": 3124,
+              "primitive": "north",
+              "share": 0.23704378177403446
+            },
+            {
+              "considered": 3124,
+              "primitive": "recolored_north",
+              "share": 0.23704378177403446
+            },
+            {
+              "considered": 3124,
+              "primitive": "recolored_south",
+              "share": 0.23704378177403446
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 254,
+          "considered": 13179,
+          "first_solution_index": 254,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "5": {
+          "b_eff": 11.8,
+          "by_primitive": [
+            {
+              "considered": 13152,
+              "primitive": "__const__",
+              "share": 0.9971946318902115
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.841610432936538
+            },
+            {
+              "considered": 9944,
+              "primitive": "map_color",
+              "share": 0.7539616346955796
+            },
+            {
+              "considered": 3125,
+              "primitive": "merged",
+              "share": 0.23693987413753886
+            },
+            {
+              "considered": 3125,
+              "primitive": "north",
+              "share": 0.23693987413753886
+            },
+            {
+              "considered": 3125,
+              "primitive": "recolored_north",
+              "share": 0.23693987413753886
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 254,
+          "considered": 13189,
+          "first_solution_index": 254,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "recolored_south",
+      "task_id": "recolored_south-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 10.5,
+          "by_primitive": [
+            {
+              "considered": 7479,
+              "primitive": "__const__",
+              "share": 0.9997326560620238
+            },
+            {
+              "considered": 7317,
+              "primitive": "map_color",
+              "share": 0.9780777970859511
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7806442988905227
+            },
+            {
+              "considered": 800,
+              "primitive": "swap_colors",
+              "share": 0.10693757519048255
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0025397674107739605
+            },
+            {
+              "considered": 11,
+              "primitive": "nth",
+              "share": 0.0014703916588691352
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 261,
+          "considered": 7481,
+          "first_solution_index": 261,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 10.55,
+          "by_primitive": [
+            {
+              "considered": 7484,
+              "primitive": "__const__",
+              "share": 0.999332354119375
+            },
+            {
+              "considered": 7112,
+              "primitive": "map_color",
+              "share": 0.9496595006008813
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7798103885699025
+            },
+            {
+              "considered": 2059,
+              "primitive": "north",
+              "share": 0.2749365736413406
+            },
+            {
+              "considered": 800,
+              "primitive": "swap_colors",
+              "share": 0.10682334089998664
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.002537054346374683
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 262,
+          "considered": 7489,
+          "first_solution_index": 262,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 10.59,
+          "by_primitive": [
+            {
+              "considered": 7487,
+              "primitive": "__const__",
+              "share": 0.9986661331199146
+            },
+            {
+              "considered": 6765,
+              "primitive": "map_color",
+              "share": 0.902360944377751
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7789782579698546
+            },
+            {
+              "considered": 2060,
+              "primitive": "north",
+              "share": 0.2747765772975857
+            },
+            {
+              "considered": 2060,
+              "primitive": "south",
+              "share": 0.2747765772975857
+            },
+            {
+              "considered": 800,
+              "primitive": "swap_colors",
+              "share": 0.1067093504068294
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 254,
+          "considered": 7497,
+          "first_solution_index": 254,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 10.64,
+          "by_primitive": [
+            {
+              "considered": 7488,
+              "primitive": "__const__",
+              "share": 0.9977348434377082
+            },
+            {
+              "considered": 6216,
+              "primitive": "map_color",
+              "share": 0.8282478347768154
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7781479013990673
+            },
+            {
+              "considered": 2061,
+              "primitive": "north",
+              "share": 0.27461692205196536
+            },
+            {
+              "considered": 2061,
+              "primitive": "recolored_north",
+              "share": 0.27461692205196536
+            },
+            {
+              "considered": 2061,
+              "primitive": "south",
+              "share": 0.27461692205196536
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 254,
+          "considered": 7505,
+          "first_solution_index": 254,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 10.68,
+          "by_primitive": [
+            {
+              "considered": 7487,
+              "primitive": "__const__",
+              "share": 0.996539331824837
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7773193131904699
+            },
+            {
+              "considered": 5405,
+              "primitive": "map_color",
+              "share": 0.7194196725675496
+            },
+            {
+              "considered": 2062,
+              "primitive": "north",
+              "share": 0.27445760681485426
+            },
+            {
+              "considered": 2062,
+              "primitive": "recolored_north",
+              "share": 0.27445760681485426
+            },
+            {
+              "considered": 2062,
+              "primitive": "recolored_south",
+              "share": 0.27445760681485426
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 254,
+          "considered": 7513,
+          "first_solution_index": 254,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "5": {
+          "b_eff": 10.73,
+          "by_primitive": [
+            {
+              "considered": 7484,
+              "primitive": "__const__",
+              "share": 0.9950804414306608
+            },
+            {
+              "considered": 5840,
+              "primitive": "overlay",
+              "share": 0.7764924877011036
+            },
+            {
+              "considered": 4272,
+              "primitive": "map_color",
+              "share": 0.5680095731950539
+            },
+            {
+              "considered": 2063,
+              "primitive": "merged",
+              "share": 0.27429863050126313
+            },
+            {
+              "considered": 2063,
+              "primitive": "north",
+              "share": 0.27429863050126313
+            },
+            {
+              "considered": 2063,
+              "primitive": "recolored_north",
+              "share": 0.27429863050126313
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 254,
+          "considered": 7521,
+          "first_solution_index": 254,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "south",
+      "task_id": "south-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.55,
+          "by_primitive": [
+            {
+              "considered": 13137,
+              "primitive": "__const__",
+              "share": 0.9998477814141107
+            },
+            {
+              "considered": 12979,
+              "primitive": "map_color",
+              "share": 0.987822513128853
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8448131516858208
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07610929294466855
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0014460765659487023
+            },
+            {
+              "considered": 9,
+              "primitive": "nth",
+              "share": 0.0006849836365020169
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 261,
+          "considered": 13139,
+          "first_solution_index": 261,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 11.6,
+          "by_primitive": [
+            {
+              "considered": 13144,
+              "primitive": "__const__",
+              "share": 0.9996197429462317
+            },
+            {
+              "considered": 12776,
+              "primitive": "map_color",
+              "share": 0.9716328237888813
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8441706593657312
+            },
+            {
+              "considered": 3121,
+              "primitive": "north",
+              "share": 0.23735645296220245
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07605141075366947
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0014449768043197201
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 262,
+          "considered": 13149,
+          "first_solution_index": 262,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 11.65,
+          "by_primitive": [
+            {
+              "considered": 13149,
+              "primitive": "__const__",
+              "share": 0.9992400638346379
+            },
+            {
+              "considered": 12431,
+              "primitive": "map_color",
+              "share": 0.9446766471616385
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8435291435519416
+            },
+            {
+              "considered": 3122,
+              "primitive": "north",
+              "share": 0.2372520708260506
+            },
+            {
+              "considered": 3122,
+              "primitive": "south",
+              "share": 0.2372520708260506
+            },
+            {
+              "considered": 1000,
+              "primitive": "swap_colors",
+              "share": 0.07599361653621096
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 252,
+          "considered": 13159,
+          "first_solution_index": 252,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 11.7,
+          "by_primitive": [
+            {
+              "considered": 13152,
+              "primitive": "__const__",
+              "share": 0.998709089528438
+            },
+            {
+              "considered": 11884,
+              "primitive": "map_color",
+              "share": 0.9024223555319311
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.8428886020198952
+            },
+            {
+              "considered": 3123,
+              "primitive": "north",
+              "share": 0.2371478472169489
+            },
+            {
+              "considered": 3123,
+              "primitive": "recolored_north",
+              "share": 0.2371478472169489
+            },
+            {
+              "considered": 3123,
+              "primitive": "south",
+              "share": 0.2371478472169489
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 252,
+          "considered": 13169,
+          "first_solution_index": 252,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "4": {
+          "b_eff": 11.75,
+          "by_primitive": [
+            {
+              "considered": 13153,
+              "primitive": "__const__",
+              "share": 0.9980271644282571
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.842249032551787
+            },
+            {
+              "considered": 11075,
+              "primitive": "map_color",
+              "share": 0.8403520752712649
+            },
+            {
+              "considered": 3124,
+              "primitive": "north",
+              "share": 0.23704378177403446
+            },
+            {
+              "considered": 3124,
+              "primitive": "recolored_north",
+              "share": 0.23704378177403446
+            },
+            {
+              "considered": 3124,
+              "primitive": "recolored_south",
+              "share": 0.23704378177403446
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 252,
+          "considered": 13179,
+          "first_solution_index": 252,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "5": {
+          "b_eff": 11.8,
+          "by_primitive": [
+            {
+              "considered": 13152,
+              "primitive": "__const__",
+              "share": 0.9971946318902115
+            },
+            {
+              "considered": 11100,
+              "primitive": "overlay",
+              "share": 0.841610432936538
+            },
+            {
+              "considered": 9944,
+              "primitive": "map_color",
+              "share": 0.7539616346955796
+            },
+            {
+              "considered": 3125,
+              "primitive": "merged",
+              "share": 0.23693987413753886
+            },
+            {
+              "considered": 3125,
+              "primitive": "north",
+              "share": 0.23693987413753886
+            },
+            {
+              "considered": 3125,
+              "primitive": "recolored_north",
+              "share": 0.23693987413753886
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 252,
+          "considered": 13189,
+          "first_solution_index": 252,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "south",
+      "task_id": "south-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 12.83,
+          "by_primitive": [
+            {
+              "considered": 21275,
+              "primitive": "__const__",
+              "share": 0.9999060017859661
+            },
+            {
+              "considered": 21121,
+              "primitive": "map_color",
+              "share": 0.9926681393053532
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8854631761996522
+            },
+            {
+              "considered": 1200,
+              "primitive": "swap_colors",
+              "share": 0.05639892842036001
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0008929830333223669
+            },
+            {
+              "considered": 7,
+              "primitive": "nth",
+              "share": 0.0003289937491187667
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 21277,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 12.89,
+          "by_primitive": [
+            {
+              "considered": 21284,
+              "primitive": "__const__",
+              "share": 0.9997651369251727
+            },
+            {
+              "considered": 20920,
+              "primitive": "map_color",
+              "share": 0.9826671050777397
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8849640659495515
+            },
+            {
+              "considered": 4423,
+              "primitive": "north",
+              "share": 0.20775987599229648
+            },
+            {
+              "considered": 1200,
+              "primitive": "swap_colors",
+              "share": 0.05636713795857015
+            },
+            {
+              "considered": 19,
+              "primitive": "split_v",
+              "share": 0.0008924796843440275
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 21289,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 12.94,
+          "by_primitive": [
+            {
+              "considered": 21291,
+              "primitive": "__const__",
+              "share": 0.9995305384723722
+            },
+            {
+              "considered": 20577,
+              "primitive": "map_color",
+              "share": 0.9660109853997465
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8844655180507958
+            },
+            {
+              "considered": 4424,
+              "primitive": "north",
+              "share": 0.20768977982254355
+            },
+            {
+              "considered": 4424,
+              "primitive": "south",
+              "share": 0.20768977982254355
+            },
+            {
+              "considered": 1200,
+              "primitive": "swap_colors",
+              "share": 0.05633538331533731
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 21301,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "3": {
+          "b_eff": 13.0,
+          "by_primitive": [
+            {
+              "considered": 21296,
+              "primitive": "__const__",
+              "share": 0.9992023647539061
+            },
+            {
+              "considered": 20032,
+              "primitive": "map_color",
+              "share": 0.9398958382208042
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8839675315535119
+            },
+            {
+              "considered": 4425,
+              "primitive": "north",
+              "share": 0.20761976258621498
+            },
+            {
+              "considered": 4425,
+              "primitive": "recolored_north",
+              "share": 0.20761976258621498
+            },
+            {
+              "considered": 4425,
+              "primitive": "south",
+              "share": 0.20761976258621498
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 21313,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "4": {
+          "b_eff": 13.06,
+          "by_primitive": [
+            {
+              "considered": 21299,
+              "primitive": "__const__",
+              "share": 0.9987807737397421
+            },
+            {
+              "considered": 19225,
+              "primitive": "map_color",
+              "share": 0.9015240328253223
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8834701055099649
+            },
+            {
+              "considered": 4426,
+              "primitive": "north",
+              "share": 0.20754982415005863
+            },
+            {
+              "considered": 4426,
+              "primitive": "recolored_north",
+              "share": 0.20754982415005863
+            },
+            {
+              "considered": 4426,
+              "primitive": "recolored_south",
+              "share": 0.20754982415005863
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 21325,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "5": {
+          "b_eff": 13.11,
+          "by_primitive": [
+            {
+              "considered": 21300,
+              "primitive": "__const__",
+              "share": 0.9982659230444767
+            },
+            {
+              "considered": 18840,
+              "primitive": "overlay",
+              "share": 0.8829732389745513
+            },
+            {
+              "considered": 18096,
+              "primitive": "map_color",
+              "share": 0.8481042320851103
+            },
+            {
+              "considered": 4427,
+              "primitive": "merged",
+              "share": 0.20747996438112198
+            },
+            {
+              "considered": 4427,
+              "primitive": "north",
+              "share": 0.20747996438112198
+            },
+            {
+              "considered": 4427,
+              "primitive": "recolored_north",
+              "share": 0.20747996438112198
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 20584,
+          "considered": 21337,
+          "first_solution_index": 20584,
+          "solve_generation": 2,
+          "solved": true
+        }
+      },
+      "rung": "top",
+      "task_id": "fafffa47"
+    }
+  ],
+  "ladder": {
+    "budgets": [
+      {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      }
+    ],
+    "distractors": [],
+    "heldout_corpus": {
+      "content_hash": "e17539bc6f0bba0e",
+      "name": "fafffa47-nor-merged:heldout",
+      "task_count": 6
+    },
+    "reference_config": {
+      "attempts_per_test": 2,
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "constraints": [],
+      "cost": {
+        "kind": "ProgramSize"
+      },
+      "learn": {
+        "curriculum": null,
+        "early_stop": true,
+        "iterations": 5,
+        "kind": "LearnSpec",
+        "learn_engine": {
+          "kind": "GreedyMDLLearnEngine",
+          "metric": {
+            "bits_per_primitive": 1.0,
+            "cost": {
+              "kind": "ProgramSize"
+            },
+            "kind": "CompressionMetric"
+          },
+          "name_prefix": "abs",
+          "proposer": {
+            "bound_var_safe": false,
+            "kind": "AntiunifyPairs"
+          },
+          "selector": {
+            "kind": "GreedyMDL"
+          }
+        },
+        "reset_programs_each_wake": true,
+        "score_each_wake": false,
+        "wake_schedule": "full"
+      },
+      "library": {
+        "name": "nor-L0",
+        "primitives": [
+          {
+            "name": "split_v",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": {
+              "args": [
+                "grid"
+              ],
+              "con": "list"
+            },
+            "variadic_param": null
+          },
+          {
+            "name": "nth",
+            "param_types": [
+              {
+                "args": [
+                  {
+                    "var": "a"
+                  }
+                ],
+                "con": "list"
+              },
+              "int"
+            ],
+            "return_type": {
+              "var": "a"
+            },
+            "variadic_param": null
+          },
+          {
+            "name": "overlay",
+            "param_types": [
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": "grid"
+          },
+          {
+            "name": "map_color",
+            "param_types": [
+              "grid",
+              "color",
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "swap_colors",
+            "param_types": [
+              "grid",
+              "color",
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          }
+        ],
+        "version": 1
+      },
+      "search_engine": {
+        "constant_sources": [
+          "finite-enumerate-scalars"
+        ],
+        "function_hole_fill_mode": "none",
+        "function_sample_size": 4,
+        "inverse_semantics_propagation": false,
+        "kind": "BottomUpSearchEngine",
+        "polymorphism_instantiation": "monomorphize",
+        "unpinned_type_var_mode": "reject"
+      }
+    },
+    "rungs": [
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "north"
+            },
+            "task_id": "north-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "north"
+            },
+            "task_id": "north-01"
+          }
+        ],
+        "level": 1,
+        "name": "north",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "split_v"
+            },
+            {
+              "op": "const",
+              "value": 0,
+              "value_type": "int"
+            }
+          ],
+          "op": "apply",
+          "primitive": "nth"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "south"
+            },
+            "task_id": "south-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "south"
+            },
+            "task_id": "south-01"
+          }
+        ],
+        "level": 2,
+        "name": "south",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "split_v"
+            },
+            {
+              "op": "const",
+              "value": 1,
+              "value_type": "int"
+            }
+          ],
+          "op": "apply",
+          "primitive": "nth"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_north"
+            },
+            "task_id": "recolored_north-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_north"
+            },
+            "task_id": "recolored_north-01"
+          }
+        ],
+        "level": 3,
+        "name": "recolored_north",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "north"
+            },
+            {
+              "op": "const",
+              "value": 9,
+              "value_type": "color"
+            },
+            {
+              "op": "const",
+              "value": 2,
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "map_color"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_south"
+            },
+            "task_id": "recolored_south-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_south"
+            },
+            "task_id": "recolored_south-01"
+          }
+        ],
+        "level": 4,
+        "name": "recolored_south",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "south"
+            },
+            {
+              "op": "const",
+              "value": 1,
+              "value_type": "color"
+            },
+            {
+              "op": "const",
+              "value": 2,
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "map_color"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "merged"
+            },
+            "task_id": "merged-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "merged"
+            },
+            "task_id": "merged-01"
+          }
+        ],
+        "level": 5,
+        "name": "merged",
+        "template": {
+          "args": [
+            {
+              "op": "const",
+              "value": 0,
+              "value_type": "color"
+            },
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_north"
+            },
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_south"
+            }
+          ],
+          "op": "apply",
+          "primitive": "overlay"
+        }
+      }
+    ],
+    "top": {
+      "reference_solutions": [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "merged"
+            },
+            {
+              "op": "const",
+              "value": 0,
+              "value_type": "color"
+            },
+            {
+              "op": "const",
+              "value": 2,
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "swap_colors"
+        }
+      ],
+      "task_ids": [
+        "fafffa47"
+      ]
+    },
+    "train_corpus": {
+      "content_hash": "e1732273af655dea",
+      "name": "fafffa47-nor-merged:train",
+      "task_count": 11
+    }
+  },
+  "probe_cap": 512,
+  "rung_recovery": [
+    {
+      "level": 1,
+      "matched_by": [
+        "abs0"
+      ],
+      "recovered": true,
+      "rung": "north"
+    },
+    {
+      "level": 2,
+      "matched_by": [
+        "abs1"
+      ],
+      "recovered": true,
+      "rung": "south"
+    },
+    {
+      "level": 3,
+      "matched_by": [
+        "abs2"
+      ],
+      "recovered": true,
+      "rung": "recolored_north"
+    },
+    {
+      "level": 4,
+      "matched_by": [
+        "abs3"
+      ],
+      "recovered": true,
+      "rung": "recolored_south"
+    },
+    {
+      "level": 5,
+      "matched_by": [
+        "abs4"
+      ],
+      "recovered": true,
+      "rung": "merged"
+    }
+  ],
+  "shape": {
+    "height": 6,
+    "lint_ok": true,
+    "max_jump_depth": 2,
+    "raw_depth_profile": [
+      5
+    ],
+    "validity_window": [
+      2,
+      2
+    ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": true
+  },
+  "wake_schedule": "full"
+}

@@ -1,0 +1,6 @@
+a740d043: 3 train + 1 test example(s)
+
+ANCHORED  0/4 bad  map_color(crop_to_content(g), 1, 0)
+ANCHORED  0/4 bad  map_color(crop_to_content(g), most_common_color(g), 0)
+ANCHORED  0/4 bad  map_color(crop_to_mask(g, nonbg_mask(g)), most_common_color(g), 0)
+ANCHORED  0/4 bad  map_color(crop_to_mask(g, mask_complement(mask_by_color(g, mcc(g)))), mcc(g), 0)

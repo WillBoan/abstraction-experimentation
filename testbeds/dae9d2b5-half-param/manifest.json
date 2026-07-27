@@ -1,0 +1,72 @@
+{
+  "name": "dae9d2b5-half-param",
+  "note": "Generated from dae9d2b5-half-param.ladder",
+  "content_hash": "487c172826a45bac",
+  "tasks": [
+    {
+      "task_id": "half-w0",
+      "label": "half",
+      "split": "train"
+    },
+    {
+      "task_id": "half-w1",
+      "label": "half",
+      "split": "train"
+    },
+    {
+      "task_id": "half-e0",
+      "label": "half",
+      "split": "train"
+    },
+    {
+      "task_id": "half-e1",
+      "label": "half",
+      "split": "train"
+    },
+    {
+      "task_id": "half-heldout",
+      "label": "half",
+      "split": "heldout"
+    },
+    {
+      "task_id": "recolored_west-00",
+      "label": "recolored_west",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_west-01",
+      "label": "recolored_west",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_west-heldout",
+      "label": "recolored_west",
+      "split": "heldout"
+    },
+    {
+      "task_id": "recolored_east-00",
+      "label": "recolored_east",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_east-01",
+      "label": "recolored_east",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_east-heldout",
+      "label": "recolored_east",
+      "split": "heldout"
+    },
+    {
+      "task_id": "dae9d2b5",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "dae9d2b5-heldout",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

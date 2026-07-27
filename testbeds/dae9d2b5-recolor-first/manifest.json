@@ -1,0 +1,47 @@
+{
+  "name": "dae9d2b5-recolor-first",
+  "note": "Generated from dae9d2b5-recolor-first.ladder",
+  "content_hash": "ba16391d9d950fc3",
+  "tasks": [
+    {
+      "task_id": "recolored_west-00",
+      "label": "recolored_west",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_west-01",
+      "label": "recolored_west",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_west-heldout",
+      "label": "recolored_west",
+      "split": "heldout"
+    },
+    {
+      "task_id": "recolored_east-00",
+      "label": "recolored_east",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_east-01",
+      "label": "recolored_east",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_east-heldout",
+      "label": "recolored_east",
+      "split": "heldout"
+    },
+    {
+      "task_id": "dae9d2b5",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "dae9d2b5-heldout",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}

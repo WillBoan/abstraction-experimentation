@@ -1,0 +1,21 @@
+=== dae9d2b5-split-recolor-lean  (4 rungs)
+proposer                     admitted  recovered  junk  iters   end-to-end  mints
+AntiunifyPairs (baseline)        True        4/4     0      3      302,961  4 minted
+FrequentSubtree                  True        0/4     0      1      100,815  0 minted
+TypeScopedFrequentSubtree[GRID]     True        0/4     0      1      100,815  0 minted
+StitchProposer                   True        0/4     0      1      100,815  0 minted
+
+=== 94f9d214-nor-merged  (5 rungs)
+proposer                     admitted  recovered  junk  iters   end-to-end  mints
+AntiunifyPairs (baseline)        True        5/5     0      4      576,512  5 minted
+FrequentSubtree                  True        0/5     0      1      143,831  0 minted
+TypeScopedFrequentSubtree[GRID]     True        0/5     0      1      143,831  0 minted
+StitchProposer                   True        0/5     0      1      143,831  0 minted
+
+=== al1-mirror  (2 rungs)
+proposer                     admitted  recovered  junk  iters   end-to-end  mints
+AntiunifyPairs (baseline)        True        2/2     0      3      200,280  2 minted
+FrequentSubtree                  True        0/2     0      1       33,715  0 minted
+TypeScopedFrequentSubtree[GRID]     True        0/2     0      1       33,715  0 minted
+StitchProposer                   True        1/2     0      2       68,275  1 minted
+

@@ -1,0 +1,17 @@
+=== 1. mechanism: can the proposer offer the demonstrated idiom? ===
+  FULL_SOLUTION demos        AntiunifyPairs               offers= 1  target-offered=True
+  FULL_SOLUTION demos        FrequentSubtree              offers= 1  target-offered=False
+  FULL_SOLUTION demos        TypeScopedFrequentSubtree    offers= 0  target-offered=False
+  FULL_SOLUTION demos        SearchScopedFrequentSubtree  offers= 1  target-offered=False
+  FULL_SOLUTION demos        StitchProposer               offers= 1  target-offered=True
+  FRAGMENT_IDENTICAL demos   AntiunifyPairs               offers= 0  target-offered=False
+  FRAGMENT_IDENTICAL demos   FrequentSubtree              offers= 2  target-offered=True
+  FRAGMENT_IDENTICAL demos   TypeScopedFrequentSubtree    offers= 1  target-offered=True
+  FRAGMENT_IDENTICAL demos   SearchScopedFrequentSubtree  offers= 2  target-offered=True
+  FRAGMENT_IDENTICAL demos   StitchProposer               offers= 1  target-offered=True
+
+=== 2. retrodiction: al4-mask-crop (the batch's only FrequentSubtree ladder) ===
+  r1 nonbg_mask         demo-kinds=['fragment_identical']  corrected-check-says-minable=True
+  r2 flatten_content    demo-kinds=['full_solution']  corrected-check-says-minable=False
+  r3 stamp              demo-kinds=['full_solution']  corrected-check-says-minable=False
+  register records of the real run: 'Rung recovery: r1 only'

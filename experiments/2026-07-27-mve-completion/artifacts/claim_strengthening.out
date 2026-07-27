@@ -1,0 +1,87 @@
+======================================================================
+T1 -- __const__ share of considered, every cell with by_primitive
+======================================================================
+cells with attribution: 385
+  p  0: __const__ share 0.9675
+  p 10: __const__ share 0.9842
+  p 25: __const__ share 0.9923
+  p 50: __const__ share 0.9988
+  p 75: __const__ share 0.9998
+  p 90: __const__ share 0.9999
+  p100: __const__ share 1.0000
+  cells with share > 0.9: 385/385
+  cells with share > 0.99: 295/385
+  lowest 3: [('0.968', 'dae9d2b5-split-asym-lean', 'recolored_west-00'), ('0.968', 'dae9d2b5-split-asym-lean', 'recolored_west-01'), ('0.974', 'dae9d2b5-split-asym-lean', 'east-00')]
+
+======================================================================
+T2 -- per-added-rung growth at fixed depth vs the added rung's shape
+     (exhaustive, uncompromised reports only; growth L_(i-1)->L_i)
+======================================================================
+  growth arity #const big-battery  ladder/rung
+   3.82x     3      0       False  al1-mirror/mirror_recolor
+   1.86x     1      0       False  al2-rot90-calibration/rot90
+   1.49x     2      0       False  al21-dag-siblings/mirror_h
+   1.40x     2      0       False  al21-dag-siblings/mirror_flip
+   1.21x     2      1        True  al16-layout-nest/pair
+   1.19x     2      0       False  al16-layout-nest/stack
+   1.19x     2      1        True  al18-fanin-rotate/pair
+   1.17x     1      0       False  al18-fanin-rotate/rot
+   1.11x     1      1       False  dae9d2b5-split-recolor/west
+   1.11x     1      1       False  dae9d2b5-split-recolor/east
+   1.10x     1      2        True  dae9d2b5-split-recolor/recolored_west
+   1.10x     1      2        True  dae9d2b5-split-recolor/recolored_east
+   1.05x     2      1        True  al15-shift-frame/shift_stack
+   1.05x     2      1        True  al17-shift-frame-tall/shift1
+   1.05x     1      2        True  al15-shift-frame/framed
+   1.05x     1      2        True  al17-shift-frame-tall/frame1
+   1.05x     1      0       False  al17-shift-frame-tall/shift2
+   1.04x     2      1        True  al19-fanin-recolor/pair
+   1.04x     1      2        True  al19-fanin-recolor/recol
+   1.04x     2      1        True  al20-recolor-telescope/pair
+   1.03x     1      2        True  al20-recolor-telescope/recol
+   1.03x     1      0       False  al1-mirror/rot180
+   1.00x     1      1       False  dae9d2b5-split-recolor-lean/west
+   1.00x     1      1       False  dae9d2b5-split-recolor-lean/east
+   1.00x     1      2        True  dae9d2b5-split-recolor-lean/recolored_west
+   1.00x     1      2        True  dae9d2b5-split-recolor-lean/recolored_east
+   1.00x     1      1       False  94f9d214-nor-merged/north
+   1.00x     1      1       False  fafffa47-nor-merged/north
+   1.00x     1      1       False  94f9d214-nor-merged/south
+   1.00x     1      1       False  fafffa47-nor-merged/south
+   1.00x     1      2        True  94f9d214-nor-merged/recolored_north
+   1.00x     1      2        True  fafffa47-nor-merged/recolored_north
+   1.00x     1      2        True  94f9d214-nor-merged/recolored_south
+   1.00x     1      2        True  fafffa47-nor-merged/recolored_south
+   1.00x     2      1        True  94f9d214-nor-merged/merged
+   1.00x     2      1        True  fafffa47-nor-merged/merged
+median growth by minted arity:
+  arity 1: n=24  median 1.03x  max 1.86x
+  arity 2: n=11  median 1.05x  max 1.49x
+  arity 3: n=1  median 3.82x  max 3.82x
+
+======================================================================
+T3 -- marginal-rung-value predictor shoot-out (own_tasks_speedup)
+======================================================================
+rungs with data: 56
+  binds big-battery constant             yes: n=25 med   34.61x  |  no: n=31 med    1.05x  ratio   32.9x  [OVERLAP]
+  binds >=1 constant of any type         yes: n=45 med    1.18x  |  no: n=11 med    3.42x  ratio    0.3x  [OVERLAP]
+  minted arity >= 2                      yes: n=15 med    1.25x  |  no: n=41 med    1.19x  ratio    1.0x  [OVERLAP]
+  top-fed (consumer is the top)          yes: n=29 med   17.04x  |  no: n=27 med    1.05x  ratio   16.2x  [OVERLAP]
+
+======================================================================
+T4 -- every raw arm on disk
+======================================================================
+ladder                             d_raw floor        ratio         kind sound
+94f9d214-nor-recolor                   5     5         10.0  lower-bound  True
+al1-mirror                             4     3 3.5907914579881215     measured  True
+al15-shift-frame                       5     3         10.0  lower-bound  True
+al16-layout-nest                       4     3         10.0  lower-bound  True
+al17-shift-frame-tall                  6     3         10.0  lower-bound  True
+al18-fanin-rotate                      4     4         10.0  lower-bound  True
+al19-fanin-recolor                     4     4         10.0  lower-bound  True
+al2-rot90-calibration                  4     2 0.48148148148148145     measured  True
+al20-recolor-telescope                 5     3         10.0  lower-bound  True
+al21-dag-siblings                      3     4 1.1925754060324827     measured  True
+dae9d2b5-split-recolor                 4     4         10.0  lower-bound  True
+dae9d2b5-split-recolor-lean            4     4         10.0  lower-bound  True
+fafffa47-nor-recolor                   5     5         10.0  lower-bound  True

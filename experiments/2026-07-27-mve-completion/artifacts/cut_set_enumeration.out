@@ -1,0 +1,69 @@
+
+=== dae9d2b5: 15 non-empty cut-sets over ['west', 'east', 'recolored_west', 'recolored_east']
+cut-set                                         k           schedule  all-d2 errors  status
+west                                            1             [2, 4]              0  NEW
+east                                            1             [2, 4]              0  NEW
+recolored_west                                  1             [3, 4]              0  recolor-solo (probed: inconclusive)
+recolored_east                                  1             [3, 4]              0  NEW
+west+east                                       2          [2, 2, 3]     yes      0  split-halves-lean
+west+recolored_west                             2          [2, 2, 4]              0  NEW
+west+recolored_east                             2          [2, 3, 3]              0  NEW
+east+recolored_west                             2          [2, 3, 3]              0  NEW
+east+recolored_east                             2          [2, 2, 4]              0  NEW
+recolored_west+recolored_east                   2          [3, 3, 2]              0  recolor-first (probed: inconclusive)
+west+east+recolored_west                        3       [2, 2, 2, 3]     yes      0  split-asym-lean
+west+east+recolored_east                        3       [2, 2, 2, 3]     yes      0  NEW
+west+recolored_west+recolored_east              3       [2, 2, 3, 2]              0  NEW
+east+recolored_west+recolored_east              3       [2, 3, 2, 2]              0  NEW
+west+east+recolored_west+recolored_east         4    [2, 2, 2, 2, 2]     yes      0  split-recolor(-lean)
+
+  cut-sets total:                 15
+  lint-clean:                     15
+  distinct up to branch symmetry: 9
+  AFFORDABLE (rungs d2, top <=3): 3
+     west+east                                                   [2, 2, 3]  split-halves-lean
+     west+east+recolored_west                                 [2, 2, 2, 3]  split-asym-lean
+     west+east+recolored_west+recolored_east               [2, 2, 2, 2, 2]  split-recolor(-lean)
+  ** NEW and affordable (unexplored, runnable): 0
+
+=== 94f9d214: 31 non-empty cut-sets over ['north', 'south', 'recolored_north', 'recolored_south', 'merged']
+cut-set                                         k           schedule  all-d2 errors  status
+north                                           1             [2, 5]              0  NEW
+south                                           1             [2, 5]              0  NEW
+recolored_north                                 1             [3, 5]              0  NEW
+recolored_south                                 1             [3, 5]              0  NEW
+merged                                          1             [4, 2]              0  NEW
+north+south                                     2          [2, 2, 4]              0  nor-halves
+north+recolored_north                           2          [2, 2, 5]              0  NEW
+north+recolored_south                           2          [2, 3, 4]              0  NEW
+north+merged                                    2          [2, 4, 2]              0  NEW
+south+recolored_north                           2          [2, 3, 4]              0  NEW
+south+recolored_south                           2          [2, 2, 5]              0  NEW
+south+merged                                    2          [2, 4, 2]              0  NEW
+recolored_north+recolored_south                 2          [3, 3, 3]              0  recolor-first (probed: inconclusive)
+recolored_north+merged                          2          [3, 4, 2]              0  NEW
+recolored_south+merged                          2          [3, 4, 2]              0  NEW
+north+south+recolored_north                     3       [2, 2, 2, 4]              0  NEW
+north+south+recolored_south                     3       [2, 2, 2, 4]              0  NEW
+north+south+merged                              3       [2, 2, 3, 2]              0  NEW
+north+recolored_north+recolored_south           3       [2, 2, 3, 3]              0  NEW
+north+recolored_north+merged                    3       [2, 2, 4, 2]              0  NEW
+north+recolored_south+merged                    3       [2, 3, 3, 2]              0  NEW
+south+recolored_north+recolored_south           3       [2, 3, 2, 3]              0  NEW
+south+recolored_north+merged                    3       [2, 3, 3, 2]              0  NEW
+south+recolored_south+merged                    3       [2, 2, 4, 2]              0  NEW
+recolored_north+recolored_south+merged          3       [3, 3, 2, 2]              0  NEW
+north+south+recolored_north+recolored_south     4    [2, 2, 2, 2, 3]     yes      0  nor-recolor
+north+south+recolored_north+merged              4    [2, 2, 2, 3, 2]              0  NEW
+north+south+recolored_south+merged              4    [2, 2, 2, 3, 2]              0  NEW
+north+recolored_north+recolored_south+merged    4    [2, 2, 3, 2, 2]              0  NEW
+south+recolored_north+recolored_south+merged    4    [2, 3, 2, 2, 2]              0  NEW
+north+south+recolored_north+recolored_south+merged  5 [2, 2, 2, 2, 2, 2]     yes      0  nor-merged
+
+  cut-sets total:                 31
+  lint-clean:                     31
+  distinct up to branch symmetry: 19
+  AFFORDABLE (rungs d2, top <=3): 2
+     north+south+recolored_north+recolored_south           [2, 2, 2, 2, 3]  nor-recolor
+     north+south+recolored_north+recolored_south+merged   [2, 2, 2, 2, 2, 2]  nor-merged
+  ** NEW and affordable (unexplored, runnable): 0

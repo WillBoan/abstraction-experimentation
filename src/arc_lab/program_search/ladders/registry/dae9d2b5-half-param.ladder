@@ -1,0 +1,155 @@
+ladder dae9d2b5-half-param
+
+# ``dae9d2b5-half-param``: the BIND-LATE member of the `dae9d2b5` cohort -- ONE parameterized rung
+# replacing two monomorphic siblings.
+#
+# `dae9d2b5-split-recolor-lean` names the two halves as SEPARATE arity-1 rungs (`west`, `east`,
+# bind-early: the index is baked into each). Here a single arity-2 rung
+# ``half(g, i) = nth(split_h(g), i)`` serves both branches, and the index is bound at the CALL SITE
+# by its consumers. Same task, same floor, same `max_pool`, same guard, same already-paid raw arm --
+# the ONLY difference is where the index is bound. This is the parameterization axis MVE-PLAN
+# declares per sub-cohort ("the bind-early/bind-late choice it is") and that nothing had sampled.
+#
+# It is also the ONLY cheap structural variation these cohorts still admit: the 2026-07-27 cut-set
+# enumeration proved the granularity axis EXHAUSTED (46 cut-sets, every affordable one already
+# built), but that enumeration ranges over SUBSETS OF EXISTING INTERMEDIATE TERMS -- and `half` is a
+# different FUNCTION (arity 2), so no cut-set can express it.
+#
+# **REGISTERED PREDICTIONS, written before lint or probe.**
+#
+# 1. COST -- genuinely undecided, which is why it is worth running. A wider-arity library entry
+#    costs more per entry (measured 2026-07-27: ~1.03x round-1 base-width growth for arity-1 mints
+#    vs 3.82x at the single arity-3 point), but this member carries one FEWER entry (3 rungs, not
+#    4). Which effect dominates is not predictable from anything we have measured.
+# 2. LEARNABILITY -- the real prize, and a SECOND falsification route for the proposer question.
+#    `AntiunifyPairs` will be offered BOTH readings of the same four retained programs: the two
+#    specialised arity-1 templates (each `nth(split_h(input), k)` recurs verbatim, so
+#    `Counter(programs)` offers it) AND the generalised arity-2 template from antiunifying the
+#    distinct pair (`nth(split_h(input), ?)`). GreedyMDL then chooses. Predicted: the arity-2 form
+#    wins (one entry covering four programs beats two entries covering two each) and rung recovery
+#    reads 3/3. If instead it SPECIALISES into two arity-1 mints, `half` is not recovered at its
+#    intended arity -- a nonzero learned-vs-oracle gap from a second, independent direction, and one
+#    that is about GOVERNANCE (what MDL prefers) rather than about proposer reach (S15's mechanism).
+#    Either way the readout is clean, because `matches_target` grades arity.
+#
+# The competence, floor, withheld set and skip argument are unchanged from the cohort's other
+# members; only the spine's binding structure moves. `d_raw` stays 4.
+#
+# **Skip-audit, by hand, before any probe** (LADDER-PROCESS section 5): every rung is d2 and every
+# consumer runs at d2, so inlining any rung into its consumer costs d3 against a level budget of 2.
+# `half` specifically: skipping it makes `recolored_west` = `map_color(nth(split_h(g),0),4,6)`, d3
+# against budget 2 -- unreachable, so skip-freeness holds for the same reason as the sibling form.
+
+config {
+    budget.depth_limit: 2
+    budget.max_arity: 3
+    budget.max_pool: 30
+    budget.considered_limit: 2000000
+    search_engine.constant_sources: ['finite-enumerate-scalars']
+}
+
+floor dae9d2b5-split-L0 {
+    use split_h:   (Grid) -> List[Grid]
+    use nth:       (List[a], Int) -> a
+    use overlay:   (Color, Grid...) -> Grid
+    use map_color: (Grid, Color, Color) -> Grid
+}
+
+rung {
+    half(g: Grid, i: Int) -> Grid = nth(split_h(g), i)
+
+    task half-w0 {
+        solution: half(input, 0)
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,0,4,3,0,0,0],[0,4,0,0,0,3,3,0],[4,4,0,0,0,0,0,3],[0,0,4,0,3,0,0,0]]
+        test  [[4,0,3,3],[0,4,0,0]]
+    }
+    task half-w1 {
+        solution: half(input, 0)
+        train [[4,0,0,0,0,0,0,0,0,3],[0,4,0,0,0,0,0,0,3,0],[0,0,4,0,0,0,0,3,0,0],[0,0,0,4,0,0,3,0,0,0],[0,0,0,0,4,3,0,0,0,0]]
+        train [[4,0,4,3,0,0],[0,4,0,0,3,3]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+    }
+    task half-e0 {
+        solution: half(input, 1)
+        train [[4,0,0,3],[0,4,3,0],[4,4,0,0],[0,0,3,3]]
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        test  [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+    }
+    task half-e1 {
+        solution: half(input, 1)
+        train [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+        train [[4,0,0,0,0,3],[0,4,0,0,3,0],[0,0,4,3,0,0],[4,4,4,0,0,0]]
+        test  [[4,0,0,3],[0,4,3,0],[4,4,0,0]]
+    }
+    heldout task half-heldout {
+        solution: half(input, 0)
+        train [[4,0,0,4,3,3,0,0],[0,4,0,0,0,0,3,0],[4,0,4,0,0,3,0,3]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,0,0,4,3,0,3,0],[0,4,4,0,0,3,0,3]]
+    }
+}
+
+rung {
+    recolored_west(g: Grid) -> Grid = map_color(half(g, 0), 4, 6)
+
+    task recolored_west-00 {
+        solution: recolored_west(input)
+        train [[0,0,4,0,3,0],[4,4,0,0,3,0],[0,0,0,0,3,0]]
+        train [[0,0,0,4,0,3,0,0],[0,4,4,0,0,3,0,0],[4,0,0,0,0,3,0,0],[0,0,4,4,0,3,0,0]]
+        test  [[4,0,0,0,0,3],[0,0,4,0,0,3]]
+    }
+    task recolored_west-01 {
+        solution: recolored_west(input)
+        train [[0,4,4,3,0,0],[4,0,0,3,0,0],[0,0,4,3,0,0],[4,4,0,3,0,0],[0,0,0,3,0,0]]
+        train [[0,0,4,4,0,0,3,0,3,0],[4,4,0,0,0,0,3,0,3,0]]
+        test  [[0,0,0,4,0,3,0,0],[0,4,4,0,0,3,0,0],[4,0,0,0,0,3,0,0]]
+    }
+    heldout task recolored_west-heldout {
+        solution: recolored_west(input)
+        train [[4,0,0,0,0,3],[0,0,4,0,0,3],[4,4,0,0,0,3],[0,0,0,0,0,3]]
+        train [[4,4,0,0,0,3,0,3,0,0],[0,0,0,4,4,3,0,3,0,0],[0,4,4,0,0,3,0,3,0,0]]
+        test  [[0,4,4,0,3,0,0,3],[4,0,0,0,3,0,0,3],[0,0,4,4,3,0,0,3],[4,4,0,0,3,0,0,3],[0,0,0,4,3,0,0,3]]
+    }
+}
+
+rung {
+    recolored_east(g: Grid) -> Grid = map_color(half(g, 1), 3, 6)
+
+    task recolored_east-00 {
+        solution: recolored_east(input)
+        train [[0,0,4,4,0,3,0,3],[4,4,0,0,0,3,0,3]]
+        train [[0,0,0,0,3,0],[0,4,4,0,3,0],[4,0,0,0,3,0],[0,0,4,0,3,0],[4,4,0,0,3,0]]
+        test  [[4,0,0,0,0,3],[0,0,4,0,0,3],[4,4,0,0,0,3]]
+    }
+    task recolored_east-01 {
+        solution: recolored_east(input)
+        train [[0,4,4,0,0,3,0,0,3,0],[4,0,0,0,4,3,0,0,3,0],[0,0,4,4,0,3,0,0,3,0]]
+        train [[0,0,4,0,3,0],[4,4,0,0,3,0],[0,0,0,0,3,0],[0,4,4,0,3,0]]
+        test  [[0,0,0,4,0,3,0,0],[0,4,4,0,0,3,0,0]]
+    }
+    heldout task recolored_east-heldout {
+        solution: recolored_east(input)
+        train [[4,0,0,0,0,0,3,0],[0,0,4,4,0,0,3,0],[4,4,0,0,0,0,3,0],[0,0,0,4,0,0,3,0],[0,4,4,0,0,0,3,0]]
+        train [[4,4,0,3,0,3],[0,0,0,3,0,3]]
+        test  [[0,4,4,0,0,3,0,0,3,0],[4,0,0,0,4,3,0,0,3,0],[0,0,4,4,0,3,0,0,3,0],[4,4,0,0,0,3,0,0,3,0]]
+    }
+}
+
+top {
+    task dae9d2b5 {
+        solution: overlay(0, recolored_west(input), recolored_east(input))
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,4,3,3,0],[4,0,0,3,0,0],[0,0,4,3,0,0]]
+        train [[0,0,4,0,3,0],[0,4,4,3,0,3],[4,4,0,0,0,3]]
+        train [[4,4,0,3,0,0],[0,0,0,0,0,3],[4,0,0,0,0,0]]
+        train [[0,0,0,0,3,0],[4,0,0,0,0,0],[0,0,4,3,3,0]]
+        test  [[0,4,4,3,0,0],[4,0,0,3,3,0],[0,4,0,3,0,0]]
+    }
+    heldout task dae9d2b5-heldout {
+        solution: overlay(0, recolored_west(input), recolored_east(input))
+        train [[0,0,4,0,3,0],[0,4,0,3,3,3],[4,0,0,3,0,0]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+    }
+}

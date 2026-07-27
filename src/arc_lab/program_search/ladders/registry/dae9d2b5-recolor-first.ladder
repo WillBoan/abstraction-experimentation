@@ -1,0 +1,128 @@
+ladder dae9d2b5-recolor-first
+
+# ``dae9d2b5-recolor-first``: a DECOMPOSITION-STRATEGY SIBLING of ``dae9d2b5-split-halves-lean``,
+# same task, same floor, same 2-rung cut DENSITY -- but cutting along the opposite axis.
+#
+# ``split-halves-lean`` names the RAW HALF as the rung (``west``/``east``, addressing-first) and
+# folds the recolour into the top. Here the rung IS the recoloured half
+# (``recolored_west``/``recolored_east``), computed directly from ``g`` -- the addressing step
+# (``nth(split_h(g), i)``) is folded into the RUNG's own template instead of the top's.
+#
+# **Registered prediction (written before lint or probe).** This should be MORE expensive overall
+# than ``split-halves-lean``, not less, despite a SHALLOWER top (d2 here, both rungs feed directly
+# into ``overlay`` -- vs ``split-halves-lean``'s d3 top, which must apply ``map_color`` twice after
+# reaching L_2). The cost moves rather than disappears: each rung's own jump now needs depth 3 from
+# the BARE floor (``map_color(nth(split_h(g),i),c,6)``), where ``split-halves-lean``'s rungs need
+# only depth 2 (``nth(split_h(g),i)`` alone). Two d3 rung-jumps with NO shared reuse between them
+# (unlike a shared top, which reuses whatever both branches already established) should cost more
+# in aggregate than one d3 top fed by two cheap d2 rungs. If the prediction holds, decomposition
+# order matters even at fixed cut density: address-first lets both branches share reachability
+# into L_1 before paying the expensive step; recolor-first pays the expensive step twice, alone.
+#
+# Demonstrations are the SAME FILES ``split-recolor-lean`` uses for its recoloured rungs (the
+# grids are anchored ground truth regardless of which cut names them); ``west``/``east`` are simply
+# not named as rungs here -- they exist only inside the ``recolored_*`` templates.
+#
+# The competence: an ``h x 2w`` grid carries colour 4 on its left half and 3 on its right; the
+# answer is the ``h x w`` grid holding 6 wherever EITHER half is non-blank. Verified against
+# arc1-train ground truth (all 5 train + both held-out tests) before authoring
+# (``test_real_arc_anchoring.py``); ``d_raw`` 4, unchanged (same floor, same task).
+#
+# The spine: TWO rungs, each computing one recoloured half directly from ``g``; the top overlays
+# them. Two independent branches meeting at the top -- a DAG with fan-in 2, not a telescope.
+#
+# **Depth, by rung this time, not by level.** Each rung's own jump (``map_color(nth(split_h(g),i),
+# c,6)`` over the bare floor) is d3 -- one level DEEPER than ``split-halves-lean``'s rungs (d2:
+# ``nth(split_h(g),i)`` alone). The top (``overlay(0, recolored_west(g), recolored_east(g))``,
+# both branches already rungs) is d2 -- one level SHALLOWER than that sibling's d3 top. Same
+# floor, same 4 primitives, same withheld set (region-tier route, no single-step half-merger);
+# only which step is folded into the rung vs the top has moved.
+#
+# **Skip-audit, by hand, before any probe** (LADDER-PROCESS section 5): each rung is d3 against a
+# level budget of 2 below it (L_0, the bare floor) -- ``proper-composition`` requires the JUMP
+# depth to exceed the serving level's budget, which holds (d3 > 2). The top is d2 over L_2 (both
+# rungs available), also proper. Inlining a rung into the top would need d3+1=4 at the top's own
+# budget of 2 -- automatically skip-free by the same margin argument as the sibling.
+#
+# ``depth_limit`` 3 (not 2 like the address-first sibling): the CLIMB searches at this pinned
+# value, and the derived schedule's max is 3 (the rung jumps) -- `climb-budget-covers-top` would
+# flag 2 as cutting the climb off, the same defect class fixed on `split-asym-lean` and found
+# latent in both `nor-halves` members (S2/S6).
+config {
+    budget.depth_limit: 3
+    budget.max_arity: 3
+    budget.max_pool: 30
+    budget.considered_limit: 2000000
+    search_engine.constant_sources: ['finite-enumerate-scalars']
+}
+
+floor dae9d2b5-split-L0 {
+    use split_h:   (Grid) -> List[Grid]
+    use nth:       (List[a], Int) -> a
+    use overlay:   (Color, Grid...) -> Grid
+    use map_color: (Grid, Color, Color) -> Grid
+}
+
+rung {
+    recolored_west(g: Grid) -> Grid = map_color(nth(split_h(g), 0), 4, 6)
+
+    task recolored_west-00 {
+        solution: recolored_west(input)
+        train [[0,0,4,0,3,0],[4,4,0,0,3,0],[0,0,0,0,3,0]]
+        train [[0,0,0,4,0,3,0,0],[0,4,4,0,0,3,0,0],[4,0,0,0,0,3,0,0],[0,0,4,4,0,3,0,0]]
+        test  [[4,0,0,0,0,3],[0,0,4,0,0,3]]
+    }
+    task recolored_west-01 {
+        solution: recolored_west(input)
+        train [[0,4,4,3,0,0],[4,0,0,3,0,0],[0,0,4,3,0,0],[4,4,0,3,0,0],[0,0,0,3,0,0]]
+        train [[0,0,4,4,0,0,3,0,3,0],[4,4,0,0,0,0,3,0,3,0]]
+        test  [[0,0,0,4,0,3,0,0],[0,4,4,0,0,3,0,0],[4,0,0,0,0,3,0,0]]
+    }
+    heldout task recolored_west-heldout {
+        solution: recolored_west(input)
+        train [[4,0,0,0,0,3],[0,0,4,0,0,3],[4,4,0,0,0,3],[0,0,0,0,0,3]]
+        train [[4,4,0,0,0,3,0,3,0,0],[0,0,0,4,4,3,0,3,0,0],[0,4,4,0,0,3,0,3,0,0]]
+        test  [[0,4,4,0,3,0,0,3],[4,0,0,0,3,0,0,3],[0,0,4,4,3,0,0,3],[4,4,0,0,3,0,0,3],[0,0,0,4,3,0,0,3]]
+    }
+}
+
+rung {
+    recolored_east(g: Grid) -> Grid = map_color(nth(split_h(g), 1), 3, 6)
+
+    task recolored_east-00 {
+        solution: recolored_east(input)
+        train [[0,0,4,4,0,3,0,3],[4,4,0,0,0,3,0,3]]
+        train [[0,0,0,0,3,0],[0,4,4,0,3,0],[4,0,0,0,3,0],[0,0,4,0,3,0],[4,4,0,0,3,0]]
+        test  [[4,0,0,0,0,3],[0,0,4,0,0,3],[4,4,0,0,0,3]]
+    }
+    task recolored_east-01 {
+        solution: recolored_east(input)
+        train [[0,4,4,0,0,3,0,0,3,0],[4,0,0,0,4,3,0,0,3,0],[0,0,4,4,0,3,0,0,3,0]]
+        train [[0,0,4,0,3,0],[4,4,0,0,3,0],[0,0,0,0,3,0],[0,4,4,0,3,0]]
+        test  [[0,0,0,4,0,3,0,0],[0,4,4,0,0,3,0,0]]
+    }
+    heldout task recolored_east-heldout {
+        solution: recolored_east(input)
+        train [[4,0,0,0,0,0,3,0],[0,0,4,4,0,0,3,0],[4,4,0,0,0,0,3,0],[0,0,0,4,0,0,3,0],[0,4,4,0,0,0,3,0]]
+        train [[4,4,0,3,0,3],[0,0,0,3,0,3]]
+        test  [[0,4,4,0,0,3,0,0,3,0],[4,0,0,0,4,3,0,0,3,0],[0,0,4,4,0,3,0,0,3,0],[4,4,0,0,0,3,0,0,3,0]]
+    }
+}
+
+top {
+    task dae9d2b5 {
+        solution: overlay(0, recolored_west(input), recolored_east(input))
+        train [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+        train [[4,0,4,3,3,0],[4,0,0,3,0,0],[0,0,4,3,0,0]]
+        train [[0,0,4,0,3,0],[0,4,4,3,0,3],[4,4,0,0,0,3]]
+        train [[4,4,0,3,0,0],[0,0,0,0,0,3],[4,0,0,0,0,0]]
+        train [[0,0,0,0,3,0],[4,0,0,0,0,0],[0,0,4,3,3,0]]
+        test  [[0,4,4,3,0,0],[4,0,0,3,3,0],[0,4,0,3,0,0]]
+    }
+    heldout task dae9d2b5-heldout {
+        solution: overlay(0, recolored_west(input), recolored_east(input))
+        train [[0,0,4,0,3,0],[0,4,0,3,3,3],[4,0,0,3,0,0]]
+        train [[4,0,0,0,3,0],[0,4,0,3,0,3],[0,0,4,0,0,3],[4,0,4,0,3,0],[0,4,0,3,0,0]]
+        test  [[4,4,0,3,3,0],[4,0,0,3,0,0],[0,0,0,0,0,3]]
+    }
+}

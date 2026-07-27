@@ -162,6 +162,113 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
   - v1-eligible: not #1, but EARLY — they gate the interpretation of every other ladder's results
   - Tests: negative controls for the whole batch
 
+### Real-ARC cohort members (added 2026-07-27) — a different kind of entry
+
+Candidate **members of cohorts that already exist and have already paid their raw arm** (same task
++ same floor ⇒ RQ1 is bought once per cohort), not standalone ladders. That makes them the cheapest
+additions available. Cohort state: [LADDERS.md](LADDERS.md). Which axes are sampled and which are
+not: [experiments/2026-07-27-mve-completion/](../../experiments/2026-07-27-mve-completion/notebook.md) §S12.
+
+- **half-param** — bind-LATE addressing: ONE parameterized rung replacing two monomorphic siblings
+  - Cohorts: `dae9d2b5`; the same move on `94f9d214` / `fafffa47` costs a colour constant each
+  - Height: 4 · Shape: DAG (fan-in 2 at the top) · Floor: unchanged `{split_h, nth, overlay, map_color}`
+  - Rungs:
+    - r1 = `half(g: Grid, i: Int) -> Grid = nth(split_h(g), i)` (d=2, **arity 2**, one free INT param)
+    - r2 = `recolored_west(g) = map_color(half(g, 0), 4, 6)` (d=2)
+    - r3 = `recolored_east(g) = map_color(half(g, 1), 3, 6)` (d=2)
+  - Top Rung: `overlay(0, recolored_west(input), recolored_east(input))` (d=2)
+  - Sandwich sketch: derived schedule `[2,2,2,2]` — **all-d2, the cheap regime** (seconds-to-minutes)
+  - Demos: FREE — reuse the committed `west-*` grids at `i=0` and `east-*` at `i=1`, so
+    `free-param-varies` holds by construction rather than by luck
+  - Contrast partner already built and fully valid: `dae9d2b5-split-recolor-lean` (4 rungs, all-d2,
+    two arity-1 siblings). Same task, floor, budget, raw arm — the ONLY difference is bind-early vs
+    bind-late, which is the parameterization axis MVE-PLAN names and nothing has sampled
+  - Tests (cost side): genuinely undecided, which is rare here. Wider arity costs more per library
+    entry (measured: ~1.03x base-width growth for arity-1 mints vs 3.82x at the single arity-3
+    point) but there is one FEWER entry. Which effect wins is not predictable from what we know
+  - Tests (learnability side — **the real prize**): the first arm where rung recovery requires the
+    proposer to GENERALISE A PARAMETER rather than match a fixed term — `AntiunifyPairs` must
+    abstract `nth(split_h(g),0)` / `nth(split_h(g),1)` to `nth(split_h(g),?)`. Specialising into two
+    arity-1 mints instead is the **first honest nonzero learned-vs-oracle gap** (43/43 recovered, 0
+    junk on every arm ever run) — and it is not rigged, it is the proposer at its designed capability
+  - v1-eligible: yes — machinery exists (al14 ships arity-3 rungs; demos bind params at call sites)
+
+- **a740d043-crop-normalize** — a SECOND real task FAMILY (crop-and-recolour), ANCHORED 2026-07-27
+  - Anchor passed and pinned: `tests/program_search/ladders/test_a740d043_anchor.py`, 4/4 examples
+    incl. held-out test. Full account: [experiments/2026-07-27-mve-completion/](../../experiments/2026-07-27-mve-completion/notebook.md) §S18
+  - Competence: crop to the bounding box of non-background content, recolour background to 0
+  - Why it matters: every existing real-task ladder is two-halves geometry (split + combine) with
+    fixed colour constants; this CROPS to perceived content and routes the background through a
+    PERCEIVER (`most_common_color`). It is the only thing that would widen the headline past "an
+    existence result over a deliberately narrow sample"
+  - ⚠ `d_raw` is 2 with `crop_to_content` gifted -> fails `raw-intractable`. The floor MUST withhold
+    it; that is what makes the task laddered rather than trivial
+  - **Variant A (cheap, 1 rung, all-Grid, all-d2)**: floor `{crop_to_mask, nonbg_mask, map_color,
+    most_common_color}` · r1 `crop_to_content(g) = crop_to_mask(g, nonbg_mask(g))` (d2) · top
+    `map_color(r1(g), most_common_color(g), 0)` (d2) · `d_raw` 3. In the cheap regime by S13's
+    predicate. Thin at one rung; it IS the gen/full contrast the rung register names
+  - **Variant B (2 rungs, COHORT-B SHAPED — the valuable one)**: withhold `nonbg_mask` too · r1
+    `nonbg_mask(g) = mask_complement(mask_by_color(g, mcc(g)))` is **Mask-valued**, so it cannot be
+    demoed as a full solution and needs a wrapper (demo-affordability law, one depth level) · this
+    is the fragment-demo shape cfb2ce5a Cohort B was for, and the arm-shape S15 showed is REQUIRED
+    for proposer-agnostic claims (a full-solution demo puts the target in `AntiunifyPairs`' regime
+    by construction)
+  - Blocker: none technical — wrapper demo authoring is the known-expensive case, not yet done
+
+- **distractor arms on a real cohort** — does sleep mint junk when given off-spine work?
+  - Cohorts: any built member; same task, floor and raw arm, so marginal cost ~ the extra tasks
+  - Shape: an existing admitted member + `distractors` (LADDER-FORMAT DST), currently EMPTY on every
+    non-control ladder in the repo
+  - Tests: 0 junk mints has held on every arm ever run, and we cannot distinguish "governance is
+    robust" from "nothing we built can fail it". This is the cheapest available attack on that gap
+  - Precedent: al9-decoy, but synthetic; this is the real-task version
+
+- **demo-plan siblings (collision-seeded)** — same spine, demos chosen to ADMIT a cheaper wrong program
+  - Cohorts: any; the spine and floor are untouched, only the demo subset moves
+  - Tests: the S-B law from the failing side — if the retained program is a COLLISION (differs off
+    the train support, al14's failure mode) then sleep mints the wrong thing and recovery fails
+  - Blocker: engineering a genuine collision by hand is guesswork — needs the inverted selector
+    (see sources/seeds below), which is why this is a method-gated idea rather than a ready design
+
+- **`dae9d2b5-halves-union` re-pricing** — the floor-power ablation, possibly no longer unaffordable
+  - Status: parked as "a multi-hour enumeration at ~21M considered per cell"; that figure predates
+    per-level pool scaling, immediate stop limits AND the pool calibration
+  - Evidence it may be stale: the 2026-07-27 recolor-first probes measured d3 rungs on this same
+    task at 314k-2M, not 21M. Same shape of staleness as the retracted "raw arm is 76% of a run"
+  - Cost to find out: ONE probe cell. Price it before committing; if affordable it is wave-2 item 1
+    (floor-power ablation) nearly free
+  - ⚠ Strictly a different floor ⇒ a different cohort, so raw does not cancel against the `split_*`
+    members; the licensed comparison is depth/breadth structure, not cost
+
+---
+
+- **(negative note, 2026-07-27 — PROVEN BY ENUMERATION) the cut-set/granularity axis is EXHAUSTED on
+  both real cohorts.** All 46 cut-sets screened statically
+  ([cut_set_enumeration.py](../../experiments/2026-07-27-mve-completion/artifacts/cut_set_enumeration.py)):
+  `dae9d2b5` 15 cut-sets → 9 distinct up to branch symmetry → **3 affordable, all 3 already built**;
+  NOR 31 → 19 → **2 affordable, both already built**. **Zero new affordable members exist.** Not
+  "we ran out of ideas" — the space is finite and it is closed.
+  - The screen retrodicted all **9** measured-or-probed outcomes before delivering the negative,
+    which is what licenses trusting it on the 37 candidates nobody has run.
+  - Affordability predicate (9/9, and derived rather than assumed): `max(schedule[:-1]) <= 2 and
+    schedule[-1] <= 3` — rung-serving levels at d2, top allowed d3. Plain "all-d2" is too strict
+    (rejects three members that ran); plain "max <= 3" is too loose (admits both inconclusive
+    recolor-first members).
+  - ⚠ **The structural reason, worth carrying to every future spine:** a depth-3 level is affordable
+    at the TOP but not at a RUNG, because a rung-serving level pays an expensive wake AND an
+    expensive SKIP search — and the skip search must run to EXHAUSTION (it must not solve; that is
+    what `no_skip_paths` asserts), so it can never stop early. The top carries no skip obligation.
+  - Corollary, and it sharpens the case for **half-param** above: the enumeration ranges over
+    SUBSETS OF EXISTING INTERMEDIATE TERMS, so parameterization (a different function, arity 2),
+    demo-plan and distractor variants are outside its space by construction. They are now the ONLY
+    cheap structural variation these cohorts still admit.
+
+- **(negative note, 2026-07-27) the decomposition-strategy axis came back INCONCLUSIVE everywhere.**
+  Four recolor-first candidates (2-rung on all three tasks + a 1-rung endpoint) probe unclean at the
+  cohorts' standard 2M guard — see LADDERS.md "Decomposition-strategy siblings". Not a defect: the
+  finding is that cost tracks the depth of whichever search inherits the deepest jump, and that
+  search can be the WAKE or the SKIP, at the RUNG or the TOP, depending on how the cut falls.
+
 ---
 
 - **(negative note) D4-only ladders cap out** — the group has 8 elements, all reachable at depth <= 4 from the generators, so double-jump intractability is nearly unachievable: validity windows empty or one budget wide. D4 material = calibration ladders (height 2), not taller ladders.
@@ -198,6 +305,29 @@ Note: under the goal-layer Top-Rung framing, NO previous experiment is a complet
 - Based on Hodel's 160-ish-sized DSL for ARC + Hodel's canonical ARC task solutions.
   - Immediate use: **mine rung statistics** — which sub-programs recur across the canonical solutions → empirically-grounded rung candidates and ladder shapes; plus the grid-level subset of solutions translates cheaply today (→ real-ARC anchor corpora + reference solutions).
   - Fuller use is gated by the **Object pathway** (arc-lab has no Object type yet) — a modest, near-term build if we want it, with Hodel's object primitives as its natural blueprint. Not a distant thing.
+- **Mechanical cut-set enumeration + static filter** (added 2026-07-27; the systematic way to find
+  every remaining MEMBER of a cohort whose spine already exists). A spine's intermediate terms are a
+  finite set, so its cut-sets are `2^n` — enumerate them, emit a draft `.ladder` per candidate
+  (demos are REUSABLE VERBATIM across cut-sets: a rung's demonstrating tasks are a property of the
+  FUNCTION, not of which lower terms happen to be named), lint each, and keep only the candidates
+  whose DERIVED DEPTH SCHEDULE is all-d2. The step-function law does the filtering: d2 tops cost
+  36-71k, d3 tops 288-524k, d4 tops `> 30M`. Cost ~1s/candidate, and — the point — it filters BEFORE
+  demo authoring, which is the dominant cost centre. Implementation:
+  [experiments/2026-07-27-mve-completion/artifacts/cut_set_enumeration.py](../../experiments/2026-07-27-mve-completion/artifacts/cut_set_enumeration.py).
+- **Mine `alternative` probe verdicts.** An ALTERNATIVE verdict means the engine found a program that
+  solves the demos at the intended depth but is NOT the declared term — i.e. an engine-DISCOVERED
+  decomposition nobody enumerated. Free to read off probes already run; any that is a genuinely
+  different competence is a new rung candidate.
+- **Invert `discriminating_grids` to hunt collisions.** It currently finds grids that SEPARATE
+  confounded programs; run the same machinery backwards to find demo subsets that CONFOUND them, and
+  learner-stress arms fall out by construction instead of by guesswork. This is the deferred
+  demo-pool selector pointed at making the learner FAIL rather than at making it succeed — and it is
+  the blocker named by the collision-seeded demo-plan idea above.
+- **Separator variants of a settled family.** The two-halves survey found only 3 tasks at exact
+  `2x`/no-separator geometry, but the earlier "10" counted SEPARATOR variants. Those need one extra
+  floor primitive (drop the separator row/column) — technically a new cohort, so raw must be re-paid,
+  but the spine, the demo generator and the whole NOR/OR rule analysis transfer wholesale. Cheapest
+  known route to more real TASKS rather than more members.
 - Ladders come up with in the "Finding abstraction ladders" Claude chat; or using approaches developed in that chat.
 - **The derivability probe** ([experiments/2026-07-17-derivability-dag/](../../experiments/2026-07-17-derivability-dag/)) — a reusable certifier for ANY candidate on this page: computes minimal `d_i`, double-jump censoring, and skip routes by enumeration over the real impls (holdout-verified).
   - Both hand-computed fan-in templates on this page had cheaper skip routes — **compute `d_i` by enumeration, never by hand**; fold this into the Ladder Linter.
@@ -241,4 +371,9 @@ Format: **name** — type/template sketch — floor it presumes — why interest
 - **mask De Morgan closures** — `mask_union`/`mask_intersect`/`mask_difference` interderivable via `mask_complement` (d<=3, certified) — mask-algebra gen floors — algebraic mini-rungs for a mask-genesis ladder.
 - **quad2 / grid9x9 self-composition tops** — `GRID->GRID` = `r2(r2(g))` (d=2 over L2, certified) — the cheapest possible goal layer for any param-free tower; doubles inlined depth per application (the geometric depth-profile family).
 - **symmetrize_by** — `(GRID, GRID->GRID)->GRID` ~ `overlay(c, g, f(g))` — `D4_GEN` + `overlay` — the function-typed scheme rung (see scheme-ladder); StitchProposer territory.
+- **half / addressed-half** — `(GRID,INT)->GRID` = `nth(split_h(g), i)` (d=2, arity 2) — the
+  `split_*` real-ARC floor — the bind-LATE form of `west`/`east`: ONE parameterized rung serving both
+  branches of a two-halves DAG instead of two monomorphic siblings. Wanted by half-param above, in
+  both the `split_h` (dae9d2b5) and `split_v` (NOR) orientations. The cheapest available test of
+  whether `AntiunifyPairs` generalises a parameter rather than specialising to fixed terms.
 - **dilate_once** — `MASK->MASK` (or `GRID->GRID`) neighborhood expansion — no shipped neighbor primitive; expressible only as an expensive `build_grid` lambda — first rung of the morphology tower toward `segment`; names a concrete primitive gap like `mask_count` does.

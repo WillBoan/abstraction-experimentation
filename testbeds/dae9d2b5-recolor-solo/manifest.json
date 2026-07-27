@@ -1,0 +1,32 @@
+{
+  "name": "dae9d2b5-recolor-solo",
+  "note": "Generated from dae9d2b5-recolor-solo.ladder",
+  "content_hash": "a63e78fe6d491764",
+  "tasks": [
+    {
+      "task_id": "recolored_west-00",
+      "label": "recolored_west",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_west-01",
+      "label": "recolored_west",
+      "split": "train"
+    },
+    {
+      "task_id": "recolored_west-heldout",
+      "label": "recolored_west",
+      "split": "heldout"
+    },
+    {
+      "task_id": "dae9d2b5",
+      "label": "top",
+      "split": "train"
+    },
+    {
+      "task_id": "dae9d2b5-heldout",
+      "label": "top",
+      "split": "heldout"
+    }
+  ]
+}
