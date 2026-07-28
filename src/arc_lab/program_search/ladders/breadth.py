@@ -18,10 +18,24 @@ Two exact quantities per rung, both pure functions of ``(grids, library, constan
 
 **An indicator, never a prediction.** Round 1 is exact, and it UNDERSTATES badly, because the tax
 compounds with depth. Calibration point (``dae9d2b5-halves-union`` rung 1): this census reads
-**1,211x** at round 1; the probe MEASURED **~5.3e6** at depth 3. Round 1 understated the real tax
-about 4,000-fold -- and still made the defect obvious in a second, which is the whole point. Read
+**131x** at round 1; the probe MEASURED **~5.3e6** at depth 3. Round 1 understated the real tax
+about 40,000-fold -- and still made the defect obvious in a second, which is the whole point. Read
 these numbers to RANK floors and to compare a ladder against itself, never as a forecast of what a
 run will cost. The probe's ``FloorTax`` measures; this estimates -- and says which it is.
+
+**Round-1 exactness is verified, not assumed** (2026-07-27). It was FALSE until then: the shared
+``forecast_cost._slot_types`` replicated a variadic primitive's last DECLARED parameter instead of
+its ``variadic_param``, over-counting any floor with an ``overlay``-shaped primitive by up to
+9.24x -- and this docstring read 1,211x / ~4,000-fold as a result. Now checked against the engine's
+own round-1 ``composed`` on every uncompromised rung cell: 21/42 exact before, **42/42** after.
+
+**What the RANKING claim is worth, measured on the same batch:** median ``b1`` per ladder ranks
+measured per-cell cost at Spearman **+0.97** (n=14 ladders); within a single ladder, **+1.00**.
+**What it cannot see is ``max_pool``, and that is first-order** -- one ladder run at pool 150 vs 30
+has a BYTE-IDENTICAL census and costs **19-26x** more. So ``b1`` orders floors; it can never be
+converted into an absolute cost. ``execution/forecast_cost`` is NOT the upgrade: on the same cells
+it ranks worse (+0.46) and under-reads ~5x, because its ``max_pool`` model saturates.
+Full account: ``experiments/2026-07-27-census-calibration/``.
 """
 
 from __future__ import annotations

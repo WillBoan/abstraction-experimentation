@@ -1,0 +1,40 @@
+Round-1 breadth tax (b1_full / b1_min), worst first -- POST-FIX (2026-07-27)
+
+     ratio  ladder                         rung                b1_full  b1_min
+--------------------------------------------------------------------------------
+    232.0x  fafffa47-nor-recolor           south                   232       1
+    232.0x  fafffa47-nor-merged            south                   232       1
+    232.0x  fafffa47-nor-halves            south                   232       1
+    232.0x  94f9d214-nor-recolor           south                   232       1
+    232.0x  94f9d214-nor-merged            south                   232       1
+    232.0x  94f9d214-nor-halves            south                   232       1
+    231.0x  fafffa47-nor-recolor           north                   231       1
+    231.0x  fafffa47-nor-merged            north                   231       1
+    231.0x  fafffa47-nor-halves            north                   231       1
+    231.0x  94f9d214-nor-recolor           north                   231       1
+    231.0x  94f9d214-nor-merged            north                   231       1
+    231.0x  94f9d214-nor-halves            north                   231       1
+    132.0x  dae9d2b5-split-recolor-lean    east                    132       1
+    132.0x  dae9d2b5-split-recolor         east                    132       1
+    132.0x  dae9d2b5-split-halves-lean     east                    132       1
+    132.0x  dae9d2b5-split-halves          east                    132       1
+    132.0x  dae9d2b5-split-asym-lean       east                    132       1
+    132.0x  dae9d2b5-halves-union          east                    132       1
+    131.0x  dae9d2b5-split-recolor-lean    west                    131       1
+    131.0x  dae9d2b5-split-recolor         west                    131       1
+
+... 106 rung readings total
+
+The 1.0x floors (no constant battery at all):
+    al3-quad-symmetrize            quad
+    al2-rot90-calibration          rot90
+    al12-unlearnable               rot90
+    al10-skippable                 rot90
+    (4 rungs read exactly 1.0x)
+
+================================================================================
+The 2026-07-26 claim under test: is the real-task ladder still THE OUTLIER?
+================================================================================
+  worst rung now: fafffa47-nor-recolor / south at 232.0x
+  worst `dae9d2b5` rung: dae9d2b5-split-recolor-lean / east at 132.0x
+  its rank in the batch: 13 of 106

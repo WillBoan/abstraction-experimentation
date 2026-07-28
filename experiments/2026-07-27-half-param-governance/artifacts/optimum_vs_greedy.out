@@ -1,0 +1,64 @@
+Programs: map_color(input, c, 6) for V distinct colours, M occurrences each.
+`optimum` = DL-minimal of {none, specialise, generalise, both}, priced directly.
+`greedy`  = what GreedyMDLLearnEngine actually mints.
+
+====================================================================================================
+METRIC: flat
+====================================================================================================
+  V   M |    none  specialise  generalise    both |     OPTIMUM |      GREEDY | agree?
+----------------------------------------------------------------------------------------------------
+  2   2 |    26.0        20.0        23.0    21.0 |  specialise |  specialise | yes
+  2   3 |    34.0        24.0        29.0    25.0 |  specialise |  specialise | yes
+  2   4 |    42.0        28.0        35.0    29.0 |  specialise |  specialise | yes
+  2   6 |    58.0        36.0        47.0    37.0 |  specialise |  specialise | yes
+
+  3   2 |    34.0        25.0        29.0    26.0 |  specialise |        both | ** NO **
+  3   3 |    46.0        31.0        38.0    32.0 |  specialise |        both | ** NO **
+  3   4 |    58.0        37.0        47.0    38.0 |  specialise |        both | ** NO **
+  3   6 |    82.0        49.0        65.0    50.0 |  specialise |        both | ** NO **
+
+  4   2 |    42.0        30.0        35.0    31.0 |  specialise |        both | ** NO **
+  4   3 |    58.0        38.0        47.0    39.0 |  specialise |        both | ** NO **
+  4   4 |    74.0        46.0        59.0    47.0 |  specialise |        both | ** NO **
+  4   6 |   106.0        62.0        83.0    63.0 |  specialise |        both | ** NO **
+
+  6   2 |    58.0        40.0        47.0    41.0 |  specialise |        both | ** NO **
+  6   3 |    82.0        52.0        65.0    53.0 |  specialise |        both | ** NO **
+  6   4 |   106.0        64.0        83.0    65.0 |  specialise |        both | ** NO **
+  6   6 |   154.0        88.0       119.0    89.0 |  specialise |        both | ** NO **
+
+  8   2 |    74.0        50.0        59.0    51.0 |  specialise |        both | ** NO **
+  8   3 |   106.0        66.0        83.0    67.0 |  specialise |        both | ** NO **
+  8   4 |   138.0        82.0       107.0    83.0 |  specialise |        both | ** NO **
+  8   6 |   202.0       114.0       155.0   115.0 |  specialise |        both | ** NO **
+
+====================================================================================================
+METRIC: TwoPart
+====================================================================================================
+  V   M |    none  specialise  generalise    both |     OPTIMUM |      GREEDY | agree?
+----------------------------------------------------------------------------------------------------
+  2   2 |    26.0        28.0        27.0    33.0 |        none |        none | yes
+  2   3 |    34.0        32.0        33.0    37.0 |  specialise |  specialise | yes
+  2   4 |    42.0        36.0        39.0    41.0 |  specialise |  specialise | yes
+  2   6 |    58.0        44.0        51.0    49.0 |  specialise |  specialise | yes
+
+  3   2 |    34.0        37.0        33.0    42.0 |  generalise |  generalise | yes
+  3   3 |    46.0        43.0        42.0    48.0 |  generalise |  generalise | yes
+  3   4 |    58.0        49.0        51.0    54.0 |  specialise |  generalise | ** NO **
+  3   6 |    82.0        61.0        69.0    66.0 |  specialise |        both | ** NO **
+
+  4   2 |    42.0        46.0        39.0    51.0 |  generalise |  generalise | yes
+  4   3 |    58.0        54.0        51.0    59.0 |  generalise |  generalise | yes
+  4   4 |    74.0        62.0        63.0    67.0 |  specialise |  generalise | ** NO **
+  4   6 |   106.0        78.0        87.0    83.0 |  specialise |        both | ** NO **
+
+  6   2 |    58.0        64.0        51.0    69.0 |  generalise |  generalise | yes
+  6   3 |    82.0        76.0        69.0    81.0 |  generalise |  generalise | yes
+  6   4 |   106.0        88.0        87.0    93.0 |  generalise |  generalise | yes
+  6   6 |   154.0       112.0       123.0   117.0 |  specialise |        both | ** NO **
+
+  8   2 |    74.0        82.0        63.0    87.0 |  generalise |  generalise | yes
+  8   3 |   106.0        98.0        87.0   103.0 |  generalise |  generalise | yes
+  8   4 |   138.0       114.0       111.0   119.0 |  generalise |  generalise | yes
+  8   6 |   202.0       146.0       159.0   151.0 |  specialise |        both | ** NO **
+

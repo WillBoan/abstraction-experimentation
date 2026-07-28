@@ -13,7 +13,9 @@ Derived from `al4-mask-crop.ladder` (in `program_search/ladders/registry/`) -- t
 
 ## Verification
 
-- Static lint (what this file asserts): **FAILED** -- 82 checks (errors: 8, warnings: 1)
+- Static lint (what this file asserts): **FAILED** -- 84 checks (errors: 10, warnings: 2)
+  - ERROR `proposer-compat[flatten_content]`: ['full_solution'] unservable by FrequentSubtree
+  - ERROR `proposer-compat[stamp]`: ['full_solution'] unservable by FrequentSubtree
   - ERROR `heldout-distinct[nonbg_mask-heldout-00]`: identical train examples to the train task 'nonbg_mask-00'
   - ERROR `constant-subterm[nonbg_mask-00]`: train-constant subterms beaten by an enumerated literal: most_common_color(input)=0
   - ERROR `constant-subterm[nonbg_mask-01]`: train-constant subterms beaten by an enumerated literal: most_common_color(input)=0
@@ -23,6 +25,7 @@ Derived from `al4-mask-crop.ladder` (in `program_search/ladders/registry/`) -- t
   - ERROR `constant-subterm[stamp-01]`: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
   - ERROR `constant-subterm[top-00]`: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
   - warn `floor-fully-exercised`: floor primitives no rung, demonstration, distractor or top solution uses: ['least_common_color', 'mask_union', 'mask_intersect']
+  - warn `primitive-necessity`: floor primitives carried below the level that first needs them, where the carry is not cheap: paint_through_mask: needed at L_1 (flatten_content), carried from L_0 -- depth 4; arity 3, superlinear in the pool at any depth; flip_h: needed at L_2 (stamp), carried from L_0 -- depth 4
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
 ## Shape
@@ -62,7 +65,8 @@ Derived from `al4-mask-crop.ladder` (in `program_search/ladders/registry/`) -- t
 
 - `b1`: candidates the FIRST composition round builds -- the typed-census model the cost forecaster uses, so variadic arities and polymorphic slots count exactly as the engine counts them.
 - `b1 (min)`: the same round with the library cut to the primitives this rung's demonstration references AND the constants cut to the values it uses. The irreducible width of this rung on this floor.
-- **An indicator, not a prediction.** Round 1 is exact and UNDERSTATES badly, because the tax compounds with depth: `dae9d2b5-halves-union` r_1 reads 1,211x here and MEASURED ~5.3e6 at depth 3 -- round 1 understated it ~4,000-fold. Use these to rank floors and to compare a ladder against itself; only `arc-lab probe-ladder` measures.
+- **An indicator, not a prediction.** Round 1 is exact and UNDERSTATES badly, because the tax compounds with depth: `dae9d2b5-halves-union` r_1 reads 131x here and MEASURED ~5.3e6 at depth 3 -- round 1 understated it ~40,000-fold. Use these to rank floors and to compare a ladder against itself; only `arc-lab probe-ladder` measures. (This line read 1,211x / ~4,000-fold before 2026-07-27, when calibrating the census against measured cost found a variadic slot-typing defect over-counting it 9.24x; round-1 exactness is now verified against the engine on every rung cell.)
+- **RANKING is what it is calibrated for, and it holds**: across the batch's uncompromised ladders, median `b1` per ladder ranks measured per-cell cost at Spearman +0.97 (n=14). It is blind to `max_pool`, which is first-order -- one ladder run at pool 150 vs 30 has a BYTE-IDENTICAL census and costs 19-26x more (`experiments/2026-07-27-census-calibration/`).
 - `battery`: constant leaves minted per type, against how many this rung uses. Minting is gated on whether ANY floor primitive mentions the type, so one colour-taking primitive buys every rung the full ten-colour battery.
 
 ## Top Rung (goal layer -- nothing is minted here)
@@ -103,14 +107,3 @@ The frozen ladder default with the source file's `config` block applied -- the e
   - score_each_wake: `False`
   - wake_schedule: `full`
   - curriculum: `None`
-
-al4-mask-crop: FAILED -- 82 checks (8 errors, 1 warnings)
-  ERROR heldout-distinct[nonbg_mask-heldout-00]: identical train examples to the train task 'nonbg_mask-00'
-  ERROR constant-subterm[nonbg_mask-00]: train-constant subterms beaten by an enumerated literal: most_common_color(input)=0
-  ERROR constant-subterm[nonbg_mask-01]: train-constant subterms beaten by an enumerated literal: most_common_color(input)=0
-  ERROR constant-subterm[flatten_content-00]: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
-  ERROR constant-subterm[flatten_content-01]: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
-  ERROR constant-subterm[stamp-00]: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
-  ERROR constant-subterm[stamp-01]: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
-  ERROR constant-subterm[top-00]: train-constant subterms beaten by an enumerated literal: most_common_color(crop_to_mask(input, mask_complement(mask_by_color(input, most_common_color(input)))))=1, most_common_color(input)=0
-  warn  floor-fully-exercised: floor primitives no rung, demonstration, distractor or top solution uses: ['least_common_color', 'mask_union', 'mask_intersect']

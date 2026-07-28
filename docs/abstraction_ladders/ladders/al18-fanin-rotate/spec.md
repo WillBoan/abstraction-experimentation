@@ -13,7 +13,7 @@ Derived from `al18-fanin-rotate.ladder` (in `program_search/ladders/registry/`) 
 
 ## Verification
 
-- Static lint (what this file asserts): **OK** -- 59 checks (errors: 0, warnings: 1)
+- Static lint (what this file asserts): **OK** -- 61 checks (errors: 0, warnings: 1)
   - warn `not-all-telescope`: every rung has fan-in 1 (a pure telescope)
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
@@ -51,7 +51,8 @@ Derived from `al18-fanin-rotate.ladder` (in `program_search/ladders/registry/`) 
 
 - `b1`: candidates the FIRST composition round builds -- the typed-census model the cost forecaster uses, so variadic arities and polymorphic slots count exactly as the engine counts them.
 - `b1 (min)`: the same round with the library cut to the primitives this rung's demonstration references AND the constants cut to the values it uses. The irreducible width of this rung on this floor.
-- **An indicator, not a prediction.** Round 1 is exact and UNDERSTATES badly, because the tax compounds with depth: `dae9d2b5-halves-union` r_1 reads 1,211x here and MEASURED ~5.3e6 at depth 3 -- round 1 understated it ~4,000-fold. Use these to rank floors and to compare a ladder against itself; only `arc-lab probe-ladder` measures.
+- **An indicator, not a prediction.** Round 1 is exact and UNDERSTATES badly, because the tax compounds with depth: `dae9d2b5-halves-union` r_1 reads 131x here and MEASURED ~5.3e6 at depth 3 -- round 1 understated it ~40,000-fold. Use these to rank floors and to compare a ladder against itself; only `arc-lab probe-ladder` measures. (This line read 1,211x / ~4,000-fold before 2026-07-27, when calibrating the census against measured cost found a variadic slot-typing defect over-counting it 9.24x; round-1 exactness is now verified against the engine on every rung cell.)
+- **RANKING is what it is calibrated for, and it holds**: across the batch's uncompromised ladders, median `b1` per ladder ranks measured per-cell cost at Spearman +0.97 (n=14). It is blind to `max_pool`, which is first-order -- one ladder run at pool 150 vs 30 has a BYTE-IDENTICAL census and costs 19-26x more (`experiments/2026-07-27-census-calibration/`).
 - `battery`: constant leaves minted per type, against how many this rung uses. Minting is gated on whether ANY floor primitive mentions the type, so one colour-taking primitive buys every rung the full ten-colour battery.
 
 ## Top Rung (goal layer -- nothing is minted here)
@@ -92,6 +93,3 @@ The frozen ladder default with the source file's `config` block applied -- the e
   - score_each_wake: `False`
   - wake_schedule: `full`
   - curriculum: `None`
-
-al18-fanin-rotate: OK -- 59 checks (0 errors, 1 warnings)
-  warn  not-all-telescope: every rung has fan-in 1 (a pure telescope)

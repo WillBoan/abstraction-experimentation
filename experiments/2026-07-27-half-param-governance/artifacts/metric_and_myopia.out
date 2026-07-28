@@ -1,0 +1,86 @@
+================================================================================================
+G1 -- the REAL case: `dae9d2b5-half-param` rung 1, under each metric
+================================================================================================
+
+intended rung: half(g, i) = nth(split_h(#0), #1)   arity 2
+retained programs sleep is fed:
+  half-w0      nth(split_h(input), 0)
+  half-w1      nth(split_h(input), 0)
+  half-e0      nth(split_h(input), 1)
+  half-e1      nth(split_h(input), 1)
+
+  CompressionMetric (flat, THE DEFAULT)
+    kept 2: abs0(arity 1), abs1(arity 1)
+    final DL 14.0   recovers `half`: False
+
+  TwoPartMDL (anti-bloat)
+    kept 0: 
+    final DL 20.0   recovers `half`: False
+
+================================================================================================
+G2 -- the greedy TRAJECTORY: what is on offer at each round, under the default metric
+================================================================================================
+
+  round 0: corpus = ['nth(split_h(input), 0)', 'nth(split_h(input), 0)', 'nth(split_h(input), 1)', 'nth(split_h(input), 1)']
+      offered: arity 1  nth(split_h(#0), 0)
+      offered: arity 1  nth(split_h(#0), 1)
+      offered: arity 2  nth(split_h(#0), #1)   <-- the intended `half`
+      the arity-2 generalisation is ON OFFER; selector takes: nth(split_h(#0), 0)
+
+  round 1: corpus = ['abs0(input)', 'abs0(input)', 'nth(split_h(input), 1)', 'nth(split_h(input), 1)']
+      offered: arity 1  abs0(#0)
+      offered: arity 1  nth(split_h(#0), 1)
+      the arity-2 generalisation is GONE; selector takes: nth(split_h(#0), 1)
+
+  round 2: corpus = ['abs0(input)', 'abs0(input)', 'abs1(input)', 'abs1(input)']
+      offered: arity 1  abs0(#0)
+      offered: arity 1  abs1(#0)
+      selector: nothing improves DL -- loop ends
+
+  ^ If the generalisation is ON OFFER at round 0 but GONE by round 1, it was not weighed and
+    rejected on the merits -- the first mint's REWRITE destroyed the pair it is derived from.
+
+================================================================================================
+G3 -- the END STATES, priced directly: does greedy reach the DL-minimum?
+================================================================================================
+
+  CompressionMetric (flat, THE DEFAULT)
+    do nothing                         DL     20.0  (library    4.0 + programs   16.0)
+    SPECIALISE (what greedy did)       DL     14.0  (library    6.0 + programs    8.0)
+    GENERALISE (the intended `half`)   DL     17.0  (library    5.0 + programs   12.0)
+    BOTH                               DL     15.0  (library    7.0 + programs    8.0)
+    -> DL-minimal end state: SPECIALISE (what greedy did) (14.0)
+
+  TwoPartMDL (anti-bloat)
+    do nothing                         DL     20.0  (library    4.0 + programs   16.0)
+    SPECIALISE (what greedy did)       DL     22.0  (library   14.0 + programs    8.0)
+    GENERALISE (the intended `half`)   DL     21.0  (library    9.0 + programs   12.0)
+    BOTH                               DL     27.0  (library   19.0 + programs    8.0)
+    -> DL-minimal end state: do nothing (20.0)
+
+================================================================================================
+G4 -- S17's V x M sweep, re-run under BOTH metrics
+================================================================================================
+
+  V   M |             flat: kept      verdict |       TwoPartMDL: kept      verdict
+------------------------------------------------------------------------------------------------
+  2   2 |                 [1, 1]  specialises |                     []      nothing
+  2   3 |                 [1, 1]  specialises |                 [1, 1]  specialises
+  2   4 |                 [1, 1]  specialises |                 [1, 1]  specialises
+
+  3   2 |           [1, 1, 1, 2]         both |                    [2]  GENERALISES
+  3   3 |           [1, 1, 1, 2]         both |                    [2]  GENERALISES
+  3   4 |           [1, 1, 1, 2]         both |                    [2]  GENERALISES
+
+  4   2 |        [1, 1, 1, 1, 2]         both |                    [2]  GENERALISES
+  4   3 |        [1, 1, 1, 1, 2]         both |                    [2]  GENERALISES
+  4   4 |        [1, 1, 1, 1, 2]         both |                    [2]  GENERALISES
+
+  6   2 |  [1, 1, 1, 1, 1, 1, 2]         both |                    [2]  GENERALISES
+  6   3 |  [1, 1, 1, 1, 1, 1, 2]         both |                    [2]  GENERALISES
+  6   4 |  [1, 1, 1, 1, 1, 1, 2]         both |                    [2]  GENERALISES
+
+  8   2 | [1, 1, 1, 1, 1, 1, 1, 1, 2]         both |                    [2]  GENERALISES
+  8   3 | [1, 1, 1, 1, 1, 1, 1, 1, 2]         both |                    [2]  GENERALISES
+  8   4 | [1, 1, 1, 1, 1, 1, 1, 1, 2]         both |                    [2]  GENERALISES
+

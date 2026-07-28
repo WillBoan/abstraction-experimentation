@@ -13,12 +13,13 @@ Derived from `al5-perceiver-chain.ladder` (in `program_search/ladders/registry/`
 
 ## Verification
 
-- Static lint (what this file asserts): **FAILED** -- 82 checks (errors: 4, warnings: 1)
+- Static lint (what this file asserts): **FAILED** -- 84 checks (errors: 4, warnings: 2)
   - ERROR `constant-subterm[swap_extremes-00]`: train-constant subterms beaten by an enumerated literal: least_common_color(input)=2
   - ERROR `constant-subterm[swap_mirror-00]`: train-constant subterms beaten by an enumerated literal: most_common_color(input)=1
   - ERROR `constant-subterm[swap_stack-00]`: train-constant subterms beaten by an enumerated literal: most_common_color(flip_h(input))=2, most_common_color(input)=2
   - ERROR `constant-subterm[top-00]`: train-constant subterms beaten by an enumerated literal: least_common_color(input)=1
   - warn `not-all-telescope`: every rung has fan-in 1 (a pure telescope)
+  - warn `primitive-necessity`: floor primitives carried below the level that first needs them, where the carry is not cheap: flip_h: needed at L_1 (swap_mirror), carried from L_0 -- depth 3; flip_v: needed at L_2 (swap_stack), carried from L_0 -- depth 3
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
 
 ## Shape
@@ -58,7 +59,8 @@ Derived from `al5-perceiver-chain.ladder` (in `program_search/ladders/registry/`
 
 - `b1`: candidates the FIRST composition round builds -- the typed-census model the cost forecaster uses, so variadic arities and polymorphic slots count exactly as the engine counts them.
 - `b1 (min)`: the same round with the library cut to the primitives this rung's demonstration references AND the constants cut to the values it uses. The irreducible width of this rung on this floor.
-- **An indicator, not a prediction.** Round 1 is exact and UNDERSTATES badly, because the tax compounds with depth: `dae9d2b5-halves-union` r_1 reads 1,211x here and MEASURED ~5.3e6 at depth 3 -- round 1 understated it ~4,000-fold. Use these to rank floors and to compare a ladder against itself; only `arc-lab probe-ladder` measures.
+- **An indicator, not a prediction.** Round 1 is exact and UNDERSTATES badly, because the tax compounds with depth: `dae9d2b5-halves-union` r_1 reads 131x here and MEASURED ~5.3e6 at depth 3 -- round 1 understated it ~40,000-fold. Use these to rank floors and to compare a ladder against itself; only `arc-lab probe-ladder` measures. (This line read 1,211x / ~4,000-fold before 2026-07-27, when calibrating the census against measured cost found a variadic slot-typing defect over-counting it 9.24x; round-1 exactness is now verified against the engine on every rung cell.)
+- **RANKING is what it is calibrated for, and it holds**: across the batch's uncompromised ladders, median `b1` per ladder ranks measured per-cell cost at Spearman +0.97 (n=14). It is blind to `max_pool`, which is first-order -- one ladder run at pool 150 vs 30 has a BYTE-IDENTICAL census and costs 19-26x more (`experiments/2026-07-27-census-calibration/`).
 - `battery`: constant leaves minted per type, against how many this rung uses. Minting is gated on whether ANY floor primitive mentions the type, so one colour-taking primitive buys every rung the full ten-colour battery.
 
 ## Top Rung (goal layer -- nothing is minted here)
@@ -99,10 +101,3 @@ The frozen ladder default with the source file's `config` block applied -- the e
   - score_each_wake: `False`
   - wake_schedule: `full`
   - curriculum: `None`
-
-al5-perceiver-chain: FAILED -- 82 checks (4 errors, 1 warnings)
-  ERROR constant-subterm[swap_extremes-00]: train-constant subterms beaten by an enumerated literal: least_common_color(input)=2
-  ERROR constant-subterm[swap_mirror-00]: train-constant subterms beaten by an enumerated literal: most_common_color(input)=1
-  ERROR constant-subterm[swap_stack-00]: train-constant subterms beaten by an enumerated literal: most_common_color(flip_h(input))=2, most_common_color(input)=2
-  ERROR constant-subterm[top-00]: train-constant subterms beaten by an enumerated literal: least_common_color(input)=1
-  warn  not-all-telescope: every rung has fan-in 1 (a pure telescope)

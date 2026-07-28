@@ -13,7 +13,7 @@ Derived from `dae9d2b5-split-recolor-lean.ladder` (in `program_search/ladders/re
 
 ## Verification
 
-- Static lint (what this file asserts): **OK** -- 98 checks (errors: 0, warnings: 2)
+- Static lint (what this file asserts): **OK** -- 99 checks (errors: 0, warnings: 2)
   - warn `not-all-telescope`: every rung has fan-in 1 (a pure telescope)
   - warn `primitive-necessity`: floor primitives carried below the level that first needs them, where the carry is not cheap: overlay: needed at L_4 (top), carried from L_0 -- arity 3, superlinear in the pool at any depth; map_color: needed at L_2 (recolored_west), carried from L_0 -- arity 3, superlinear in the pool at any depth
 - Empirical certificate (jump tractability in fact, skip paths, demonstration health): NOT covered by this file -- see results.md beside it, generated from the oracle-chain runs
@@ -49,16 +49,17 @@ Derived from `dae9d2b5-split-recolor-lean.ladder` (in `program_search/ladders/re
 
 ## Floor breadth (round 1)
 
-| level | rung             | b1 (full) | b1 (min) | ratio    | battery                                           |
-| ----- | ---------------- | --------- | -------- | -------- | ------------------------------------------------- |
-| 1     | `west`           | 1,211     | 1        | 1,211.0x | color: 10 minted / 0 used, int: 9 minted / 1 used |
-| 2     | `east`           | 1,212     | 1        | 1,212.0x | color: 10 minted / 0 used, int: 9 minted / 1 used |
-| 3     | `recolored_west` | 1,213     | 5        | 242.6x   | color: 10 minted / 2 used, int: 9 minted / 0 used |
-| 4     | `recolored_east` | 1,214     | 5        | 242.8x   | color: 10 minted / 2 used, int: 9 minted / 0 used |
+| level | rung             | b1 (full) | b1 (min) | ratio  | battery                                           |
+| ----- | ---------------- | --------- | -------- | ------ | ------------------------------------------------- |
+| 1     | `west`           | 131       | 1        | 131.0x | color: 10 minted / 0 used, int: 9 minted / 1 used |
+| 2     | `east`           | 132       | 1        | 132.0x | color: 10 minted / 0 used, int: 9 minted / 1 used |
+| 3     | `recolored_west` | 133       | 5        | 26.6x  | color: 10 minted / 2 used, int: 9 minted / 0 used |
+| 4     | `recolored_east` | 134       | 5        | 26.8x  | color: 10 minted / 2 used, int: 9 minted / 0 used |
 
 - `b1`: candidates the FIRST composition round builds -- the typed-census model the cost forecaster uses, so variadic arities and polymorphic slots count exactly as the engine counts them.
 - `b1 (min)`: the same round with the library cut to the primitives this rung's demonstration references AND the constants cut to the values it uses. The irreducible width of this rung on this floor.
-- **An indicator, not a prediction.** Round 1 is exact and UNDERSTATES badly, because the tax compounds with depth: `dae9d2b5-halves-union` r_1 reads 1,211x here and MEASURED ~5.3e6 at depth 3 -- round 1 understated it ~4,000-fold. Use these to rank floors and to compare a ladder against itself; only `arc-lab probe-ladder` measures.
+- **An indicator, not a prediction.** Round 1 is exact and UNDERSTATES badly, because the tax compounds with depth: `dae9d2b5-halves-union` r_1 reads 131x here and MEASURED ~5.3e6 at depth 3 -- round 1 understated it ~40,000-fold. Use these to rank floors and to compare a ladder against itself; only `arc-lab probe-ladder` measures. (This line read 1,211x / ~4,000-fold before 2026-07-27, when calibrating the census against measured cost found a variadic slot-typing defect over-counting it 9.24x; round-1 exactness is now verified against the engine on every rung cell.)
+- **RANKING is what it is calibrated for, and it holds**: across the batch's uncompromised ladders, median `b1` per ladder ranks measured per-cell cost at Spearman +0.97 (n=14). It is blind to `max_pool`, which is first-order -- one ladder run at pool 150 vs 30 has a BYTE-IDENTICAL census and costs 19-26x more (`experiments/2026-07-27-census-calibration/`).
 - `battery`: constant leaves minted per type, against how many this rung uses. Minting is gated on whether ANY floor primitive mentions the type, so one colour-taking primitive buys every rung the full ten-colour battery.
 
 ## Top Rung (goal layer -- nothing is minted here)

@@ -602,7 +602,7 @@ enumeration ranges over subsets of existing terms and `half` is a different FUNC
 
 Lint: 89 checks, 0 errors, schedule `[2,2,2,2]` — the all-d2 cheap regime, as predicted. **And the
 static census already priced the arity tax before any run:** `half` grows the round-1 base
-**1,211 -> 1,220 (+9)** where the arity-1 `west` grew it **+1**.
+~~**1,211 -> 1,220 (+9)**~~ → **corrected 2026-07-27: 131 -> 140 (+9)** where the arity-1 `west` grew it **+1**. (The absolute widths were inflated 9.24x by the `_slot_types` variadic defect; **the +9-vs-+1 delta this argument rests on is unchanged**, so the arity-tax reading stands — see `../2026-07-27-census-calibration/notebook.md`.)
 
 **Prediction 1 (cost) — resolved: it is a WASH.** to-first 35,987 vs the sibling's 35,778 (+0.6%),
 exhaust 101,297 vs 100,973 (+0.3%), loop-overhead 2.99 vs 3.00. The wider entry and the fewer
@@ -638,6 +638,8 @@ parameter values each specialised variant recurs often enough to pay its own lib
 2 entries x 2-nodes-saved beats 1 entry x 1-node-saved. The bias is therefore not unconditional —
 it should invert once the parameter takes enough distinct values, which is a sharp, cheap follow-up.
 
+> ⚠ **CORRECTED 2026-07-27** ([2026-07-27-half-param-governance](../2026-07-27-half-param-governance/notebook.md)): under the flat `CompressionMetric` this batch actually runs, the bias **never inverts** — `specialise` is the DL-optimum at every V (2-8) and M (2-6) tested, because a flat 1-bit-per-entry charge lets V cheap entries beat one entry with weaker per-site savings indefinitely. The inversion reasoned to here requires a metric that charges DEFINITION size (`TwoPartMDL`), under which it does occur — and is two-dimensional, reversing again at high M.
+
 **The ladder was run anyway** (all-d2, ~2 min), deliberately, because the conviction IS the result
 rather than a defect to fix — the al9-al12 control precedent. Outcome: **ADMITTED**, top reached in
 chain and climb, **rung recovery 2/3** (`half` missed; both recolour rungs recovered). That makes it
@@ -655,6 +657,8 @@ all arity" result says SEARCH is biased against parameterized abstractions (+2.5
 +282% for a 2-param rung). Now governance is shown biased against them too. **Both halves of the
 system push away from exactly the abstractions that generalise** — which is a coherent and somewhat
 uncomfortable story for a program whose thesis is that reusable abstraction is what buys tractability.
+
+> ⚠ **CORRECTED 2026-07-27** — this sentence is struck. The SEARCH half stands (the vocabulary tax is measured). The GOVERNANCE half is a property of the **default metric**, not of the system: under the shipped `TwoPartMDL` the same loop generalises cleanly from V>=3, and at this ladder's own V=2/M=2 it correctly declines to mint anything at all — `none` (DL 26.0) beats `generalise` (27.0) beats `specialise` (28.0). **The learner was right and the ladder was wrong**: `half` is never MDL-optimal for a 2-way split under either metric.
 
 ### S17 — the governance boundary, characterised: S16 landed in the ONE cell that specialises
 ([`mdl_inversion.py`](artifacts/mdl_inversion.py) · [`.out`](artifacts/mdl_inversion.out))
@@ -677,7 +681,7 @@ offers nothing, so the antiunified form is the *only* candidate and is kept by d
 
 **Two findings, and the second was not predicted.**
 
-1. **The boundary is exactly V=2, and S16's real case sits precisely in it.** `dae9d2b5-half-param`
+1. ~~**The boundary is exactly V=2, and S16's real case sits precisely in it.**~~ → **corrected 2026-07-27: there is no V=2 boundary in MDL's preference** — under the flat metric `specialise` is optimal at every V, and the V>=3 change is greedy myopia (the corpus rewrite destroys the arity-2 candidate after round 0). The real case IS correctly handled under `TwoPartMDL`: the optimum there is to mint nothing. `dae9d2b5-half-param`
    has two half-indices with two demos each — V=2, M=2, the single cell in this table where the
    offered generalisation is actively DISCARDED. So the S16 failure is not a broad bias against
    parameterization; it is a narrow corner that the real experiment happened to land in exactly.
@@ -689,6 +693,16 @@ offers nothing, so the antiunified form is the *only* candidate and is kept by d
    length, and it never revisits. So the V>=3 regime is not "correct behaviour" either — it trades a
    missed generalisation for LIBRARY BLOAT, which the standing vocabulary-tax finding says is paid
    again at every subsequent search.
+
+> ⚠ **CORRECTED 2026-07-27 by [2026-07-27-half-param-governance](../2026-07-27-half-param-governance/notebook.md).**
+> This section never varied the METRIC and never priced the end states. Both matter. The batch runs the
+> flat `CompressionMetric` (definition size ignored — its own docstring says it "lets the loop hoard
+> marginal specialisations"); under it, `specialise` is the DL-optimum at EVERY V tested, so the
+> predicted inversion never happens and the V=2 "boundary" is really *greedy ceasing to reach the
+> optimum* at V>=3. Under the shipped `TwoPartMDL`, V>=3 generalises cleanly — and the real V=2/M=2
+> case correctly mints NOTHING, because with four programs no abstraction pays for its definition.
+> So `half-param`'s missed rung is not a governance pathology; and `half` is never MDL-optimal at V=2
+> under either metric.
 
 **So governance has two distinct pathologies either side of V=2**, and neither is the right answer
 (keep the generalisation, drop the specialisations it subsumes). The honest version of S16's
