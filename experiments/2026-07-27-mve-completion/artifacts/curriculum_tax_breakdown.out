@@ -1,0 +1,28 @@
+Wake schedule: `full` only (see note in source). Percentages are shares of the
+climb's total wake cost, which partitions exactly over (iteration x task) cells.
+
+corpus (ladder train set)          iters        total      productive  already-solved  not-yet-solved of which capped
+94f9d214-nor-halves:train              2    4,002,148     1,134   0.0%     1,014   0.0% 4,000,000  99.9% 4,000,000  99.9%
+94f9d214-nor-merged:train              1      143,831    41,240  28.7%         0   0.0%   102,591  71.3%         0   0.0%
+94f9d214-nor-recolor:train             5    5,505,471 1,817,079  33.0% 1,688,392  30.7% 2,000,000  36.3% 2,000,000  36.3%
+al1-mirror:train                       2       68,275    27,310  40.0%    13,824  20.2%    27,141  39.8%         0   0.0%
+al15-shift-frame:train                 3       56,405    18,627  33.0%    23,258  41.2%    14,520  25.7%         0   0.0%
+al16-layout-nest:train                 3        5,655     1,817  32.1%     2,530  44.7%     1,308  23.1%         0   0.0%
+al17-shift-frame-tall:train            4      107,772    26,677  24.8%    47,948  44.5%    33,147  30.8%         0   0.0%
+al18-fanin-rotate:train                3        6,705     2,161  32.2%     2,974  44.4%     1,570  23.4%         0   0.0%
+al19-fanin-recolor:train               3      144,465    47,807  33.1%    59,174  41.0%    37,484  25.9%         0   0.0%
+al2-rot90-calibration:train            2           60        27  45.0%        26  43.3%         7  11.7%         0   0.0%
+al20-recolor-telescope:train           3      109,595    36,279  33.1%    44,846  40.9%    28,470  26.0%         0   0.0%
+al21-dag-siblings:train                2          940       371  39.5%       508  54.0%        61   6.5%         0   0.0%
+dae9d2b5-half-param:train              3      302,961   100,935  33.3%   124,208  41.0%    77,818  25.7%         0   0.0%
+dae9d2b5-split-asym-lean:train         2    2,775,428   774,506  27.9%       922   0.0% 2,000,000  72.1% 2,000,000  72.1%
+dae9d2b5-split-halves-lean:train       2    2,288,863   288,251  12.6%       612   0.0% 2,000,000  87.4% 2,000,000  87.4%
+dae9d2b5-split-recolor-lean:train      1      100,815    43,098  42.7%         0   0.0%    57,717  57.3%         0   0.0%
+dae9d2b5-split-recolor:train           3    2,556,291 1,119,541  43.8%     1,846   0.1% 1,434,904  56.1%         0   0.0%
+fafffa47-nor-halves:train              2    4,002,148     1,134   0.0%     1,014   0.0% 4,000,000  99.9% 4,000,000  99.9%
+fafffa47-nor-merged:train              4      609,086   152,197  25.0%   269,074  44.2%   187,815  30.8%         0   0.0%
+fafffa47-nor-recolor:train             5    5,504,883 1,816,800  33.0% 1,688,083  30.7% 2,000,000  36.3% 2,000,000  36.3%
+
+`of which capped` = cost incurred by searches that hit their candidate limit
+without solving. That cost is set by our budget, not by the task -- it is a
+measure of what we chose to spend, not of an intrinsic cost.

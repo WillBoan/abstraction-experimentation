@@ -880,3 +880,61 @@ as designed, for ~2 seconds against the cost of a full run. Worth recording beca
 **Designed, not built:** a synthetic **non-commuting twin** of this task (make the recolour's colour
 depend on the crop) is the control the law predicts should become admissible. It is the cleanest
 available test of the law and the natural next build.
+
+### S12 — the curriculum tax as an additive percentage breakdown
+([`curriculum_tax_breakdown.py`](artifacts/curriculum_tax_breakdown.py) · [`.out`](artifacts/curriculum_tax_breakdown.out))
+
+Prompted by "can we give the cost breakdown per category, as percentages?" The answer splits by
+dimension, and the split is not a presentation choice — it is a property of what search cost is.
+
+**Tasks: additive, so percentages are well-defined.** Search cost is per-task, so a climb's total
+wake cost partitions exactly over `(iteration x task)` cells, each belonging to one class. Read off
+`trace.jsonl`'s per-task `search_stats[task].total.considered` (the committed reports carry only
+per-iteration aggregates; the runs carry the per-task rows).
+
+Classification per cell: solved for the first time at this iteration = `productive`; solved at an
+earlier iteration and searched again = `already-solved` [tax]; not solved at this iteration =
+`not-yet-solved` [tax]; not part of the ladder = `distractor` [tax, never present].
+
+**Two methodological corrections found while building it, both of which had produced wrong numbers
+in the first run:**
+
+1. **The wake schedule determines which taxes can exist**, so rows under different schedules are not
+   comparable. The `curriculum` schedule searches each rung's tasks only at its own level, so its
+   `already-solved` bucket is zero *by construction*; `skip-solved` drops tasks once solved. The
+   first version silently mixed schedules (al15 read 100% productive / 0% tax, which is the
+   curriculum arm, not a property of the ladder). Now filtered to `full` only.
+2. **`solved` in a trace row is CUMULATIVE**, not "newly solved at this iteration" — it lists every
+   task solved as of that iteration. Classifying on it directly counts re-searches as productive.
+
+**Results (20 ladders, `full` schedule).** The clean synthetic ladders cluster tightly at roughly
+**33% productive / 41% already-solved re-search / 26% not-yet-solved** (al15, al16, al19, al20,
+`dae9d2b5-half-param` all within ~1 point). So about **two thirds of a climb's search cost is
+curriculum tax** on these ladders.
+
+- **The breakdown is a decomposition OF the loop-overhead factor, and reproduces it exactly.**
+  `total / productive` equals the separately-computed loop-overhead: al15 56,405/18,627 = **3.03x**,
+  al17 107,772/26,677 = **4.04x** — matching the 2026-07-23 schedule-comparison figures (3.0x-4.0x,
+  al17 the tallest at 4.04x) to the reported precision. Loop overhead is therefore `1 / productive
+  share`, and this table says what the other `1 - productive` is made of. Independent derivation,
+  same number.
+- **The height signal the loop-overhead ratio could not resolve is visible here**: al17 (4 rungs,
+  the tallest) is the lowest productive share at 24.8%, against ~33% for the 3-rung ladders. Still
+  n=1 on the tall end; not a claim, a lead.
+- **Broken members are diagnosed instantly**: `94f9d214-nor-halves` and `fafffa47-nor-halves` read
+  **0.0% productive, 99.9% not-yet-solved**, all of it budget-capped — i.e. essentially the entire
+  climb was spent on a task it cannot solve at that budget. The certificate called both `admitted`.
+- **A caveat that must ship with the percentages**: the `not-yet-solved` bucket is dominated by
+  searches that hit their candidate limit (the `of which capped` column — 99.9% for the `-halves`
+  members, 36.3% for the 4-rung NOR members). That cost is set by our guard, not by the task, so
+  these are shares of *what we chose to spend*, not of an intrinsic cost.
+- **The distractor-task column is 0% everywhere because no run has ever included distractor tasks** —
+  the taxonomy's fourth cell is structurally absent, not measured-as-zero.
+
+**Primitives and constants: NOT additively decomposable, and we have the measurement that shows it.**
+A single candidate program contains several primitives and several constants at once, so candidates
+do not partition by primitive — which is exactly why `by_primitive` shares sum far above 100% (they
+are overlapping containment counts). And the effects interact: the 2026-07-25 sweep measured
+primitive-pruning alone = censored, constant-pruning alone = censored, both together = solved. Two
+honest formats instead: nested ablation ratios that telescope to the total under a declared nesting
+order, or shares of the log (the census already computes the full 2x2 pruning corners statically).
