@@ -9,7 +9,8 @@ solver-invisible :class:`TaskMeta`), but its iteration / indexing / ``tasks`` su
 yields the pure ``Task`` — so solvers and the eval harness never see metadata (blindness).
 Meta-aware code reads ``entries``.
 
-The legacy name ``Dataset`` (and ``load_dataset``) remain as aliases during the migration.
+Two loaders, one return type: :func:`load_dataset` for the vendored ARC corpora and
+:func:`load_testbed` for the generated synthetic ones, both yielding a :class:`Corpus`.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ import json
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, TypeAlias
+from typing import Final
 
 from arc_lab.core.annotation import AnnotatedTask, Real, Split, Synthetic, TaskMeta
 from arc_lab.core.hashing import content_id
@@ -124,12 +125,14 @@ class Corpus:
         raise KeyError(f"task {task_id!r} not found in corpus {self.name!r}")
 
 
-#: Legacy name for :class:`Corpus`, kept as an alias during the migration.
-Dataset: TypeAlias = Corpus
-
-
 def load_dataset(name: str, *, limit: int | None = None) -> Corpus:
-    """Load a named dataset; ``limit`` truncates to the first *n* tasks."""
+    """Load a named ARC corpus (``arc1-train``, ...) from the vendored datasets under ``data/``.
+
+    Named for its *source* — the ARC datasets — and paired with :func:`load_testbed`, which
+    loads the synthetic ones. Both return a :class:`Corpus`; ``limit`` truncates to the first
+    *n* tasks. To resolve a name across both sources (plus ``:split`` suffixes), the CLI's
+    ``_corpora.load_corpus`` is the dispatcher over this pair.
+    """
     path = dataset_path(name)
     if not path.is_dir():
         raise FileNotFoundError(
@@ -140,10 +143,6 @@ def load_dataset(name: str, *, limit: int | None = None) -> Corpus:
     if limit is not None:
         tasks = tasks[:limit]
     return Corpus.of(name, tasks, meta=TaskMeta(provenance=Real(name)))
-
-
-#: Provenance-agnostic name for :func:`load_dataset`.
-load_corpus = load_dataset
 
 
 def load_testbed(name: str) -> Corpus:
@@ -184,8 +183,8 @@ def _synthetic_meta(generator: str, row: dict[str, str]) -> TaskMeta:
     return TaskMeta(provenance=Synthetic(generator), split=split, label=row.get("label"))
 
 
-def split_dataset(
-    dataset: Corpus, *, name_a: str | None = None, name_b: str | None = None
+def split_corpus(
+    corpus: Corpus, *, name_a: str | None = None, name_b: str | None = None
 ) -> tuple[Corpus, Corpus]:
     """Deterministic disjoint parity split (even / odd index) into two named halves.
 
@@ -194,6 +193,6 @@ def split_dataset(
     keep their metadata across the split.
     """
     return (
-        Corpus(name=name_a or f"{dataset.name}:A", entries=dataset.entries[0::2]),
-        Corpus(name=name_b or f"{dataset.name}:B", entries=dataset.entries[1::2]),
+        Corpus(name=name_a or f"{corpus.name}:A", entries=corpus.entries[0::2]),
+        Corpus(name=name_b or f"{corpus.name}:B", entries=corpus.entries[1::2]),
     )

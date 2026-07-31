@@ -33,7 +33,7 @@ def test_get_annotated_missing_raises() -> None:
 
 
 def test_split_style_partition_preserves_meta() -> None:
-    from arc_lab.core.dataset import split_dataset
+    from arc_lab.core.dataset import split_corpus
 
     entries = Corpus(
         name="c",
@@ -46,7 +46,7 @@ def test_split_style_partition_preserves_meta() -> None:
             ).entries[0],
         ),
     )
-    a, b = split_dataset(entries)
+    a, b = split_corpus(entries)
     assert a.get_annotated("a").meta is not None
     assert a.get_annotated("a").meta.split is Split.TRAIN  # type: ignore[union-attr]
     assert b.get_annotated("b").meta.split is Split.HELDOUT  # type: ignore[union-attr]

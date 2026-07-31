@@ -2,8 +2,8 @@
 
 **Deliberately re-pinned (2026-07-11)** for the execution overhaul (EXECUTION.md Phase 7):
 the presets are `execution/presets.py`'s `Config`s driven through the recorded-run core —
-no solver classes. Continuity with the old locks (`tests/test_integration.py`, which guard
-the old tree until its deletion pass):
+no solver classes. Continuity with the old locks (`tests/test_integration.py`, deleted with
+the old tree on 2026-07-15):
 
 - `d4` reproduces the old `dsl` seven EXACTLY (same task-ids).
 - `synth` reproduces the old `dsl-synth` eleven EXACTLY. The lock runs at ``depth_limit=1``

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from arc_lab.core.dataset import load_corpus
+from arc_lab.core.dataset import load_dataset
 from arc_lab.core.task import Task
 from arc_lab.program_search.substrate.library import Library
 from arc_lab.program_search.substrate.program import Apply, Const, Input, Program
@@ -48,7 +48,7 @@ SOLUTION_UNFOLDED: Program = Apply(
 
 
 def _task() -> Task:
-    for entry in load_corpus("arc1-train").entries:
+    for entry in load_dataset("arc1-train").entries:
         if entry.task.task_id == TASK_ID:
             return entry.task
     pytest.skip(f"{TASK_ID} not present in arc1-train")

@@ -74,7 +74,7 @@ testpaths = ["tests"]
 addopts = "-q"
 markers = [
     # Heavy regression/research locks — they run real search inside the wake-sleep loop or over real
-    # ARC datasets (E1-E9 abstraction formation; `dsl`/`dsl-sym`/`dsl-synth` benchmarks). Excluded from
+    # ARC datasets (E1-E9 abstraction formation; the `d4`/`sym`/`synth`/`beam` preset locks). Excluded from
     # the fast inner-loop run (`make test` = `-m 'not slow'`); the full gate (`make check`) runs them.
     "slow: a heavy regression/research lock (deselect with -m 'not slow')",
 ]

@@ -1,8 +1,7 @@
 """The ``arc-lab`` entry point: app assembly + the logging callback.
 
 Thin by design (EXECUTION.md): one module per command, arg-parse + dispatch only —
-all behavior lives in ``program_search/execution/``. The old solver-driving CLI
-survives as ``arc_lab.cli_legacy`` until the old tree's deletion pass.
+all behavior lives in ``program_search/execution/``.
 """
 
 from __future__ import annotations

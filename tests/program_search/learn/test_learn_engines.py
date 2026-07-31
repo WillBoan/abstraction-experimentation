@@ -1,8 +1,8 @@
 """Behavioral coverage for the registered-but-unwired learn components.
 
 ``GreedyMDLLearnEngine`` + ``AntiunifyPairs`` are exercised by the studies and by
-``test_learn_port``; this file covers the rest of the registered menu, which would
-otherwise lose its only (old-tree, stitch-gated) coverage at the deletion pass:
+``test_learn_port``; this file covers the rest of the registered menu, whose only
+(old-tree, stitch-gated) coverage would otherwise have gone with the 2026-07-15 deletion:
 ``FrequentSubtree`` / ``TypeScopedFrequentSubtree`` mining, ``TwoPartMDL``'s
 definition charge (the E3->E4 anti-bloat governance), ``RefactoringLearnEngine``'s
 two-phase library refactoring, and (dep-gated) ``StitchProposer``.
