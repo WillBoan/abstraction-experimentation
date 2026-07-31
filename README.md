@@ -12,7 +12,7 @@ In order to research and experiment with these questions, I did two main things:
 
 1.  I engineered a deterministic program-synthesis system.
 2.  I conducted research and experimentation into abstraction learning, and the dynamics of abstraction learning.
-    - This led to me building a framework for working with _instances of abstraction learning trajectories_, called **Abstraction Ladders**.
+    - This led to me building a framework for working with _instances of abstraction learning trajectories_, called [**Abstraction Ladders**](docs/abstraction_ladders/ABSTRACTION-LADDERS.md).
 
 An Abstraction Ladder makes an authored learning trajectory explicit: a primitive floor, a sequence of intermediate routines, demonstrations for learning them, and a held-out Top task. The framework has already produced several useful findings about library learning and search cost. Its most important contribution so far is methodological: it makes invalid trajectories, hidden priors, and misleading cost comparisons visible.
 
@@ -36,7 +36,7 @@ This separates a failed learner from a bad experiment. It also keeps the costs i
 
 [ABSTRACTION-LADDERS.md](docs/abstraction_ladders/ABSTRACTION-LADDERS.md) gives a fuller account of Abstraction Ladders – the concept, validity discipline, cost views, Ladder relationships, and workflow.
 
-## What I found
+## Some key findings
 
 ### 1. Most authored trajectories were not valid experiments
 
@@ -60,7 +60,7 @@ Residual composition depth is expensive. Across three small real ARC task cohort
 
 At a fixed depth, vocabulary can matter just as much. Two otherwise comparable signatures differed by 404x because their argument types opened different pools of candidate programs. In the largest single contrast, a search over the full floor considered 21,149,854 candidates; an oracle-pruned floor containing only the three primitives used by the solution considered 4. Constants and retained-pool size have similarly large effects. [Micro-probes](experiments/2026-07-22-micro-probes/notebook.md) and [floor-lowering sweep](experiments/2026-07-25-v5-lowering-search-cost/notebook.md)
 
-The practical implication is not simply "make Ladders finer." More rungs reduce the deepest jump but widen later search spaces. Measured total costs are non-monotone in rung count. The useful quantity is the cost profile of a particular trajectory, not the number of intermediates in isolation.
+The practical implication is not simply "make Ladders finer." **More rungs reduce the deepest jump but widen later search spaces. Measured total costs are non-monotone in rung count.** The useful quantity is the cost profile of a particular trajectory, not the number of intermediates in isolation.
 
 ### 4. Laddering is conditionally useful
 
