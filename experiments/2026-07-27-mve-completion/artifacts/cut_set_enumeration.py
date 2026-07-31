@@ -26,7 +26,9 @@ costs milliseconds and no testbed has to exist.
 from __future__ import annotations
 
 import itertools
+import os
 import re
+import tempfile
 from pathlib import Path
 
 from arc_lab.program_search.ladders.lang.load import draft_spec
@@ -34,10 +36,10 @@ from arc_lab.program_search.ladders.registry import parse_ladder_file, resolve
 
 ROOT = Path(__file__).resolve().parents[3]
 REGISTRY = ROOT / "src/arc_lab/program_search/ladders/registry"
-SCRATCH = Path(
-    "/private/tmp/claude-501/-Users-williamboan-Documents-Career-Transition---Projects-"
-    "abstraction-experimentation/582b8816-8da8-4de7-b491-b9e8725a1b01/scratchpad/cutsets"
-)
+#: Candidate `.ladder` drafts are written here to be linted -- scratch, never results, and
+#: nothing downstream reads them. Defaults to a system temp dir so this runs anywhere; override
+#: with ``ARC_LAB_SCRATCH`` to keep the drafts around for inspection.
+SCRATCH = Path(os.environ.get("ARC_LAB_SCRATCH") or Path(tempfile.gettempdir()) / "arc-lab-cutsets")
 
 
 class Cohort:
