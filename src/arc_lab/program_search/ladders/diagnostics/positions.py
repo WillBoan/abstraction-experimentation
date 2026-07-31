@@ -1,6 +1,6 @@
 """Source positions and ranges: the coordinate types every diagnostic anchors to.
 
-Conventions, held everywhere internal (see AL-PLAN-LADDER-EDITOR-TOOLING-2026-07-23.md):
+Conventions, held everywhere internal (see docs/archive/abstraction_ladders/LADDER-EDITOR-TOOLING-PLAN-2026-07-23.md):
 
 - **0-based**, LSP-native. Human/CLI text adds one (:meth:`Range.human`).
 - Columns are **code points**. LEX-1 mandates ASCII source, so for every valid `.ladder`

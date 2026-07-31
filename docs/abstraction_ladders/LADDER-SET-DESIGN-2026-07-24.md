@@ -1,6 +1,6 @@
 # Ladder-set design: tasks, cohorts, sub-cohorts, spines (2026-07-24)
 
-How the experiment set of ladders is structured, and the vocabulary for talking about it. A dated snapshot of a design discussion (2026-07-24); the relationship taxonomy it builds on is [LADDER-RELATIONSHIPS-2026-07-23.md](LADDER-RELATIONSHIPS-2026-07-23.md), the cost-axis analysis it leans on is [BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md), and the execution plan that consumes it is [LADDER-SET-PLAN-2026-07-24.md](LADDER-SET-PLAN-2026-07-24.md).
+How the experiment set of ladders is structured, and the vocabulary for talking about it. A dated snapshot of a design discussion (2026-07-24); the relationship taxonomy it builds on is [LADDER-RELATIONSHIPS-2026-07-23.md](LADDER-RELATIONSHIPS-2026-07-23.md), the cost-axis analysis it leans on is [BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md), and the execution plan that consumes it is [LADDER-SET-PLAN-2026-07-24.md](../archive/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md).
 
 ## The hierarchy
 

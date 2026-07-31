@@ -147,7 +147,7 @@ was swapped:
 
 ## Addendum (2026-07-23) — decision taken
 
-Recorded in [AL-PLAN-2026-07-23.md](../../docs/abstraction_ladders/AL-PLAN-2026-07-23.md). The
+Recorded in [AL-PLAN-2026-07-23.md](../../docs/archive/abstraction_ladders/AL-PLAN-2026-07-23.md). The
 choice is none of the notebook's options 1–3 verbatim but the measured/bounded split option 2
 gestured at, made concrete:
 

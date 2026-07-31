@@ -71,7 +71,7 @@ def render_register(
         "",
         "Prose context -- the layering these sit in, what lint can and cannot catch, and the "
         "current batch health -- is in "
-        "[LADDER-CHECKS-2026-07-21.md](../archive/LADDER-CHECKS-2026-07-21.md).",
+        "[LADDER-CHECKS-2026-07-21.md](../archive/abstraction_ladders/LADDER-CHECKS-2026-07-21.md).",
         "",
         "## Syntax -- the document alone (`DOCUMENT_PLAN`)",
         "",

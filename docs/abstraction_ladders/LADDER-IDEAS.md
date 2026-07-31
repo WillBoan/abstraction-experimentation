@@ -7,7 +7,7 @@ A parking lot for:
 
 Notes:
 
-- Reference: ([Design doc](ABSTRACTION-LADDERS-2026-07-16.md)).
+- Reference: ([Design doc](ABSTRACTION-LADDERS-SPEC.md)).
 - Keep entries cheap; one piece of info per bullet.
 - When a rung is adopted into a ladder, move it to that worksheet and delete it here; a rung wanted by several ladders is worth noting as such.
 - NOT restricted to Ladder-#1-shaped ideas — complicated/ambitious ladders are extremely important; get them down even when blocked, with the blocker named.

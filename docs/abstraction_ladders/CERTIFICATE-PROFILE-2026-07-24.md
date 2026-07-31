@@ -1,6 +1,6 @@
 # The certificate is a per-rung verdict profile, not a sandwich gate (2026-07-24)
 
-A reframe of what a ladder's certificate _is_, reached in the 2026-07-24 v5-design discussion. Sits under [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md) (spines/granularity) and [BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md) (the joint budget); the checks it recasts are in [LADDER-CHECKS-2026-07-21.md](../archive/LADDER-CHECKS-2026-07-21.md).
+A reframe of what a ladder's certificate _is_, reached in the 2026-07-24 v5-design discussion. Sits under [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md) (spines/granularity) and [BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md) (the joint budget); the checks it recasts are in [LADDER-CHECKS-2026-07-21.md](../archive/abstraction_ladders/LADDER-CHECKS-2026-07-21.md).
 
 ## The sandwich, unbundled
 

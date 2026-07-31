@@ -2,7 +2,7 @@
 
 ## Context
 
-We are building the **Abstraction Ladder Experiments** for `arc-lab` — a batch of LEARN experiments measuring whether, and by how much, learned abstractions convert one intractable search into a sequence of tractable ones. Full design: `docs/abstraction_ladders/ABSTRACTION-LADDERS-2026-07-16.md`.
+We are building the **Abstraction Ladder Experiments** for `arc-lab` — a batch of LEARN experiments measuring whether, and by how much, learned abstractions convert one intractable search into a sequence of tractable ones. Full design: `docs/abstraction_ladders/ABSTRACTION-LADDERS-SPEC.md`.
 
 A **Ladder** = a **Floor** (`L_0`, a starting `Library`), an ordered chain of **bridging Rungs** (`r_1..r_k`, each a _learnable_ abstraction over the previous cumulative library `L_{i-1}`), and a **Top Rung** — the goal layer: the hardest tasks, whose solutions _use_ the top bridging rung `r_k` as a fragment, but which are **not** minted as an abstraction (nothing is above them to learn them). A rung-tagged **Corpus** holds the demonstrating tasks. The experiment measures **raw cost** (Floor → Top, no learning; usually intractable) against **laddered cost** (Floor → Top via the bridging rungs, with learning), plus a matrix of derived metrics.
 

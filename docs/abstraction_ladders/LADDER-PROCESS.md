@@ -1,10 +1,10 @@
-# Ladder process (2026-07-26)
+# Ladder process
 
 How to build a ladder: what to do, in what order, with which instrument — and what each instrument can and cannot prove.
 
 **What this is not.** It is not a list of checks: [LINT-CHECKS.md](LINT-CHECKS.md) is generated from the code and is the authority on what fires and why. It is not the format spec ([LADDER-FORMAT.md](LADDER-FORMAT.md)) or the register ([LADDERS.md](LADDERS.md)). What lives here is the part machinery cannot enforce — **order, judgement, and inference** — which is why it is short: nearly everything else became a check.
 
-Written after the first real-ARC ladder ([`dae9d2b5-halves-union`](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-halves-union.ladder)) cost far more than it should have. The machinery half of that response is [2026-07-26-AL-PLAN.md](2026-07-26-AL-PLAN-PROCESS.md); the failures are in [EXPERIMENTS.md](../../EXPERIMENTS.md) under 2026-07-25/26. Almost every rule below is a scar.
+Written after the first real-ARC ladder ([`dae9d2b5-halves-union`](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-halves-union.ladder)) cost far more than it should have. The machinery half of that response is [2026-07-26-AL-PLAN.md](../archive/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md); the failures are in [EXPERIMENTS.md](../../EXPERIMENTS.md) under 2026-07-25/26. Almost every rule below is a scar.
 
 ---
 
@@ -28,13 +28,13 @@ Both axes are now instrumented ([BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-0
 2. **Cut the term into competences.** Read the natural cut-sets off the verified term and name each one. If you cannot name a rung in three words, it is a fragment of a competence, not a rung.
 3. **Then choose the smallest floor** that puts each cut at depth 2–3, preferring _perceived_ geometry over _computed_ (§5). The floor is chosen to serve the cuts — never inherited and then worked around.
 4. **Author demonstrations last.** They are the plan's dominant cost centre, so they are the last thing to commit to a spine that might still move.
-5. **Register the expected profile, then verify** — lint, probe, `diff-ladder` for any member derived from another (membership/equivalence, picking the validator the floor relationship licenses — [LADDER-RELATIONSHIPS](LADDER-RELATIONSHIPS-2026-07-23.md)), taskgen, run, analyse (§3 for the order, §4 when something fires). Write the predicted per-rung verdict profile down **before** `run-ladder`: a profile is evidence only against a stated expectation, and a prediction cannot be retro-fitted ([MVE-PLAN](MVE-PLAN-2026-07-25.md)).
+5. **Register the expected profile, then verify** — lint, probe, `diff-ladder` for any member derived from another (membership/equivalence, picking the validator the floor relationship licenses — [LADDER-RELATIONSHIPS](LADDER-RELATIONSHIPS-2026-07-23.md)), taskgen, run, analyse (§3 for the order, §4 when something fires). Write the predicted per-rung verdict profile down **before** `run-ladder`: a profile is evidence only against a stated expectation, and a prediction cannot be retro-fitted ([MVE-PLAN](../archive/abstraction_ladders/MVE-PLAN-2026-07-25.md)).
 
 Start a ladder, or the next variant of one, with `arc-lab new-ladder <name> [--from <existing>]`. It refuses to overwrite; that is the point (§7).
 
 ### Choosing which ladder to build
 
-Soundness is not worth much on a task that measures nothing. Two selection criteria beyond the task screen in [MVE-PLAN-2026-07-25.md](MVE-PLAN-2026-07-25.md):
+Soundness is not worth much on a task that measures nothing. Two selection criteria beyond the task screen in [MVE-PLAN-2026-07-25.md](../archive/abstraction_ladders/MVE-PLAN-2026-07-25.md):
 
 - **Demo-pool cheapness.** Rungs demonstrable with task-realizable, full-solution _Grid_ demos are the cheap case. Fragment-demoed rungs (any non-Grid rung must be wrapped, and the wrapper's depth is what the wake pays) are a deliberate sample, never an accident.
 - **Floor leverage.** Prefer families where one perceived-geometry producer unlocks several tasks — one `panels`-style producer serving the whole separator/two-halves family beats a bespoke floor per task.
@@ -69,7 +69,7 @@ The session's own contrast: `dae9d2b5-3-recolor-rungs` was killed by **one lint,
 
 **Read the compact table first.** `lint-ladder <name>` prints one line per rung — the level's budget, `d_i`/`needs`, the double-jump, the round-1 breadth `b1` and its `tax` ratio, and a `measured` column read back from any recorded probe cells for that level. Blank there means nobody has probed it, which is an honest gap rather than a zero. `--full` prints the artifact form; `arc-lab runs --probes` lists the cells themselves.
 
-**Lint's ~1s has one known exception.** Unfolding a heavily-shared tall DAG can blow up — `cfb2ce5a-5-lowered-full` does not terminate (>8 min, >2.6 GB RSS). A lint that is minutes-silent on a big DAG is hitting that, not working; the fix is recorded out-of-scope in [2026-07-26-AL-PLAN](2026-07-26-AL-PLAN-PROCESS.md) — park the ladder rather than waiting it out.
+**Lint's ~1s has one known exception.** Unfolding a heavily-shared tall DAG can blow up — `cfb2ce5a-5-lowered-full` does not terminate (>8 min, >2.6 GB RSS). A lint that is minutes-silent on a big DAG is hitting that, not working; the fix is recorded out-of-scope in [2026-07-26-AL-PLAN](../archive/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md) — park the ladder rather than waiting it out.
 
 **INCONCLUSIVE is a non-result by design, not a defect to tune away.** A censored cell means the search was cut short, so "unsolved" is a budget fact, not a verdict. Raising `--guard` buys a longer search, never a stronger verdict; if the answer matters, run `run-ladder`. (2026-07-25: six escalating guard runs, >1h. The CLI's own help was recommending it — that text is fixed; this is the reason.)
 
@@ -93,7 +93,7 @@ The session's own contrast: `dae9d2b5-3-recolor-rungs` was killed by **one lint,
 | --- | --- |
 | `double-jump-intractable` (warn) | a data point about where the cut was placed, **not** a reason the ladder may not exist ([CERTIFICATE-PROFILE](CERTIFICATE-PROFILE-2026-07-24.md)). Do not redesign to silence it |
 | `raw-intractable` | the top is reachable from the bare floor — the ladder measures nothing. **Withhold the primitive(s) that make it shallow** (and declare them, §2), or drop the task; redesigning the top is the last resort, because it changes which competence you are measuring |
-| `free-param-varies` | the demo plan feeds a rung parameter one value everywhere, so sleep will bake the literal in instead of minting at intended arity — the S-B law: **the demo value-patterns ARE the mint's spec**. Choose grids that vary the value; this is the manual demo-selection judgement the deferred selector would mechanize, and repeated pain here is that selector's build trigger ([MVE-PLAN](MVE-PLAN-2026-07-25.md)) |
+| `free-param-varies` | the demo plan feeds a rung parameter one value everywhere, so sleep will bake the literal in instead of minting at intended arity — the S-B law: **the demo value-patterns ARE the mint's spec**. Choose grids that vary the value; this is the manual demo-selection judgement the deferred selector would mechanize, and repeated pain here is that selector's build trigger ([MVE-PLAN](../archive/abstraction_ladders/MVE-PLAN-2026-07-25.md)) |
 | `free-params-covary` | two parameters move in lockstep at every call site, so no mint can separate them. Vary them independently across demos — same S-B judgement as above |
 | `rewrite-shallow` | real, and the witness is printed. The rung buys less depth than it claims |
 | `constant-subterm` | a composite subterm is train-constant and beaten by a literal. Vary the grids so the value cannot be baked in (al14) |
@@ -182,6 +182,6 @@ General habits, listed because these are the ones that cost real time here.
 
 - Format: [LADDER-FORMAT.md](LADDER-FORMAT.md) · Register: [LADDERS.md](LADDERS.md) · Checks: [LINT-CHECKS.md](LINT-CHECKS.md)
 - Verdict profile, not a sandwich gate: [CERTIFICATE-PROFILE-2026-07-24.md](CERTIFICATE-PROFILE-2026-07-24.md) · The two cost axes: [BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md)
-- Set structure: [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md) · Full-set plan (Phase 2+ entry gates): [LADDER-SET-PLAN-2026-07-24.md](LADDER-SET-PLAN-2026-07-24.md) · Comparison licenses: [LADDER-RELATIONSHIPS-2026-07-23.md](LADDER-RELATIONSHIPS-2026-07-23.md)
-- Active plans: [MVE-PLAN-2026-07-25.md](MVE-PLAN-2026-07-25.md) · [AL-PLAN-2026-07-23.md](AL-PLAN-2026-07-23.md) · [2026-07-26-AL-PLAN.md](2026-07-26-AL-PLAN-PROCESS.md)
+- Set structure: [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md) · Full-set plan (Phase 2+ entry gates): [LADDER-SET-PLAN-2026-07-24.md](../archive/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md) · Comparison licenses: [LADDER-RELATIONSHIPS-2026-07-23.md](LADDER-RELATIONSHIPS-2026-07-23.md)
+- Active plans: [MVE-PLAN-2026-07-25.md](../archive/abstraction_ladders/MVE-PLAN-2026-07-25.md) · [AL-PLAN-2026-07-23.md](../archive/abstraction_ladders/AL-PLAN-2026-07-23.md) · [2026-07-26-AL-PLAN.md](../archive/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md)
 - Run model: [EXECUTION.md](../EXECUTION.md) · Engine: [ARCHITECTURE.md](../ARCHITECTURE.md) · Notebooks: [experiments/README.md](../../experiments/README.md)

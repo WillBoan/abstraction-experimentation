@@ -1,6 +1,10 @@
-# Abstraction Ladder Experiments — design (2026-07-16)
+# Abstraction Ladders — the specification
 
-The design snapshot for the **Abstraction Ladder Experiments**: a batch of LEARN experiments measuring whether — and by how much — learned abstractions convert an intractable search into a sequence of tractable ones. This document is the merged output of the 2026-07-16 design sessions; it records the concept, the quantities & metrics, the ladder-construction methodology, the run structure, and the open decisions.
+**This is the canonical reference for Abstraction Ladder terms, quantities and metrics** — cite it for definitions. For the short conceptual read, see [ABSTRACTION-LADDERS.md](ABSTRACTION-LADDERS.md); for the file format, [LADDER-FORMAT.md](LADDER-FORMAT.md).
+
+Originally the merged output of the 2026-07-16 design sessions for the **Abstraction Ladder Experiments** — a batch of LEARN experiments measuring whether, and by how much, learned abstractions convert an intractable search into a sequence of tractable ones. It records the concept, the quantities & metrics, the ladder-construction methodology, the run structure, and the open decisions.
+
+> **One correction of record.** §5.3's "estimation is the METHOD" decision was **reversed** on 2026-07-23 after the extrapolating estimator failed validation (its bracket contained the truth in 2 of 10 cells): measured raw arms and proven lower bounds replaced it, and the estimate renders as advisory only. See [AL-PLAN-2026-07-23.md](../archive/abstraction_ladders/AL-PLAN-2026-07-23.md) decision 1. Everything else here stands.
 
 ## 1. Core experiment design
 

@@ -81,7 +81,7 @@ class FloorFullyExercised(LadderCheck):
 
 
 #: The budget at which carrying an unneeded primitive stops being cheap. Cost goes as
-#: ``(primitives x constants)^depth`` (LADDER-PROCESS-2026-07-26 section 1), so an extra primitive
+#: ``(primitives x constants)^depth`` (LADDER-PROCESS section 1), so an extra primitive
 #: is a base term: at depth 2 a UNARY or BINARY one is a rounding error, at depth 3+ it compounds.
 #: Calibration: ``dae9d2b5-halves-union`` carried ``overlay``/``map_color`` -- both needed only by
 #: the top -- at two levels running depth 3, measuring 21,149,854 considered against 4 pruned.

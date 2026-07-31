@@ -1,6 +1,6 @@
 # Abstraction Ladder batch: reading all 20 ladders, and the al14 diagnosis
 
-**Date:** 2026-07-21 · **Commit:** `f0fe2e1` · Abstract: [EXPERIMENTS.md](../../EXPERIMENTS.md) entries of 2026-07-21 · Register: [LADDERS.md](../../docs/abstraction_ladders/LADDERS.md) · Design: [ABSTRACTION-LADDERS-2026-07-16.md](../../docs/abstraction_ladders/ABSTRACTION-LADDERS-2026-07-16.md)
+**Date:** 2026-07-21 · **Commit:** `f0fe2e1` · Abstract: [EXPERIMENTS.md](../../EXPERIMENTS.md) entries of 2026-07-21 · Register: [LADDERS.md](../../docs/abstraction_ladders/LADDERS.md) · Design: [ABSTRACTION-LADDERS-SPEC.md](../../docs/abstraction_ladders/ABSTRACTION-LADDERS-SPEC.md)
 
 ## Goal
 

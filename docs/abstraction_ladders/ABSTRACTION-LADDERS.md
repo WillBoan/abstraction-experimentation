@@ -4,7 +4,7 @@ An Abstraction Ladder is an authored, measurable learning trajectory: a declared
 
 The point is not to claim that a prescribed sequence measures intelligence. It is to make a candidate path from prior knowledge to competence explicit enough to test. Once the floor, intermediate routines, budgets, and search engine are declared, a Ladder lets us ask what each step costs, what it enables, and whether the proposed intermediate routines were actually necessary.
 
-The original [design snapshot](ABSTRACTION-LADDERS-2026-07-16.md), the [MVE plan](MVE-PLAN-2026-07-25.md), and the [Ladder process](LADDER-PROCESS-2026-07-26.md) record dated decisions and operational details.
+The original [design snapshot](ABSTRACTION-LADDERS-SPEC.md), the [MVE plan](../archive/abstraction_ladders/MVE-PLAN-2026-07-25.md), and the [Ladder process](LADDER-PROCESS.md) record dated decisions and operational details.
 
 ## The Object of Study
 

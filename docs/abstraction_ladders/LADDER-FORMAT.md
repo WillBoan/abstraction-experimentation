@@ -1,6 +1,6 @@
 # The `.ladder` file format — spec
 
-Normative spec for `.ladder` files: the declarative source format in which a Ladder ([ABSTRACTION-LADDERS-2026-07-16.md](ABSTRACTION-LADDERS-2026-07-16.md)) is authored.
+Normative spec for `.ladder` files: the declarative source format in which a Ladder ([ABSTRACTION-LADDERS-SPEC.md](ABSTRACTION-LADDERS-SPEC.md)) is authored.
 
 A `.ladder` file is the **single source of truth for a ladder's identity**: it drives the `LadderSpec`, the testbed (via taskgen), and every derived artifact. It is hand-authored: no tool rewrites it.
 

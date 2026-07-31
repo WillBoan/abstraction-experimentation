@@ -12,7 +12,7 @@ you actually mean.
 This is deliberately the only thing in the repo that writes a `.ladder`: ``taskgen`` reads one to
 build a testbed, and everything else (lint, probe, run) is read-only. A scratch script can of
 course still write one itself -- nothing can stop that -- but there is now a supported path that
-cannot lose work, and `LADDER-PROCESS-2026-07-26.md` names it as the one to use.
+cannot lose work, and `docs/abstraction_ladders/LADDER-PROCESS.md` names it as the one to use.
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ _TEMPLATE = """ladder {name}
 #
 # <Why this decomposition: what each rung is a nameable competence FOR, and what the top needs that
 # the floor cannot reach. Record dead ends here too -- a retired variant's file persists as the
-# finding (LADDERS.md). Design guidance: docs/abstraction_ladders/LADDER-PROCESS-2026-07-26.md>
+# finding (LADDERS.md). Design guidance: docs/abstraction_ladders/LADDER-PROCESS.md>
 #
 # PLACEHOLDER SPINE -- replace the floor, the rung and the tasks. It loads as written so that
 # `lint-ladder` gives you a real reading from the first edit.

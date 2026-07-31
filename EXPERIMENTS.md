@@ -469,7 +469,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 - **Commit:** working tree atop a665ddb
 - **Notebook:** [experiments/2026-07-17-derivability-dag/](experiments/2026-07-17-derivability-dag/) — full write-up + probe scripts and outputs
-- **Question:** can the Abstraction Ladder batch (docs/abstraction*ladders/ABSTRACTION-LADDERS-2026-07-16.md) be supplied by \_enumeration* — computing every shipped primitive's minimal behavioral derivation over (a) the rest of the library and (b) each bundles-doc floor, then reading ladders off the derivability structure?
+- **Question:** can the Abstraction Ladder batch (docs/abstraction*ladders/ABSTRACTION-LADDERS-SPEC.md) be supplied by \_enumeration* — computing every shipped primitive's minimal behavioral derivation over (a) the rest of the library and (b) each bundles-doc floor, then reading ladders off the derivability structure?
 - **Ran:** a throwaway typed bottom-up enumerator over `BASE_PRIMITIVES` impls (observational-equivalence dedup on a deterministic battery, disjoint holdout verification; mono first-order scope, 55/71 prims, no constant leaves). Pass A: leave-one-out; Pass B/C: 12 floors × targets, then floor+rung re-derivation; Pass D: composite targets (quad/tile towers, E11/E12 compositions) → full static jump matrices.
 - **Result:**
   - Pass A: the mono library = a **redundant shell** (~21 prims derivable ≤3–4: D4 clique, mask De Morgan clique, `min`/`max`/`add`/`mod` identities, `map_color` ↔ `swap_colors` — _mutually_ derivable given mask machinery, refining `_PRIMITIVE_BUNDLES.md` Constraint 5) + an **atom core** (~30, incl. all of layout and parameterized iteration).
@@ -484,7 +484,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-18 — Abstraction Ladder machinery built; ladder #1 (`al1-mirror`) runs end to end and is ADMITTED
 
-- **Commit:** `11c5457` (branch `feat/abstraction-ladders-machinery`; a 6-commit stack from `a462abc`). Design: `docs/abstraction_ladders/ABSTRACTION-LADDERS-2026-07-16.md`; build plan `~/.claude/plans/i-think-you-compressed-scroll.md`.
+- **Commit:** `11c5457` (branch `feat/abstraction-ladders-machinery`; a 6-commit stack from `a462abc`). Design: `docs/abstraction_ladders/ABSTRACTION-LADDERS-SPEC.md`; build plan `~/.claude/plans/i-think-you-compressed-scroll.md`.
 - **Built:** the full §6 machinery. Substrate atoms `compositional_depth` (leaf=0, = the engine's generation accounting) + `unfold_program`/`substitute_params` (the inverse of `make_abstraction`; the Linter's `d_i`/inlined-double-jump are now enumerated, never hand-computed — folds in the prior entry's "Next"). Telemetry atoms: the **solution sink** (every goal-match at absorption, keep-cheapest-K), the **per-generation funnel**, and **sleep-cost counters** — all serialized. `LadderSpec`/`Rung`/`TopRung` + `.lint()` -> `LadderShape` (static sandwich checks); `run_ladder` + `certify` + `create_ladder_report`; `arc-lab run-ladder`.
 - **Two isolated engine correctness fixes en route (each its own commit; ALL locks unchanged, latent on the current corpora, proven via constructed tests):** (1) eviction-loss (`00fa05a`) — the search returns the globally-cheapest solution from the sink, so a solution found then evicted by `max_pool` is never lost (`solved` now sink-based; the `solved & accepted==0` gap is the eviction-loss signal); (2) `attempts_per_test` wakeup (`4e85fba`) — `ranked_programs` is the full cheapest-ordered ranking, so `predict` actually uses its 2 attempts.
 - **Ladder #1 result — ADMITTED.** Climb (max_depth=3, `AntiunifyPairs`): iter0 (L0) solves the rot180 tasks -> mints `abs0`=rot180; iter1 (L1) solves mirror_recolor -> mints `abs1`=mirror_recolor; iter2 (L2) solves the top -> converges. Both rungs recovered behaviorally; certificate: all jumps tractable, zero skip paths, demonstration health 1.0. Raw top intractable at the reference budget (`d_raw`=4 vs depth-2 jumps). Marginal laddered ~53.7k considered, end-to-end ~200k, raw censored at 6.7k (unsolved at L0).
@@ -496,7 +496,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-20 — Budget stop limits (`considered_limit` / `solution_limit`) + lazy composition
 
-- **Commit:** working tree atop `4674fa0`. Design: `docs/abstraction_ladders/ABSTRACTION-LADDERS-2026-07-16.md` §6.9; build plan `~/.claude/plans/i-think-we-need-composed-clover.md`.
+- **Commit:** working tree atop `4674fa0`. Design: `docs/abstraction_ladders/ABSTRACTION-LADDERS-SPEC.md` §6.9; build plan `~/.claude/plans/i-think-we-need-composed-clover.md`.
 - **Question:** the design doc deferred a `max_considered` cap ("would make censored baselines and cost-matched controls much cleaner") and early stop. The stronger motivation turned out to be ladder construction: `depth_limit` was doing two conflicting jobs — the ladder's _semantic_ validity window AND the compute guard — which is why picking one for a new ladder was guesswork.
 - **Built:** `Budget.considered_limit` / `Budget.solution_limit`, each with a `*_mode` (`immediate` | `generation-end`). One predicate at the `_absorb_one` choke point + a `BaseException` unwind, per-frame sub-pool repair, and a partial-round `incomplete` flag. Preceded by **lazy composition** (`_enumerate` pulls `_compose` instead of `list()`-ing it) — behaviour-preserving with no limit set, which the locks prove.
 - **Result:**
@@ -551,7 +551,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-22 — Lint hardening: the collapse families become static checks (11/20 now fail lint, witnesses printed)
 
-- **Commit:** `72eb123` (sequence `0c63c70..72eb123`). Checks inventory: [docs/archive/LADDER-CHECKS-2026-07-21.md](docs/archive/LADDER-CHECKS-2026-07-21.md); plan of record: [docs/archive/AL-PLAN-2026-07-22.md](docs/archive/AL-PLAN-2026-07-22.md).
+- **Commit:** `72eb123` (sequence `0c63c70..72eb123`). Checks inventory: [docs/archive/LADDER-CHECKS-2026-07-21.md](docs/archive/abstraction_ladders/LADDER-CHECKS-2026-07-21.md); plan of record: [docs/archive/AL-PLAN-2026-07-22.md](docs/archive/abstraction_ladders/AL-PLAN-2026-07-22.md).
 - **Question:** the 2026-07-21 read-across established collapse = "the intended template is not the cost-minimal representative of its signature class" and named two static-checkable mechanisms (train-constant subterms; equational shortcuts). Can they be linted — and what do they find on the existing 20?
 - **Ran:** three new lint checks + five review fixes, then the batch lint, observe-then-lock. `constant-subterm` (every composite scalar subterm of every stated solution, unfolded to floor, evaluated across the task's train examples; error iff the value is in the ladder's own `policy_constants` domain, warn otherwise). `if-condition-varies` (both truth values per If; dormant, no ladder branches). `rewrite-shallow` (`analysis/equations.py` curated laws + import-time-derived D4 table; `analysis/rewrite.py` bounded normalize-and-enumerate; every witness behaviorally confirmed; caps are silent passes).
 - **Result:**
@@ -787,11 +787,11 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - So: **the mint improves the solution (MDL/ranking), not the search.** Three mechanisms: exhaustive round-based enumeration (no cost-ordering, `solution_limit` off); dedup is post-generation (`considered` already paid); and the chicken-and-egg — a climb has ONE `Config`, and the constants that the binding rung's own wake _needs_ keep taxing every later rung.
 - **Interpretation:** search cost has two axes — **depth** (rounds of composition; the sandwich, `d_i`, `depth_limit`) and **breadth** (choices per round; census products, `considered`, pool). Constants live entirely on the breadth axis (a literal is a nullary quasi-primitive whose membership is decided by _config_, not the library). A specialization is real learning on the breadth axis — the choice doesn't vanish, it _moves_ to a cheap early round and is cached — but the current engine cannot realize the saving. The lint's sandwich is depth-only; the probe already checks the joint budget. "Constants should cost depth 1" was considered and rejected: it prices a multiplicative, context-dependent cost in an additive, uniform currency. Full analysis + approaches (removal / weighting / abstraction-normal-form pruning): [BREADTH-AXIS-2026-07-24.md](docs/abstraction_ladders/BREADTH-AXIS-2026-07-24.md).
 - **Consequences for the ladder program (Phase 1 design disciplines):** the specialization-prelude control arm is **struck** (it would measure ~zero under current machinery, and we know it in advance); Phase-1 cohorts keep `constant_sources` off wherever a perceiver route exists, so they stay clean depth experiments. Breadth machinery (static breadth-sandwich lint leg; normal-form pruning; weighting/neural-guided) is Phase 2+.
-- **Next:** the set-design and plan docs this fed into: [LADDER-SET-DESIGN-2026-07-24.md](docs/abstraction_ladders/LADDER-SET-DESIGN-2026-07-24.md), [LADDER-SET-PLAN-2026-07-24.md](docs/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md).
+- **Next:** the set-design and plan docs this fed into: [LADDER-SET-DESIGN-2026-07-24.md](docs/abstraction_ladders/LADDER-SET-DESIGN-2026-07-24.md), [LADDER-SET-PLAN-2026-07-24.md](docs/archive/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md).
 
 ## 2026-07-24 — Phase-0 percept probes: cheap percept is a clean rung, deep percept needs laddering + a scalars-only constant policy
 
-- **Commit:** d5ec718. Executes the queued Phase-0 step of [LADDER-SET-PLAN-2026-07-24.md](docs/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md) and resolves two of its named risks (addressing-tier search cost unvalidated; quadratic Coord/Offset constant leaves).
+- **Commit:** d5ec718. Executes the queued Phase-0 step of [LADDER-SET-PLAN-2026-07-24.md](docs/archive/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md) and resolves two of its named risks (addressing-tier search cost unvalidated; quadratic Coord/Offset constant leaves).
 - **Question:** does a decomposed cfb2ce5a percept search cheaply as a rung off the addressing floor? The tier is proven CORRECT but its COST was unmeasured; `write_relative_tile`'s d8 decomposition warned some jumps may be too tall to certify in one leap.
 - **Ran:** `probe_rung` on the source-square percept (d3) as a single rung; then a bounded search-cost sweep on the write-tile percept (`place_copy_right`, d7) as one jump vs. laddered via intermediate rungs, under `finite-enumerate` vs a new `finite-enumerate-scalars` policy.
 - **Result:**
@@ -820,7 +820,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-25 — MVE task screen: 3 real ARC tasks made expressible; the demo-affordability law; two DAG/lint gaps closed
 
-- **Commit:** 6fd79be. Executes step 1 of [MVE-PLAN-2026-07-25.md](docs/abstraction_ladders/MVE-PLAN-2026-07-25.md).
+- **Commit:** 6fd79be. Executes step 1 of [MVE-PLAN-2026-07-25.md](docs/archive/abstraction_ladders/MVE-PLAN-2026-07-25.md).
 - **Question:** which real `arc1-train` tasks can host an MVE ladder over the current substrate, and what actually blocks authoring one?
 - **Ran:** a structural screen of all 400 arc1-train tasks (bucketed by input->output relation, then a targeted pass for the four families the substrate expresses WITH depth); a propose-check harness (elaborate a term against the full 117-primitive library, evaluate on every train example AND the held-out test); then authored two ladders and probed them.
 - **Result:**
@@ -888,7 +888,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — Per-rung depth budgets (derived by default), and the DAG reads that were level reads
 
-- **Commit:** dc8ae13. Wave 1 of [docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md](docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md).
+- **Commit:** dc8ae13. Wave 1 of [docs/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md](docs/archive/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md).
 - **Question:** two things the `dae9d2b5` build exposed. (1) Four sites read "the layer above rung `i`" as `rungs[i]` -- the next rung BY LEVEL -- which on a DAG names a sibling; two were still live. (2) A single `depth_limit` must be at once deep enough for the deepest jump and shallow enough that the shallowest double-jump stays out of reach, so a ladder whose rungs differ in depth can have NO valid budget. Does a per-level schedule dissolve that, and what does it cost?
 - **Ran:** converted the level reads to the consumer graph; made the depth schedule per-level and derived-by-default, with an explicit `ladder.depth_schedule: 'pinned'` opt-out; swept the derived schedule across all 22 registry ladders before changing anything.
 - **Result:**
@@ -907,7 +907,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — The breadth axis, instrumented: a static census and a measured floor tax
 
-- **Commit:** dc8ae13. Wave 2 of [docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md](docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md).
+- **Commit:** dc8ae13. Wave 2 of [docs/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md](docs/archive/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md).
 - **Question:** the 07-25 pruning diagnosis found rung 1 costing 21,149,854 considered on the full floor and **4** pruned, and concluded the data to see it had been available all along. What instrument makes that visible BEFORE an hour is spent, and what does it say about the ladders already committed?
 - **Ran:** built two instruments -- a static round-1 breadth census in the lint (`ladders/breadth.py`) and a pruned-vs-full cell pair in the probe (`FloorTax`) -- then swept the census over all 22 registry ladders.
 - **Result:**
@@ -931,9 +931,9 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — Wave 3: labelling compromises, guarding the write, and the process doc
 
-- **Commit:** dc8ae13. Wave 3 of [docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md](docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md), completing it.
+- **Commit:** dc8ae13. Wave 3 of [docs/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md](docs/archive/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md), completing it.
 - **Question:** what is left that machinery can enforce, and what genuinely cannot be — the residue that has to be a written process rather than a check?
-- **Ran:** built the Compromise Options registry, the guarded `.ladder` writer, and the remaining lint-output pass; then wrote [LADDER-PROCESS-2026-07-26.md](docs/abstraction_ladders/LADDER-PROCESS-2026-07-26.md) for what was left.
+- **Ran:** built the Compromise Options registry, the guarded `.ladder` writer, and the remaining lint-output pass; then wrote [LADDER-PROCESS.md](docs/abstraction_ladders/LADDER-PROCESS.md) for what was left.
 - **Result:**
   - **Compromise Options are DETECTED, not declared** (`ladders/compromise.py`). Three entries -- `pruned-library` (voids all cost interpretation), `wake-schedule`, `solution-limit` (narrows: RQ1 survives, since `first_solution_index` is exact either way) -- each stating what it saves, what it forfeits, and when it is justified. `compromises_in(config)` reads them off the `Config` itself: an oracle-pruned library by its `:pruned` name, an early stop by `solution_limit`, assistance by `wake_schedule`/`curriculum`. **A label you must remember to set is the one that gets forgotten**, which is the entire failure mode; deriving it removes the choice. The report banners them AHEAD of the numbers (generalising the `wake_schedule` arm-label precedent, which is now one entry among three).
   - **A6's premise did not match the repo, and the guard moved.** The plan said "a generator must refuse to overwrite an existing `.ladder`" -- but nothing in the repo writes `.ladder` files; `taskgen` reads one to build a testbed, and the five destroyed variants were written by throwaway scratch scripts. So the machinery is a supported PATH rather than a guard on an existing one: `arc-lab new-ladder <name> [--from <existing>] [--registry] [--force]`, which refuses to overwrite and makes "the next variant" (copy + rename the `ladder` header, original untouched) cheaper than reusing a name. It cannot stop a scratch script -- nothing can -- but there is now a path that cannot lose work.
@@ -942,11 +942,11 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - **Stale claims corrected where they were found**, not just where planned: AL-PLAN-2026-07-23's pipeline line quoted the probe at "~1s/rung" (true only at the default guard on a lean floor -- it is minutes on a fat one), and MVE-PLAN-2026-07-25's screen leg 3 encodes DEPTH as the filter when the measurement says breadth was the variable that mattered. Both now carry a dated correction rather than a silent edit.
   - **Metrics:** `make check` green, **945** tests (from 921 at the start of this plan, +24). No regression lock moved across all three waves. 14 of 22 ladders' run identity untouched; the 8 that moved did so deliberately (derived depth schedule).
 - **Interpretation:** the split the plan predicted held up -- almost everything worth enforcing turned out to be enforceable, and the doc is short because of it. What genuinely could not be machinery is exactly three things: **instrument contracts** (what a probe can and cannot prove is a fact about inference, not code), **design taste** (a rung being a "nameable competence" has no checkable form), and **operational discipline** (estimate before launching; do not pipe long output through a buffering filter). Everything else in the original 9-section outline collapsed into a table pointing at a check that already fires.
-- **Next:** the plan is complete; the MVE build ([MVE-PLAN-2026-07-25.md](docs/abstraction_ladders/MVE-PLAN-2026-07-25.md)) is unblocked. First real use of the new instruments: re-screen candidate tasks with the breadth census in the loop, and purchase `dae9d2b5-halves-union`'s certificate against a floor whose tax has been read rather than guessed.
+- **Next:** the plan is complete; the MVE build ([MVE-PLAN-2026-07-25.md](docs/archive/abstraction_ladders/MVE-PLAN-2026-07-25.md)) is unblocked. First real use of the new instruments: re-screen candidate tasks with the breadth census in the loop, and purchase `dae9d2b5-halves-union`'s certificate against a floor whose tax has been read rather than guessed.
 
 ## 2026-07-26 — Value-level constant pruning, added without moving a single `run_id`
 
-- **Commit:** cd77ccf. Closes the last open A3 item of [docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md](docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md).
+- **Commit:** cd77ccf. Closes the last open A3 item of [docs/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md](docs/archive/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md).
 - **Question:** the probe's "pruned" cell pruned only the LIBRARY. The plan specified a value-level constant allowlist too, and that was skipped on the reasoning that `_type_in_use` already drops whole types when their primitives go. Is that reasoning right, and what does adding the allowlist cost?
 - **Ran:** measured the four breadth corners across the batch to test the reasoning, then added `BottomUpSearchEngine.constant_allowlist` and wired it into the probe's pruned cell.
 - **Result:**

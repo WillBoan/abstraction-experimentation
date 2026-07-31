@@ -1,4 +1,4 @@
-"""Abstraction Ladder Experiments (docs/abstraction_ladders/ABSTRACTION-LADDERS-2026-07-16.md).
+"""Abstraction Ladder Experiments (docs/abstraction_ladders/ABSTRACTION-LADDERS-SPEC.md).
 
 A **Ladder** is a Floor (``L_0``) + an ordered chain of learnable **bridging Rungs**
 (``r_1..r_k``, each an abstraction over the previous cumulative library) + a **Top Rung** (the

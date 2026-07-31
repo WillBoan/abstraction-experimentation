@@ -4,7 +4,7 @@ Editor support for arc-lab `.ladder` files: TextMate syntax highlighting plus li
 
 **Internal extension.** It assumes a working `uv` and an arc-lab checkout as the workspace; it is not built for the VS Code Marketplace. The default server command is `uv run arc-lab lsp`, launched from the first workspace folder.
 
-This is the Phase A vertical slice of the editor-tooling plan (`docs/abstraction_ladders/AL-PLAN-LADDER-EDITOR-TOOLING-2026-07-23.md`): highlighting + line-level diagnostics over the current strict parser. Precise ranges, symbols, hover, and formatting arrive in later phases.
+This is the Phase A vertical slice of the editor-tooling plan (`docs/archive/abstraction_ladders/LADDER-EDITOR-TOOLING-PLAN-2026-07-23.md`): highlighting + line-level diagnostics over the current strict parser. Precise ranges, symbols, hover, and formatting arrive in later phases.
 
 ## Develop
 
