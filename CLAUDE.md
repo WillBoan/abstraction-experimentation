@@ -23,12 +23,12 @@ make format     # auto-fix ruff lint + format
 ## Definition of done
 
 1. `make check` is green (ruff clean, mypy `--strict` clean, all tests pass).
-2. **Regression locks preserved.** The new-world locks pin exact solved task-id sets per preset on `arc1-train` in `tests/program_search/execution/test_locks.py` (the old-world locks in `tests/test_integration.py` guard the old tree until its deletion). A behavior-preserving change must not move them; a feature that changes them updates the lock deliberately.
+2. **Regression locks preserved.** The locks pin exact solved task-id sets per preset on `arc1-train` in `tests/program_search/execution/test_locks.py`. A behavior-preserving change must not move them; a feature that changes them updates the lock deliberately.
 3. For changes with runtime behavior, actually drive it: `uv run arc-lab search <preset> --corpus <corpus>`.
 
 ## Experiment log
 
-When you run a meaningful experiment or reach a finding — **including dead ends** — append a terse, commit-anchored entry to [EXPERIMENTS.md](EXPERIMENTS.md). It's the shared human+AI record of what's been tried and what it meant. It's an _event log, not a state mirror_ — read its header for the discipline before adding to it. The **active experimental program is the Abstraction Ladder Experiments** — plan of record `docs/abstraction_ladders/AL-PLAN-2026-07-23.md` (its ladder-set execution plan is `docs/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md`), cross-cutting index `docs/TODO-2026-07-22.md`. [EXPERIMENT_QUEUE.md](docs/EXPERIMENT_QUEUE.md) is now the drain-only **backlog of non-ladder / deferred experiments** (the single-task search-behavior line it began as is superseded; see its header).
+When you run a meaningful experiment or reach a finding — **including dead ends** — append a terse, commit-anchored entry to [EXPERIMENTS.md](EXPERIMENTS.md). It's the shared human+AI record of what's been tried and what it meant. It's an _event log, not a state mirror_ — read its header for the discipline before adding to it. The **active experimental program is the Abstraction Ladder Experiments** — plan of record `docs/abstraction_ladders/AL-PLAN-2026-07-23.md` (its ladder-set execution plan is `docs/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md`); the cross-cutting index `docs/archive/TODO-2026-07-22.md` is archived. [EXPERIMENT_QUEUE.md](docs/EXPERIMENT_QUEUE.md) is now the drain-only **backlog of non-ladder / deferred experiments** (the single-task search-behavior line it began as is superseded; see its header).
 
 For a **non-trivial investigation**, also keep a detailed lab notebook under [experiments/](experiments/) — the full write-up + the throwaway probe scripts and their outputs, which EXPERIMENTS.md (the curated abstract) points to. See [experiments/README.md](experiments/README.md).
 
@@ -86,18 +86,18 @@ A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed s
 
 ## Sources of truth (don't duplicate — point here)
 
-- Activity / call-stack / run data model (RunSpec · Config · activities · runs/ layout · CLI): `EXECUTION.md`
-- Search-engine & substrate design (types · scopes · enumeration · deliberate limits register §11.6): `ARCHITECTURE.md` (the superseded run-model snapshot is `docs/archive/ARCHITECTURE-2026-07-09.md`)
+- Activity / call-stack / run data model (RunSpec · Config · activities · runs/ layout · CLI): `docs/EXECUTION.md`
+- Search-engine & substrate design (types · scopes · enumeration · deliberate limits register §11.6): `docs/ARCHITECTURE.md` (the superseded run-model snapshot is `docs/archive/ARCHITECTURE-2026-07-09.md`)
 - Preset registry: `src/arc_lab/program_search/execution/presets.py` · Study registry: `execution/studies.py` · Generator registry: `src/arc_lab/taskgen/generators.py`
-- Behavior locks: `tests/program_search/execution/test_locks.py` (old-tree locks: `tests/test_integration.py`, until the deletion pass)
+- Behavior locks: `tests/program_search/execution/test_locks.py`
 - Commands: `Makefile`
-- Experiment history & findings: `EXPERIMENTS.md` · Active program: `docs/abstraction_ladders/AL-PLAN-2026-07-23.md` + cross-cutting index `docs/TODO-2026-07-22.md` · Non-ladder backlog: `EXPERIMENT_QUEUE.md`
+- Experiment history & findings: `EXPERIMENTS.md` · Active program: `docs/abstraction_ladders/AL-PLAN-2026-07-23.md` (its cross-cutting index `docs/archive/TODO-2026-07-22.md` is archived — supersede it by writing the next one) · Non-ladder backlog: `docs/EXPERIMENT_QUEUE.md`
 - Ladder-set MVE plan (**the active execution plan**: MVE composition · corrected cost model · deferred-with-trigger items; dated): `docs/abstraction_ladders/MVE-PLAN-2026-07-25.md` · full-set plan it narrows (goals · phases; dated): `docs/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md` · set structure (task/cohort/sub-cohort/spine): `docs/abstraction_ladders/LADDER-SET-DESIGN-2026-07-24.md` · the two cost axes (depth vs breadth): `docs/abstraction_ladders/BREADTH-AXIS-2026-07-24.md` · certificate = per-rung verdict profile (not a sandwich gate): `docs/abstraction_ladders/CERTIFICATE-PROFILE-2026-07-24.md` · comparison licenses: `docs/abstraction_ladders/LADDER-RELATIONSHIPS-2026-07-23.md`
 - **Ladder process** (instrument contracts · the failure→response table · tractability triage · design taste · Compromise Options · operational discipline · glossary; dated): `docs/abstraction_ladders/LADDER-PROCESS-2026-07-26.md`
 - Ladder file format (`.ladder` = a ladder's single source of truth: spec, testbed, artifacts): `docs/abstraction_ladders/LADDER-FORMAT.md` · Ladder sources: `program_search/ladders/registry/*.ladder` · Ladder register: `docs/abstraction_ladders/LADDERS.md`
 - Ladder checks (every load/lint/certificate check + batch health as of then; dated, archived): `docs/archive/LADDER-CHECKS-2026-07-21.md` · Generated per-check register (current): `docs/abstraction_ladders/LINT-CHECKS.md` (`arc-lab lint-checks`; a test pins it) · Lint implementation: `program_search/ladders/checks/` (`LadderCheck` ABC + `CHECK_PLAN`)
 - AL plan of record (corrections, pipeline, phased build/measure order; dated): `docs/abstraction_ladders/AL-PLAN-2026-07-23.md` (superseded: `AL-PLAN-2026-07-22.md`)
-- Lever maps (primitives / machinery / expressibility control): `ONTOLOGY.md` / `MACHINERY.md` / `SEARCH-SPACE.md`
-- Research frame (dated snapshot the maps are read against): `docs/RESEARCH-2026-07-08.md` (superseded snapshots live in `docs/archive/`)
-- Machinery build strategy (build vs. adopt vs. defer; dated): `docs/MACHINERY-STRATEGY-2026-07-07.md`
-- Config/param defaults review (every param: options, cost impact, default rationale; dated): `docs/CONFIG-DEFAULTS-2026-07-11.md`
+- Lever maps (primitives / machinery / expressibility control): `docs/ONTOLOGY.md` / `docs/MACHINERY.md` / `docs/SEARCH-SPACE.md`
+- Research frame (dated snapshot the maps are read against): `docs/archive/RESEARCH-2026-07-08.md` (all superseded snapshots live in `docs/archive/`)
+- Machinery build strategy (build vs. adopt vs. defer; dated): `docs/archive/MACHINERY-STRATEGY-2026-07-07.md`
+- Config/param defaults review (every param: options, cost impact, default rationale; dated): `docs/archive/CONFIG-DEFAULTS-2026-07-11.md`

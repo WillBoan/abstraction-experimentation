@@ -6,7 +6,7 @@ The load-bearing idea: **machinery is data**. There are no solver classes — a 
 
 On top of search sits **wake–sleep library learning**: wake = program search over a corpus; sleep = a learn engine compressing the found solutions into new library abstractions under MDL governance. Studies then grid learned vs. hand-written vs. target libraries across budgets and corpora to measure enablement, search-effort speedup, and transfer.
 
-The activity/run model (RunSpec · activities · `runs/` layout) is [EXECUTION.md](EXECUTION.md); the search-engine and substrate design is [ARCHITECTURE.md](ARCHITECTURE.md).
+The activity/run model (RunSpec · activities · `runs/` layout) is [EXECUTION.md](docs/EXECUTION.md); the search-engine and substrate design is [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Layout
 
@@ -101,15 +101,15 @@ Details live in the canonical files, not here:
 | File | What it holds |
 | --- | --- |
 | [CLAUDE.md](CLAUDE.md) | working conventions: commands, definition of done, mental model, recipes |
-| [EXECUTION.md](EXECUTION.md) | the activity / run model: RunSpec · Config · activities · `runs/` layout · CLI |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | search-engine & substrate design (types, enumeration, deliberate limits) |
-| [ONTOLOGY.md](ONTOLOGY.md) | map of the primitive / abstraction space (the vocabulary lever) |
-| [MACHINERY.md](MACHINERY.md) | map of the search / scoring / learning mechanisms (the machinery lever) |
-| [SEARCH-SPACE.md](SEARCH-SPACE.md) | map of the search-space-control levers |
+| [EXECUTION.md](docs/EXECUTION.md) | the activity / run model: RunSpec · Config · activities · `runs/` layout · CLI |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | search-engine & substrate design (types, enumeration, deliberate limits) |
+| [ONTOLOGY.md](docs/ONTOLOGY.md) | map of the primitive / abstraction space (the vocabulary lever) |
+| [MACHINERY.md](docs/MACHINERY.md) | map of the search / scoring / learning mechanisms (the machinery lever) |
+| [SEARCH-SPACE.md](docs/SEARCH-SPACE.md) | map of the search-space-control levers |
 | [EXPERIMENTS.md](EXPERIMENTS.md) | the experiment event log — findings, including dead ends |
-| [EXPERIMENT_QUEUE.md](EXPERIMENT_QUEUE.md) | planned experiments (drain-only queue) |
-| [docs/RESEARCH-2026-07-08.md](docs/RESEARCH-2026-07-08.md) | the research frame — the dated snapshot the maps are read against |
-| [docs/MACHINERY-STRATEGY-2026-07-07.md](docs/MACHINERY-STRATEGY-2026-07-07.md) | build strategy — what machinery to build, adopt, or defer (dated) |
-| [docs/CONFIG-DEFAULTS-2026-07-11.md](docs/CONFIG-DEFAULTS-2026-07-11.md) | config/param defaults review — every param's options, cost, and rationale (dated) |
+| [EXPERIMENT_QUEUE.md](docs/EXPERIMENT_QUEUE.md) | planned experiments (drain-only queue) |
+| [docs/archive/RESEARCH-2026-07-08.md](docs/archive/RESEARCH-2026-07-08.md) | the research frame — the dated snapshot the maps are read against |
+| [docs/archive/MACHINERY-STRATEGY-2026-07-07.md](docs/archive/MACHINERY-STRATEGY-2026-07-07.md) | build strategy — what machinery to build, adopt, or defer (dated) |
+| [docs/archive/CONFIG-DEFAULTS-2026-07-11.md](docs/archive/CONFIG-DEFAULTS-2026-07-11.md) | config/param defaults review — every param's options, cost, and rationale (dated) |
 
 Superseded dated snapshots live in [docs/archive/](docs/archive/).
