@@ -637,7 +637,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-22 — Higher-order depth is computable; example propagation is not sound under a wrapper
 
-- **Commit:** _pending_ (working tree). Notebook: [experiments/2026-07-22-ho-depth-and-propagation/](experiments/2026-07-22-ho-depth-and-propagation/).
+- **Commit:** 1a8e065. Notebook: [experiments/2026-07-22-ho-depth-and-propagation/](experiments/2026-07-22-ho-depth-and-propagation/).
 - **Question:** designing `.ladder` syntax for `Lam`/`Var`/`AppFn` raised a prerequisite — is compositional depth meaningful at all once a program contains a `Lam`, and can the generation search finds it be predicted? If not, a higher-order ladder could be written but never certified, since the whole tractability sandwich is stated in depth.
 - **Ran:** a 10-case matrix (`artifacts/depth_matrix.py`) sweeping non-HO depths 0-3 and lambda body depth 0-3 against a fixed outer depth, plus a same-effective-depth pair differing only in whether the HO call is at the root. Each case builds a task from the target program, then sweeps `depth_limit` for the smallest one at which the engine returns it.
 - **Result:**
@@ -732,7 +732,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-24 — The addressing tier: Coord/Offset/Rect + region enumeration; largest_filled_square decomposed
 
-- **Commit:** (pending -- branch `feat/ladder-editor-tooling`). Plan: `docs/abstraction_ladders/` (addressing-tier plan, this session).
+- **Commit:** e525377. Plan: `docs/abstraction_ladders/` (addressing-tier plan, this session).
 - **Question:** the promotion loop found `largest_filled_square` irreducible _by construction_ (nothing produced a list of regions to select among). Add the missing capability, then check whether the percept -- and the other bespoke cfb2ce5a atoms -- decompose.
 - **Ran:** built three base types (`Coord`/`Offset`/`Rect`, `core/geometry.py`) and ~30 primitives (`primitives/addressing.py` + `primitives/regions.py` + `range`/`nth`): region producers (`filled_squares`, `maximal_filled_squares`, `squares`, `quadrants`, `connected_regions`, `content_coords`), the affine algebra (`coord_add`/`coord_sub`/`offset_scale`/`to_local`...), and the missing elim `paste`. Extended `Const` to carry Coord/Offset literals so displacement-typed rungs keep their depth. Refactored the _displacement_ family (`translate`/`blank`/`from_cells` -> Offset) + added `extent`. Validated decompositions via the existing `observationally_equivalent_functions` loop.
 - **Result:**
@@ -749,7 +749,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-24 — Totality is a third design axis; the cells cluster splits by flavor rather than moving
 
-- **Commit:** (pending -- same branch). Follow-on to the addressing tier, same day.
+- **Commit:** 6432fdc. Follow-on to the addressing tier, same day.
 - **Question:** `nth_nonzero_color` was the one cfb2ce5a atom the promotion loop REFUSED. Why, and what does the refusal actually say?
 - **Ran:** traced the refusal to its witness, then measured three candidate decompositions against the reference.
 - **Result:**
@@ -764,7 +764,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-24 — The last two cfb2ce5a atoms decompose, and expose a SECOND flavor of the totality axis
 
-- **Commit:** (pending -- same branch).
+- **Commit:** d5ec718.
 - **Question:** do the two heaviest cfb2ce5a atoms (`write_relative_tile`, `nth_seed_source_color`) decompose over the addressing floor? A full v5 lowering needs them.
 - **Ran:** the promotion loop on both, then re-tested the splits on strictly coherent (task-realizable) inputs.
 - **Result:**
@@ -791,7 +791,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-24 — Phase-0 percept probes: cheap percept is a clean rung, deep percept needs laddering + a scalars-only constant policy
 
-- **Commit:** (pending -- same branch). Executes the queued Phase-0 step of [LADDER-SET-PLAN-2026-07-24.md](docs/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md) and resolves two of its named risks (addressing-tier search cost unvalidated; quadratic Coord/Offset constant leaves).
+- **Commit:** d5ec718. Executes the queued Phase-0 step of [LADDER-SET-PLAN-2026-07-24.md](docs/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md) and resolves two of its named risks (addressing-tier search cost unvalidated; quadratic Coord/Offset constant leaves).
 - **Question:** does a decomposed cfb2ce5a percept search cheaply as a rung off the addressing floor? The tier is proven CORRECT but its COST was unmeasured; `write_relative_tile`'s d8 decomposition warned some jumps may be too tall to certify in one leap.
 - **Ran:** `probe_rung` on the source-square percept (d3) as a single rung; then a bounded search-cost sweep on the write-tile percept (`place_copy_right`, d7) as one jump vs. laddered via intermediate rungs, under `finite-enumerate` vs a new `finite-enumerate-scalars` policy.
 - **Result:**
@@ -820,7 +820,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-25 — MVE task screen: 3 real ARC tasks made expressible; the demo-affordability law; two DAG/lint gaps closed
 
-- **Commit:** (pending -- same branch). Executes step 1 of [MVE-PLAN-2026-07-25.md](docs/abstraction_ladders/MVE-PLAN-2026-07-25.md).
+- **Commit:** 6fd79be. Executes step 1 of [MVE-PLAN-2026-07-25.md](docs/abstraction_ladders/MVE-PLAN-2026-07-25.md).
 - **Question:** which real `arc1-train` tasks can host an MVE ladder over the current substrate, and what actually blocks authoring one?
 - **Ran:** a structural screen of all 400 arc1-train tasks (bucketed by input->output relation, then a targeted pass for the four families the substrate expresses WITH depth); a propose-check harness (elaborate a term against the full 117-primitive library, evaluate on every train example AND the held-out test); then authored two ladders and probed them.
 - **Result:**
@@ -841,7 +841,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-25 — First real-ARC ladder that lints and learns clean: `dae9d2b5`, and the perceived-vs-computed geometry rule
 
-- **Commit:** (pending -- same branch). Continues the same-day MVE screen entry; executes MVE-PLAN step 1.
+- **Commit:** 6fd79be. Continues the same-day MVE screen entry; executes MVE-PLAN step 1.
 - **Question:** the first screen's three tasks all hit breadth walls. Was that the TASKS, or the floors I chose for them?
 - **Ran:** re-screened with the ENGINE (real search over all 400 arc1-train tasks, lean floor, `solution_limit=1`) instead of by eye; then rebuilt the `dae9d2b5` ladder on a re-designed floor and probed it.
 - **Result:**
@@ -858,7 +858,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — Optimal pruning: `dae9d2b5` rung 1's 21M considered is floor breadth the rung never uses (21,149,854 -> 4)
 
-- **Commit:** (pending -- same branch). Corrects the attribution in the preceding entry.
+- **Commit:** 7236716. Corrects the attribution in the preceding entry.
 - **Question:** the `dae9d2b5-halves-union` skip search costs ~22M considered at depth 3. The preceding entry attributed that to `overlay`'s quadratic grid product. Is that right?
 - **Ran:** two cells on the SAME wake search (rung `west`, demo `west-00`, library `L_0`, the ladder's own budget): (A) the full 6-primitive floor with `by_primitive` attribution dumped, (B) the library cut to the 3 primitives the rung's own unfolded program references ("optimal pruning"). Because constants are minted only for types the library USES (`leaves.py::_type_in_use`), pruning the library prunes the constant battery with it.
 - **Result:**
@@ -872,7 +872,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — Depth definitions unified on the programs the searches actually run (batch: a no-op, by measurement)
 
-- **Commit:** (pending -- same branch).
+- **Commit:** 7236716.
 - **Question:** `jump-affordable` measured the rung TEMPLATE while the top's affordability was already measured on its TASK SOLUTIONS, which is why `demo-affordable` had to ship as a second check (07-25 entry). Is the same split present elsewhere, and should the rung-depth definition itself move to the demonstrations?
 - **Ran:** audited every derived depth quantity in `checks/context.py`, moved both bounds onto the search-side programs, then diffed the whole batch's validity windows and error sets before/after.
 - **Result:**
@@ -888,7 +888,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — Per-rung depth budgets (derived by default), and the DAG reads that were level reads
 
-- **Commit:** (pending -- same branch; base `99d38b2`). Wave 1 of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md).
+- **Commit:** dc8ae13. Wave 1 of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md).
 - **Question:** two things the `dae9d2b5` build exposed. (1) Four sites read "the layer above rung `i`" as `rungs[i]` -- the next rung BY LEVEL -- which on a DAG names a sibling; two were still live. (2) A single `depth_limit` must be at once deep enough for the deepest jump and shallow enough that the shallowest double-jump stays out of reach, so a ladder whose rungs differ in depth can have NO valid budget. Does a per-level schedule dissolve that, and what does it cost?
 - **Ran:** converted the level reads to the consumer graph; made the depth schedule per-level and derived-by-default, with an explicit `ladder.depth_schedule: 'pinned'` opt-out; swept the derived schedule across all 22 registry ladders before changing anything.
 - **Result:**
@@ -907,7 +907,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — The breadth axis, instrumented: a static census and a measured floor tax
 
-- **Commit:** (pending -- same branch). Wave 2 of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md).
+- **Commit:** dc8ae13. Wave 2 of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md).
 - **Question:** the 07-25 pruning diagnosis found rung 1 costing 21,149,854 considered on the full floor and **4** pruned, and concluded the data to see it had been available all along. What instrument makes that visible BEFORE an hour is spent, and what does it say about the ladders already committed?
 - **Ran:** built two instruments -- a static round-1 breadth census in the lint (`ladders/breadth.py`) and a pruned-vs-full cell pair in the probe (`FloorTax`) -- then swept the census over all 22 registry ladders.
 - **Result:**
@@ -931,7 +931,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — Wave 3: labelling compromises, guarding the write, and the process doc
 
-- **Commit:** (pending -- same branch). Wave 3 of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md), completing it.
+- **Commit:** dc8ae13. Wave 3 of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md), completing it.
 - **Question:** what is left that machinery can enforce, and what genuinely cannot be — the residue that has to be a written process rather than a check?
 - **Ran:** built the Compromise Options registry, the guarded `.ladder` writer, and the remaining lint-output pass; then wrote [LADDER-PROCESS-2026-07-26.md](docs/abstraction_ladders/LADDER-PROCESS-2026-07-26.md) for what was left.
 - **Result:**
@@ -946,7 +946,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — Value-level constant pruning, added without moving a single `run_id`
 
-- **Commit:** (pending -- same branch). Closes the last open A3 item of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md).
+- **Commit:** cd77ccf. Closes the last open A3 item of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md).
 - **Question:** the probe's "pruned" cell pruned only the LIBRARY. The plan specified a value-level constant allowlist too, and that was skipped on the reasoning that `_type_in_use` already drops whole types when their primitives go. Is that reasoning right, and what does adding the allowlist cost?
 - **Ran:** measured the four breadth corners across the batch to test the reasoning, then added `BottomUpSearchEngine.constant_allowlist` and wired it into the probe's pruned cell.
 - **Result:**
@@ -963,7 +963,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-27 — The first certified real-ARC ladder: plumbing depth was the cost, and an abstraction that typed itself out of its own search
 
-- **Commit:** (pending -- same branch). Executes MVE-PLAN-2026-07-25 on `dae9d2b5` under the 2026-07-26 process; the predecessor `dae9d2b5-halves-union` stays unrun as the baseline. Full write-up + the bug-hunt probes and their outputs: [experiments/2026-07-27-dae9d2b5-plumbing-depth/notebook.md](experiments/2026-07-27-dae9d2b5-plumbing-depth/notebook.md). Notebook: [experiments/2026-07-27-mve-ladder-cohorts/](experiments/2026-07-27-mve-ladder-cohorts/notebook.md).
+- **Commit:** 27a8fa6. Executes MVE-PLAN-2026-07-25 on `dae9d2b5` under the 2026-07-26 process; the predecessor `dae9d2b5-halves-union` stays unrun as the baseline. Full write-up + the bug-hunt probes and their outputs: [experiments/2026-07-27-dae9d2b5-plumbing-depth/notebook.md](experiments/2026-07-27-dae9d2b5-plumbing-depth/notebook.md). Notebook: [experiments/2026-07-27-mve-ladder-cohorts/](experiments/2026-07-27-mve-ladder-cohorts/notebook.md).
 - **Question:** `dae9d2b5-halves-union` costs 21,149,854 considered per cell against **4** optimally pruned. The 07-26 attribution blamed floor breadth. Given the base `b` is pinned by the TOP's vocabulary and no rung redesign can remove it, is the ladder redesignable at all -- and if so, on what lever?
 - **Ran:** re-derived the spine on the principle that **the only lever a spine controls is the EXPONENT at each level**; added `split_h`/`split_v`; authored a granularity pair over the new floor; lint -> probe -> taskgen -> `run-ladder`.
 - **Result:**
@@ -982,7 +982,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-27 — A ladder run is 25x cheaper than it was run: `max_pool` was saturated, and the raw arm is 3/4 of the bill
 
-- **Commit:** (pending -- same branch). Follow-on to the same-day certification entry; motivated by "how do we get the MVE done fast, with many more ladders". Notebook: [experiments/2026-07-27-mve-ladder-cohorts/](experiments/2026-07-27-mve-ladder-cohorts/notebook.md).
+- **Commit:** ede5e25. Follow-on to the same-day certification entry; motivated by "how do we get the MVE done fast, with many more ladders". Notebook: [experiments/2026-07-27-mve-ladder-cohorts/](experiments/2026-07-27-mve-ladder-cohorts/notebook.md).
 - **Question:** `dae9d2b5-split-recolor` certified in ~45 minutes and 32.7M considered. Where does that actually go, and how much of it is buying evidence?
 - **Ran:** priced the levers on recorded cells, then re-certified the whole ladder with ONE variable changed (`max_pool` 150 -> 30) as a paired calibration against the already-certified expensive arm.
 - **Result:**
@@ -998,7 +998,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-27 — The MVE's ladder set: 8 certified ladders across 3 real ARC tasks, two granularity curves, and a cohort template
 
-- **Commit:** (pending -- same branch). Executes MVE-PLAN-2026-07-25 steps 1 and 3 under the calibrated budget from the same-day speed entry. Notebook: [experiments/2026-07-27-mve-ladder-cohorts/](experiments/2026-07-27-mve-ladder-cohorts/notebook.md).
+- **Commit:** 1b43b3a. Executes MVE-PLAN-2026-07-25 steps 1 and 3 under the calibrated budget from the same-day speed entry. Notebook: [experiments/2026-07-27-mve-ladder-cohorts/](experiments/2026-07-27-mve-ladder-cohorts/notebook.md).
 - **Question:** with a ladder now costing seconds rather than an hour, can the MVE's exit criteria actually be met -- >= 8 profiled ladders across 3 real tasks, granularity curves for >= 2 sub-cohorts, RQ1 per cohort?
 - **Ran:** an anchoring sweep over the screen leads and the two-halves family; then authored and certified every member at `max_pool` 30 with one raw arm per cohort.
 - **Result:**
@@ -1014,7 +1014,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-27 — CORRECTION: six of eight "certified" ladders never solve their top task, and `admitted` does not say they do
 
-- **Commit:** (pending -- same branch). Corrects the same-day "8 certified ladders" entry, found by the batch analysis it called for. Notebook: [experiments/2026-07-27-mve-batch-analysis/](experiments/2026-07-27-mve-batch-analysis/notebook.md).
+- **Commit:** 1b43b3a. Corrects the same-day "8 certified ladders" entry, found by the batch analysis it called for. Notebook: [experiments/2026-07-27-mve-batch-analysis/](experiments/2026-07-27-mve-batch-analysis/notebook.md).
 - **Question:** the batch analysis asked what a rung is worth. Reading `cost_matrix` per task x library to answer it surfaced something else: is the TOP task actually solved?
 - **Ran:** read `solved` at the full oracle library `L_k` for every committed report; then swept `max_pool` on two unsolved tops.
 - **Result:**
@@ -1022,13 +1022,13 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - **The cause is `max_pool` 30 meeting a depth-3 top.** Measured on `94f9d214-nor-recolor`'s top at `L_4`, depth 3: **pool 30 -> unsolved** (23,754 exhaustive) · **pool 60 -> unsolved** (702,470 exhaustive) · **pool 150 -> SOLVED**. Same shape on `dae9d2b5-split-halves-lean`. A depth-3 search must retain its depth-2 intermediates to compose them; a 30-entry pool evicts them.
   - **The calibration was sound but I over-generalised it.** `max_pool` 30 was validated against `dae9d2b5-split-recolor`, whose derived schedule is `[2,2,2,2,2]` -- every level depth 2. Its `-lean` twin reproduced the verdict profile exactly, and that pair remains valid: both solve the top, and the 25.4x figure stands **for an all-d2 ladder**. Applying it to ladders whose schedule ends in a 3 is what broke, and every broken one has a `3` in its schedule while both intact ones do not.
   - **`admitted` never claimed otherwise, and that is the machinery finding.** Admission is exactly `tractable_jumps` + `no_skip_paths` -- both statements about RUNGS. A ladder can therefore be ADMITTED, recover every rung, score demonstration health 1.0, and still be unable to reach its own goal at its own configured budget, with **no check and no report line saying so**. `top-affordable-with-ladder` passes because it reasons about DEPTH and does not model `max_pool`; the cost matrix holds the fact, and nothing surfaces it.
-- **What survives and what does not.** SURVIVES: every rung-level result -- jump tractability, skip-freeness, 43/43 rung recovery, 0 junk mints -- since those concern rungs, not the top; the pool calibration for all-d2 ladders; the ground-truth anchoring of all 8 (the terms are right, the *search budget* is not). DOES NOT: the granularity curves as reported, because the coarse members are cheaper partly by not finishing, and the NOR cohorts' headline "admitted" overstates what was achieved.
+- **What survives and what does not.** SURVIVES: every rung-level result -- jump tractability, skip-freeness, 43/43 rung recovery, 0 junk mints -- since those concern rungs, not the top; the pool calibration for all-d2 ladders; the ground-truth anchoring of all 8 (the terms are right, the _search budget_ is not). DOES NOT: the granularity curves as reported, because the coarse members are cheaper partly by not finishing, and the NOR cohorts' headline "admitted" overstates what was achieved.
 - **Interpretation:** this is the session's own lesson turned on its author. A calibration is a PAIRED claim about the configuration it was measured in, and the pair I ran shared one property -- an all-depth-2 schedule -- that I did not name as a precondition when generalising it. The deeper machinery gap is separate and worth fixing on its own terms: "the ladder reaches its goal" is not currently anything the certificate asserts or the report headlines, which is a strange omission for an instrument whose entire subject is whether a laddered climb gets there.
 - **Next:** a `top-reachable` check reading the chain's own `solved` flag at `L_k` (the datum already exists); a per-ladder pool derived from the top's depth rather than a constant; then re-certify the six and re-measure both granularity curves.
 
 ## 2026-07-27 — A Compromise Option invalidated a metric that was not in its forfeit list; and what survives a validity filter
 
-- **Commit:** (pending -- same branch). Notebook: [experiments/2026-07-27-mve-batch-analysis/](experiments/2026-07-27-mve-batch-analysis/notebook.md). Follows the same-day CORRECTION entry; fixes what it found and re-reads the batch.
+- **Commit:** 1b43b3a. Notebook: [experiments/2026-07-27-mve-batch-analysis/](experiments/2026-07-27-mve-batch-analysis/notebook.md). Follows the same-day CORRECTION entry; fixes what it found and re-reads the batch.
 - **Question:** with the top-unreachable defect fixed, which of the day's findings actually hold -- and what does loop overhead look like when read only off runs whose numbers mean what the metric claims?
 - **Ran:** shipped the per-level pool (`run.py::pool_for_depth`) + an immediate stop limit, validated as a PAIR against the certified `dae9d2b5-split-recolor`; re-certified the six in parallel; then re-analysed under a validity filter.
 - **Result:**
@@ -1037,7 +1037,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - **A Compromise Option forfeited something its own registry entry did not name.** `solution-limit` moved loop-overhead factors from 2.16-3.88x to **0.30x-10.52x** -- including `dae9d2b5-split-asym-lean` at **0.30x**, i.e. end-to-end (98,809) BELOW marginal (330,286), which is impossible for a quantity defined as re-search overhead. Cause: `laddered_marginal` is read off the CHAIN and `laddered_end_to_end` off the CLIMB, and an early stop truncates the two at different points, so their ratio stops comparing like with like. The entry named `cheapest_solution_index`, cost-to-exhaust and complete `by_primitive`, and asserted "RQ1 SURVIVES". **The forfeit list was found incomplete by MEASUREMENT, not by review**, and now names the loop-overhead factor.
   - **Under a validity filter (uncompromised + admitted + top reached), 11 of 18 ladders remain -- only 2 of them real.** What that does to the day's findings:
     - **SURVIVES:** the learned-vs-oracle gap is exactly **zero** -- 26/26 rungs recovered, **0 junk mints** (43/43, 0 junk across all admitted).
-    - **SURVIVES, weakened:** marginal rung value median **3.17x**, **50%** of rungs worth under 2x, range 1.00x-1988x. "Marginal values are small" is better read as *concentrated*.
+    - **SURVIVES, weakened:** marginal rung value median **3.17x**, **50%** of rungs worth under 2x, range 1.00x-1988x. "Marginal values are small" is better read as _concentrated_.
     - **RETRACTED -- loop overhead rising with rung count.** Valid runs: 2 rungs **3.03x** (n=7), 4 rungs **3.04x** (n=2). Flat. The monotone trend (1: 2.22x, 2: 2.78x, 3: 3.34x, 4: 3.41x) came entirely from broken and compromised runs. Valid band 2.18x-4.04x, median 3.03x, no demonstrated dependence on rung count.
     - **RETRACTED -- all three granularity curves.** Valid members: `dae9d2b5` **1 of 3**, `94f9d214` **0 of 2**, `fafffa47` **0 of 2**. **There is currently no valid granularity curve at all**, which is the MVE's designated RQ2 axis.
   - Also retracted from the same-day speed entry: **the raw arm is not 76% of a run.** That held at pool 150; at the lean settings these ladders use it is **1-2%** (chain 57-61%, climb 37-42%), because its guard is `K x laddered marginal`. Cutting `K` was mis-ranked as a major lever.
@@ -1046,7 +1046,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-27 — MVE completion: the curves re-bought in cost-to-first, a fourth defect, two 5-rung members, and the goal-reachability guards
 
-- **Commit:** (pending -- same branch). Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md). Picks up the batch analysis's "Next" list.
+- **Commit:** d9dba63. Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md). Picks up the batch analysis's "Next" list.
 - **Question:** with no valid granularity curve and only 2 measurement-valid real ladders, what does the MVE actually have, and what is the cheapest path to curves whose numbers mean what they claim?
 - **Ran:** a full validity inventory of the 8 real members (chain-top AND climb-top per member); two pricing probes (d4 top at a 30M guard; d3 top exhaustion at 10M); a read-side to-first curve extraction; two new 5-rung NOR members via the cohort template; the goal-reachability guards.
 - **Result:**
@@ -1062,7 +1062,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-27 — Decomposition-strategy siblings: a new finding, and two probe-machinery defects found and fixed along the way
 
-- **Commit:** (pending -- same branch). Executes MVE-PLAN wave 2's deferred decomposition-strategy axis. Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md) S12.
+- **Commit:** d9dba63. Executes MVE-PLAN wave 2's deferred decomposition-strategy axis. Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md) S12.
 - **Question:** every real-task ladder so far cuts the SAME way -- address-first (name the raw half, fold the recolour into the top). Does the orthogonal cut (name the recoloured half directly, fold addressing into the rung) cost the same at the same cut density?
 - **Ran:** drafted `dae9d2b5-recolor-first` (2-rung, recolor-first) via `new-ladder --from`, reusing the cohort's own anchored demo grids; lint -> probe.
 - **Result:**
@@ -1079,7 +1079,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-27 — Cut-set enumeration closes the granularity axis by proof, and sharpens the cost law: a deep level is affordable at the TOP but not at a RUNG
 
-- **Commit:** (pending -- same branch). Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md) S13. Ideas + methods parked in [LADDER-IDEAS.md](docs/abstraction_ladders/LADDER-IDEAS.md).
+- **Commit:** d9dba63. Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md) S13. Ideas + methods parked in [LADDER-IDEAS.md](docs/abstraction_ladders/LADDER-IDEAS.md).
 - **Question:** are there any further ladders to build inside the cohorts that have already paid their raw arm -- and rather than guessing, is there a systematic way to settle it?
 - **Ran:** built a mechanical cut-set enumerator. A spine's intermediate terms are finite, so its cut-sets are `2^n`: enumerate all, render a draft `.ladder` each, lint in-process, read the derived depth schedule, filter. 46 candidates, milliseconds each, no testbeds and no demo authoring -- **demo blocks are reusable VERBATIM across cut-sets**, because a rung's demonstrating tasks are a property of the FUNCTION, not of which lower terms happen to be named. Only the template line moves.
 - **Result:**
@@ -1093,7 +1093,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-27 — Transfer measured for the first time (the abstraction buys the goal on unseen data), and the zero learned-vs-oracle gap turns out to be ONE PROPOSER's property
 
-- **Commit:** (pending -- same branch). Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md) S14, S15. Executes the two Tier-1 directions identified after the cut-set axis closed.
+- **Commit:** d9dba63. Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md) S14, S15. Executes the two Tier-1 directions identified after the cut-set axis closed.
 - **Question:** two long-standing gaps, both read-side or near-read-side. (1) Does anything the ladders learn TRANSFER? The report itself says the transfer runs exist and the view does not. (2) Is "the learned-vs-oracle gap is exactly zero" a property of wake-sleep, or of `AntiunifyPairs`, which is the only proposer any real-task arm has ever used?
 - **Ran:** read every ladder's `run_search_learn(...).transfer` record (cached, no new search), then a FLOOR baseline over the same heldout corpora; separately, swapped the proposer on three already-certified ladders and re-ran only the climb.
 - **Result:**
@@ -1107,7 +1107,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-27 — A second nonzero learned-vs-oracle gap, this one from GOVERNANCE: the bind-late ladder collapses into the bind-early one under learning
 
-- **Commit:** (pending -- same branch). Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md) S16. Executes MVE-PLAN's parameterization sub-cohort axis, the only cheap structural variation left after the cut-set enumeration closed the granularity axis.
+- **Commit:** d9dba63. Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md) S16. Executes MVE-PLAN's parameterization sub-cohort axis, the only cheap structural variation left after the cut-set enumeration closed the granularity axis.
 - **Question:** `dae9d2b5-split-recolor-lean` names the two halves as separate arity-1 rungs (bind-early). Does naming ONE arity-2 rung `half(g, i) = nth(split_h(g), i)` instead (bind-late) cost more or less -- and will the learner mint the parameterized form at all?
 - **Ran:** generated the member reusing the committed `west-*`/`east-*` grids as `half(input,0)` / `half(input,1)` demos (so `free-param-varies` holds by construction); lint -> probe -> taskgen -> run; then a dedicated diagnosis separating proposer reach from governance preference.
 - **Result:**
@@ -1118,13 +1118,13 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - **Run deliberately despite the conviction** (all-d2, ~2 min), because here the conviction IS the result rather than a defect to fix -- the al9-al12 control precedent. **ADMITTED**, top reached in chain and climb, **rung recovery 2/3**: the first real-task ladder carrying a MEASURED nonzero recovery in a committed artifact.
   - **The sharpest detail: the bind-late ladder COLLAPSES INTO the bind-early one under learning.** The two members' per-iteration climb costs are byte-identical (`[100815, 100987, 101159]`, e2e 302,961 both). Not coincidence -- sleep's two specialised mints ARE `west` and `east`, so after iteration 0 the learned libraries are behaviorally identical and every later search matches exactly. The learner does not merely fail to mint `half`; it **reconstructs the decomposition the sibling member declares**.
 - **Interpretation:** this composes with a standing finding into an uncomfortable story. "Vocabulary tax is almost all arity" (+2.5% param-free vs +282% for a 2-param rung) says SEARCH is biased against parameterized abstractions; now GOVERNANCE is shown biased against them too, on a case where the right answer was available, proposed, and rejected. **Both halves of the system push away from exactly the abstractions that generalise** -- which is worth stating plainly for a program whose thesis is that reusable abstraction buys tractability. Methodologically, the day's pattern held a third time: a metric that had never moved (100% recovery) only became informative once something was varied that could move it, and the informative part was isolating WHICH component failed -- proposer reach (S15) and governance preference (S16) look identical in the report and are entirely different defects.
-- > ⚠ **CORRECTED 2026-07-27 by [experiments/2026-07-27-half-param-governance/](experiments/2026-07-27-half-param-governance/notebook.md).** Neither S16 nor S17 varied the compression METRIC or priced the END STATES. Both matter: the batch runs the flat `CompressionMetric` (definition size ignored — its own docstring predicts this hoarding), under which `specialise` is the DL-optimum at EVERY V tested, so the predicted inversion never happens and the "V=2 boundary" is really *greedy ceasing to reach the optimum* at V>=3. Under the shipped `TwoPartMDL`, V>=3 generalises cleanly — and the real V=2/M=2 case correctly mints **nothing**, because four programs cannot pay for any abstraction's definition. Struck text below.
+- > ⚠ **CORRECTED 2026-07-27 by [experiments/2026-07-27-half-param-governance/](experiments/2026-07-27-half-param-governance/notebook.md).** Neither S16 nor S17 varied the compression METRIC or priced the END STATES. Both matter: the batch runs the flat `CompressionMetric` (definition size ignored — its own docstring predicts this hoarding), under which `specialise` is the DL-optimum at EVERY V tested, so the predicted inversion never happens and the "V=2 boundary" is really _greedy ceasing to reach the optimum_ at V>=3. Under the shipped `TwoPartMDL`, V>=3 generalises cleanly — and the real V=2/M=2 case correctly mints **nothing**, because four programs cannot pay for any abstraction's definition. Struck text below.
 - ~~**Follow-up, same day (S17) -- the boundary characterised, and the interpretation above NARROWED.**~~ A pure selector sweep over V (distinct parameter values) x M (occurrences each), no search at all: ~~**V=2 with M>=2 is the ONLY cell that specialises**~~ (metric-specific: true of the flat metric only) -- exactly `half-param`'s configuration (two half-indices, two demos each). So the S16 failure is not a broad bias against parameterization but a narrow corner the real experiment happened to land in, and "both halves of the system push away from abstractions that generalise" is too strong as stated. Unpredicted second finding: from **V>=3 greedy-MDL keeps the generalisation AND every specialisation** (`[1,1,1,2]`, `[1,1,1,1,2]`, ...) -- **V+1 entries where 1 would do** -- so that regime is not correct behaviour either, it trades a missed generalisation for library bloat, which the vocabulary-tax finding says is re-paid at every later search. ~~The accurate statement of the defect: **greedy-MDL over program size never prunes a specialisation that its own generalisation subsumes**~~ → **corrected 2026-07-27:** that describes the flat `CompressionMetric`, not greedy-MDL. Under it MDL's preference is uniformly `specialise`; what changes at V>=3 is that greedy stops REACHING it. Under `TwoPartMDL` the same loop generalises cleanly -- below V=3 that appears as specialising instead of generalising, above it as doing both.
 - **Next:** real-task controls (distractors, collision-seeded demos); a second task FAMILY; breadth as a deliberate treatment.
 
 ## 2026-07-27 — A lint that passed unlearnable ladders, and a second task family that admits NO ladder: commuting factorisations cannot be laddered
 
-- **Commit:** (pending -- same branch). Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md) S19. Executes the "second task FAMILY" direction that the previous two entries both listed as next.
+- **Commit:** d9dba63. Notebook: [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md) S19. Executes the "second task FAMILY" direction that the previous two entries both listed as next.
 - **Question:** build the ladder for `a740d043` (crop-and-recolour), anchored 4/4 the same day, and widen the batch's headline past two-halves geometry.
 - **Ran:** read `proposer-compat`'s capability table while choosing the rung set (it decides which cuts are demoable), measured every entry against the real proposers, then built / linted / probed the ladder.
 - **Result:**
@@ -1139,7 +1139,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-27 — Calibrating the breadth census: it was over-counting the one quantity it calls EXACT
 
-- **Commit:** (pending — same branch). Closes the standing gap named by the batch analysis ("the breadth census has never been calibrated against measured cost"). Notebook: [experiments/2026-07-27-census-calibration/](experiments/2026-07-27-census-calibration/notebook.md).
+- **Commit:** d9dba63. Closes the standing gap named by the batch analysis ("the breadth census has never been calibrated against measured cost"). Notebook: [experiments/2026-07-27-census-calibration/](experiments/2026-07-27-census-calibration/notebook.md).
 - **Question:** `ladders/breadth.py` documents two things — round-1 counts are **exact**, and the numbers are for **ranking** floors, never forecasting. LADDER-PROCESS §3 and MVE-PLAN's screen leg 3 both lean on it. Neither half had ever been tested against a measured cost.
 - **Ran:** joined every uncompromised ladder's per-rung census to the measured cell it prices (39 cells, 14 ladders), decomposed the rank agreement, backtested the full `forecast_cost` model on the same cells, then drove the real engine to diagnose the residual.
 - **Result:**
@@ -1149,24 +1149,24 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - **`dae9d2b5-halves-union`'s headline breadth tax is 131x, not 1,211x** — the figure quoted in LADDER-PROCESS §3, MVE-PLAN, `breadth.py`'s own docstring, `test_breadth.py` and ~20 generated `spec.md` files. The understatement-at-depth gap it anchors is ~40,000-fold, not ~4,000.
   - **The RANKING claim holds, and is now measured rather than asserted:** median `b1` per ladder ranks measured per-cell cost at Spearman **+0.966** (n=14 ladders); within a ladder, median **+1.000**. That is exactly the use the screen makes of it.
   - **The census is blind to `max_pool`, and it is first-order.** `dae9d2b5-split-recolor` (pool 150) and `-split-recolor-lean` (pool 30) are the same ladder, same floor, same rungs, same depth schedule — **byte-identical census readings** — and cost **19.0x-25.6x** apart, rung by rung. `b1` ranks floors; it can never be converted to an absolute cost.
-  - **The full forecaster is NOT the drop-in fix**, which is the reason to keep the census. Backtested statically on the same cells it ranks *worse* (**+0.455** vs +0.803) and under-reads systematically (median **0.20x** of measured, 18/39 within 2x): `_capped` freezes the modelled census at `max_pool`, and the new-layer restriction then makes deeper rounds structurally zero — its own docstring's saturation caveat, confirmed against the engine's funnel (round 2: engine 11,988 / model 27 at pool 30).
+  - **The full forecaster is NOT the drop-in fix**, which is the reason to keep the census. Backtested statically on the same cells it ranks _worse_ (**+0.455** vs +0.803) and under-reads systematically (median **0.20x** of measured, 18/39 within 2x): `_capped` freezes the modelled census at `max_pool`, and the new-layer restriction then makes deeper rounds structurally zero — its own docstring's saturation caveat, confirmed against the engine's funnel (round 2: engine 11,988 / model 27 at pool 30).
   - **Nothing the census DIAGNOSED moves.** Responsible primitives, wasted batteries, fat-vs-lean floor separation: all unchanged. Only magnitudes were wrong, and the 2026-07-26 attribution stands.
   - `make check` green, **1023** tests. Regression test pins engine agreement AND the structural precondition (`overlay.param_types[-1] != overlay.variadic_param`), so a "simplification" back to the old form fails.
-- **Interpretation:** two lessons, and the second is the transferable one. First, **a threshold assertion can encode the defect it should catch** — `test_breadth.py` asserted `b1_full > 1000` against a true value of 131, so the over-count made the test *pass more comfortably*; it is now pinned to the exact engine-verified number. Second, and more general: **this was found by calibration, not by review.** The census had been read, quoted and built on for two days; its arithmetic was never once put beside the engine's own funnel, and the funnel was in every recorded run's `generations`. The same shape as 2026-07-25's `by_primitive` sitting unread — the data existed, nothing compared it to the claim. A static instrument that is never backtested is a hypothesis wearing a number's clothes.
+- **Interpretation:** two lessons, and the second is the transferable one. First, **a threshold assertion can encode the defect it should catch** — `test_breadth.py` asserted `b1_full > 1000` against a true value of 131, so the over-count made the test _pass more comfortably_; it is now pinned to the exact engine-verified number. Second, and more general: **this was found by calibration, not by review.** The census had been read, quoted and built on for two days; its arithmetic was never once put beside the engine's own funnel, and the funnel was in every recorded run's `generations`. The same shape as 2026-07-25's `by_primitive` sitting unread — the data existed, nothing compared it to the claim. A static instrument that is never backtested is a hypothesis wearing a number's clothes.
 - **Next:** a pool-aware static predictor is the real gap and now has a concrete lead — `_capped` freezes the census's SIZE while its CONTENT still turns over, so the new-layer term should be computed against what the pool holds, not against its size. Also open: committed `spec.md` files carry stale census numbers until regenerated, and the depth half of the claim is still uncalibrated (every usable cell here is depth 2; the batch's only depth-3 rows are al5's, all censored).
 
 ## 2026-07-27 — `half-param`'s missed rung is the METRIC, not the greed — and the learner was right
 
-- **Commit:** (pending — same branch). Audits S16/S17 of [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md); both conclusions move. Notebook: [experiments/2026-07-27-half-param-governance/](experiments/2026-07-27-half-param-governance/notebook.md).
+- **Commit:** 2ce8f2b. Audits S16/S17 of [experiments/2026-07-27-mve-completion/](experiments/2026-07-27-mve-completion/notebook.md); both conclusions move. Notebook: [experiments/2026-07-27-half-param-governance/](experiments/2026-07-27-half-param-governance/notebook.md).
 - **Question:** S16 found `dae9d2b5-half-param`'s rung 1 missed by GOVERNANCE (the arity-2 generalisation is offered and discarded), and S17 characterised the boundary as "exactly V=2", generalising to "greedy-MDL never prunes a specialisation its own generalisation subsumes". Neither varied the compression METRIC, and neither priced the END STATES — so neither could distinguish "MDL prefers specialisation" from "greedy cannot reach the alternative".
 - **Ran:** the real retained programs and an S17-style V x M sweep under both `CompressionMetric` (flat, the default) and `TwoPartMDL` (anti-bloat, already shipped); then priced all four reachable end states (`none`/`specialise`/`generalise`/`both`) directly and compared the DL-minimum against greedy's output. Pure selector arithmetic, milliseconds.
 - **Result:**
   - **The learner is RIGHT, and the ladder is wrong.** At the real case (V=2 distinct parameter values, M=2 occurrences each) the DL-optimal action under a proper two-part code is to mint **nothing**: `none` **26.0** < `generalise` 27.0 < `specialise` 28.0. Four programs cannot pay for any abstraction's definition. `TwoPartMDL` mints exactly nothing there — **refuting my own hypothesis that it would recover `half`**.
   - **`half` is never MDL-optimal at V=2, under either metric.** A binary parameter cannot justify a parameterized abstraction: each specialisation recurs enough to pay its way while the generalisation still has to write the argument. The ladder's registered prediction was wrong on the economics, not because the selector is broken. **Design finding for the method: bind-late is the wrong decomposition for a 2-way split**, and `rung_recovery` scores intent against a learner whose job is compression — the certificate cannot currently say "the learner was right".
   - **S16's mechanism does not hold under the metric in use.** It predicted the bias "should invert once the parameter takes enough distinct values". Under the flat metric it **never** inverts — `specialise` is the DL-optimum at every V (2-8) and M (2-6) tested — because a flat 1-bit-per-entry charge lets V cheap entries beat one entry with weaker per-site savings indefinitely. The inversion requires a metric that charges definition size.
-  - **S17's "boundary is exactly V=2" is a greedy artefact, not a boundary in MDL's preference.** Under the flat metric the preference is uniformly `specialise`; what changes at V=3 is that **greedy stops reaching it** (it returns `both` — the generalisation *plus* every specialisation, V+1 entries where V would do). So the "two pathologies either side of V=2" are one metric defect plus one search defect, not a boundary.
+  - **S17's "boundary is exactly V=2" is a greedy artefact, not a boundary in MDL's preference.** Under the flat metric the preference is uniformly `specialise`; what changes at V=3 is that **greedy stops reaching it** (it returns `both` — the generalisation _plus_ every specialisation, V+1 entries where V would do). So the "two pathologies either side of V=2" are one metric defect plus one search defect, not a boundary.
   - **Under `TwoPartMDL` the economics are sensible and genuinely two-dimensional:** generalisation wins for **many distinct values used few times each** (V>=3, M<=3 — greedy agrees), specialisation wins once each value recurs enough to amortise its definition (M>=4). Neither S16's "V grows" nor S17's "V=2 line".
   - **Greedy myopia is real, located, and NOT the cause here.** The trajectory shows the arity-2 candidate is **ON OFFER at round 0 and GONE at round 1**: minting the first specialisation rewrites half the corpus, destroying the antiunification pair the generalisation is derived from, so it can never be reconsidered. It never bites at V=2 (greedy reaches the true optimum there); it bites at V>=3. The repo already names the fix (MACHINERY.md F4, beam/joint selection) in `GreedyMDL`'s own TODO.
   - Confirmed in passing, since S16 asserted it: the two mints ARE structurally the sibling ladder's `west`/`east`, so "the bind-late member collapses into the bind-early one under learning" holds.
-- **Interpretation:** the transferable lesson is that **"what the greedy loop produced" was read as "what the objective prefers", and they are different claims** — separating them took one direct pricing of the end states, which nobody had done in two days of reasoning about this selector. It is the same shape as the day's other two corrections (`by_primitive` unread; the census never backtested): the datum needed was cheap and adjacent, and the reasoning ran without it. A second lesson is narrower and worth keeping: a *default* is a claim. The flat metric's docstring predicted this hoarding behaviour in as many words, and the batch ran it anyway.
+- **Interpretation:** the transferable lesson is that **"what the greedy loop produced" was read as "what the objective prefers", and they are different claims** — separating them took one direct pricing of the end states, which nobody had done in two days of reasoning about this selector. It is the same shape as the day's other two corrections (`by_primitive` unread; the census never backtested): the datum needed was cheap and adjacent, and the reasoning ran without it. A second lesson is narrower and worth keeping: a _default_ is a claim. The flat metric's docstring predicted this hoarding behaviour in as many words, and the batch ran it anyway.
 - **Next:** two decisions, both flagged and deliberately NOT taken. (1) Should `ladder_default_config` adopt `TwoPartMDL`? It is the better selector by this evidence, but the metric is part of `Config`, so switching moves the `run_id` of **every LEARN run in the repo**. (2) Should `rung_recovery` distinguish "missed" from "correctly declined / re-decomposed"? Finding 1 is a case the instrument currently scores as a failure and should not. Also open: every V>=3 row is a `map_color` proxy — no real ladder in the batch has V>=3 — and `bits_per_primitive = 1.0` was not swept, which the V=2 corner is sensitive to (a 1.0-bit gap).
