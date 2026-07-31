@@ -1,7 +1,5 @@
 # Making abstraction-learning trajectories measurable
 
-_Progress report on four weeks of work. This is an instrument-and-results report, not a finished benchmark or a claim of general intelligence._
-
 > **`arc-lab`** — setup, commands, and layout are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Summary
