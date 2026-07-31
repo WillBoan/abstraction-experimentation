@@ -17,13 +17,19 @@ A Ladder has four parts:
 
 ```mermaid
 graph BT
-    F["Floor: L0"]
-    R1["Rung 1"]
-    R2["Rung 2"]
-    T["Top task"]
-    F --> R1 --> R2 --> T
-    F -. "possible skip path" .-> T
+    F["Floor:<br/>concat_v, translate, pad"]
+    R1["Rung 1:<br/>shift1(g) =<br/>concat_v(g, translate(g, (0, 1)))"]
+    R2["Rung 2:<br/>frame1(g) =<br/>pad(shift1(g), 1, 5)"]
+    R3["Rung 3:<br/>shift2(g) =<br/>shift1(frame1(g))"]
+    T["Top:<br/>pad(shift2(input), 1, 6)"]
+    F --> R1 --> R2 --> R3 --> T
+    R1 -.->|"skip path?<br/>Rung 3's tasks from L1, without frame1"| R3
+    F -.->|"raw search:<br/>Top from L0, no rungs"| T
 ```
+
+The solid edges are the Ladder; the dashed ones are questions asked about it, measured separately. A **skip path** bypasses a single rung, to test whether that rung is load-bearing. The **raw** path is the from-scratch search that the laddered cost is compared against.
+
+The diagram is a real Ladder — [`al17-shift-frame-tall`](../../src/arc_lab/program_search/ladders/registry/al17-shift-frame-tall.ladder) — whose floor, three rungs, demonstrations, and Top are that file's declared contents, minus the example grids and each rung's held-out demonstration. It is an admitted Ladder: at its declared budget every jump was affordable and no rung had a skip path. The [Ladder register](LADDERS.md) indexes the rest of the batch.
 
 The sequence may be a chain or a DAG. A higher rung can reuse any lower rung, and its **fan-in** is the number of such calls, counted with multiplicity. The central unit is therefore a trajectory from a stated floor, not a final program in isolation.
 
