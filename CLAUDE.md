@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Operational guide for agents working in this repo. Human-facing overview is in [README.md](README.md); this file is the agent contract — conventions, gotchas, and recipes. Keep it lean and pointer-heavy (it loads every session).
+Operational guide for agents working in this repo. [README.md](README.md) is the research report (what this studies and what it found); [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) is the human-facing operational front door. This file is the agent contract — conventions, gotchas, and recipes. Keep it lean and pointer-heavy (it loads every session).
 
 ## What this is
 
@@ -36,7 +36,7 @@ For a **non-trivial investigation**, also keep a detailed lab notebook under [ex
 
 Terminology (ARC's own): **dataset ⊃ corpus (train/eval) ⊃ task ⊃ example (train/test)**.
 
-- **`Config`** = `library × search_engine × budget × constraints × cost × attempts_per_test × learn?` (`execution/model/config.py`) — frozen machinery-as-data. `learn: LearnSpec | None` discriminates SEARCH vs LEARN runs. Named presets: `execution/presets.py::PRESETS` (`d4`/`sym`/`synth`/`beam`).
+- **`Config`** = `library × search_engine × budget × constraints × cost × attempts_per_test × learn?` (`execution/model/config.py`) — frozen machinery-as-data. `learn: LearnSpec | None` discriminates SEARCH vs LEARN runs. Named presets: `execution/presets.py::PRESETS` — four ARC-benchmark machineries (`d4`/`sym`/`synth`/`beam`) + three floor-grain contrast floors (`geom`/`universal-floor`/`minimal-complete-floor`).
 - **`RunSpec = Config × Corpus`** → content-hashed `run_id` → executed once by `execute()` (the ONLY writer of `runs/`), cached, crash-safe, resumable. `runs/` is a gitignored regenerable cache.
 - **Activities**: `run_search` (one SEARCH run) · `run_search_learn` (wake-sleep loop = ONE recorded LEARN run + derived SEARCH runs: train-usefulness + transfer) · `run_study` (learn L2, build L3 = L1 + targets, grid `(L1,L2,L3) × budgets × (train,eval)`) + read-side `analyze_run` / `create_study_report`.
 - **Blindness seams**: solvers see pure `Task`s (never `TaskMeta`); `SearchEngine.run(train_examples=…)` structurally cannot see test examples; `predict` + `score_task` are the only functions touching test grids. Targets are observables, never a training signal.
@@ -44,7 +44,9 @@ Terminology (ARC's own): **dataset ⊃ corpus (train/eval) ⊃ task ⊃ example 
 - **Programs are data**: `Program` ABC — `Input | Param | Const | Apply | If | Var | Lam | AppFn | PrimRef` (`substrate/program.py`). Every node kind must round-trip both codecs — enforced by `tests/program_search/learn/test_codec_completeness.py` (ARCHITECTURE.md §11.6).
 - **Learning** (`program_search/learn/`): sleep = `LearnEngine.run(library, solutions) → LearnOutcome` (proposers: antiunify / frequent-subtree / Stitch; governance: greedy-MDL). Studies register in `execution/studies.py::STUDIES`; testbed generators in `taskgen/generators.py::GENERATORS`.
 
-Layers: `core/` (grid·task·annotation·dataset·hashing) · `eval/` (scoring rules only) · `program_search/` (`substrate/` · `search/` · `learn/` · `analysis/` · `execution/`) · `taskgen/` · `cli/` (thin) · `viz/`.
+- **Ladders** (`program_search/ladders/`): the active experimental instrument — the `.ladder` language (`lang/`), the lint checks (`checks/`), the per-rung probe, and the certificate. A Ladder is one authored learning trajectory (floor → rungs → Top) made testable; see the "Add a ladder" recipe below.
+
+Layers: `core/` (grid·task·annotation·dataset·hashing) · `eval/` (scoring rules only) · `program_search/` (`substrate/` · `search/` · `learn/` · `analysis/` · `execution/` · `ladders/`) · `taskgen/` · `cli/` (thin) · `viz/`.
 
 ## Key commands
 
@@ -57,6 +59,11 @@ uv run arc-lab analyze-run <run_id>                  # READ-ONLY over a complete
 uv run arc-lab taskgen <generator>                   # (re)generate a committed testbed
 uv run arc-lab -vv search ...                        # -v INFO / -vv DEBUG trace (stderr)
 ARC_LAB_LOG=DEBUG uv run pytest -k <x>               # same trace under pytest
+
+# the ladder loop (cheapest gate first) — see the "Add a ladder" recipe
+uv run arc-lab lint-ladder <name>                    # static, ~1s, no search (works pre-testbed)
+uv run arc-lab probe-ladder <name>                   # REAL engine per rung: collapses, skip paths
+uv run arc-lab run-ladder <name> [--artifacts <dir>] # full climb + oracle chain + certificate
 ```
 
 A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed split (`e1-rot90:train` / `:heldout`). Config precedence: `defaults < preset < config file < --set` — `<config>` may be a JSON file `{"preset": ..., "set": {...}}`, and `--set budget.depth_limit=3` overrides any `Config` field by dotted path (`execution/overrides.py`).
@@ -96,7 +103,8 @@ A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed s
 - **Ladder process** (instrument contracts · the failure→response table · tractability triage · design taste · Compromise Options · operational discipline · glossary; dated): `docs/abstraction_ladders/LADDER-PROCESS-2026-07-26.md`
 - Ladder file format (`.ladder` = a ladder's single source of truth: spec, testbed, artifacts): `docs/abstraction_ladders/LADDER-FORMAT.md` · Ladder sources: `program_search/ladders/registry/*.ladder` · Ladder register: `docs/abstraction_ladders/LADDERS.md`
 - Ladder checks (every load/lint/certificate check + batch health as of then; dated, archived): `docs/archive/LADDER-CHECKS-2026-07-21.md` · Generated per-check register (current): `docs/abstraction_ladders/LINT-CHECKS.md` (`arc-lab lint-checks`; a test pins it) · Lint implementation: `program_search/ladders/checks/` (`LadderCheck` ABC + `CHECK_PLAN`)
-- AL plan of record (corrections, pipeline, phased build/measure order; dated): `docs/abstraction_ladders/AL-PLAN-2026-07-23.md` (superseded: `AL-PLAN-2026-07-22.md`)
+- AL plan of record (corrections, pipeline, phased build/measure order; dated): `docs/abstraction_ladders/AL-PLAN-2026-07-23.md` (superseded: `docs/archive/AL-PLAN-2026-07-22.md`)
+- Research report (what this studies, what it found, what it does not establish): `README.md` · Operational front door (setup · commands · layout · doc index): `docs/DEVELOPMENT.md`
 - Lever maps (primitives / machinery / expressibility control): `docs/ONTOLOGY.md` / `docs/MACHINERY.md` / `docs/SEARCH-SPACE.md`
 - Research frame (dated snapshot the maps are read against): `docs/archive/RESEARCH-2026-07-08.md` (all superseded snapshots live in `docs/archive/`)
 - Machinery build strategy (build vs. adopt vs. defer; dated): `docs/archive/MACHINERY-STRATEGY-2026-07-07.md`

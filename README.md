@@ -1,115 +1,96 @@
-# arc-lab
+# Making abstraction-learning trajectories measurable
 
-A sandbox for experimenting with the [ARC-AGI](https://arcprize.org) benchmarks (ARC-AGI-1 and ARC-AGI-2) — and, from there, with ML, program synthesis, and abstraction formation more broadly.
+_Progress report on four weeks of work. This is an instrument-and-results report, not a finished benchmark or a claim of general intelligence._
 
-The load-bearing idea: **machinery is data**. There are no solver classes — a run is a frozen, content-hashed `RunSpec = Config × Corpus`, where `Config` is the machinery itself (`library × search_engine × budget × constraints × cost × attempts_per_test × learn?`) expressed as data. The execution layer drives it directly: every run gets a `run_id` that is a pure function of its spec, is executed exactly once, and lands in `runs/` — a gitignored, regenerable cache — crash-safe and resumable. Rerunning anything already computed is free.
+> **`arc-lab`** — setup, commands, and layout are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-On top of search sits **wake–sleep library learning**: wake = program search over a corpus; sleep = a learn engine compressing the found solutions into new library abstractions under MDL governance. Studies then grid learned vs. hand-written vs. target libraries across budgets and corpora to measure enablement, search-effort speedup, and transfer.
+## Summary
 
-The activity/run model (RunSpec · activities · `runs/` layout) is [EXECUTION.md](docs/EXECUTION.md); the search-engine and substrate design is [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+The question behind this project is simple: if an ARC solver succeeds using a rich domain-specific language, how much of that success came from the solver and how much came from the language it was given? To study acquisition rather than just performance, I fix and declare a starting primitive library, then measure the effort required to build useful routines above it.
 
-## Layout
+In order to research and experiment with these questions, I did two main things:
 
-```
-src/arc_lab/
-  core/                grid · task · annotation · dataset (Corpus) · hashing
-  eval/                ARC scoring rules (top-2), paradigm-neutral
-  program_search/
-    substrate/         the language: types · programs · library · primitives
-    search/            typed bottom-up search engine + constraints · cost · budget
-    learn/             sleep: learn engines · proposers (antiunify · Stitch) · MDL
-    analysis/          read-side metrics (compression, MDL, effort)
-    execution/         RunSpec/Config model · execute() · activities · presets · studies
-  taskgen/             synthetic-corpus generators (writes testbeds/)
-  cli/                 thin: arg-parse + dispatch only
-  viz/                 render grids/tasks (official palette)
-data/                  arc-agi-1, arc-agi-2 — the datasets, as git submodules
-testbeds/              committed synthetic task sets for the learn experiments
-runs/                  run artifacts — a gitignored, regenerable cache
-experiments/           lab notebooks for non-trivial investigations
-tests/                 fast functionality tests + slow regression locks
-```
+1.  I engineered a deterministic program-synthesis system.
+2.  I conducted research and experimentation into abstraction learning, and the dynamics of abstraction learning.
+    - This led to me building a framework for working with _instances of abstraction learning trajectories_, called **Abstraction Ladders**.
 
-## Setup
+An Abstraction Ladder makes an authored learning trajectory explicit: a primitive floor, a sequence of intermediate routines, demonstrations for learning them, and a held-out Top task. The framework has already produced several useful findings about library learning and search cost. Its most important contribution so far is methodological: it makes invalid trajectories, hidden priors, and misleading cost comparisons visible.
 
-Requires [`uv`](https://docs.astral.sh/uv/) and Python 3.11+.
+This is not yet a benchmark, a demonstration that the system discovers its own curriculum, or an evaluation of revision and pruning. It is a controlled substrate for making those later experiments meaningful.
 
-```bash
-make setup          # init submodules + install
-# or manually:
-git submodule update --init --recursive
-uv sync
-```
+## The instrument
 
-Everything runs through `uv` (`uv run …`); never invoke `python`/`pytest` bare.
+The system uses typed bottom-up program enumeration and a wake-sleep library-learning loop. Search, library, proposal mechanism, governance objective, and budget are immutable run configuration. Runs are deterministic, content-hashed, cached, and recorded; the search engine never sees test examples, and withheld targets are used only for evaluation.
 
-```bash
-make test           # fast tests — the dev inner loop (~seconds)
-make check          # ruff + mypy --strict + FULL suite incl. slow locks — the gate
-make format         # auto-fix lint + formatting
-```
+In a planted-ground-truth study, I author a target routine, a floor from which it is reachable, and demonstration tasks. The learner receives the demonstrations but not the target. Recovery is therefore blind at runtime, while the experiment remains explicitly target-authored.
 
-## Quick start
+An Abstraction Ladder adds the missing trajectory object. It declares:
 
-```bash
-uv run arc-lab search d4 --corpus arc1-train        # one SEARCH recorded run (cached)
-uv run arc-lab learn synth --corpus e1-rot90:train --eval-corpus e1-rot90:heldout
-                                                    # wake-sleep loop: 2-3 recorded runs
-uv run arc-lab run-study e1-rot90                   # study grid + report (cache hits free)
-uv run arc-lab analyze-run <run_id>                 # read-only metrics over a completed run
-uv run arc-lab taskgen e1-rot90                     # (re)generate a committed testbed
-```
+- a **floor**: the initial primitive library;
+- **rungs**: routines intended to be learned in sequence; and
+- a **Top**: a harder held-out task expected to reuse the learned routines.
 
-Utilities:
+The key discipline is testing whether the proposed trajectory actually exists. A rung is admitted only if its demonstrations are reachable from the preceding library and no route bypasses it within the consumer's configured budget. That last condition is budget-relative: no detected skip is not a proof that no longer alternative route exists. End-to-end validity is stricter still: the Top must be reached both by an oracle chain and by the learned climb.
 
-```bash
-uv run arc-lab configs                              # list machinery presets
-uv run arc-lab datasets                             # list datasets and task counts
-uv run arc-lab runs                                 # list recorded runs
-uv run arc-lab show 007bbfb7 --dataset arc1-train   # render a task to PNG
-uv run arc-lab estimate d4 --corpus arc1-train      # worst-case search-cost ceiling, no execution
-uv run arc-lab -vv search ...                       # -v INFO / -vv DEBUG trace on stderr
-```
+This separates a failed learner from a bad experiment. It also keeps the costs interpretable: all results are relative to a stated floor, engine, trajectory, and budget.
 
-**Presets** (`d4` · `sym` · `synth` · `beam`) are named `Config`s in `execution/presets.py`. A `--corpus` is a dataset (`arc1-train`), a testbed (`e1-rot90`), or a testbed split (`e1-rot90:train` / `:heldout`).
+[ABSTRACTION-LADDERS.md](docs/abstraction_ladders/ABSTRACTION-LADDERS.md) gives a fuller account of Abstraction Ladders – the concept, validity discipline, cost views, Ladder relationships, and workflow.
 
-**Overrides:** any `Config` field is settable by dotted path — `--set budget.max_depth=4` — and the `<config>` argument may also be a JSON file `{"preset": ..., "set": {...}}`. Precedence: `defaults < preset < config file < --set`. Every override mints its own `run_id`, so the cache never collides.
+## What I found
 
-## Datasets
+### 1. Most authored trajectories were not valid experiments
 
-| Name         | Contents                         |
-| ------------ | -------------------------------- |
-| `arc1-train` | ARC-AGI-1 training (400 tasks)   |
-| `arc1-eval`  | ARC-AGI-1 evaluation (400 tasks) |
-| `arc2-train` | ARC-AGI-2 training (1000 tasks)  |
-| `arc2-eval`  | ARC-AGI-2 evaluation (120 tasks) |
+Of 20 early synthetic Ladders, 8 were rejected structurally: the Top could be reached without an intended rung, or a rung could be satisfied more cheaply than designed. Three recurring causes were repeated composition, an overly capable perception primitive on the floor, and literals substituting for a parameter that the rung was meant to compute. [Batch analysis](experiments/2026-07-21-ladder-batch-analysis/notebook.md)
 
-Both use the same JSON schema, so one loader handles both.
+Those failures were valuable. They became executable checks with witness programs, and six subsequent Ladders designed around them were rung-admitted on their first attempt. The instruments also caught their own failure modes: initial reports could admit all rungs while failing to reach the Top. Top reachability is now recorded separately from rung admission. [Validity repair](experiments/2026-07-27-mve-completion/notebook.md)
 
-## Manual play
+The lesson is not that the learner is strong. It is that a learning-trajectory experiment must establish that its intended intermediate routines are genuinely load-bearing before interpreting a result.
 
-The ARC-AGI-1 repo ships its official testing interface, vendored here at [`data/arc-agi-1/apps/testing_interface.html`](data/arc-agi-1/apps/testing_interface.html). Open it in Chrome and load any task JSON from `data/` to solve it by hand.
+### 2. Compression and future usefulness can diverge
 
-## Extending
+On a low-level geometric task family, an MDL-style selector preferred the routine that compressed the solved training programs most. That routine had a type and shape that the search could not compose into later programs. A smaller shared coordinate routine compressed less, but unlocked the later reflections.
 
-Recipes — add a primitive, a search engine, a machinery preset, a constraint or cost, a learn engine, a study, a CLI command — live in [CLAUDE.md](CLAUDE.md#recipes), the working contract for this repo.
+With the same corpus, the larger train compressor enabled 0 held-out tasks; a search-scoped proposal set that exposed the reusable coordinate routine enabled 5. This is not a selector-only ablation, but it makes the proposal-governance interaction concrete. [E8/E9](experiments/2026-07-07-e8-e9-mirror-index-bootstrap/notebook.md) and the [Stitch spike](experiments/2026-07-08-stitch-spike/notebook.md) show that first-order Stitch over the raw corpus makes the same unfavorable choice. Higher-order invention can prevent the burial, while first-order library refactoring can recover the buried routine from library definitions.
 
-## Documentation
+This is a concrete governance problem: compression of past solutions does not by itself capture future search use. The possible remedies are search-aware selection, library refactoring, or more expressive abstraction formation.
 
-Details live in the canonical files, not here:
+### 3. Search cost is shaped by residual depth and vocabulary width
 
-| File | What it holds |
-| --- | --- |
-| [CLAUDE.md](CLAUDE.md) | working conventions: commands, definition of done, mental model, recipes |
-| [EXECUTION.md](docs/EXECUTION.md) | the activity / run model: RunSpec · Config · activities · `runs/` layout · CLI |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | search-engine & substrate design (types, enumeration, deliberate limits) |
-| [ONTOLOGY.md](docs/ONTOLOGY.md) | map of the primitive / abstraction space (the vocabulary lever) |
-| [MACHINERY.md](docs/MACHINERY.md) | map of the search / scoring / learning mechanisms (the machinery lever) |
-| [SEARCH-SPACE.md](docs/SEARCH-SPACE.md) | map of the search-space-control levers |
-| [EXPERIMENTS.md](EXPERIMENTS.md) | the experiment event log — findings, including dead ends |
-| [EXPERIMENT_QUEUE.md](docs/EXPERIMENT_QUEUE.md) | planned experiments (drain-only queue) |
-| [docs/archive/RESEARCH-2026-07-08.md](docs/archive/RESEARCH-2026-07-08.md) | the research frame — the dated snapshot the maps are read against |
-| [docs/archive/MACHINERY-STRATEGY-2026-07-07.md](docs/archive/MACHINERY-STRATEGY-2026-07-07.md) | build strategy — what machinery to build, adopt, or defer (dated) |
-| [docs/archive/CONFIG-DEFAULTS-2026-07-11.md](docs/archive/CONFIG-DEFAULTS-2026-07-11.md) | config/param defaults review — every param's options, cost, and rationale (dated) |
+Residual composition depth is expensive. Across three small real ARC task cohorts, cost-to-first-solution was roughly 36,000-71,000 candidates with a depth-2 Top jump, 288,000-524,000 at depth 3, and not found within 30 million candidates at depth 4. [Granularity analysis](experiments/2026-07-27-mve-completion/notebook.md)
 
-Superseded dated snapshots live in [docs/archive/](docs/archive/).
+At a fixed depth, vocabulary can matter just as much. Two otherwise comparable signatures differed by 404x because their argument types opened different pools of candidate programs. In the largest single contrast, a search over the full floor considered 21,149,854 candidates; an oracle-pruned floor containing only the three primitives used by the solution considered 4. Constants and retained-pool size have similarly large effects. [Micro-probes](experiments/2026-07-22-micro-probes/notebook.md) and [floor-lowering sweep](experiments/2026-07-25-v5-lowering-search-cost/notebook.md)
+
+The practical implication is not simply "make Ladders finer." More rungs reduce the deepest jump but widen later search spaces. Measured total costs are non-monotone in rung count. The useful quantity is the cost profile of a particular trajectory, not the number of intermediates in isolation.
+
+### 4. Laddering is conditionally useful
+
+The benefit of a Ladder is not intrinsic. It depends on the configured task, floor, trajectory, curriculum, engine, and budget. Three fully measured cases had raw-to-laddered ratios of 3.59x, 1.19x, and 0.48x: in the last case, the curriculum cost more than raw search. Ten other cases establish only `>= 10x` lower bounds because the raw arm exhausted its guard without solving. [Clean-set re-run](experiments/2026-07-23-clean-set-rerun/notebook.md)
+
+The setup also makes overhead visible. Across four fully valid, uncompromised real Ladders, the full wake schedule cost 3.00x, 3.08x, 4.00x, and 4.00x an oracle per-rung schedule. A separate schedule control found that avoiding re-search of solved tasks reduced cost but sometimes minted unintended routines. These are oracle-relative overheads, not a clean additive decomposition or a production cost model; they are unavailable when a solution-limit compromise truncates the relevant cells. [Loop-overhead experiment](experiments/2026-07-23-loop-overhead/notebook.md) and [validity repair](experiments/2026-07-27-mve-completion/notebook.md)
+
+### 5. Held-out instance generalization, not cross-competence transfer
+
+On the original `AntiunifyPairs` clean set, the learner recovered 43 of 43 intended routines with no spurious mints. On three real ARC tasks, the learned library solved held-out Tops on grids it had not seen, while the bare floor could not. [Recorded transfer check](experiments/2026-07-27-mve-completion/notebook.md)
+
+This is generalization to unseen instances of authored competences, not cross-competence transfer. It is also not a general wake-sleep result: proposer swaps produced 0/4, 0/5, and 0/2 recovery where the relevant whole-program abstraction was structurally outside those proposers' candidate spaces, and a parameterized real Ladder recovered 2 of 3 intended routines when governance selected specialized alternatives. These named failure modes are more informative than a universal recovery claim. [Recovery boundaries](experiments/2026-07-27-mve-completion/notebook.md)
+
+## What this does not establish
+
+- A population-level claim about ARC: the real-task sample is three related geometric tasks, two with the same rule under different palettes.
+- A result across search engines: every number comes from one deterministic bottom-up enumerator and one enumeration order.
+- A benchmark result: intermediate routines and curricula are prescribed rather than discovered.
+- A general learner result: the clean-set recovery result is specific to one proposer and demonstration convention; other proposer and governance regimes have measured failure modes.
+- A full account of continual abstraction learning: revision, merging, pruning, retirement, and distractor-task behavior remain untested.
+- A neural result: there is no neural guidance in this system.
+
+## Next
+
+The immediate scientific next step is to drop the prescribed rungs. A Ladder-shaped benchmark would declare a floor and a Top but require a system to discover its own useful intermediate routines. The existing validity checks would still be useful, but they would evaluate a discovered trajectory rather than certify an authored one.
+
+The most promising system directions are search-aware library governance, library refactoring, and learned guidance over which primitives, constants, and tasks to consider. Revision and pruning belong after there is a trajectory that can demonstrably require them; otherwise an ablation cannot distinguish an unnecessary mechanism from an inadequate test stream.
+
+## Evidence and code
+
+The repository is the primary artifact. The concise record of every experiment, including dead ends and retractions, is [EXPERIMENTS.md](EXPERIMENTS.md). Detailed notebooks and raw outputs live in [experiments/](experiments/). The Ladder registry and its per-Ladder reports are documented in [LADDERS.md](docs/abstraction_ladders/LADDERS.md), and [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) explains how to run the system.
+
+The key investigations behind this report are the [compression-versus-reuse experiment](experiments/2026-07-07-e8-e9-mirror-index-bootstrap/notebook.md), the [first Ladder batch analysis](experiments/2026-07-21-ladder-batch-analysis/notebook.md), and the [MVE completion notebook](experiments/2026-07-27-mve-completion/notebook.md).
