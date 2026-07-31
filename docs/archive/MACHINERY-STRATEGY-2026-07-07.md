@@ -1,6 +1,6 @@
 # Machinery Build Strategy · 2026-07-07
 
-> **Provisional. A dated snapshot of _how we decide what machinery to build, adopt, or defer_ — as of 2026-07-07.** Companion to [MACHINERY.md](../MACHINERY.md) (the _catalog_ of mechanisms) and [RESEARCH-2026-07-07.md](archive/RESEARCH-2026-07-07.md) (the _frame_ — what we believe). Division of labor: MACHINERY = _the map_; RESEARCH = _what we believe_; **this = _how we proceed_.** Prior-art scores/meaning live in RESEARCH; here they appear only as build decisions.
+> **Provisional. A dated snapshot of _how we decide what machinery to build, adopt, or defer_ — as of 2026-07-07.** Companion to [MACHINERY.md](../MACHINERY.md) (the _catalog_ of mechanisms) and [RESEARCH-2026-07-07.md](RESEARCH-2026-07-07.md) (the _frame_ — what we believe). Division of labor: MACHINERY = _the map_; RESEARCH = _what we believe_; **this = _how we proceed_.** Prior-art scores/meaning live in RESEARCH; here they appear only as build decisions.
 >
 > **May graduate to a living `MACHINERY-STRATEGY.md`** if it proves durable — until then, supersede with a new dated snapshot. Tags: **[C]** committed · **[H]** hypothesis · **[O]** open.
 >

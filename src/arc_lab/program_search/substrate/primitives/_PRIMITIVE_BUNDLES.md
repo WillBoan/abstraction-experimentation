@@ -1,6 +1,6 @@
 # Primitive Bundles
 
-A reference for grouping the ~71 primitives in [registry.py](registry.py)::`BASE_PRIMITIVES` into **bundles**, for designing experiments and (eventually) `Library`/`Config` presets ([execution/presets.py](../../execution/presets.py)). A bundle is not just a set of primitives — it is a set _plus the engine policies that make it runnable_. The tables below carry both.
+A reference for grouping the ~71 primitives in [registry.py](../registry.py)::`BASE_PRIMITIVES` into **bundles**, for designing experiments and (eventually) `Library`/`Config` presets ([execution/presets.py](../../execution/presets.py)). A bundle is not just a set of primitives — it is a set _plus the engine policies that make it runnable_. The tables below carry both.
 
 **Three tiers:**
 

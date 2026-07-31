@@ -4,9 +4,9 @@
 
 **What this is:** the design for a batch of LEARN experiments ("Abstraction Ladders") measuring how much a chain of learnable intermediate abstractions reduces the search cost of reaching a target program — and what that reduction costs in learning overhead and library bloat. It is the **source of truth for ladder terminology** (§2) and the **pre-registered predictions** (§3): queue rows, notebooks, and future sessions link here rather than redefining.
 
-**What this is not:** a results log (runs go to [EXPERIMENTS.md](../EXPERIMENTS.md) + `experiments/` notebooks), a machinery design (that lands in [EXECUTION.md](../EXECUTION.md)/[ARCHITECTURE.md](../ARCHITECTURE.md), tracked in MACHINERY.md), or a state mirror of the queue ([EXPERIMENT_QUEUE.md](../EXPERIMENT_QUEUE.md) holds what's next).
+**What this is not:** a results log (runs go to [EXPERIMENTS.md](../../EXPERIMENTS.md) + `experiments/` notebooks), a machinery design (that lands in [EXECUTION.md](../EXECUTION.md)/[ARCHITECTURE.md](../ARCHITECTURE.md), tracked in MACHINERY.md), or a state mirror of the queue ([EXPERIMENT_QUEUE.md](../EXPERIMENT_QUEUE.md) holds what's next).
 
-**Builds on:** E11 (perceive→transform: single-rung mint with a genuinely free parameter; the cheapest-wins corpus discipline), E12 (layered-abstraction: two-generation climb; first vocabulary-tax measurement), E13 (fundamental-floor grain contrast: measured per-round growth factors; censored-baseline reality) — all in [EXPERIMENTS.md](../EXPERIMENTS.md). Precursor sketch: [task_specific/4093f84a-EXPRESSIBILITY-2026-07-15.md](task_specific/4093f84a-EXPRESSIBILITY-2026-07-15.md) (a hand-derived ladder, before the concept was fleshed out; its Total-vs-Jump-only depth distinction survives here as inlined vs jump depth).
+**Builds on:** E11 (perceive→transform: single-rung mint with a genuinely free parameter; the cheapest-wins corpus discipline), E12 (layered-abstraction: two-generation climb; first vocabulary-tax measurement), E13 (fundamental-floor grain contrast: measured per-round growth factors; censored-baseline reality) — all in [EXPERIMENTS.md](../../EXPERIMENTS.md). Precursor sketch: [task_specific/4093f84a-EXPRESSIBILITY-2026-07-15.md](4093f84a-EXPRESSIBILITY-2026-07-15.md) (a hand-derived ladder, before the concept was fleshed out; its Total-vs-Jump-only depth distinction survives here as inlined vs jump depth).
 
 ---
 
@@ -228,7 +228,7 @@ Marked open deliberately; to be settled by discussion, then this section re-issu
 
 ## 11. Appendix — E12 re-read as the canonical height-2 ladder
 
-The `layered-abstraction` study ([studies.py](../src/arc_lab/program_search/execution/studies.py), EXPERIMENTS.md 2026-07-12), in this doc's vocabulary:
+The `layered-abstraction` study ([studies.py](../../src/arc_lab/program_search/execution/studies.py), EXPERIMENTS.md 2026-07-12), in this doc's vocabulary:
 
 - **Floor** `L_0` = {flip_h, flip_v, map_color}; **wake budget** `max_depth=3` (two applications).
 - **r_1** = `rot180 = flip_h(flip_v(g))`: d_1 = 2; 4 demonstrating tasks + 1 heldout; no free parameters (no variation plan needed); demonstrations full-solution at own level.

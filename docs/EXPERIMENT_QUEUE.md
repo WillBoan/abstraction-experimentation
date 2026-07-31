@@ -2,7 +2,7 @@
 
 Planned experiments for arc-lab — a **drain-only queue**. This is _state, not events_ (the counterpart to `EXPERIMENTS.md`): it holds what we currently intend to run, and it only shrinks or gets deliberately re-fed.
 
-> **Superseded as the active program (2026-07-23).** The single-task **search-behavior** line this queue was built around (the 2026-07-14 priority spine) has been superseded by the **Abstraction Ladder Experiments**, whose phased plan of record is [docs/abstraction_ladders/AL-PLAN-2026-07-23.md](docs/abstraction_ladders/AL-PLAN-2026-07-23.md) and whose cross-cutting index is [docs/TODO-2026-07-23.md](docs/TODO-2026-07-23.md). **Active experimental work now lives there, not here.** This queue is retained as the **backlog of non-ladder / deferred experiments** — real ideas orthogonal to the ladder program or gated behind it. It only shrinks (run / reject / absorb) or gets a row promoted into the ladder plan.
+> **Superseded as the active program (2026-07-23).** The single-task **search-behavior** line this queue was built around (the 2026-07-14 priority spine) has been superseded by the **Abstraction Ladder Experiments**, whose phased plan of record is [docs/abstraction_ladders/AL-PLAN-2026-07-23.md](abstraction_ladders/AL-PLAN-2026-07-23.md) and whose cross-cutting index is [docs/archive/TODO-2026-07-22.md](archive/TODO-2026-07-22.md). **Active experimental work now lives there, not here.** This queue is retained as the **backlog of non-ladder / deferred experiments** — real ideas orthogonal to the ladder program or gated behind it. It only shrinks (run / reject / absorb) or gets a row promoted into the ladder plan.
 >
 > **Drained in the 2026-07-23 supersession** (the whole former Active section): _extrapolator validation_ → **run** (the estimator failed it; EXPERIMENTS.md 2026-07-23, `experiments/2026-07-23-estimator-validation/`); _control-floor cost concentration_ → **absorbed** into the if-tax micro-probe (EXPERIMENTS.md 2026-07-22 micro-probes, battery C — the `eq`/`if` O(pool²) shape is measured there); _point the loop at real ARC_ → **promoted** to the ladder plan's real-ARC anchoring (AL-PLAN Phase 3+ item 12 / TODO item 11). The remaining former-Active rows moved to Backlog below.
 
@@ -17,7 +17,7 @@ Planned experiments for arc-lab — a **drain-only queue**. This is _state, not 
 
 ## Backlog — deferred / non-ladder / downstream
 
-Real ideas, but either orthogonal to the ladder program or gated behind it. Promote a row into [AL-PLAN](docs/abstraction_ladders/AL-PLAN-2026-07-23.md) or [TODO](docs/TODO-2026-07-23.md) when it becomes the active thing to build; otherwise it waits here.
+Real ideas, but either orthogonal to the ladder program or gated behind it. Promote a row into [AL-PLAN](abstraction_ladders/AL-PLAN-2026-07-23.md) or [TODO](archive/TODO-2026-07-22.md) when it becomes the active thing to build; otherwise it waits here.
 
 | Experiment | Type | Floor / setup | What it asks | Status vs the ladder program | Unmet machinery |
 | --- | --- | --- | --- | --- | --- |

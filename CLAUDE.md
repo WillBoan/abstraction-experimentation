@@ -4,7 +4,7 @@ Operational guide for agents working in this repo. Human-facing overview is in [
 
 ## What this is
 
-`arc-lab`: a sandbox for the ARC-AGI benchmarks and, more broadly, ML / program-synthesis / abstraction-formation experimentation. The load-bearing design decision: **machinery is data** — there are no solver classes; a run is a frozen, content-hashed `RunSpec = Config × Corpus`, and the execution layer (`program_search/execution/`) drives `Config` directly. The activity/call-stack model is **[EXECUTION.md](EXECUTION.md)**; the search-engine design is **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+`arc-lab`: a sandbox for the ARC-AGI benchmarks and, more broadly, ML / program-synthesis / abstraction-formation experimentation. The load-bearing design decision: **machinery is data** — there are no solver classes; a run is a frozen, content-hashed `RunSpec = Config × Corpus`, and the execution layer (`program_search/execution/`) drives `Config` directly. The activity/call-stack model is **[EXECUTION.md](docs/EXECUTION.md)**; the search-engine design is **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
 > `_notes/` is the user's private notes — off-limits.
 
@@ -28,7 +28,7 @@ make format     # auto-fix ruff lint + format
 
 ## Experiment log
 
-When you run a meaningful experiment or reach a finding — **including dead ends** — append a terse, commit-anchored entry to [EXPERIMENTS.md](EXPERIMENTS.md). It's the shared human+AI record of what's been tried and what it meant. It's an _event log, not a state mirror_ — read its header for the discipline before adding to it. The **active experimental program is the Abstraction Ladder Experiments** — plan of record `docs/abstraction_ladders/AL-PLAN-2026-07-23.md` (its ladder-set execution plan is `docs/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md`), cross-cutting index `docs/TODO-2026-07-22.md`. [EXPERIMENT_QUEUE.md](EXPERIMENT_QUEUE.md) is now the drain-only **backlog of non-ladder / deferred experiments** (the single-task search-behavior line it began as is superseded; see its header).
+When you run a meaningful experiment or reach a finding — **including dead ends** — append a terse, commit-anchored entry to [EXPERIMENTS.md](EXPERIMENTS.md). It's the shared human+AI record of what's been tried and what it meant. It's an _event log, not a state mirror_ — read its header for the discipline before adding to it. The **active experimental program is the Abstraction Ladder Experiments** — plan of record `docs/abstraction_ladders/AL-PLAN-2026-07-23.md` (its ladder-set execution plan is `docs/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md`), cross-cutting index `docs/TODO-2026-07-22.md`. [EXPERIMENT_QUEUE.md](docs/EXPERIMENT_QUEUE.md) is now the drain-only **backlog of non-ladder / deferred experiments** (the single-task search-behavior line it began as is superseded; see its header).
 
 For a **non-trivial investigation**, also keep a detailed lab notebook under [experiments/](experiments/) — the full write-up + the throwaway probe scripts and their outputs, which EXPERIMENTS.md (the curated abstract) points to. See [experiments/README.md](experiments/README.md).
 

@@ -1,8 +1,8 @@
 # ARCHITECTURE.md
 
-> **SUPERSEDED (2026-07-11) by [EXECUTION.md](EXECUTION.md).** This snapshot described the run/config/activity model as of 2026-07-09, over the *old* solver-based machinery. The execution overhaul replaced it wholesale: `Solver` is gone, `Config` holds live components (not name-strings), the activities are `run_search` / `run_search_learn` / `run_study` over a recorded-run core, and the run data model (SPECS vs RECORDS) lives in EXECUTION.md's "Run data model" section. Kept for the historical record only — do not build against it.
+> **SUPERSEDED (2026-07-11) by [EXECUTION.md](../EXECUTION.md).** This snapshot described the run/config/activity model as of 2026-07-09, over the *old* solver-based machinery. The execution overhaul replaced it wholesale: `Solver` is gone, `Config` holds live components (not name-strings), the activities are `run_search` / `run_search_learn` / `run_study` over a recorded-run core, and the run data model (SPECS vs RECORDS) lives in EXECUTION.md's "Run data model" section. Kept for the historical record only — do not build against it.
 
-How a _run_ is specified, executed, and recorded. Sibling to the lever maps ([ONTOLOGY.md](ONTOLOGY.md) = the primitives, [MACHINERY.md](MACHINERY.md) = the mechanisms): this file is the **run/config/activity model** — the substrate the harness drives solvers over. It reflects the state after the `RunSpec × Config` refactor. Terms in **bold** are real types.
+How a _run_ is specified, executed, and recorded. Sibling to the lever maps ([ONTOLOGY.md](../ONTOLOGY.md) = the primitives, [MACHINERY.md](../MACHINERY.md) = the mechanisms): this file is the **run/config/activity model** — the substrate the harness drives solvers over. It reflects the state after the `RunSpec × Config` refactor. Terms in **bold** are real types.
 
 ## Ontology at a glance
 
@@ -73,7 +73,7 @@ Runs are idempotent (a present `results.json` is served from cache) and resumabl
 
 ## Extending an axis
 
-Add a search strategy → a `SearchSpec.kind` branch in `config.py` (+ the `Search` subclass). Add a library → an entry in `config.py::LIBRARIES`. Add a cost → `config.py::COSTS`. Add a proposer / sleep strategy / selector → subclass the ABC (`learn/antiunify.py`, `learn/sleep.py`, `learn/selection.py`) and wire it on a `StudySpec`. See [MACHINERY.md](MACHINERY.md) for the full axis catalogue.
+Add a search strategy → a `SearchSpec.kind` branch in `config.py` (+ the `Search` subclass). Add a library → an entry in `config.py::LIBRARIES`. Add a cost → `config.py::COSTS`. Add a proposer / sleep strategy / selector → subclass the ABC (`learn/antiunify.py`, `learn/sleep.py`, `learn/selection.py`) and wire it on a `StudySpec`. See [MACHINERY.md](../MACHINERY.md) for the full axis catalogue.
 
 ## Deferred (target model, not yet built)
 

@@ -67,7 +67,7 @@ Format (per idea; one piece of info per bullet; omit fields that are empty/obvio
   - Height: ~4-5
   - Shape: deep chain (quantity pipeline)
   - Floor: `UNIVERSAL_FLOOR`-ish, or HO (`fold` + CELLS_IO + PAIR)
-  - Rungs: bar/orientation detection → per-line counting (`count_left_of`-style, non-Grid→Grid) → run-painting. Worked case study: [4093f84a-EXPRESSIBILITY-2026-07-15.md](../task_specific/4093f84a-EXPRESSIBILITY-2026-07-15.md)
+  - Rungs: bar/orientation detection → per-line counting (`count_left_of`-style, non-Grid→Grid) → run-painting. Worked case study: [4093f84a-EXPRESSIBILITY-2026-07-15.md](../archive/4093f84a-EXPRESSIBILITY-2026-07-15.md)
   - Top Rung: the real ARC task (or a synthetic sibling)
   - Machinery demands: HO (`fill=lambda-synthesis`) or CTRL-heavy floor + `finite-enumerate` · **quantity-typed (non-Grid→Grid) rungs** → embedded fragments (`FrequentSubtree`/`StitchProposer`), RQ3 fragment visibility, or probe tasks
   - v1-eligible: NO

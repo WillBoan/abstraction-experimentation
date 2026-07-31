@@ -177,7 +177,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
   - Pure symbolic/MDL ARC solving lands single-digit→~20% _as a score_ — not our deliverable; understanding is. We sit **deliberately off the LLM-TTT frontier** (it trades away the determinism/inspectability that make findings mean anything).
   - The **descriptive (perceive/render) half** is the identified highest-leverage empty region — Ferré is a worked existence proof. The **unoccupied position:** descriptive representation × cross-task library learning.
   - **Adopt don't rebuild:** Stitch for F4 invention-at-scale, egg/babble for equivalence-at-scale, Hodel's `arc-dsl` as vocabulary reference; own the substrate + instrumentation. Build the lambda-index keystone as a **Stitch-compatible De Bruijn index** (serves the low-floor thesis _and_ cheap future adoption).
-- **Interpretation / strategy:** captured in [MACHINERY-STRATEGY-2026-07-07.md](docs/MACHINERY-STRATEGY-2026-07-07.md) (the build methodology); frame updated in [RESEARCH-2026-07-07.md](docs/archive/RESEARCH-2026-07-07.md) (supersedes 07-06); [MACHINERY.md](MACHINERY.md) / [ONTOLOGY.md](ONTOLOGY.md) annotated surgically.
+- **Interpretation / strategy:** captured in [MACHINERY-STRATEGY-2026-07-07.md](docs/archive/MACHINERY-STRATEGY-2026-07-07.md) (the build methodology); frame updated in [RESEARCH-2026-07-07.md](docs/archive/RESEARCH-2026-07-07.md) (supersedes 07-06); [MACHINERY.md](docs/MACHINERY.md) / [ONTOLOGY.md](docs/ONTOLOGY.md) annotated surgically.
 - **Next:** the F0 substrate keystone (De Bruijn λ-index); then shift the workload from synthetic microworlds toward real ARC tasks so reality writes the build queue.
 
 ---
@@ -327,7 +327,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-09 — Review of the higher-order/Stitch/type stack (corrects the "compromise-free" claim)
 
-- **Commit:** working tree atop `6f38706`. Full ledger: [codebase_review/review-after-stitch-integration-2026-07-09.md](codebase_review/review-after-stitch-integration-2026-07-09.md) (the abstract here; findings + status there).
+- **Commit:** working tree atop `6f38706`. Full ledger: [docs/archive/codebase_review/review-after-stitch-integration-2026-07-09.md](docs/archive/codebase_review/review-after-stitch-integration-2026-07-09.md) (the abstract here; findings + status there).
 - **Ran:** a multi-agent adversarial review (three reviewers — Phase-H migration, higher-order search, Stitch shim/sleep — plus independent reading), sharpest claims re-probed against the real `stitch_core` wheel.
 - **Result:**
   - **The Phases G+H "compromise-free within its scope" claim (above) was overstated.** The function-dedup battery was in fact _unsound_ — both probe grids were height-2, so `height` collapsed with a constant and a correct candidate could be silently dropped (order-dependent solve). Fixed by widening the battery + never deduping an unprobeable (`None`) signature; but it remains a **finite-battery observational-equivalence heuristic** (standard, sound-in-practice, not complete) — not "compromise-free".
@@ -551,7 +551,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-22 — Lint hardening: the collapse families become static checks (11/20 now fail lint, witnesses printed)
 
-- **Commit:** `72eb123` (sequence `0c63c70..72eb123`). Checks inventory: [docs/abstraction_ladders/LADDER-CHECKS-2026-07-21.md](docs/abstraction_ladders/LADDER-CHECKS-2026-07-21.md); plan of record: [docs/abstraction_ladders/AL-PLAN-2026-07-22.md](docs/abstraction_ladders/AL-PLAN-2026-07-22.md).
+- **Commit:** `72eb123` (sequence `0c63c70..72eb123`). Checks inventory: [docs/archive/LADDER-CHECKS-2026-07-21.md](docs/archive/LADDER-CHECKS-2026-07-21.md); plan of record: [docs/archive/AL-PLAN-2026-07-22.md](docs/archive/AL-PLAN-2026-07-22.md).
 - **Question:** the 2026-07-21 read-across established collapse = "the intended template is not the cost-minimal representative of its signature class" and named two static-checkable mechanisms (train-constant subterms; equational shortcuts). Can they be linted — and what do they find on the existing 20?
 - **Ran:** three new lint checks + five review fixes, then the batch lint, observe-then-lock. `constant-subterm` (every composite scalar subterm of every stated solution, unfolded to floor, evaluated across the task's train examples; error iff the value is in the ladder's own `policy_constants` domain, warn otherwise). `if-condition-varies` (both truth values per If; dormant, no ladder branches). `rewrite-shallow` (`analysis/equations.py` curated laws + import-time-derived D4 table; `analysis/rewrite.py` bounded normalize-and-enumerate; every witness behaviorally confirmed; caps are silent passes).
 - **Result:**
@@ -888,7 +888,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — Per-rung depth budgets (derived by default), and the DAG reads that were level reads
 
-- **Commit:** dc8ae13. Wave 1 of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md).
+- **Commit:** dc8ae13. Wave 1 of [docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md](docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md).
 - **Question:** two things the `dae9d2b5` build exposed. (1) Four sites read "the layer above rung `i`" as `rungs[i]` -- the next rung BY LEVEL -- which on a DAG names a sibling; two were still live. (2) A single `depth_limit` must be at once deep enough for the deepest jump and shallow enough that the shallowest double-jump stays out of reach, so a ladder whose rungs differ in depth can have NO valid budget. Does a per-level schedule dissolve that, and what does it cost?
 - **Ran:** converted the level reads to the consumer graph; made the depth schedule per-level and derived-by-default, with an explicit `ladder.depth_schedule: 'pinned'` opt-out; swept the derived schedule across all 22 registry ladders before changing anything.
 - **Result:**
@@ -907,7 +907,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — The breadth axis, instrumented: a static census and a measured floor tax
 
-- **Commit:** dc8ae13. Wave 2 of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md).
+- **Commit:** dc8ae13. Wave 2 of [docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md](docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md).
 - **Question:** the 07-25 pruning diagnosis found rung 1 costing 21,149,854 considered on the full floor and **4** pruned, and concluded the data to see it had been available all along. What instrument makes that visible BEFORE an hour is spent, and what does it say about the ladders already committed?
 - **Ran:** built two instruments -- a static round-1 breadth census in the lint (`ladders/breadth.py`) and a pruned-vs-full cell pair in the probe (`FloorTax`) -- then swept the census over all 22 registry ladders.
 - **Result:**
@@ -931,7 +931,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — Wave 3: labelling compromises, guarding the write, and the process doc
 
-- **Commit:** dc8ae13. Wave 3 of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md), completing it.
+- **Commit:** dc8ae13. Wave 3 of [docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md](docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md), completing it.
 - **Question:** what is left that machinery can enforce, and what genuinely cannot be — the residue that has to be a written process rather than a check?
 - **Ran:** built the Compromise Options registry, the guarded `.ladder` writer, and the remaining lint-output pass; then wrote [LADDER-PROCESS-2026-07-26.md](docs/abstraction_ladders/LADDER-PROCESS-2026-07-26.md) for what was left.
 - **Result:**
@@ -946,7 +946,7 @@ Entry template (tier the bullets; put the numbers in an explicit **Metrics** blo
 
 ## 2026-07-26 — Value-level constant pruning, added without moving a single `run_id`
 
-- **Commit:** cd77ccf. Closes the last open A3 item of [docs/abstraction_ladders/2026-07-26-AL-PLAN.md](docs/abstraction_ladders/2026-07-26-AL-PLAN.md).
+- **Commit:** cd77ccf. Closes the last open A3 item of [docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md](docs/abstraction_ladders/2026-07-26-AL-PLAN-PROCESS.md).
 - **Question:** the probe's "pruned" cell pruned only the LIBRARY. The plan specified a value-level constant allowlist too, and that was skipped on the reasoning that `_type_in_use` already drops whole types when their primitives go. Is that reasoning right, and what does adding the allowlist cost?
 - **Ran:** measured the four breadth corners across the batch to test the reasoning, then added `BottomUpSearchEngine.constant_allowlist` and wired it into the probe's pruned cell.
 - **Result:**

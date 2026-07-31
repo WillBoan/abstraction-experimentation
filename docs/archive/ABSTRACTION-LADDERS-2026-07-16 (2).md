@@ -1,10 +1,10 @@
 # Abstraction Ladder Experiments — design (2026-07-16)
 
-The design snapshot for the **Abstraction Ladder Experiments**: a batch of LEARN experiments measuring whether — and by how much — learned abstractions convert an intractable search into a sequence of tractable ones. This document is the merged output of the 2026-07-16 design sessions; it records the concept, the metrics, the ladder-construction methodology, the run structure, and the open decisions. It is a _design_ doc, not a log: runs land in [EXPERIMENTS.md](../EXPERIMENTS.md) with notebooks under [experiments/](../experiments/), and next-run sizing lands as [EXPERIMENT_QUEUE.md](../EXPERIMENT_QUEUE.md) rows when each run is specced.
+The design snapshot for the **Abstraction Ladder Experiments**: a batch of LEARN experiments measuring whether — and by how much — learned abstractions convert an intractable search into a sequence of tractable ones. This document is the merged output of the 2026-07-16 design sessions; it records the concept, the metrics, the ladder-construction methodology, the run structure, and the open decisions. It is a _design_ doc, not a log: runs land in [EXPERIMENTS.md](../../EXPERIMENTS.md) with notebooks under [experiments/](../../experiments/), and next-run sizing lands as [EXPERIMENT_QUEUE.md](../EXPERIMENT_QUEUE.md) rows when each run is specced.
 
 Prior work this builds on directly: E11 (cheapest-wins trap, free-parameter corpus discipline), E12 (2-rung climb works end to end; first vocabulary-cost signal, ~4x), E13 (per-round growth b ≈ 17–24x; raw deep search is censored in practice, not just expensive). A `StudySpec` is the degenerate 1-rung ladder; E12's `layered-abstraction` was a 2-rung ladder. This direction is a **scaling instrument** for that phenomenon, not a new phenomenon.
 
-An early hand-worked precursor (before the concept was fleshed out): [task_specific/4093f84a-EXPRESSIBILITY-2026-07-15.md](task_specific/4093f84a-EXPRESSIBILITY-2026-07-15.md) — its Total-vs-Jump-only depth distinction and "depth compounds by re-embedding" observation survive into this design; its rungs-as-quantities framing is superseded (see §2 scope note).
+An early hand-worked precursor (before the concept was fleshed out): [task_specific/4093f84a-EXPRESSIBILITY-2026-07-15.md](4093f84a-EXPRESSIBILITY-2026-07-15.md) — its Total-vs-Jump-only depth distinction and "depth compounds by re-embedding" observation survive into this design; its rungs-as-quantities framing is superseded (see §2 scope note).
 
 ---
 
@@ -233,7 +233,7 @@ Open:
 ## 11. Pointers
 
 - Run model / activities: [EXECUTION.md](../EXECUTION.md) · engine/substrate: [ARCHITECTURE.md](../ARCHITECTURE.md)
-- Prior findings: [EXPERIMENTS.md](../EXPERIMENTS.md) (E11 2026-07-12 · E12 2026-07-12 · E13 2026-07-15) · queue: [EXPERIMENT_QUEUE.md](../EXPERIMENT_QUEUE.md)
+- Prior findings: [EXPERIMENTS.md](../../EXPERIMENTS.md) (E11 2026-07-12 · E12 2026-07-12 · E13 2026-07-15) · queue: [EXPERIMENT_QUEUE.md](../EXPERIMENT_QUEUE.md)
 - Study machinery this generalizes: `src/arc_lab/program_search/execution/model/study_spec.py` · `execution/studies.py`
 - Tracking instruments: `src/arc_lab/program_search/search/tracking.py`
-- Precursor hand-worked ladder: [task_specific/4093f84a-EXPRESSIBILITY-2026-07-15.md](task_specific/4093f84a-EXPRESSIBILITY-2026-07-15.md)
+- Precursor hand-worked ladder: [task_specific/4093f84a-EXPRESSIBILITY-2026-07-15.md](4093f84a-EXPRESSIBILITY-2026-07-15.md)

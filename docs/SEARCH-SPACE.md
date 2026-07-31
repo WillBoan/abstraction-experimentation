@@ -1,6 +1,6 @@
 # SEARCH-SPACE.md
 
-A map of the **control surface for what programs are _expressible_** — the "what's possible" levers. Sibling to [ONTOLOGY.md](ONTOLOGY.md) (lever 1, the primitive vocabulary / Floor) and [MACHINERY.md](MACHINERY.md) (lever 3, the search / scoring / learning Machinery): those catalog _the things_ (primitives, mechanisms); this one maps _how you toggle which of them are in play for a run_, and why some toggles are the vocabulary itself while others must be an explicit switch. [RESEARCH-2026-07-08.md](docs/RESEARCH-2026-07-08.md) is the frame all three are read against; run-time configuration is the frozen `Config` bundle (`program_search/execution/model/config.py`, presets in `execution/presets.py` — see [EXECUTION.md](EXECUTION.md)), and the expressiveness switches themselves are fields on `program_search/search/search_engine.py::BottomUpSearchEngine`.
+A map of the **control surface for what programs are _expressible_** — the "what's possible" levers. Sibling to [ONTOLOGY.md](ONTOLOGY.md) (lever 1, the primitive vocabulary / Floor) and [MACHINERY.md](MACHINERY.md) (lever 3, the search / scoring / learning Machinery): those catalog _the things_ (primitives, mechanisms); this one maps _how you toggle which of them are in play for a run_, and why some toggles are the vocabulary itself while others must be an explicit switch. [RESEARCH-2026-07-08.md](archive/RESEARCH-2026-07-08.md) is the frame all three are read against; run-time configuration is the frozen `Config` bundle (`program_search/execution/model/config.py`, presets in `execution/presets.py` — see [EXECUTION.md](EXECUTION.md)), and the expressiveness switches themselves are fields on `program_search/search/search_engine.py::BottomUpSearchEngine`.
 
 It exists because "control the search space" hides at least two independent gates that get conflated: **curating the bag of primitives** and **flipping a capability the bag can't summon**. The load-bearing fact — the reason this needs its own map — is that _vocabulary curation is necessary but not sufficient_: **invention can re-introduce a capability you thought you removed by emptying the bag** (see Table B, higher-order invention). You can't reason about "turn X off for this run" without seeing both gates.
 
@@ -10,7 +10,7 @@ It exists because "control the search space" hides at least two independent gate
 
 - **Two tables, one dividing line.** Table A = capabilities _summoned by the vocabulary_ (control by curating the bag — no switch needed). Table B = capabilities _not fully gated by the bag_ (they need their own config switch). The line between them is the whole point.
 - **The Options column is the experiment surface** — the settings you'd actually vary for a run.
-- The **rendered companion** — [`docs/search-space-control.html`](docs/search-space-control.html) — carries the same two tables plus the co-dependency **graph** (open in a browser; GitHub shows it as source).
+- The **rendered companion** — [`docs/archive/search-space-control.html`](archive/search-space-control.html) — carries the same two tables plus the co-dependency **graph** (open in a browser; GitHub shows it as source).
 - Deliberately a _map_, not a claim of coverage. The Status columns record the 2026-07-13 code audit; re-ground them when the control surface moves.
 
 ## Mental model (the words we're using)
@@ -73,7 +73,7 @@ One rule generates every cluster: **a type is useful only if the bag holds both 
   ISLAND   Grid ─histogram▶ Histogram  ─╳  (no consumer back)               ✗ dead weight
 ```
 
-Read it: `Bool` has no direct route to a grid — `if` _is_ its off-ramp; drop `if` and predicates become an island, drop predicates and `if`'s condition is unfillable. `Int` gets home only via a **two-hop** off-ramp (`compare`→`Bool`, then `if`→`Grid`); drop either hop and `Int` is an island. Rendered version with colour/ramps: [`docs/search-space-control.html`](docs/search-space-control.html).
+Read it: `Bool` has no direct route to a grid — `if` _is_ its off-ramp; drop `if` and predicates become an island, drop predicates and `if`'s condition is unfillable. `Int` gets home only via a **two-hop** off-ramp (`compare`→`Bool`, then `if`→`Grid`); drop either hop and `Int` is an island. Rendered version with colour/ramps: [`docs/archive/search-space-control.html`](archive/search-space-control.html).
 
 ## The through-line
 

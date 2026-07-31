@@ -4,7 +4,7 @@ How to build a ladder: what to do, in what order, with which instrument — and 
 
 **What this is not.** It is not a list of checks: [LINT-CHECKS.md](LINT-CHECKS.md) is generated from the code and is the authority on what fires and why. It is not the format spec ([LADDER-FORMAT.md](LADDER-FORMAT.md)) or the register ([LADDERS.md](LADDERS.md)). What lives here is the part machinery cannot enforce — **order, judgement, and inference** — which is why it is short: nearly everything else became a check.
 
-Written after the first real-ARC ladder ([`dae9d2b5-halves-union`](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-halves-union.ladder)) cost far more than it should have. The machinery half of that response is [2026-07-26-AL-PLAN.md](2026-07-26-AL-PLAN.md); the failures are in [EXPERIMENTS.md](../../EXPERIMENTS.md) under 2026-07-25/26. Almost every rule below is a scar.
+Written after the first real-ARC ladder ([`dae9d2b5-halves-union`](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-halves-union.ladder)) cost far more than it should have. The machinery half of that response is [2026-07-26-AL-PLAN.md](2026-07-26-AL-PLAN-PROCESS.md); the failures are in [EXPERIMENTS.md](../../EXPERIMENTS.md) under 2026-07-25/26. Almost every rule below is a scar.
 
 ---
 
@@ -69,7 +69,7 @@ The session's own contrast: `dae9d2b5-3-recolor-rungs` was killed by **one lint,
 
 **Read the compact table first.** `lint-ladder <name>` prints one line per rung — the level's budget, `d_i`/`needs`, the double-jump, the round-1 breadth `b1` and its `tax` ratio, and a `measured` column read back from any recorded probe cells for that level. Blank there means nobody has probed it, which is an honest gap rather than a zero. `--full` prints the artifact form; `arc-lab runs --probes` lists the cells themselves.
 
-**Lint's ~1s has one known exception.** Unfolding a heavily-shared tall DAG can blow up — `cfb2ce5a-5-lowered-full` does not terminate (>8 min, >2.6 GB RSS). A lint that is minutes-silent on a big DAG is hitting that, not working; the fix is recorded out-of-scope in [2026-07-26-AL-PLAN](2026-07-26-AL-PLAN.md) — park the ladder rather than waiting it out.
+**Lint's ~1s has one known exception.** Unfolding a heavily-shared tall DAG can blow up — `cfb2ce5a-5-lowered-full` does not terminate (>8 min, >2.6 GB RSS). A lint that is minutes-silent on a big DAG is hitting that, not working; the fix is recorded out-of-scope in [2026-07-26-AL-PLAN](2026-07-26-AL-PLAN-PROCESS.md) — park the ladder rather than waiting it out.
 
 **INCONCLUSIVE is a non-result by design, not a defect to tune away.** A censored cell means the search was cut short, so "unsolved" is a budget fact, not a verdict. Raising `--guard` buys a longer search, never a stronger verdict; if the answer matters, run `run-ladder`. (2026-07-25: six escalating guard runs, >1h. The CLI's own help was recommending it — that text is fixed; this is the reason.)
 
@@ -183,5 +183,5 @@ General habits, listed because these are the ones that cost real time here.
 - Format: [LADDER-FORMAT.md](LADDER-FORMAT.md) · Register: [LADDERS.md](LADDERS.md) · Checks: [LINT-CHECKS.md](LINT-CHECKS.md)
 - Verdict profile, not a sandwich gate: [CERTIFICATE-PROFILE-2026-07-24.md](CERTIFICATE-PROFILE-2026-07-24.md) · The two cost axes: [BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md)
 - Set structure: [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md) · Full-set plan (Phase 2+ entry gates): [LADDER-SET-PLAN-2026-07-24.md](LADDER-SET-PLAN-2026-07-24.md) · Comparison licenses: [LADDER-RELATIONSHIPS-2026-07-23.md](LADDER-RELATIONSHIPS-2026-07-23.md)
-- Active plans: [MVE-PLAN-2026-07-25.md](MVE-PLAN-2026-07-25.md) · [AL-PLAN-2026-07-23.md](AL-PLAN-2026-07-23.md) · [2026-07-26-AL-PLAN.md](2026-07-26-AL-PLAN.md)
-- Run model: [EXECUTION.md](../../EXECUTION.md) · Engine: [ARCHITECTURE.md](../../ARCHITECTURE.md) · Notebooks: [experiments/README.md](../../experiments/README.md)
+- Active plans: [MVE-PLAN-2026-07-25.md](MVE-PLAN-2026-07-25.md) · [AL-PLAN-2026-07-23.md](AL-PLAN-2026-07-23.md) · [2026-07-26-AL-PLAN.md](2026-07-26-AL-PLAN-PROCESS.md)
+- Run model: [EXECUTION.md](../EXECUTION.md) · Engine: [ARCHITECTURE.md](../ARCHITECTURE.md) · Notebooks: [experiments/README.md](../../experiments/README.md)
