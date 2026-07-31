@@ -69,6 +69,11 @@ def lint_ladder_command(
         False, "--json", help="Emit diagnostics as JSON (LSP-shaped ranges) instead of the report."
     ),
 ) -> None:
+    """Statically check a `.ladder` source -- reads only, never runs a search.
+
+    The authoring loop (edit -> lint -> edit). Works before the testbed exists; exits non-zero
+    when anything fails.
+    """
     targets = sorted(ladder_paths()) if target is None else [target]
     if json_output:
         _emit_json(targets)

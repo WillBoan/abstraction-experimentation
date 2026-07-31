@@ -45,6 +45,11 @@ def ladder_seeds_command(
         "repair -- see al13).",
     ),
 ) -> None:
+    """Print deterministic input grids as `.ladder` task lines, ready to paste.
+
+    Hand-picking grids is where a ladder acquires a literal, constant or identity shortcut; these
+    are varied within a task, varied across tasks, and asymmetric under both flips.
+    """
     colours = tuple(int(part) for part in palette.split(",") if part.strip())
     count = train + test
     try:

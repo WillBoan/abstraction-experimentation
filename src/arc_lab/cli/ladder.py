@@ -40,6 +40,10 @@ def run_ladder_command(
         "arm censors, the amortization ratio is proven >= K; if it solves, the ratio is measured.",
     ),
 ) -> None:
+    """Execute a registered Ladder end-to-end and print (or write) its certificate report.
+
+    Renders and lints the spec, then runs the climb, the oracle chain and the off-chain arm.
+    """
     try:
         spec = make_ladder(name)
     except KeyError as exc:

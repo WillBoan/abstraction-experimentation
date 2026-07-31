@@ -40,6 +40,11 @@ def probe_ladder_command(
         "longer wait, not a verdict. Lower it for a fast smoke probe; only `run-ladder` acquits.",
     ),
 ) -> None:
+    """Drive one Ladder's rungs through the real engine, one rung cell at a time.
+
+    The design-time loop between lint and the certificate: it convicts (collapses, collisions,
+    wrong mints) but never acquits. Exits non-zero when any probed rung fails.
+    """
     try:
         spec = draft_spec(load_ladder(name))
     except KeyError as exc:

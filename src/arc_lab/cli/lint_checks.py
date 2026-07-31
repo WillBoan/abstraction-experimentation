@@ -22,6 +22,10 @@ def lint_checks_command(
         "docs/abstraction_ladders/LINT-CHECKS.md).",
     ),
 ) -> None:
+    """Print (or write) the generated ladder-lint check register.
+
+    A projection of ``CHECK_PLAN``, never a parallel list to keep in step.
+    """
     text = render_register()
     if out is None:
         typer.echo(text, nl=False)
