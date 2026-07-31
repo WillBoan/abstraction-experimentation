@@ -17,10 +17,6 @@
       "Bash(gh run watch:*)",
       "Bash(grep -rn '\"int\", \"color\", \"bool\"\\\\|{\"int\", \"color\", \"bool\"}\\\\|_CONSTANT_TYPES\\\\|int.*color.*bool' src/arc_lab/program_search/execution/check_coherence.py src/arc_lab/program_search/execution/forecast_cost.py)"
     ],
-    "deny": [
-      "Read(./_notes/**)",
-      "./docs/archive/ABSTRACTION-LADDERS-2026-07-16 (1).md",
-      "./docs/archive/ABSTRACTION-LADDERS-2026-07-16 (2).md"
-    ]
+    "deny": ["Read(./_notes/**)"]
   }
 }
