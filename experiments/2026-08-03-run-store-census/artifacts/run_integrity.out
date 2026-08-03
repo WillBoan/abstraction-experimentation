@@ -1,0 +1,103 @@
+====================================================================================================
+A. IS THERE A COMPLETE, SINGLE-GENERATION CELL SET PER LADDER?
+====================================================================================================
+   For each ladder: its runs grouped by (commit, base budget). A usable batch
+   of record needs ONE group holding every cell. Multiple groups = the ladder's
+   numbers come from runs made under different machinery/budgets.
+
+ladder                       runs  #(commit,budget) groups  largest group  share  its commit
+---------------------------  ----  -----------------------  -------------  -----  ----------
+al1-mirror                   45    8                        14             31%    b88897c9  
+dae9d2b5-split-halves-lean   17    8                        5              29%    6012073d  
+94f9d214-nor-recolor         21    7                        4              19%    ede5e258  
+dae9d2b5-split-asym-lean     22    7                        7              32%    ede5e258  
+94f9d214-nor-halves          14    5                        5              36%    260fa76b  
+al17-shift-frame-tall        21    5                        17             81%    aad497c7  
+fafffa47-nor-halves          14    5                        5              36%    260fa76b  
+fafffa47-nor-recolor         21    5                        8              38%    260fa76b  
+al15-shift-frame             18    4                        14             78%    532e1255  
+al16-layout-nest             18    4                        14             78%    532e1255  
+al18-fanin-rotate            18    4                        14             78%    aad497c7  
+al19-fanin-recolor           20    4                        14             70%    aad497c7  
+al2-rot90-calibration        17    4                        10             59%    532e1255  
+al20-recolor-telescope       20    4                        14             70%    aad497c7  
+al3-quad-symmetrize          10    3                        8              80%    532e1255  
+al5-perceiver-chain          17    3                        8              47%    c038fa15  
+dae9d2b5-split-recolor       19    3                        9              47%    272d13e5  
+dae9d2b5-split-recolor-lean  14    3                        9              64%    6012073d  
+e1-rot90                     18    3                        13             72%    c8a16ee6  
+94f9d214-nor-merged          25    2                        24             96%    1b43b3a4  
+al21-dag-siblings            8     2                        7              88%    99d38b28  
+al4-mask-crop                10    2                        8              80%    532e1255  
+fafffa47-nor-merged          22    2                        21             95%    1b43b3a4  
+al10-skippable               5     1                        5              100%   532e1255  
+al11-greedy-trap             10    1                        10             100%   532e1255  
+al12-unlearnable             4     1                        4              100%   532e1255  
+al13-symmetry-repair         14    1                        14             100%   532e1255  
+al14-cell-row-grid           15    1                        15             100%   532e1255  
+al6-mirror-tall              9     1                        9              100%   532e1255  
+al7-fast-tower               10    1                        10             100%   532e1255  
+al8-lean-perceiver           8     1                        8              100%   532e1255  
+al9-decoy                    10    1                        10             100%   532e1255  
+dae9d2b5-half-param          8     1                        8              100%   1b43b3a4  
+dae9d2b5-halves-union        1     1                        1              100%   99d38b28  
+layered-abstraction          13    1                        13             100%   d5ae2f32  
+perceive-transform           13    1                        13             100%   d5ae2f32  
+
+====================================================================================================
+B. DOUBLE-PAID CELLS — the same search space run under two stop modes
+====================================================================================================
+   compromise.py: the default is NO compromise 'precisely so one exhaustive run
+   yields three cost quantities at once'. Pairs below mean it was paid twice.
+
+   duplicate-key cell groups : 107
+   redundant runs            : 133  (16% of all runs)
+   redundant considered      : 33,208,607  (11% of all compute)
+   redundant wall-clock      : 30 min  (12%)
+
+   what differs inside a duplicate group (solution_limit, mode):
+        55x  ("(1, 'immediate')", "(None, 'generation-end')")
+        27x  ("(None, 'generation-end')",)
+        24x  ('(None, None)',)
+         1x  ("(1, 'generation-end')", "(1, 'immediate')", "(None, 'generation-end')")
+
+   top duplicate groups by redundant compute:
+ladder                   arm    budget                runs  redundant considered
+-----------------------  -----  --------------------  ----  --------------------
+quick-check-d511f180     -      dNone/pool500/arity2  2     14,329,638          
+arc1-train               -      d2/pool500/arity2     3     5,336,068           
+grain-contrast           -      dNone/pool200/arity2  3     1,832,388           
+dae9d2b5-split-recolor   train  d2/pool150/arity3     2     1,401,247           
+grain-contrast           -      dNone/pool200/arity2  2     1,290,178           
+dae9d2b5-split-recolor   train  d2/pool150/arity3     2     1,272,997           
+dae9d2b5-split-recolor   train  d2/pool150/arity3     2     1,153,209           
+dae9d2b5-split-recolor   train  d2/pool150/arity3     2     928,265             
+dae9d2b5-split-recolor   train  d2/pool150/arity3     2     767,765             
+grain-contrast-3x3-only  -      dNone/pool200/arity2  2     679,288             
+fafffa47-nor-merged      train  d2/pool30/arity3      2     152,519             
+fafffa47-nor-merged      train  d2/pool30/arity3      2     152,519             
+
+====================================================================================================
+C. PRE-RUNSPEC RUNS — recorded before the run model existed
+====================================================================================================
+   run dirs with NO runspec.json: 34
+   by experiment corpus:
+        9x  e10-stitch-refactor
+        5x  e1-rot90
+        5x  e8-mirror-index-sub
+        5x  e3-swap-cols
+        5x  e4-swap-cols-mdl
+        5x  e2-swap-cells
+   dates: ['2026-07-08']
+   files present: ['library.json', 'summary.json', 'trace.jsonl']
+
+====================================================================================================
+D. PROVENANCE — can a committed report be traced to its runs?
+====================================================================================================
+   committed reports          : 21
+   with NO run/commit provenance: 21
+   -> 94f9d214-nor-halves, 94f9d214-nor-merged, 94f9d214-nor-recolor, al1-mirror, al15-shift-frame, al16-layout-nest ...
+
+   Consequence: a committed number cannot be re-checked against the run that
+   produced it, and staleness cannot be detected mechanically (the run_ids are
+   content-hashed, but the artifact never records which ones it used).

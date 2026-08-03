@@ -1,0 +1,52 @@
+ONE FULL PASS PER LADDER, estimated from its largest coherent run group
+
+## Ladders with a committed report.json
+
+ladder                       cells  wall  largest (commit, budget) group
+---------------------------  -----  ----  ------------------------------
+al1-mirror                   14     32s   b88897c9 dNone/pool300/arity2 
+al2-rot90-calibration        10     0s    532e1255 d2/pool400/arity2    
+al15-shift-frame             14     5s    532e1255 d2/pool400/arity2    
+al16-layout-nest             14     0s    532e1255 d2/pool400/arity2    
+al17-shift-frame-tall        17     9s    aad497c7 d2/pool400/arity2    
+al18-fanin-rotate            14     1s    aad497c7 d2/pool400/arity2    
+al19-fanin-recolor           14     12s   aad497c7 d2/pool400/arity2    
+al20-recolor-telescope       14     10s   aad497c7 d2/pool400/arity2    
+al21-dag-siblings            7      0s    99d38b28 d2/pool400/arity2    
+dae9d2b5-split-recolor       9      743s  272d13e5 d2/pool150/arity3    
+dae9d2b5-split-recolor-lean  9      25s   6012073d d2/pool30/arity3     
+dae9d2b5-split-halves-lean   5      10s   6012073d d3/pool30/arity3     
+dae9d2b5-split-asym-lean     7      16s   ede5e258 d2/pool30/arity3     
+dae9d2b5-half-param          8      21s   1b43b3a4 d2/pool30/arity3     
+94f9d214-nor-merged          24     51s   1b43b3a4 d2/pool30/arity3     
+94f9d214-nor-recolor         4      13s   ede5e258 d2/pool30/arity3     
+94f9d214-nor-halves          5      6s    260fa76b d3/pool30/arity3     
+fafffa47-nor-merged          21     60s   1b43b3a4 d2/pool30/arity3     
+fafffa47-nor-recolor         8      26s   260fa76b d2/pool30/arity3     
+fafffa47-nor-halves          5      8s    260fa76b d3/pool30/arity3     
+
+   subtotal: 17 min
+
+## Rejected ladders + controls (runs on disk, NO committed report)
+
+ladder                cells  wall  largest (commit, budget) group
+--------------------  -----  ----  ------------------------------
+al3-quad-symmetrize   8      35s   532e1255 d4/pool2000/arity2   
+al4-mask-crop         8      114s  532e1255 d4/pool2000/arity3   
+al6-mirror-tall       9      147s  532e1255 d3/pool1500/arity3   
+al7-fast-tower        10     0s    532e1255 d2/pool400/arity2    
+al8-lean-perceiver    8      1s    532e1255 d3/pool1500/arity3   
+al13-symmetry-repair  14     61s   532e1255 d3/pool1000/arity3   
+al14-cell-row-grid    15     629s  532e1255 d3/pool2000/arity4   
+al9-decoy             10     1s    532e1255 d2/pool400/arity2    
+al10-skippable        5      0s    532e1255 d4/pool4000/arity2   
+al11-greedy-trap      10     1s    532e1255 d2/pool400/arity2    
+al12-unlearnable      4      0s    532e1255 d2/pool400/arity2    
+
+   subtotal: 16 min
+
+## Context
+
+   estimated batch of record (both sets) : 34 min
+   ALL 811 runs ever recorded      : 4.21 h
+   total candidates ever considered      : 289,304,962
