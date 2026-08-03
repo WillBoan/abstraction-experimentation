@@ -89,6 +89,6 @@ The most promising system directions are search-aware library governance, librar
 
 ## Evidence and code
 
-The repository is the primary artifact. The concise record of every experiment, including dead ends and retractions, is [EXPERIMENTS.md](EXPERIMENTS.md). Detailed notebooks and raw outputs live in [experiments/](experiments/). The Ladder registry and its per-Ladder reports are documented in [LADDERS.md](docs/abstraction_ladders/LADDERS.md), and [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) explains how to run the system.
+The repository is the primary artifact. The concise record of every experiment, including dead ends and retractions, is [EXPERIMENTS.md](EXPERIMENTS.md). Detailed notebooks and raw outputs live in [experiments/](experiments/). Every Ladder ever run, its verdict, and what the set does and does not sample is the generated [batch of record](docs/abstraction_ladders/BATCH-OF-RECORD.md); each Ladder's own source of truth is its `.ladder` file.  [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) explains how to run the system.
 
 The key investigations behind this report are the [compression-versus-reuse experiment](experiments/2026-07-07-e8-e9-mirror-index-bootstrap/notebook.md), the [first Ladder batch analysis](experiments/2026-07-21-ladder-batch-analysis/notebook.md), and the [MVE completion notebook](experiments/2026-07-27-mve-completion/notebook.md).

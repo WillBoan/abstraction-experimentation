@@ -75,7 +75,8 @@ def test_an_empty_store_has_nothing_to_reuse(tmp_path: Path) -> None:
 
 
 def test_raw_arms_are_purchased_once_per_cohort_not_once_per_member() -> None:
-    """LADDERS.md: "RQ1 is purchased once per cohort (raw arm on the 4-rung member only); the
+    """The RQ1 protocol (`batch.py::RAW_ARM_MEMBERS`): purchased once per cohort, on the 4-rung
+    member only; the
     2-rung members run ``--raw-arm-k 0``". Same task + floor + `d_raw` is the same search, so a
     per-member arm re-buys it AND manufactures ratios the cohort rule forbids comparing."""
     # The three real cohorts buy exactly one arm each.

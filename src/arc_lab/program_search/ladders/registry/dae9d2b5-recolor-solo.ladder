@@ -22,6 +22,7 @@ ladder dae9d2b5-recolor-solo
 # the cohort's own anchored ground truth.
 
 config {
+    ladder.task: 'dae9d2b5'
     budget.depth_limit: 3
     budget.max_arity: 3
     budget.max_pool: 30

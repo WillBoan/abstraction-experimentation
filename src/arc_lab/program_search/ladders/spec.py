@@ -18,6 +18,7 @@ from pathlib import Path
 
 from arc_lab.core.annotation import AnnotatedTask
 from arc_lab.core.dataset import Corpus
+from arc_lab.core.hashing import content_id
 from arc_lab.program_search.analysis.depth import compositional_depth, min_depth_limit
 from arc_lab.program_search.execution.model.config import Config
 from arc_lab.program_search.execution.model.serde import to_data
@@ -142,6 +143,11 @@ class LadderSpec:
     #: :class:`DepthScheduleMode` -- ``DERIVED`` by default, ``PINNED`` only where the uniform
     #: budget is the ladder's point.
     depth_schedule_mode: DepthScheduleMode = DepthScheduleMode.DERIVED
+    #: The external target this ladder is built against (``ladder.task`` in the source file) -- an
+    #: ARC task id, or ``""`` when the top is the ladder's own generated construct. This is the
+    #: ONLY comparison metadata that is declared: it is durable intent ("targets ARC task X") that
+    #: survives the Floor being edited. Cohort membership is derived from it -- see :meth:`cohort`.
+    task: str = ""
 
     def __post_init__(self) -> None:
         if self.reference_config.learn is None:
@@ -154,6 +160,24 @@ class LadderSpec:
     def floor(self) -> Library:
         """``L_0`` — the reference config's own library."""
         return self.reference_config.library
+
+    def cohort(self) -> str:
+        """This ladder's comparison group: **shared task + shared Floor**, per
+        `LADDER-RELATIONSHIPS-2026-07-23.md` §"Two axes". ``""`` means a cohort of one.
+
+        Derived, never declared. That file's reasoning: a declared cohort field "would drift the
+        moment a floor is edited" — so only :attr:`task` is authored, and the Floor half is a
+        content hash of the primitive names, which cannot disagree with the Floor it names.
+
+        The consequence worth knowing: two ladders on the SAME task with DIFFERENT Floors land in
+        different cohorts automatically (`dae9d2b5-halves-union`'s region-tier Floor against its
+        siblings'). That pair is an **ablation**, not a cohort — raw does not cancel, and the raw
+        delta is the measurement rather than a nuisance. Grouping them would silently license a
+        subtraction that is not valid.
+        """
+        if not self.task:
+            return ""
+        return f"{self.task}/{content_id(sorted(self.floor().names()), length=6)}"
 
     def oracle_library(self, level: int) -> Library:
         """``L_level`` = Floor + the *intended* rungs ``r_1..r_level`` gifted (each template
@@ -217,7 +241,7 @@ class LadderSpec:
         the file\'s overrides, which no single file shows), and the static lint\'s verdict --
         separated from what only the empirical certificate (results.md) can say.
 
-        The committed copy lives beside the worksheet in ``docs/abstraction_ladders/ladders/
+        The committed copy lives in ``docs/abstraction_ladders/ladders/
         <name>/`` (written by ``arc-lab run-ladder <name> --artifacts``); never hand-edited, and
         exempt from editor formatting (.prettierignore)."""
         shape = self.lint()
@@ -565,6 +589,8 @@ class LadderSpec:
             "budgets": [to_data(b) for b in self.budgets],
             "train_corpus": _corpus_provenance(self.train_corpus),
             "heldout_corpus": _corpus_provenance(self.heldout_corpus),
+            "task": self.task,
+            "cohort": self.cohort(),
         }
 
 

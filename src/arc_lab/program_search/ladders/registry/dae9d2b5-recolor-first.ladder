@@ -49,6 +49,7 @@ ladder dae9d2b5-recolor-first
 # flag 2 as cutting the climb off, the same defect class fixed on `split-asym-lean` and found
 # latent in both `nor-halves` members (S2/S6).
 config {
+    ladder.task: 'dae9d2b5'
     budget.depth_limit: 3
     budget.max_arity: 3
     budget.max_pool: 30

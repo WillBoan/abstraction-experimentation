@@ -2103,6 +2103,7 @@
         "solution_limit_mode": "generation-end"
       }
     ],
+    "cohort": "dae9d2b5/35b2a2",
     "distractors": [],
     "heldout_corpus": {
       "content_hash": "56fe21f8b78a6825",
@@ -2447,6 +2448,7 @@
         }
       }
     ],
+    "task": "dae9d2b5",
     "top": {
       "reference_solutions": [
         {

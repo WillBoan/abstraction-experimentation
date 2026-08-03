@@ -12,4 +12,4 @@ uv run arc-lab lint-ladder src/arc_lab/program_search/ladders/drafts/<name>.ladd
 
 That runs everything that is signature-level — types, scopes, arity, the rung spine — and returns the unknown primitives as a worklist. It skips everything that needs a corpus, because an assumed primitive has no implementation and so no task can be evaluated.
 
-Promotion is a move into `registry/` once the primitives exist and the tasks are written; the ladder gets its `alN-<slug>` identity and a row in `docs/abstraction_ladders/LADDERS.md` then.
+Promotion is a move into `registry/` once the primitives exist and the tasks are written; the ladder gets its `alN-<slug>` identity then (LADDER-FORMAT.md STR-3a); the directory is scanned, so there is nothing else to register.

@@ -3071,6 +3071,7 @@
         "solution_limit_mode": "generation-end"
       }
     ],
+    "cohort": "fafffa47/ef190b",
     "distractors": [],
     "heldout_corpus": {
       "content_hash": "e17539bc6f0bba0e",
@@ -3490,6 +3491,7 @@
         }
       }
     ],
+    "task": "fafffa47",
     "top": {
       "reference_solutions": [
         {

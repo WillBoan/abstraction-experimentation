@@ -291,6 +291,7 @@ def _spec_with_corpora(loaded: LoadedLadder, train: Corpus, heldout: Corpus) -> 
         heldout_corpus=heldout,
         budgets=(loaded.config.budget,),
         depth_schedule_mode=_depth_schedule_mode(loaded.document),
+        task=_task(loaded.document),
     )
 
 
@@ -442,6 +443,31 @@ def _template(block: RungBlock, below: Library) -> Program:
 #: this ladder set up", but they are routed here rather than through ``apply_overrides`` -- a plain
 #: SEARCH run has no rungs, so a per-level budget regime is not a ``Config`` field.
 _LADDER_SCOPE = "ladder."
+
+
+#: A task id is kebab-case for the same reason a ladder name is: it is a directory-safe, greppable
+#: identity that two files must spell identically to be recognised as targeting the same thing.
+_TASK_CHARS = set("abcdefghijklmnopqrstuvwxyz0123456789-")
+
+
+def _task(document: LadderDocument) -> str:
+    """``ladder.task`` -- the external target this ladder is built against (an ARC task id), or
+    ``""`` for a ladder whose top is its own generated construct.
+
+    Declared because it is durable intent -- "this targets ARC task X" survives the Floor being
+    edited, where the Floor itself does not. Everything downstream of it is DERIVED, per
+    ``LADDER-RELATIONSHIPS-2026-07-23.md``: see :meth:`LadderSpec.cohort`.
+    """
+    entry = next((e for e in document.config if e.path == f"{_LADDER_SCOPE}task"), None)
+    if entry is None:
+        return ""
+    value = str(entry.value)
+    if not value or value[0] == "-" or any(c not in _TASK_CHARS for c in value):
+        raise LadderFormatError(
+            f"`ladder.task` {value!r} must be kebab-case (same rule as a ladder name)",
+            line=entry.line,
+        )
+    return value
 
 
 def _depth_schedule_mode(document: LadderDocument) -> DepthScheduleMode:

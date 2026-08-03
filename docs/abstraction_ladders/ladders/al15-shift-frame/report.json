@@ -774,6 +774,7 @@
         "solution_limit_mode": "generation-end"
       }
     ],
+    "cohort": "",
     "distractors": [],
     "heldout_corpus": {
       "content_hash": "0a30807383683c89",
@@ -992,6 +993,7 @@
         }
       }
     ],
+    "task": "",
     "top": {
       "reference_solutions": [
         {

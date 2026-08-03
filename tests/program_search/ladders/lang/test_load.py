@@ -641,3 +641,44 @@ def test_every_ladder_is_first_order_so_the_depth_measures_agree() -> None:
                 f"{name}: {program} is no longer first-order"
             )
             assert compositional_depth(program) == min_depth_limit(program), f"{name}: {program}"
+
+
+def test_ladder_task_is_read_and_never_reaches_the_config() -> None:
+    """`ladder.task` is LADDER-scoped (CFG-7), so it must be routed past the override machinery:
+    if it reached `Config` it would land in `run_id`, and declaring the task a ladder was always
+    built against would invalidate every run it has ever recorded."""
+    spec = make_ladder("dae9d2b5-split-recolor")
+
+    assert spec.task == "dae9d2b5"
+    assert "task" not in spec.reference_config.to_dict()
+
+
+def test_a_malformed_task_id_is_a_load_error() -> None:
+    """Kebab-case, the same rule as a ladder name -- a typo must fail loudly rather than quietly
+    drop the ladder out of the cohort it was meant to join."""
+    source = _WRAPPED_RUNG.replace("config {", "config {\n    ladder.task: 'Not A Task'", 1)
+
+    with pytest.raises(LadderFormatError, match="must be kebab-case"):
+        structural_spec(resolve(parse_document(source)))
+
+
+def test_cohort_is_derived_from_task_and_floor_so_it_cannot_disagree_with_either() -> None:
+    """LADDER-RELATIONSHIPS-2026-07-23 §"Handling" refused a declared cohort field because it
+    "would drift the moment a floor is edited". Deriving it means the drift case is decided
+    correctly without anyone remembering: `dae9d2b5-halves-union` reaches a half through the
+    REGION tier, so it is an ablation against its `split_h` siblings, not a cohort member -- and
+    subtracting across it would attribute a Floor difference to the decomposition."""
+    union, sibling = make_ladder("dae9d2b5-halves-union"), make_ladder("dae9d2b5-split-recolor")
+    assert union.task == sibling.task
+    assert union.cohort() != sibling.cohort()
+
+    # The cohort template's converse: two tasks, one Floor -- so the Floor halves must agree.
+    left, right = make_ladder("94f9d214-nor-merged"), make_ladder("fafffa47-nor-merged")
+    assert left.cohort().split("/")[1] == right.cohort().split("/")[1]
+    assert left.cohort() != right.cohort()
+
+
+def test_a_synthetic_ladder_has_no_task_and_so_no_cohort() -> None:
+    """No external target means nothing to be comparable *to*."""
+    spec = make_ladder("al17-shift-frame-tall")
+    assert (spec.task, spec.cohort()) == ("", "")

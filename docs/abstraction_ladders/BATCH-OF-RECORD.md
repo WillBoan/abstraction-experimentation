@@ -21,7 +21,7 @@
 | `al2-rot90-calibration`       | admitted | yes / yes         | 1/1   | -                     | 1    | -              | 0s   |
 | `al20-recolor-telescope`      | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
 | `al21-dag-siblings`           | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
-| `al3-quad-symmetrize`         | rejected | yes / n/a         | -     | -                     | 1    | -              | 5s   |
+| `al3-quad-symmetrize`         | rejected | yes / n/a         | -     | -                     | 1    | -              | 4s   |
 | `al4-mask-crop`               | rejected | yes / n/a         | -     | -                     | 1    | -              | 3s   |
 | `al5-perceiver-chain`         | rejected | yes / n/a         | -     | -                     | 1    | -              | 3s   |
 | `al6-mirror-tall`             | rejected | yes / n/a         | -     | -                     | 1    | -              | 7s   |
@@ -37,13 +37,39 @@
 | `fafffa47-nor-merged`         | admitted | yes / yes         | 5/5   | -                     | 1    | -              | 0s   |
 | `fafffa47-nor-recolor`        | admitted | yes / yes         | 4/4   | -                     | 1    | solution-limit | 0s   |
 
+## What this batch samples
+
+**32 members: 21 climbed** (the learning loop ran) and **11 chain-only** (the certificate rejected the ladder, so learning was never paid for). Every rung-recovery number in this manifest therefore rests on those 21.
+
+Rolled up from each cell's own recorded `runspec.json`, counted per member. **An axis with one value is an assumption, not a result** -- the batch cannot tell you whether its findings depend on it.
+
+| axis               | values sampled (members)               |
+| ------------------ | -------------------------------------- |
+| learn engine       | `GreedyMDLLearnEngine` (21)            |
+| proposer           | `AntiunifyPairs` (21)                  |
+| metric             | `CompressionMetric` (21)               |
+| learn iterations   | `4` (2), `5` (18), `6` (1)             |
+| accounting mode    | `exhaustive` (26), `stop-at-first` (6) |
+| `considered_limit` | `2000000` (11), `50000` (21)           |
+| `max_arity`        | `2` (15), `3` (16), `4` (1)            |
+
+### Cohorts -- what may be compared with what
+
+A cohort is a **shared task and a shared Floor** (`LADDER-RELATIONSHIPS-2026-07-23.md`), which makes raw search cost cancel and is what licenses reading two members' cost columns against each other. It is derived, never declared -- only `ladder.task` is authored, and the Floor half is a content hash, so a cohort cannot disagree with the Floors in it. Members absent from this table stand alone: their costs are readable on their own terms and against nothing else.
+
+| cohort            | task       | Floor                                                   | members                                                                                                                                  |
+| ----------------- | ---------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `94f9d214/ef190b` | `94f9d214` | `map_color`, `nth`, `overlay`, `split_v`, `swap_colors` | `94f9d214-nor-halves`, `94f9d214-nor-merged`, `94f9d214-nor-recolor`                                                                     |
+| `dae9d2b5/35b2a2` | `dae9d2b5` | `map_color`, `nth`, `overlay`, `split_h`                | `dae9d2b5-half-param`, `dae9d2b5-split-asym-lean`, `dae9d2b5-split-halves-lean`, `dae9d2b5-split-recolor`, `dae9d2b5-split-recolor-lean` |
+| `fafffa47/ef190b` | `fafffa47` | `map_color`, `nth`, `overlay`, `split_v`, `swap_colors` | `fafffa47-nor-halves`, `fafffa47-nor-merged`, `fafffa47-nor-recolor`                                                                     |
+
 ## Batch checks
 
-- Members run: **32**; wall clock **0.6 min**.
+- Members run: **32**; wall clock **0.5 min**.
 - Members that raised: **0**
 - Members whose cells span MORE THAN ONE config generation: **0**
 
-The second check is what makes this a batch of record rather than a pile of runs: a member assembled across a code or budget change has cost columns that are not mutually comparable, which is the condition the 2026-08-03 census found in every ladder but two.
+**Scope of the generation check.** It is a check on each member SEPARATELY: that all of one member's cells came from one config, so that member's own cost columns mean one thing. That is the condition the 2026-08-03 census found failing in every ladder but two, and it is necessary for any comparison at all -- but it is **not** what licenses comparing two members. The batch deliberately spans several regimes (see the rollup above), so a cross-member comparison additionally needs a shared cohort.
 
 ## Excluded from the batch, and why
 

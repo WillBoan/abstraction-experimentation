@@ -75,6 +75,7 @@ ladder dae9d2b5-split-asym-lean
 # climb, which then converges "cleanly" having recovered every rung and never solved the task.
 # The siblings with d3 tops pin 3 for exactly this reason.
 config {
+    ladder.task: 'dae9d2b5'
     budget.depth_limit: 3
     budget.max_arity: 3
     budget.max_pool: 30
