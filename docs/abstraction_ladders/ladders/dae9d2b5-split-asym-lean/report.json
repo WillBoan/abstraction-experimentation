@@ -1339,6 +1339,7 @@
         "solution_limit_mode": "immediate"
       }
     ],
+    "cohort": "dae9d2b5/35b2a2",
     "distractors": [],
     "heldout_corpus": {
       "content_hash": "38cbea6cade22165",
@@ -1624,6 +1625,7 @@
         }
       }
     ],
+    "task": "dae9d2b5",
     "top": {
       "reference_solutions": [
         {

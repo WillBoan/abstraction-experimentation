@@ -50,3 +50,8 @@ runs/
 # Private working notes (also denied to Claude via .claude/settings.json)
 _notes/
 _other/
+
+# Generated per-ladder results (regenerate: `arc-lab run-batch --artifacts`). `report.json`
+# beside each one is the committed record; this is its markdown rendering, and committing both
+# meant every batch pass churned ~6,400 lines of diff nobody read.
+docs/abstraction_ladders/ladders/*/results.md

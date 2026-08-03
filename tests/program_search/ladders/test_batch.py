@@ -16,7 +16,7 @@ from arc_lab.program_search.ladders.batch import (
     render_manifest,
     run_batch_member,
 )
-from arc_lab.program_search.ladders.registry import ladder_paths
+from arc_lab.program_search.ladders.registry import ladder_paths, make_ladder
 
 
 def test_membership_is_declared_and_every_exclusion_names_a_real_ladder() -> None:
@@ -109,3 +109,82 @@ def test_an_arms_manifest_says_so_and_refuses_to_be_read_as_the_register() -> No
     assert "ARM: learn.learn_engine.metric=TwoPartMDL" in text
     assert "**This is an ARM, not the batch of record.**" in text
     assert "never mixed into the register" in text
+
+
+def test_cohorts_are_derived_so_a_shared_task_with_a_different_floor_splits() -> None:
+    """A cohort is task AND Floor. `LADDER-RELATIONSHIPS-2026-07-23.md` rejected a *declared*
+    cohort field precisely because it "would drift the moment a floor is edited" -- so the pair
+    that must not silently merge is the real one: `dae9d2b5-halves-union` names a half through the
+    region tier, its siblings through `split_h`. Subtracting across them would price a
+    decomposition difference that is really a Floor difference."""
+    union = make_ladder("dae9d2b5-halves-union")
+    sibling = make_ladder("dae9d2b5-split-recolor")
+
+    assert union.task == sibling.task == "dae9d2b5"
+    assert union.cohort() and sibling.cohort()
+    assert union.cohort() != sibling.cohort(), "different Floors must not share a cohort"
+    # ...while the cohort template's two tasks, same Floor, land on the same Floor half.
+    left, right = make_ladder("94f9d214-nor-merged"), make_ladder("fafffa47-nor-merged")
+    assert left.cohort() != right.cohort()
+    assert left.cohort().split("/")[1] == right.cohort().split("/")[1]
+
+
+def test_a_synthetic_ladder_declares_no_task_and_stands_alone() -> None:
+    """No external target means nothing to be comparable *to*: a cohort of one, so the RQ1 arm is
+    bought per ladder rather than shared."""
+    spec = make_ladder("al17-shift-frame-tall")
+    assert spec.task == "" and spec.cohort() == ""
+
+
+def test_manifest_rolls_up_what_the_batch_samples_not_just_per_member_rows() -> None:
+    """The defect this fixes: every fact below was already in the per-member rows, machine-readably
+    and repeated N times, and no artifact ever COUNTED them -- so "the whole set runs one learner"
+    was invisible to a reader and had to be rediscovered by hand."""
+    members = [
+        BatchMember(
+            name="climber",
+            seconds=1.0,
+            admitted=True,
+            climbed=True,
+            generations=("a",),
+            report={
+                "provenance": [
+                    {
+                        "cell": "chain/L0",
+                        "budget": {"considered_limit": 50_000, "solution_limit": None},
+                        "learn": None,
+                    },
+                    {
+                        "cell": "climb/learn",
+                        "budget": {"considered_limit": 50_000, "solution_limit": None},
+                        "learn": {"metric": "CompressionMetric", "proposer": "AntiunifyPairs"},
+                    },
+                    # The raw arm carries its own measured guard, so counting it would report a
+                    # `considered_limit` the ladder never ran its chain at.
+                    {
+                        "cell": "raw-arm",
+                        "budget": {"considered_limit": 187_070, "solution_limit": 1},
+                        "learn": None,
+                    },
+                ]
+            },
+        ),
+        BatchMember(name="rejected", seconds=1.0, admitted=False, climbed=False, generations=("a",)),
+    ]
+    text = render_manifest(members)
+
+    assert "**2 members: 1 climbed**" in text and "1 chain-only" in text
+    assert "`CompressionMetric` (1)" in text and "`AntiunifyPairs` (1)" in text
+    assert "`50000` (1)" in text and "187070" not in text, "the raw arm is generation-exempt"
+    assert "`exhaustive` (1)" in text
+    assert "An axis with one value is an assumption, not a result" in text
+
+
+def test_manifest_states_the_generation_check_is_per_member_not_a_comparison_license() -> None:
+    """The claim this replaces said the check is "what makes its cost columns comparable", which
+    read as a cross-member license it never was -- the batch spans a 50k and a 2M guard."""
+    text = render_manifest([BatchMember(name="x", seconds=1.0, admitted=True, generations=("a",))])
+
+    assert "check on each member SEPARATELY" in text
+    assert "not** what licenses comparing two members" in text
+    assert "additionally needs a shared cohort" in text

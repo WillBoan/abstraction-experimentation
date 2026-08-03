@@ -6,7 +6,7 @@ ladder al1-mirror
 # abstractions mint.
 #
 # Verified sandwich at depth_limit=2: jumps d=2 affordable, d_raw=4 intractable, double-jumps d=3
-# intractable.  Worksheet: docs/abstraction_ladders/ladders/al1-mirror/worksheet.md
+# intractable.
 
 config {
     budget.depth_limit: 2

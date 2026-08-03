@@ -9,8 +9,18 @@ from a dozen code states and the comparability had to be argued in prose, per cl
 
 So this exists to make "one pass, one generation" a thing you can *do* in one command, and the
 manifest to make it a thing you can *check*: each member reports its provenance generations (see
-``ladders/provenance.py``), and a batch whose members each carry exactly one is what licenses
-comparing their cost columns at all.
+``ladders/provenance.py``), and a member carrying exactly one is a member whose own cost columns
+mean a single thing.
+
+**That check is per member, and does not license comparing two of them.** The batch deliberately
+spans regimes -- a 50k guard on the synthetic ladders against 2M on the real-ARC ones, three
+``max_arity`` settings, two accounting modes -- so a cross-member reading needs a shared cohort
+(:meth:`LadderSpec.cohort`, ``LADDER-RELATIONSHIPS-2026-07-23.md``) on top of it. The manifest
+prints both: :func:`cohort_rows` says who may be compared with whom (and :func:`ablation_pairs`
+which same-task pairs only look comparable), and the rollup says what the batch SAMPLES on each
+axis -- because an axis carrying one value across every member is an assumption the results
+silently depend on, and the point of a batch of record is that such things are countable rather
+than argued.
 
 **Arms.** ``overrides`` applies a dotted-path ``Config`` change to every member -- the surface a
 governance-objective arm needs (``learn.learn_engine.metric=TwoPartMDL``), which ``run-ladder``
@@ -28,12 +38,14 @@ import dataclasses
 import json
 import time
 import traceback
-from collections.abc import Mapping, Sequence
+from collections import Counter
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 from arc_lab.program_search.execution.overrides import apply_overrides
 from arc_lab.program_search.ladders._render import table
+from arc_lab.program_search.ladders.provenance import GENERATION_EXEMPT_CELLS
 from arc_lab.program_search.ladders.registry import ladder_paths, make_ladder
 from arc_lab.program_search.ladders.report import create_ladder_report, render_report_markdown
 from arc_lab.program_search.ladders.run import run_ladder
@@ -43,9 +55,10 @@ from arc_lab.program_search.ladders.run import run_ladder
 #: register's contents drifting precisely because nothing declared what the set was.
 #:
 #: In: every ladder that has ever been run -- the 21 carrying a committed ``report.json``, plus the
-#: 11 rejections and controls that never got one. The rejections cost the same as the admitted
-#: ladders (~17 min for all 11) and `LADDERS.md` calls them "the batch's most valuable output so
-#: far", so there is no reason for them to be outside the pass.
+#: 11 rejections and controls that never got one. The rejections name collapse FAMILIES rather than
+#: one-off design slips, which makes them the set's most reusable output; they also cost the same
+#: as the admitted ladders (~17 min for all 11), so there is no reason for them to be outside the
+#: pass.
 EXCLUDED: Mapping[str, str] = {
     "dae9d2b5-halves-union": "parked: a multi-hour enumeration (~21M considered per cell); kept "
     "unrun on purpose as the measured region-tier baseline",
@@ -62,22 +75,24 @@ EXCLUDED: Mapping[str, str] = {
 }
 
 
-#: Which members purchase RQ1 (the raw arm), and why only these.
+#: **The RQ1 protocol: the raw arm is purchased ONCE PER COHORT**, on one nominated member; every
+#: other member of that cohort runs ``--raw-arm-k 0``.
 #:
-#: The raw arm searches the TOP task from the bare Floor at ``d_raw``, so **same task + same floor
+#: The raw arm searches the TOP task from the bare Floor at ``d_raw``, so **same task + same Floor
 #: + same ``d_raw`` is literally the same search**: a member's own budget changes only its guard,
-#: never its search space. LADDERS.md states the protocol -- "RQ1 is purchased once per cohort
-#: (raw arm on the 4-rung member only); the 2-rung members run ``--raw-arm-k 0``" -- and running
-#: one per member both re-buys that enumeration and manufactures per-member ratios that invite the
-#: cross-member comparison the cohort rule forbids.
+#: never its search space. Running one per member therefore does two wrong things at once -- it
+#: re-buys an enumeration already recorded (measured: two members bought theirs twice, 2.57M
+#: redundant candidates), and it manufactures per-member RQ1 ratios that invite exactly the
+#: cross-member comparison the cohort rule exists to forbid. A comparability instrument generating
+#: incomparable numbers.
 #:
-#: Every synthetic ladder is its own cohort (its own floor and top), so each buys its own -- and
-#: they are cheap: 0-16s apiece. The three real cohorts buy theirs once, on the member that
-#: already holds the recorded arm.
+#: This map IS the protocol; nothing else states it. A member outside it whose derived cohort is
+#: empty (no ``ladder.task``, so a synthetic top) is a cohort of one and buys its own arm --
+#: they are cheap, 0-16s apiece. See :func:`raw_arm_k_for`.
 RAW_ARM_MEMBERS: Mapping[str, str] = {
     "dae9d2b5-split-recolor": "the `dae9d2b5` cohort's RQ1 (raw cancels across its members)",
-    "94f9d214-nor-recolor": "the `94f9d214` cohort's RQ1 (the 4-rung member, per LADDERS.md)",
-    "fafffa47-nor-recolor": "the `fafffa47` cohort's RQ1 (the 4-rung member, per LADDERS.md)",
+    "94f9d214-nor-recolor": "the `94f9d214` cohort's RQ1, bought on the 4-rung member",
+    "fafffa47-nor-recolor": "the `fafffa47` cohort's RQ1, bought on the 4-rung member",
 }
 
 
@@ -119,11 +134,20 @@ class BatchMember:
     diagnoses: tuple[str, ...] = ()
     generations: tuple[str, ...] = ()
     compromises: tuple[str, ...] = ()
+    #: ``ladder.task`` -- the external target, or ``""`` for a synthetic top.
+    task: str = ""
+    #: ``LadderSpec.cohort()`` -- task + Floor hash, DERIVED. ``""`` means a cohort of one.
+    cohort: str = ""
+    #: The Floor's primitive names, sorted -- the readable half of what the cohort hash encodes.
+    floor: tuple[str, ...] = ()
     report: dict[str, Any] | None = None
 
     @property
     def single_generation(self) -> bool:
-        """The property that licenses comparing this member's costs against another's."""
+        """Necessary for this member's own cost columns to mean one thing. NOT sufficient for
+        comparing them against another member's -- that additionally needs a shared cohort, since
+        the batch spans two guard regimes (50k synthetic, 2M real-ARC) and three ``max_arity``
+        settings. See :func:`render_manifest`'s rollup."""
         return len(self.generations) == 1
 
 
@@ -183,6 +207,9 @@ def run_batch_member(
             compromises=tuple(
                 str(option.get("code")) for option in _rows_of(report, "compromises")
             ),
+            task=spec.task,
+            cohort=spec.cohort(),
+            floor=tuple(sorted(spec.floor().names())),
             report=report,
         )
     except Exception:
@@ -229,8 +256,109 @@ def _top_column(member: BatchMember) -> str:
     return f"{_reach(member.top_chain)} / {climb}"
 
 
+def _generation_cells(member: BatchMember) -> list[Mapping[str, Any]]:
+    """A member's provenance rows, minus the cells :mod:`ladders.provenance` exempts from the
+    generation key -- so the rollup reads the same cells the coherence check does."""
+    rows = _rows_of(member.report or {}, "provenance")
+    return [row for row in rows if row.get("cell") not in GENERATION_EXEMPT_CELLS]
+
+
+def _axis(members: Sequence[BatchMember], read: Callable[[Mapping[str, Any]], object]) -> str:
+    """One rollup row: each distinct value on an axis, with how many MEMBERS carry it.
+
+    Counted per member rather than per cell: a member's cells all share these fields by the
+    generation check, and per-cell counts would just re-weight by chain height.
+    """
+    counts: Counter[str] = Counter()
+    for member in members:
+        values = {read(row) for row in _generation_cells(member)}
+        for value in values:
+            if value is not None:
+                counts[str(value)] += 1
+    if not counts:
+        return "-"
+    return ", ".join(f"`{value}` ({n})" for value, n in sorted(counts.items()))
+
+
+def _budget_field(field: str) -> Callable[[Mapping[str, Any]], object]:
+    def read(row: Mapping[str, Any]) -> object:
+        budget = row.get("budget")
+        return budget.get(field) if isinstance(budget, Mapping) else None
+
+    return read
+
+
+def _learn_field(field: str) -> Callable[[Mapping[str, Any]], object]:
+    def read(row: Mapping[str, Any]) -> object:
+        learn = row.get("learn")
+        return learn.get(field) if isinstance(learn, Mapping) else None
+
+    return read
+
+
+def _accounting_mode(row: Mapping[str, Any]) -> object:
+    """Exhaustive vs stop-at-first -- the axis that decides which cost quantities a cell yields
+    (`compromise.py`: one exhaustive run gives `first_solution_index`, `cheapest_solution_index`
+    AND cost-to-exhaust; an early stop gives only the first)."""
+    budget = row.get("budget")
+    if not isinstance(budget, Mapping):
+        return None
+    return "exhaustive" if budget.get("solution_limit") is None else "stop-at-first"
+
+
+#: The rollup's axes, in the order a reader should scan them: what the LEARNER was, then what the
+#: SEARCH was. Each row's job is to make a single-valued axis visible as such.
+_ROLLUP_AXES: tuple[tuple[str, Callable[[Mapping[str, Any]], object]], ...] = (
+    ("learn engine", _learn_field("learn_engine")),
+    ("proposer", _learn_field("proposer")),
+    ("metric", _learn_field("metric")),
+    ("learn iterations", _learn_field("iterations")),
+    ("accounting mode", _accounting_mode),
+    ("`considered_limit`", _budget_field("considered_limit")),
+    ("`max_arity`", _budget_field("max_arity")),
+)
+
+
+def cohorts_of(members: Sequence[BatchMember]) -> dict[str, list[BatchMember]]:
+    """The batch's cohorts: derived id -> its members. Ladders with no cohort stand alone."""
+    groups: dict[str, list[BatchMember]] = {}
+    for member in members:
+        if member.error is None and member.cohort:
+            groups.setdefault(member.cohort, []).append(member)
+    return {cohort: sorted(group, key=lambda m: m.name) for cohort, group in sorted(groups.items())}
+
+
+def cohort_rows(members: Sequence[BatchMember]) -> list[list[str]]:
+    """Cohort membership, as a table: who may be compared with whom, and over what Floor."""
+    rows = [["cohort", "task", "Floor", "members"]]
+    for cohort, group in cohorts_of(members).items():
+        rows.append(
+            [
+                f"`{cohort}`",
+                f"`{group[0].task}`",
+                ", ".join(f"`{name}`" for name in group[0].floor),
+                ", ".join(f"`{m.name}`" for m in group),
+            ]
+        )
+    return rows
+
+
+def ablation_pairs(members: Sequence[BatchMember]) -> dict[str, list[str]]:
+    """Tasks whose ladders span MORE THAN ONE cohort -- same top, different Floor.
+
+    Not a defect: `LADDER-RELATIONSHIPS-2026-07-23.md` calls this an **ablation**, where the raw
+    cost delta between the Floors *is* the measurement. Surfaced because the two look alike in a
+    flat member list, and subtracting across them (the thing a cohort licenses) is invalid.
+    """
+    by_task: dict[str, set[str]] = {}
+    for cohort, group in cohorts_of(members).items():
+        by_task.setdefault(group[0].task, set()).add(cohort)
+    return {task: sorted(cohorts) for task, cohorts in sorted(by_task.items()) if len(cohorts) > 1}
+
+
 def render_manifest(members: Sequence[BatchMember], *, arm: str | None = None) -> str:
-    """The batch manifest: one row per member, plus the checks that make it a batch of record."""
+    """The batch manifest: one row per member, the rollup of what the batch SAMPLES, and the
+    checks that make it a batch of record."""
     lines = [
         "<!-- Generated by `arc-lab run-batch`; never hand-edit. -->",
         "",
@@ -274,7 +402,55 @@ def render_manifest(members: Sequence[BatchMember], *, arm: str | None = None) -
 
     errored = [m for m in members if m.error is not None]
     multi = [m for m in members if m.error is None and m.generations and not m.single_generation]
+    ok = [m for m in members if m.error is None]
+    climbed = [m for m in ok if m.climbed]
     total = sum(m.seconds for m in members)
+
+    lines += [
+        "",
+        "## What this batch samples",
+        "",
+        f"**{len(ok)} members: {len(climbed)} climbed** (the learning loop ran) and "
+        f"**{len(ok) - len(climbed)} chain-only** (the certificate rejected the ladder, so "
+        "learning was never paid for). Every rung-recovery number in this manifest therefore "
+        f"rests on those {len(climbed)}.",
+        "",
+        "Rolled up from each cell's own recorded `runspec.json`, counted per member. "
+        "**An axis with one value is an assumption, not a result** -- the batch cannot tell you "
+        "whether its findings depend on it.",
+        "",
+    ]
+    lines += table(
+        [["axis", "values sampled (members)"]]
+        + [[label, _axis(ok, read)] for label, read in _ROLLUP_AXES]
+    )
+    lines += [
+        "",
+        "### Cohorts -- what may be compared with what",
+        "",
+        "A cohort is a **shared task and a shared Floor** "
+        "(`LADDER-RELATIONSHIPS-2026-07-23.md`), which makes raw search cost cancel and is what "
+        "licenses reading two members' cost columns against each other. It is derived, never "
+        "declared -- only `ladder.task` is authored, and the Floor half is a content hash, so a "
+        "cohort cannot disagree with the Floors in it. Members absent from this table stand "
+        "alone: their costs are readable on their own terms and against nothing else.",
+        "",
+    ]
+    lines += table(cohort_rows(ok))
+    ablations = ablation_pairs(ok)
+    if ablations:
+        lines += [
+            "",
+            "**Ablation pairs** -- one task, more than one Floor, so raw does NOT cancel and the "
+            "cost delta between them is itself the measurement (how much work the changed "
+            "primitive was doing). Do not subtract across these as if they were a cohort:",
+            "",
+        ]
+        lines += [
+            f"- `{task}`: {', '.join(f'`{c}`' for c in cohorts)}"
+            for task, cohorts in ablations.items()
+        ]
+
     lines += [
         "",
         "## Batch checks",
@@ -285,9 +461,12 @@ def render_manifest(members: Sequence[BatchMember], *, arm: str | None = None) -
         f"- Members whose cells span MORE THAN ONE config generation: **{len(multi)}**"
         + (f" -- {', '.join(f'`{m.name}`' for m in multi)}" if multi else ""),
         "",
-        "The second check is what makes this a batch of record rather than a pile of runs: a "
-        "member assembled across a code or budget change has cost columns that are not mutually "
-        "comparable, which is the condition the 2026-08-03 census found in every ladder but two.",
+        "**Scope of the generation check.** It is a check on each member SEPARATELY: that all of "
+        "one member's cells came from one config, so that member's own cost columns mean one "
+        "thing. That is the condition the 2026-08-03 census found failing in every ladder but "
+        "two, and it is necessary for any comparison at all -- but it is **not** what licenses "
+        "comparing two members. The batch deliberately spans several regimes (see the rollup "
+        "above), so a cross-member comparison additionally needs a shared cohort.",
     ]
     if EXCLUDED:
         lines += ["", "## Excluded from the batch, and why", ""]

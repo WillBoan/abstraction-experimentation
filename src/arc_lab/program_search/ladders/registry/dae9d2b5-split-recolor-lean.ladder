@@ -67,6 +67,7 @@ ladder dae9d2b5-split-recolor-lean
 # distributed form IS the top.
 
 config {
+    ladder.task: 'dae9d2b5'
     budget.depth_limit: 2
     budget.max_arity: 3
     budget.max_pool: 30

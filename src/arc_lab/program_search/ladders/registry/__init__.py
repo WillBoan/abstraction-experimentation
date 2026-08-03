@@ -4,7 +4,7 @@ Each ladder is one `<name>.ladder` file beside this module -- its single source 
 (``docs/abstraction_ladders/LADDER-FORMAT.md``), driving both its :class:`LadderSpec` and its
 generated testbed. Adding a ladder is adding a file: there is nothing to register.
 
-Per-ladder *artifacts* (rendered tables, worksheets, results) live under
+Per-ladder *artifacts* (rendered tables, results) live under
 ``docs/abstraction_ladders/ladders/<name>/``, not here.
 """
 

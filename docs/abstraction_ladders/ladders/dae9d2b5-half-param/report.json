@@ -1710,6 +1710,7 @@
         "solution_limit_mode": "generation-end"
       }
     ],
+    "cohort": "dae9d2b5/35b2a2",
     "distractors": [],
     "heldout_corpus": {
       "content_hash": "e4542f67f46c6e42",
@@ -2056,6 +2057,7 @@
         }
       }
     ],
+    "task": "dae9d2b5",
     "top": {
       "reference_solutions": [
         {

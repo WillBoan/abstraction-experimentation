@@ -36,7 +36,7 @@ _TEMPLATE = """ladder {name}
 #
 # <Why this decomposition: what each rung is a nameable competence FOR, and what the top needs that
 # the floor cannot reach. Record dead ends here too -- a retired variant's file persists as the
-# finding (LADDERS.md). Design guidance: docs/abstraction_ladders/LADDER-PROCESS.md>
+# finding. Design guidance: docs/abstraction_ladders/LADDER-PROCESS.md>
 #
 # PLACEHOLDER SPINE -- replace the floor, the rung and the tasks. It loads as written so that
 # `lint-ladder` gives you a real reading from the first edit.
@@ -91,7 +91,7 @@ def new_ladder_command(
         False,
         "--registry",
         help="Write into ladders/registry/ (a batch member) instead of ladders/drafts/. A "
-        "registry ladder is scanned by taskgen/run-ladder and needs a LADDERS.md row.",
+        "registry ladder is scanned by taskgen/run-ladder; there is nothing to register.",
     ),
     force: bool = typer.Option(
         False, "--force", help="Overwrite an existing file. Destroys whatever is there."

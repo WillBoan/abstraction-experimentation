@@ -58,6 +58,7 @@ ladder 94f9d214-recolor-first
 # and complete `by_primitive`.
 
 config {
+    ladder.task: '94f9d214'
     budget.depth_limit: 3
     budget.max_arity: 3
     budget.max_pool: 30

@@ -33,6 +33,11 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 - **STR-1** Filename is `<name>.ladder`.
 - **STR-2** `<name>` must equal the `ladder <name>` header.
 - **STR-3** `<name>` must be kebab-case: `[a-z0-9]+(-[a-z0-9]+)*`.
+- **STR-3a** **Naming convention** (not enforced, but followed throughout the registry). A ladder is a durable asset — a registry key plus a committed testbed — so its name is a stable identity, and two shapes are in use:
+  - `alN-<slug>` for a **synthetic** ladder, where `<slug>` is the anchor competence (`al17-shift-frame-tall`). `N` is minted when the ladder is first committed and is an **identifier, not a ranking** — gaps left by rejected or retired ladders are expected and are never reused, since the rejection is itself a finding and its file stays as a lint fixture.
+  - `<task-id>-<slug>` for a ladder targeting an external task (`dae9d2b5-split-recolor`), matching its `ladder.task` (CFG-7).
+  - **A rebuild gets a new identity, never the old one.** No fix-and-rerun under an existing `alN`: the old file and its verdict stay put as the record of what failed, and the successor is a new ladder. This is what `arc-lab new-ladder`'s refusal to overwrite enforces mechanically.
+  - Distinct from E-numbers, which are minted per _run_ in `EXPERIMENTS.md` — one ladder may carry many.
 - **STR-4** Section order is fixed; nothing else, nothing twice, nothing missing:
   - `ladder <name>` header
   - `config`
@@ -69,8 +74,9 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 - **CFG-4** `library` is not a settable path (the floor section owns it). Unsetting `learn` is forbidden.
 - **CFG-5** Duplicate paths are errors. Unknown paths are errors (**delegated** to the override machinery).
 - **CFG-6** Values naming registered components (proposer, engines) use their serde `kind` strings.
-- **CFG-7** Paths under the reserved `ladder.` namespace set the LADDER's own settings, not its `Config`'s, and are routed past the override machinery. They live in this block because it is where a reader looks for "how is this ladder set up", but a plain SEARCH run has no rungs, so they are not `Config` fields. One path so far:
+- **CFG-7** Paths under the reserved `ladder.` namespace set the LADDER's own settings, not its `Config`'s, and are routed past the override machinery. They live in this block because it is where a reader looks for "how is this ladder set up", but a plain SEARCH run has no rungs, so they are not `Config` fields. Two paths:
   - `ladder.depth_schedule: 'derived' | 'pinned'` (default `derived`) — the budget regime. `derived` gives each oracle-chain level the smallest `depth_limit` that puts what that level must find in reach (`L_j` carries rung `j+1`'s `jump_needs`, `L_k` the top's); `pinned` gives every level `budget.depth_limit`, uniformly. A ladder whose rungs differ in depth generally has NO valid uniform budget, which is what `derived` dissolves; it is also cheaper, since cost is exponential in `depth_limit`. Set `pinned` only where the uniform budget is the ladder's content ([`al10-skippable`](../../src/arc_lab/program_search/ladders/registry/al10-skippable.ladder) is the sole case: budget-induced skippability is a phenomenon derived budgets cannot produce). The resolved schedule is reported in each ladder's `spec.md`.
+  - `ladder.task: '<id>'` (default absent) — the **external target** this ladder is built against, an ARC task id. Absent means the top is the ladder's own generated construct, so it targets nothing outside itself. This is the only comparison metadata that is authored, and it is authored because it is durable intent: "targets ARC task X" survives the Floor being edited, where the Floor does not. Everything downstream is derived — see DRV-6.
 
 ### RNG — rungs
 
@@ -116,6 +122,7 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
 - **DRV-3** Task outputs are derived by executing the declared solution `Program` on each declared input through the engine's own evaluator. Execution failure on any input is a load error.
 - **DRV-4** The testbed (task JSONs + manifest, labels = rung names, splits per TSK-1) is generated from the file deterministically: same file ⇒ byte-identical testbed.
 - **DRV-5** Everything `lint()`/`render()` computes (depths, double-jumps, fan-in, validity window, `spec.md`) stays derived and is never in the file.
+- **DRV-6** **Cohort membership is derived**, as `ladder.task` (CFG-7) plus a content hash of the Floor's primitive names — `LadderSpec.cohort()`. A cohort is a shared task _and_ a shared Floor, which is what makes raw search cost cancel and licenses subtracting two members' cost columns ([LADDER-RELATIONSHIPS-2026-07-23.md](LADDER-RELATIONSHIPS-2026-07-23.md) §"Two axes"). Deriving rather than declaring is that file's decision, and its reason: a declared cohort field "would drift the moment a floor is edited". The consequence is worth knowing — two ladders on the same task with different Floors land in **different** cohorts automatically, which is correct, because that pair is an _ablation_ (the raw delta between the Floors is itself the measurement) and subtracting across it is invalid. `arc-lab run-batch` prints the cohorts and flags the ablation pairs.
 
 ### VAL — validation order
 

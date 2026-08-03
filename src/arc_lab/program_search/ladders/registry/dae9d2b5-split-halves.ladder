@@ -46,6 +46,7 @@ ladder dae9d2b5-split-halves
 # licensed rather than confounded.
 
 config {
+    ladder.task: 'dae9d2b5'
     budget.depth_limit: 3
     budget.max_arity: 3
     budget.max_pool: 150

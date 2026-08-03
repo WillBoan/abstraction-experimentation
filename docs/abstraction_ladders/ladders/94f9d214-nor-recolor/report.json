@@ -2232,6 +2232,7 @@
         "solution_limit_mode": "immediate"
       }
     ],
+    "cohort": "94f9d214/ef190b",
     "distractors": [],
     "heldout_corpus": {
       "content_hash": "9e42aeb3c1ff260d",
@@ -2586,6 +2587,7 @@
         }
       }
     ],
+    "task": "94f9d214",
     "top": {
       "reference_solutions": [
         {

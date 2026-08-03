@@ -70,6 +70,7 @@ ladder dae9d2b5-halves-union
 # The guard is high because the FLOOR is broad, not because the rungs are deep; see above.
 
 config {
+    ladder.task: 'dae9d2b5'
     budget.depth_limit: 3
     budget.max_arity: 3
     budget.max_pool: 150

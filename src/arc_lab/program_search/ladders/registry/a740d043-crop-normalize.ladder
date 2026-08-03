@@ -74,6 +74,7 @@ ladder a740d043-crop-normalize
 # ``depth_limit`` is the CLIMB's search budget and must cover the derived schedule's max (3, the
 # rung's jump); the chain runs the per-level schedule regardless.
 config {
+    ladder.task: 'a740d043'
     budget.depth_limit: 3
     budget.max_arity: 3
     budget.max_pool: 30

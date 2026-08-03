@@ -54,6 +54,7 @@ ladder fafffa47-nor-merged
 # ``depth_limit`` covers the top's jump depth (2 -- every level of this member is depth 2),
 # which is what the CLIMB searches at; the chain runs the derived per-level schedule regardless.
 config {
+    ladder.task: 'fafffa47'
     budget.depth_limit: 2
     budget.max_arity: 3
     budget.max_pool: 30
