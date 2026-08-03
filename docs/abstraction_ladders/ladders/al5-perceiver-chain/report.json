@@ -29,6 +29,7 @@
       "3": []
     },
     "loop_overhead_factor": null,
+    "loop_overhead_forfeited_by": null,
     "marginal_rung_value": [
       {
         "censored": false,
@@ -85,6 +86,10 @@
       }
     ]
   },
+  "compromises": [],
+  "config_generations": [
+    "max_arity=3 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+  ],
   "cost": {
     "amortization_ratio_considered": 0.15631008168764868,
     "amortization_ratio_estimated": null,
@@ -123,6 +128,38 @@
       "columns": {
         "0": {
           "b_eff": 20.83,
+          "by_primitive": [
+            {
+              "considered": 49983,
+              "primitive": "__const__",
+              "share": 0.99966
+            },
+            {
+              "considered": 49977,
+              "primitive": "map_color",
+              "share": 0.99954
+            },
+            {
+              "considered": 29880,
+              "primitive": "most_common_color",
+              "share": 0.5976
+            },
+            {
+              "considered": 17215,
+              "primitive": "least_common_color",
+              "share": 0.3443
+            },
+            {
+              "considered": 16800,
+              "primitive": "flip_h",
+              "share": 0.336
+            },
+            {
+              "considered": 12390,
+              "primitive": "flip_v",
+              "share": 0.2478
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 117,
           "considered": 50000,
@@ -132,6 +169,38 @@
         },
         "1": {
           "b_eff": 21.18,
+          "by_primitive": [
+            {
+              "considered": 49969,
+              "primitive": "map_color",
+              "share": 0.99938
+            },
+            {
+              "considered": 49947,
+              "primitive": "__const__",
+              "share": 0.99894
+            },
+            {
+              "considered": 26686,
+              "primitive": "most_common_color",
+              "share": 0.53372
+            },
+            {
+              "considered": 20901,
+              "primitive": "least_common_color",
+              "share": 0.41802
+            },
+            {
+              "considered": 17243,
+              "primitive": "flip_h",
+              "share": 0.34486
+            },
+            {
+              "considered": 11466,
+              "primitive": "flip_v",
+              "share": 0.22932
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 115,
           "considered": 50000,
@@ -141,6 +210,38 @@
         },
         "2": {
           "b_eff": 24.74,
+          "by_primitive": [
+            {
+              "considered": 49943,
+              "primitive": "__const__",
+              "share": 0.99886
+            },
+            {
+              "considered": 49765,
+              "primitive": "map_color",
+              "share": 0.9953
+            },
+            {
+              "considered": 33905,
+              "primitive": "swap_mirror",
+              "share": 0.6781
+            },
+            {
+              "considered": 31118,
+              "primitive": "most_common_color",
+              "share": 0.62236
+            },
+            {
+              "considered": 21561,
+              "primitive": "least_common_color",
+              "share": 0.43122
+            },
+            {
+              "considered": 8689,
+              "primitive": "flip_h",
+              "share": 0.17378
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 115,
           "considered": 50000,
@@ -150,6 +251,38 @@
         },
         "3": {
           "b_eff": 42.27,
+          "by_primitive": [
+            {
+              "considered": 19844,
+              "primitive": "__const__",
+              "share": 0.9983397897066962
+            },
+            {
+              "considered": 14249,
+              "primitive": "map_color",
+              "share": 0.7168586808874579
+            },
+            {
+              "considered": 13016,
+              "primitive": "swap_stack",
+              "share": 0.654827187201288
+            },
+            {
+              "considered": 3388,
+              "primitive": "most_common_color",
+              "share": 0.17044825677919204
+            },
+            {
+              "considered": 3317,
+              "primitive": "swap_mirror",
+              "share": 0.16687628917844746
+            },
+            {
+              "considered": 334,
+              "primitive": "flip_h",
+              "share": 0.016803340544347737
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 115,
           "considered": 19877,
@@ -165,6 +298,38 @@
       "columns": {
         "0": {
           "b_eff": 22.7,
+          "by_primitive": [
+            {
+              "considered": 49977,
+              "primitive": "map_color",
+              "share": 0.99954
+            },
+            {
+              "considered": 49971,
+              "primitive": "__const__",
+              "share": 0.99942
+            },
+            {
+              "considered": 27147,
+              "primitive": "least_common_color",
+              "share": 0.54294
+            },
+            {
+              "considered": 24016,
+              "primitive": "most_common_color",
+              "share": 0.48032
+            },
+            {
+              "considered": 16800,
+              "primitive": "flip_h",
+              "share": 0.336
+            },
+            {
+              "considered": 6657,
+              "primitive": "flip_v",
+              "share": 0.13314
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 157,
           "considered": 50000,
@@ -174,6 +339,38 @@
         },
         "1": {
           "b_eff": 23.07,
+          "by_primitive": [
+            {
+              "considered": 49969,
+              "primitive": "map_color",
+              "share": 0.99938
+            },
+            {
+              "considered": 49907,
+              "primitive": "__const__",
+              "share": 0.99814
+            },
+            {
+              "considered": 27104,
+              "primitive": "least_common_color",
+              "share": 0.54208
+            },
+            {
+              "considered": 24007,
+              "primitive": "most_common_color",
+              "share": 0.48014
+            },
+            {
+              "considered": 17243,
+              "primitive": "flip_h",
+              "share": 0.34486
+            },
+            {
+              "considered": 6275,
+              "primitive": "swap_extremes",
+              "share": 0.1255
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 115,
           "considered": 50000,
@@ -183,6 +380,38 @@
         },
         "2": {
           "b_eff": 26.86,
+          "by_primitive": [
+            {
+              "considered": 49881,
+              "primitive": "__const__",
+              "share": 0.99762
+            },
+            {
+              "considered": 49751,
+              "primitive": "map_color",
+              "share": 0.99502
+            },
+            {
+              "considered": 27279,
+              "primitive": "least_common_color",
+              "share": 0.54558
+            },
+            {
+              "considered": 23752,
+              "primitive": "most_common_color",
+              "share": 0.47504
+            },
+            {
+              "considered": 19172,
+              "primitive": "swap_mirror",
+              "share": 0.38344
+            },
+            {
+              "considered": 11026,
+              "primitive": "swap_extremes",
+              "share": 0.22052
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 115,
           "considered": 50000,
@@ -192,6 +421,38 @@
         },
         "3": {
           "b_eff": 45.99,
+          "by_primitive": [
+            {
+              "considered": 23435,
+              "primitive": "__const__",
+              "share": 0.9974038134150494
+            },
+            {
+              "considered": 16884,
+              "primitive": "map_color",
+              "share": 0.7185903983656793
+            },
+            {
+              "considered": 15435,
+              "primitive": "swap_stack",
+              "share": 0.6569203268641471
+            },
+            {
+              "considered": 3854,
+              "primitive": "swap_mirror",
+              "share": 0.16402791964589716
+            },
+            {
+              "considered": 3696,
+              "primitive": "least_common_color",
+              "share": 0.15730337078651685
+            },
+            {
+              "considered": 3696,
+              "primitive": "most_common_color",
+              "share": 0.15730337078651685
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 115,
           "considered": 23496,
@@ -207,6 +468,38 @@
       "columns": {
         "0": {
           "b_eff": 20.83,
+          "by_primitive": [
+            {
+              "considered": 49983,
+              "primitive": "__const__",
+              "share": 0.99966
+            },
+            {
+              "considered": 49977,
+              "primitive": "map_color",
+              "share": 0.99954
+            },
+            {
+              "considered": 26539,
+              "primitive": "most_common_color",
+              "share": 0.53078
+            },
+            {
+              "considered": 21200,
+              "primitive": "least_common_color",
+              "share": 0.424
+            },
+            {
+              "considered": 18092,
+              "primitive": "flip_h",
+              "share": 0.36184
+            },
+            {
+              "considered": 14497,
+              "primitive": "flip_v",
+              "share": 0.28994
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 150,
           "considered": 50000,
@@ -216,6 +509,38 @@
         },
         "1": {
           "b_eff": 21.18,
+          "by_primitive": [
+            {
+              "considered": 49969,
+              "primitive": "map_color",
+              "share": 0.99938
+            },
+            {
+              "considered": 49947,
+              "primitive": "__const__",
+              "share": 0.99894
+            },
+            {
+              "considered": 22800,
+              "primitive": "most_common_color",
+              "share": 0.456
+            },
+            {
+              "considered": 21254,
+              "primitive": "least_common_color",
+              "share": 0.42508
+            },
+            {
+              "considered": 14123,
+              "primitive": "flip_h",
+              "share": 0.28246
+            },
+            {
+              "considered": 14123,
+              "primitive": "flip_v",
+              "share": 0.28246
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 151,
           "considered": 50000,
@@ -225,6 +550,38 @@
         },
         "2": {
           "b_eff": 24.74,
+          "by_primitive": [
+            {
+              "considered": 49943,
+              "primitive": "__const__",
+              "share": 0.99886
+            },
+            {
+              "considered": 49765,
+              "primitive": "map_color",
+              "share": 0.9953
+            },
+            {
+              "considered": 37362,
+              "primitive": "swap_mirror",
+              "share": 0.74724
+            },
+            {
+              "considered": 28195,
+              "primitive": "most_common_color",
+              "share": 0.5639
+            },
+            {
+              "considered": 23354,
+              "primitive": "least_common_color",
+              "share": 0.46708
+            },
+            {
+              "considered": 11907,
+              "primitive": "swap_extremes",
+              "share": 0.23814
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 119,
           "considered": 50000,
@@ -234,6 +591,38 @@
         },
         "3": {
           "b_eff": 37.25,
+          "by_primitive": [
+            {
+              "considered": 15458,
+              "primitive": "__const__",
+              "share": 0.9978697308114389
+            },
+            {
+              "considered": 12192,
+              "primitive": "map_color",
+              "share": 0.7870376347556646
+            },
+            {
+              "considered": 8630,
+              "primitive": "swap_stack",
+              "share": 0.5570976696146149
+            },
+            {
+              "considered": 3130,
+              "primitive": "swap_mirror",
+              "share": 0.2020528048544316
+            },
+            {
+              "considered": 2640,
+              "primitive": "least_common_color",
+              "share": 0.170421535084888
+            },
+            {
+              "considered": 317,
+              "primitive": "flip_h",
+              "share": 0.020463494932541477
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 119,
           "considered": 15491,
@@ -249,6 +638,38 @@
       "columns": {
         "0": {
           "b_eff": 22.7,
+          "by_primitive": [
+            {
+              "considered": 49977,
+              "primitive": "map_color",
+              "share": 0.99954
+            },
+            {
+              "considered": 49971,
+              "primitive": "__const__",
+              "share": 0.99942
+            },
+            {
+              "considered": 27147,
+              "primitive": "least_common_color",
+              "share": 0.54294
+            },
+            {
+              "considered": 24016,
+              "primitive": "most_common_color",
+              "share": 0.48032
+            },
+            {
+              "considered": 16800,
+              "primitive": "flip_h",
+              "share": 0.336
+            },
+            {
+              "considered": 6657,
+              "primitive": "flip_v",
+              "share": 0.13314
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 29343,
           "considered": 50000,
@@ -258,6 +679,38 @@
         },
         "1": {
           "b_eff": 23.07,
+          "by_primitive": [
+            {
+              "considered": 49969,
+              "primitive": "map_color",
+              "share": 0.99938
+            },
+            {
+              "considered": 49907,
+              "primitive": "__const__",
+              "share": 0.99814
+            },
+            {
+              "considered": 27104,
+              "primitive": "least_common_color",
+              "share": 0.54208
+            },
+            {
+              "considered": 24007,
+              "primitive": "most_common_color",
+              "share": 0.48014
+            },
+            {
+              "considered": 17243,
+              "primitive": "flip_h",
+              "share": 0.34486
+            },
+            {
+              "considered": 6275,
+              "primitive": "swap_extremes",
+              "share": 0.1255
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 7376,
           "considered": 50000,
@@ -267,6 +720,38 @@
         },
         "2": {
           "b_eff": 26.86,
+          "by_primitive": [
+            {
+              "considered": 49881,
+              "primitive": "__const__",
+              "share": 0.99762
+            },
+            {
+              "considered": 49751,
+              "primitive": "map_color",
+              "share": 0.99502
+            },
+            {
+              "considered": 27279,
+              "primitive": "least_common_color",
+              "share": 0.54558
+            },
+            {
+              "considered": 23752,
+              "primitive": "most_common_color",
+              "share": 0.47504
+            },
+            {
+              "considered": 19172,
+              "primitive": "swap_mirror",
+              "share": 0.38344
+            },
+            {
+              "considered": 11026,
+              "primitive": "swap_extremes",
+              "share": 0.22052
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 123,
           "considered": 50000,
@@ -276,6 +761,38 @@
         },
         "3": {
           "b_eff": 45.99,
+          "by_primitive": [
+            {
+              "considered": 23435,
+              "primitive": "__const__",
+              "share": 0.9974038134150494
+            },
+            {
+              "considered": 16884,
+              "primitive": "map_color",
+              "share": 0.7185903983656793
+            },
+            {
+              "considered": 15435,
+              "primitive": "swap_stack",
+              "share": 0.6569203268641471
+            },
+            {
+              "considered": 3854,
+              "primitive": "swap_mirror",
+              "share": 0.16402791964589716
+            },
+            {
+              "considered": 3696,
+              "primitive": "least_common_color",
+              "share": 0.15730337078651685
+            },
+            {
+              "considered": 3696,
+              "primitive": "most_common_color",
+              "share": 0.15730337078651685
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 123,
           "considered": 23496,
@@ -291,6 +808,38 @@
       "columns": {
         "0": {
           "b_eff": 20.83,
+          "by_primitive": [
+            {
+              "considered": 49983,
+              "primitive": "__const__",
+              "share": 0.99966
+            },
+            {
+              "considered": 49977,
+              "primitive": "map_color",
+              "share": 0.99954
+            },
+            {
+              "considered": 24672,
+              "primitive": "least_common_color",
+              "share": 0.49344
+            },
+            {
+              "considered": 21807,
+              "primitive": "most_common_color",
+              "share": 0.43614
+            },
+            {
+              "considered": 15875,
+              "primitive": "flip_h",
+              "share": 0.3175
+            },
+            {
+              "considered": 15242,
+              "primitive": "flip_v",
+              "share": 0.30484
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": null,
           "considered": 50000,
@@ -300,6 +849,38 @@
         },
         "1": {
           "b_eff": 20.91,
+          "by_primitive": [
+            {
+              "considered": 49969,
+              "primitive": "map_color",
+              "share": 0.99938
+            },
+            {
+              "considered": 49947,
+              "primitive": "__const__",
+              "share": 0.99894
+            },
+            {
+              "considered": 27547,
+              "primitive": "least_common_color",
+              "share": 0.55094
+            },
+            {
+              "considered": 17933,
+              "primitive": "most_common_color",
+              "share": 0.35866
+            },
+            {
+              "considered": 15719,
+              "primitive": "swap_extremes",
+              "share": 0.31438
+            },
+            {
+              "considered": 15243,
+              "primitive": "flip_h",
+              "share": 0.30486
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": null,
           "considered": 50000,
@@ -309,6 +890,38 @@
         },
         "2": {
           "b_eff": 24.49,
+          "by_primitive": [
+            {
+              "considered": 49943,
+              "primitive": "__const__",
+              "share": 0.99886
+            },
+            {
+              "considered": 49765,
+              "primitive": "map_color",
+              "share": 0.9953
+            },
+            {
+              "considered": 36186,
+              "primitive": "swap_mirror",
+              "share": 0.72372
+            },
+            {
+              "considered": 27711,
+              "primitive": "least_common_color",
+              "share": 0.55422
+            },
+            {
+              "considered": 24839,
+              "primitive": "most_common_color",
+              "share": 0.49678
+            },
+            {
+              "considered": 7354,
+              "primitive": "flip_h",
+              "share": 0.14708
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 6105,
           "considered": 50000,
@@ -318,6 +931,38 @@
         },
         "3": {
           "b_eff": 36.94,
+          "by_primitive": [
+            {
+              "considered": 15200,
+              "primitive": "__const__",
+              "share": 0.9978336506269284
+            },
+            {
+              "considered": 11934,
+              "primitive": "map_color",
+              "share": 0.783430709643537
+            },
+            {
+              "considered": 8509,
+              "primitive": "swap_stack",
+              "share": 0.5585899034989825
+            },
+            {
+              "considered": 3119,
+              "primitive": "swap_mirror",
+              "share": 0.20475283923061774
+            },
+            {
+              "considered": 2596,
+              "primitive": "least_common_color",
+              "share": 0.1704194840149675
+            },
+            {
+              "considered": 316,
+              "primitive": "flip_h",
+              "share": 0.02074443642092825
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 149,
           "considered": 15233,
@@ -333,6 +978,38 @@
       "columns": {
         "0": {
           "b_eff": 22.7,
+          "by_primitive": [
+            {
+              "considered": 49977,
+              "primitive": "map_color",
+              "share": 0.99954
+            },
+            {
+              "considered": 49971,
+              "primitive": "__const__",
+              "share": 0.99942
+            },
+            {
+              "considered": 27147,
+              "primitive": "least_common_color",
+              "share": 0.54294
+            },
+            {
+              "considered": 24016,
+              "primitive": "most_common_color",
+              "share": 0.48032
+            },
+            {
+              "considered": 16800,
+              "primitive": "flip_h",
+              "share": 0.336
+            },
+            {
+              "considered": 6657,
+              "primitive": "flip_v",
+              "share": 0.13314
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": null,
           "considered": 50000,
@@ -342,6 +1019,38 @@
         },
         "1": {
           "b_eff": 23.07,
+          "by_primitive": [
+            {
+              "considered": 49969,
+              "primitive": "map_color",
+              "share": 0.99938
+            },
+            {
+              "considered": 49907,
+              "primitive": "__const__",
+              "share": 0.99814
+            },
+            {
+              "considered": 27104,
+              "primitive": "least_common_color",
+              "share": 0.54208
+            },
+            {
+              "considered": 24007,
+              "primitive": "most_common_color",
+              "share": 0.48014
+            },
+            {
+              "considered": 17243,
+              "primitive": "flip_h",
+              "share": 0.34486
+            },
+            {
+              "considered": 6275,
+              "primitive": "swap_extremes",
+              "share": 0.1255
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": null,
           "considered": 50000,
@@ -351,6 +1060,38 @@
         },
         "2": {
           "b_eff": 26.86,
+          "by_primitive": [
+            {
+              "considered": 49881,
+              "primitive": "__const__",
+              "share": 0.99762
+            },
+            {
+              "considered": 49751,
+              "primitive": "map_color",
+              "share": 0.99502
+            },
+            {
+              "considered": 27279,
+              "primitive": "least_common_color",
+              "share": 0.54558
+            },
+            {
+              "considered": 23752,
+              "primitive": "most_common_color",
+              "share": 0.47504
+            },
+            {
+              "considered": 19172,
+              "primitive": "swap_mirror",
+              "share": 0.38344
+            },
+            {
+              "considered": 11026,
+              "primitive": "swap_extremes",
+              "share": 0.22052
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 7383,
           "considered": 50000,
@@ -360,6 +1101,38 @@
         },
         "3": {
           "b_eff": 45.99,
+          "by_primitive": [
+            {
+              "considered": 23435,
+              "primitive": "__const__",
+              "share": 0.9974038134150494
+            },
+            {
+              "considered": 16884,
+              "primitive": "map_color",
+              "share": 0.7185903983656793
+            },
+            {
+              "considered": 15435,
+              "primitive": "swap_stack",
+              "share": 0.6569203268641471
+            },
+            {
+              "considered": 3854,
+              "primitive": "swap_mirror",
+              "share": 0.16402791964589716
+            },
+            {
+              "considered": 3696,
+              "primitive": "least_common_color",
+              "share": 0.15730337078651685
+            },
+            {
+              "considered": 3696,
+              "primitive": "most_common_color",
+              "share": 0.15730337078651685
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 196,
           "considered": 23496,
@@ -375,6 +1148,38 @@
       "columns": {
         "0": {
           "b_eff": 20.83,
+          "by_primitive": [
+            {
+              "considered": 49983,
+              "primitive": "__const__",
+              "share": 0.99966
+            },
+            {
+              "considered": 49977,
+              "primitive": "map_color",
+              "share": 0.99954
+            },
+            {
+              "considered": 32904,
+              "primitive": "most_common_color",
+              "share": 0.65808
+            },
+            {
+              "considered": 16242,
+              "primitive": "flip_h",
+              "share": 0.32484
+            },
+            {
+              "considered": 16242,
+              "primitive": "flip_v",
+              "share": 0.32484
+            },
+            {
+              "considered": 10471,
+              "primitive": "least_common_color",
+              "share": 0.20942
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 29185,
           "considered": 50000,
@@ -384,6 +1189,38 @@
         },
         "1": {
           "b_eff": 21.18,
+          "by_primitive": [
+            {
+              "considered": 49969,
+              "primitive": "map_color",
+              "share": 0.99938
+            },
+            {
+              "considered": 49947,
+              "primitive": "__const__",
+              "share": 0.99894
+            },
+            {
+              "considered": 25688,
+              "primitive": "most_common_color",
+              "share": 0.51376
+            },
+            {
+              "considered": 15238,
+              "primitive": "least_common_color",
+              "share": 0.30476
+            },
+            {
+              "considered": 14286,
+              "primitive": "swap_extremes",
+              "share": 0.28572
+            },
+            {
+              "considered": 12680,
+              "primitive": "flip_h",
+              "share": 0.2536
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 6369,
           "considered": 50000,
@@ -393,6 +1230,38 @@
         },
         "2": {
           "b_eff": 24.74,
+          "by_primitive": [
+            {
+              "considered": 49943,
+              "primitive": "__const__",
+              "share": 0.99886
+            },
+            {
+              "considered": 49765,
+              "primitive": "map_color",
+              "share": 0.9953
+            },
+            {
+              "considered": 38525,
+              "primitive": "swap_mirror",
+              "share": 0.7705
+            },
+            {
+              "considered": 31574,
+              "primitive": "most_common_color",
+              "share": 0.63148
+            },
+            {
+              "considered": 17706,
+              "primitive": "least_common_color",
+              "share": 0.35412
+            },
+            {
+              "considered": 11993,
+              "primitive": "swap_extremes",
+              "share": 0.23986
+            }
+          ],
           "censored": true,
           "cheapest_solution_index": 14794,
           "considered": 50000,
@@ -402,6 +1271,38 @@
         },
         "3": {
           "b_eff": 42.27,
+          "by_primitive": [
+            {
+              "considered": 19844,
+              "primitive": "__const__",
+              "share": 0.9983397897066962
+            },
+            {
+              "considered": 14249,
+              "primitive": "map_color",
+              "share": 0.7168586808874579
+            },
+            {
+              "considered": 13016,
+              "primitive": "swap_stack",
+              "share": 0.654827187201288
+            },
+            {
+              "considered": 3388,
+              "primitive": "most_common_color",
+              "share": 0.17044825677919204
+            },
+            {
+              "considered": 3317,
+              "primitive": "swap_mirror",
+              "share": 0.16687628917844746
+            },
+            {
+              "considered": 334,
+              "primitive": "flip_h",
+              "share": 0.016803340544347737
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 9655,
           "considered": 19877,
@@ -853,6 +1754,88 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 7500,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al5-perceiver-chain:train",
+      "learn": null,
+      "library": "al5-L0",
+      "run_dir": "20260803_203358_9d5d829d0b5c5fbb",
+      "run_id": "9d5d829d0b5c5fbb"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 7500,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al5-perceiver-chain:train",
+      "learn": null,
+      "library": "al5-L0+swap_extremes",
+      "run_dir": "20260803_203413_14311dbc93d90f83",
+      "run_id": "14311dbc93d90f83"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 7500,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al5-perceiver-chain:train",
+      "learn": null,
+      "library": "al5-L0+swap_extremes+swap_mirror",
+      "run_dir": "20260803_203428_fe613d5e9b9022d9",
+      "run_id": "fe613d5e9b9022d9"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 1500,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L3",
+      "commit": "99d38b28d46893baced63da21749b31f4d84924a",
+      "completed": true,
+      "corpus_name": "al5-perceiver-chain:train",
+      "learn": null,
+      "library": "al5-L0+swap_extremes+swap_mirror+swap_stack",
+      "run_dir": "20260726_204031_ec20e04ab9a263a4",
+      "run_id": "ec20e04ab9a263a4"
+    }
+  ],
+  "recorded_commits": [
+    "99d38b28d46893baced63da21749b31f4d84924a",
+    "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10"
+  ],
   "rung_recovery": [],
   "shape": {
     "height": 4,
@@ -865,6 +1848,10 @@
       3,
       3
     ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": null
   },
   "wake_schedule": "full"
 }

@@ -68,7 +68,10 @@
         "dae9d2b5"
       ]
     },
-    "loop_overhead_factor": 8.40310518762527,
+    "loop_overhead_factor": null,
+    "loop_overhead_forfeited_by": [
+      "solution-limit"
+    ],
     "marginal_rung_value": [
       {
         "censored": true,
@@ -134,6 +137,9 @@
       "severity": "narrows",
       "when_justified": "a cell whose only question is cost-to-first, or a guarded baseline arm where exhausting is the thing being avoided (the raw arm runs `solution_limit=1` by design)"
     }
+  ],
+  "config_generations": [
+    "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
   ],
   "cost": {
     "amortization_ratio_considered": null,
@@ -1677,12 +1683,176 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L0",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-asym-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0",
+      "run_dir": "20260727_163500_1e1d569e8f7bb071",
+      "run_id": "1e1d569e8f7bb071"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L1",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-asym-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+west",
+      "run_dir": "20260727_163502_0b6edacc0728e363",
+      "run_id": "0b6edacc0728e363"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L2",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-asym-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+west+east",
+      "run_dir": "20260727_163504_0df86d0422ae6b36",
+      "run_id": "0df86d0422ae6b36"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L3",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-asym-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+west+east+recolored_west",
+      "run_dir": "20260727_163506_8aaf60b9c1f7ba5c",
+      "run_id": "8aaf60b9c1f7ba5c"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "climb/learn",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-asym-lean:train",
+      "learn": {
+        "iterations": 5,
+        "learn_engine": "GreedyMDLLearnEngine",
+        "metric": "CompressionMetric",
+        "proposer": "AntiunifyPairs"
+      },
+      "library": "dae9d2b5-split-L0",
+      "run_dir": "20260727_180316_052ecbd55da8fa27",
+      "run_id": "052ecbd55da8fa27"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "climb/train-usefulness",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-asym-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+abs0+abs1+abs2",
+      "run_dir": "20260727_180628_9c38928ccf904e8b",
+      "run_id": "9c38928ccf904e8b"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "climb/transfer",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-asym-lean:heldout",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+abs0+abs1+abs2",
+      "run_dir": "20260727_180647_b5026f4940b03f71",
+      "run_id": "b5026f4940b03f71"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "off-chain",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-asym-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+recolored_west",
+      "run_dir": "20260727_180658_525897a0b2f35e07",
+      "run_id": "525897a0b2f35e07"
+    }
+  ],
+  "recorded_commits": [
+    "260fa76b8d20fd72a8d2898c46ac906749157adb"
+  ],
   "rung_recovery": [
     {
       "level": 1,
       "matched_by": [
         "abs2"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "west"
     },
@@ -1691,6 +1861,8 @@
       "matched_by": [
         "abs1"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "east"
     },
@@ -1699,6 +1871,8 @@
       "matched_by": [
         "abs0"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "recolored_west"
     }
@@ -1714,6 +1888,10 @@
       3,
       2
     ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": true
   },
   "wake_schedule": "full"
 }

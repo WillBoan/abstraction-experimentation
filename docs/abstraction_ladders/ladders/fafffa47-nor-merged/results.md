@@ -28,13 +28,13 @@
 
 ## Rung recovery
 
-| rung              | level | recovered | matched by |
-| ----------------- | ----- | --------- | ---------- |
-| `north`           | 1     | yes       | `abs0`     |
-| `south`           | 2     | yes       | `abs1`     |
-| `recolored_north` | 3     | yes       | `abs2`     |
-| `recolored_south` | 4     | yes       | `abs3`     |
-| `merged`          | 5     | yes       | `abs4`     |
+| rung              | level | recovered | matched by | if not, where it broke |
+| ----------------- | ----- | --------- | ---------- | ---------------------- |
+| `north`           | 1     | yes       | `abs0`     | -                      |
+| `south`           | 2     | yes       | `abs1`     | -                      |
+| `recolored_north` | 3     | yes       | `abs2`     | -                      |
+| `recolored_south` | 4     | yes       | `abs3`     | -                      |
+| `merged`          | 5     | yes       | `abs4`     | -                      |
 
 ## Cost matrix (considered count per task x library)
 
@@ -271,6 +271,23 @@
 
 - Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **yes**.
 - When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
+## Provenance (which runs this report was built from)
+
+| cell                   | run_id           | run dir                          | commit   | library                                                   | depth | pool | stop    |
+| ---------------------- | ---------------- | -------------------------------- | -------- | --------------------------------------------------------- | ----- | ---- | ------- |
+| chain/L0               | 0e64a7c863882b5d | 20260727_190555_0e64a7c863882b5d | 1b43b3a4 | nor-L0                                                    | 2     | 30   | exhaust |
+| chain/L1               | cd89f46b2d7c5d29 | 20260727_190601_cd89f46b2d7c5d29 | 1b43b3a4 | nor-L0+north                                              | 2     | 30   | exhaust |
+| chain/L2               | 64877e8889da7205 | 20260727_190606_64877e8889da7205 | 1b43b3a4 | nor-L0+north+south                                        | 2     | 30   | exhaust |
+| chain/L3               | 00ab13a658a51375 | 20260727_190610_00ab13a658a51375 | 1b43b3a4 | nor-L0+north+south+recolored_north                        | 2     | 30   | exhaust |
+| chain/L4               | b9af3e2987859164 | 20260727_190615_b9af3e2987859164 | 1b43b3a4 | nor-L0+north+south+recolored_north+recolored_south        | 2     | 30   | exhaust |
+| chain/L5               | 0fdf76902a7de584 | 20260727_190618_0fdf76902a7de584 | 1b43b3a4 | nor-L0+north+south+recolored_north+recolored_south+merged | 2     | 30   | exhaust |
+| climb/learn            | 27ddfe7df5afa38b | 20260727_190622_27ddfe7df5afa38b | 1b43b3a4 | nor-L0                                                    | 2     | 30   | exhaust |
+| climb/train-usefulness | 6d6853f2904f19d7 | 20260727_190641_6d6853f2904f19d7 | 1b43b3a4 | nor-L0+abs0+abs1+abs2+abs3+abs4                           | 2     | 30   | exhaust |
+| climb/transfer         | caf0d0b5425484bc | 20260727_190644_caf0d0b5425484bc | 1b43b3a4 | nor-L0+abs0+abs1+abs2+abs3+abs4                           | 2     | 30   | exhaust |
+| off-chain              | 1cc5a57e8436f2ec | 20260727_190646_1cc5a57e8436f2ec | 1b43b3a4 | nor-L0+merged                                             | 2     | 30   | exhaust |
+
+- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the current spec and comparing IS the staleness test: a differing hash means this artifact describes runs the current code would no longer produce.
 
 ## Not computed here
 

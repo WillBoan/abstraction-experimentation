@@ -25,11 +25,15 @@
 
 ## Rung recovery
 
-| rung             | level | recovered | matched by |
-| ---------------- | ----- | --------- | ---------- |
-| `half`           | 1     | no        | -          |
-| `recolored_west` | 2     | yes       | `abs3`     |
-| `recolored_east` | 3     | yes       | `abs2`     |
+| rung             | level | recovered | matched by | if not, where it broke         |
+| ---------------- | ----- | --------- | ---------- | ------------------------------ |
+| `half`           | 1     | no        | -          | proposed-not-selected (iter 0) |
+| `recolored_west` | 2     | yes       | `abs3`     | -                              |
+| `recolored_east` | 3     | yes       | `abs2`     | -                              |
+
+Proposals are RECOMPUTED read-side from the recorded wake programs and libraries (proposers are pure), not logged -- so this says what sleep actually saw.
+
+- `proposed-not-selected` -- the proposer DID offer a behavioural match and governance kept something else. Governance PREFERENCE, not reach -- and **not necessarily a defect**: at two distinct parameter values with two occurrences each, minting nothing is the DL-optimum, so the learner can be right and the ladder wrong (`experiments/2026-07-27-half-param-governance/`). Read it against the run's metric.
 
 ## Cost matrix (considered count per task x library)
 
@@ -206,6 +210,21 @@
 
 - Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **no**.
 - When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
+## Provenance (which runs this report was built from)
+
+| cell                   | run_id           | run dir                          | commit   | library                                              | depth | pool | stop    |
+| ---------------------- | ---------------- | -------------------------------- | -------- | ---------------------------------------------------- | ----- | ---- | ------- |
+| chain/L0               | 8ddbe7ae3c49cb3e | 20260727_214203_8ddbe7ae3c49cb3e | 1b43b3a4 | dae9d2b5-split-L0                                    | 2     | 30   | exhaust |
+| chain/L1               | f1377158eb014809 | 20260727_214207_f1377158eb014809 | 1b43b3a4 | dae9d2b5-split-L0+half                               | 2     | 30   | exhaust |
+| chain/L2               | 2a28ac351ebc2a49 | 20260727_214211_2a28ac351ebc2a49 | 1b43b3a4 | dae9d2b5-split-L0+half+recolored_west                | 2     | 30   | exhaust |
+| chain/L3               | 2738456a51da620f | 20260727_214214_2738456a51da620f | 1b43b3a4 | dae9d2b5-split-L0+half+recolored_west+recolored_east | 2     | 30   | exhaust |
+| climb/learn            | 227c31c8b21174cc | 20260727_214216_227c31c8b21174cc | 1b43b3a4 | dae9d2b5-split-L0                                    | 2     | 30   | exhaust |
+| climb/train-usefulness | 7aa514d437b011dd | 20260727_214227_7aa514d437b011dd | 1b43b3a4 | dae9d2b5-split-L0+abs0+abs1+abs2+abs3                | 2     | 30   | exhaust |
+| climb/transfer         | 38533c52e14d13bb | 20260727_214229_38533c52e14d13bb | 1b43b3a4 | dae9d2b5-split-L0+abs0+abs1+abs2+abs3                | 2     | 30   | exhaust |
+| off-chain              | ddb3da552f8562f1 | 20260727_214231_ddb3da552f8562f1 | 1b43b3a4 | dae9d2b5-split-L0+recolored_east                     | 2     | 30   | exhaust |
+
+- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the current spec and comparing IS the staleness test: a differing hash means this artifact describes runs the current code would no longer produce.
 
 ## Not computed here
 

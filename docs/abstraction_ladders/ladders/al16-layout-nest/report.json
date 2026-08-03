@@ -24,7 +24,7 @@
         "abs0"
       ],
       "proposal_count": 2,
-      "wake_considered": 1555,
+      "wake_considered": 1615,
       "wake_solved": [
         "pair-00",
         "pair-01"
@@ -38,7 +38,7 @@
         "abs1"
       ],
       "proposal_count": 4,
-      "wake_considered": 1875,
+      "wake_considered": 1935,
       "wake_solved": [
         "pair-00",
         "pair-01",
@@ -52,7 +52,7 @@
       "iteration": 2,
       "minted": [],
       "proposal_count": 2,
-      "wake_considered": 2225,
+      "wake_considered": 2285,
       "wake_solved": [
         "pair-00",
         "pair-01",
@@ -72,67 +72,72 @@
         "top-00"
       ]
     },
-    "loop_overhead_factor": 3.112272977435333,
+    "loop_overhead_factor": 3.1086840703249865,
+    "loop_overhead_forfeited_by": null,
     "marginal_rung_value": [
       {
         "censored": true,
-        "cost_with_rung": 750,
-        "cost_without_rung": 622,
+        "cost_with_rung": 774,
+        "cost_without_rung": 646,
         "layer_above": "stack",
-        "own_tasks_speedup": 1.2173913043478262,
-        "own_tasks_to_first_with": 46,
-        "own_tasks_to_first_without": 56,
-        "ratio": 0.8293333333333334,
+        "own_tasks_speedup": 1.1428571428571428,
+        "own_tasks_to_first_with": 70,
+        "own_tasks_to_first_without": 80,
+        "ratio": 0.834625322997416,
         "rung": "pair"
       },
       {
         "censored": true,
-        "cost_with_rung": 445,
-        "cost_without_rung": 375,
+        "cost_with_rung": 457,
+        "cost_without_rung": 387,
         "layer_above": "top",
-        "own_tasks_speedup": 5.541666666666667,
-        "own_tasks_to_first_with": 48,
-        "own_tasks_to_first_without": 266,
-        "ratio": 0.8426966292134831,
+        "own_tasks_speedup": 4.027777777777778,
+        "own_tasks_to_first_with": 72,
+        "own_tasks_to_first_without": 290,
+        "ratio": 0.8468271334792122,
         "rung": "stack"
       }
     ],
     "vocabulary_tax": [
       {
-        "at_full_library": 890,
-        "at_own_level": 622,
-        "factor": 1.4308681672025723,
+        "at_full_library": 914,
+        "at_own_level": 646,
+        "factor": 1.414860681114551,
         "rung": "pair"
       },
       {
-        "at_full_library": 890,
-        "at_own_level": 750,
-        "factor": 1.1866666666666668,
+        "at_full_library": 914,
+        "at_own_level": 774,
+        "factor": 1.1808785529715762,
         "rung": "stack"
       }
     ]
   },
+  "compromises": [],
+  "config_generations": [
+    "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+  ],
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
-      "high": 43.28398458998349,
-      "low": 10.50357732526142
+      "high": 41.906766116142784,
+      "low": 3.402770378263186
     },
     "budget_compression_depth": {
       "max_jump_depth": 2,
       "raw_depth": 4
     },
     "jump_costs": {
-      "pair": 622,
-      "stack": 750
+      "pair": 646,
+      "stack": 774
     },
     "jump_costs_to_first": {
-      "pair": 56,
-      "stack": 266
+      "pair": 80,
+      "stack": 290
     },
-    "laddered_end_to_end_considered": 5655,
-    "laddered_marginal_considered": 1817,
-    "laddered_marginal_to_first": 370,
+    "laddered_end_to_end_considered": 5835,
+    "laddered_marginal_considered": 1877,
+    "laddered_marginal_to_first": 430,
     "off_chain_top_solved": true,
     "raw_arm": {
       "amortization_ratio": 10.0,
@@ -142,16 +147,17 @@
         "max_pool": 200000,
         "solution_limit": 1
       },
-      "guard_per_task": 18170,
+      "guard_per_task": 18770,
       "k": 10,
-      "laddered_marginal": 1817,
+      "laddered_marginal": 1877,
+      "reused_recorded_arm": true,
       "saturated_at": null,
       "solved": false,
       "sound": true,
-      "spend_considered": 18170
+      "spend_considered": 18770
     },
     "raw_censored": true,
-    "raw_considered": 311,
+    "raw_considered": 323,
     "raw_estimate": {
       "available": true,
       "caveats": [
@@ -163,53 +169,134 @@
         "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
       ],
       "d_raw": 4,
-      "estimate_high": 78647,
-      "estimate_low": 19085,
-      "growth_ratio_geometric": 7.59,
+      "estimate_high": 78659,
+      "estimate_low": 6387,
+      "growth_ratio_geometric": 4.12,
       "growth_ratio_last": 16.0,
       "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
       "observed_composed": [
-        5,
+        17,
         18,
         288
       ],
-      "observed_considered": 311,
+      "observed_considered": 323,
       "observed_through_depth": 2,
       "rounds_extrapolated": 2,
       "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
     },
     "raw_limit_censored": false,
     "raw_solved": false,
-    "top_jump_cost": 445,
-    "top_jump_cost_to_first": 48
+    "top_jump_cost": 457,
+    "top_jump_cost_to_first": 60
   },
   "cost_matrix": [
     {
       "columns": {
         "0": {
-          "b_eff": 7.59,
+          "b_eff": 4.12,
+          "by_primitive": [
+            {
+              "considered": 304,
+              "primitive": "__const__",
+              "share": 0.9411764705882353
+            },
+            {
+              "considered": 288,
+              "primitive": "translate",
+              "share": 0.891640866873065
+            },
+            {
+              "considered": 114,
+              "primitive": "concat_h",
+              "share": 0.35294117647058826
+            },
+            {
+              "considered": 114,
+              "primitive": "concat_v",
+              "share": 0.35294117647058826
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 28,
-          "considered": 311,
-          "first_solution_index": 28,
+          "cheapest_solution_index": 40,
+          "considered": 323,
+          "first_solution_index": 40,
           "solve_generation": 2,
           "solved": true
         },
         "1": {
-          "b_eff": 8.38,
+          "b_eff": 4.54,
+          "by_primitive": [
+            {
+              "considered": 350,
+              "primitive": "__const__",
+              "share": 0.9043927648578811
+            },
+            {
+              "considered": 334,
+              "primitive": "translate",
+              "share": 0.8630490956072352
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_h",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_v",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 64,
+              "primitive": "pair",
+              "share": 0.165374677002584
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 23,
-          "considered": 375,
-          "first_solution_index": 23,
+          "cheapest_solution_index": 35,
+          "considered": 387,
+          "first_solution_index": 35,
           "solve_generation": 1,
           "solved": true
         },
         "2": {
-          "b_eff": 9.17,
+          "b_eff": 4.97,
+          "by_primitive": [
+            {
+              "considered": 396,
+              "primitive": "__const__",
+              "share": 0.8665207877461707
+            },
+            {
+              "considered": 380,
+              "primitive": "translate",
+              "share": 0.8315098468271335
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_h",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_v",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 70,
+              "primitive": "pair",
+              "share": 0.15317286652078774
+            },
+            {
+              "considered": 70,
+              "primitive": "stack",
+              "share": 0.15317286652078774
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 23,
-          "considered": 445,
-          "first_solution_index": 23,
+          "cheapest_solution_index": 35,
+          "considered": 457,
+          "first_solution_index": 35,
           "solve_generation": 1,
           "solved": true
         }
@@ -220,29 +307,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 7.59,
+          "b_eff": 4.12,
+          "by_primitive": [
+            {
+              "considered": 304,
+              "primitive": "__const__",
+              "share": 0.9411764705882353
+            },
+            {
+              "considered": 288,
+              "primitive": "translate",
+              "share": 0.891640866873065
+            },
+            {
+              "considered": 114,
+              "primitive": "concat_h",
+              "share": 0.35294117647058826
+            },
+            {
+              "considered": 114,
+              "primitive": "concat_v",
+              "share": 0.35294117647058826
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 28,
-          "considered": 311,
-          "first_solution_index": 28,
+          "cheapest_solution_index": 40,
+          "considered": 323,
+          "first_solution_index": 40,
           "solve_generation": 2,
           "solved": true
         },
         "1": {
-          "b_eff": 8.38,
+          "b_eff": 4.54,
+          "by_primitive": [
+            {
+              "considered": 350,
+              "primitive": "__const__",
+              "share": 0.9043927648578811
+            },
+            {
+              "considered": 334,
+              "primitive": "translate",
+              "share": 0.8630490956072352
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_h",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_v",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 64,
+              "primitive": "pair",
+              "share": 0.165374677002584
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 23,
-          "considered": 375,
-          "first_solution_index": 23,
+          "cheapest_solution_index": 35,
+          "considered": 387,
+          "first_solution_index": 35,
           "solve_generation": 1,
           "solved": true
         },
         "2": {
-          "b_eff": 9.17,
+          "b_eff": 4.97,
+          "by_primitive": [
+            {
+              "considered": 396,
+              "primitive": "__const__",
+              "share": 0.8665207877461707
+            },
+            {
+              "considered": 380,
+              "primitive": "translate",
+              "share": 0.8315098468271335
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_h",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_v",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 70,
+              "primitive": "pair",
+              "share": 0.15317286652078774
+            },
+            {
+              "considered": 70,
+              "primitive": "stack",
+              "share": 0.15317286652078774
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 23,
-          "considered": 445,
-          "first_solution_index": 23,
+          "cheapest_solution_index": 35,
+          "considered": 457,
+          "first_solution_index": 35,
           "solve_generation": 1,
           "solved": true
         }
@@ -253,29 +421,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 7.59,
+          "b_eff": 4.12,
+          "by_primitive": [
+            {
+              "considered": 304,
+              "primitive": "__const__",
+              "share": 0.9411764705882353
+            },
+            {
+              "considered": 288,
+              "primitive": "translate",
+              "share": 0.891640866873065
+            },
+            {
+              "considered": 114,
+              "primitive": "concat_h",
+              "share": 0.35294117647058826
+            },
+            {
+              "considered": 114,
+              "primitive": "concat_v",
+              "share": 0.35294117647058826
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 311,
+          "considered": 323,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 8.38,
+          "b_eff": 4.54,
+          "by_primitive": [
+            {
+              "considered": 350,
+              "primitive": "__const__",
+              "share": 0.9043927648578811
+            },
+            {
+              "considered": 334,
+              "primitive": "translate",
+              "share": 0.8630490956072352
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_h",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_v",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 64,
+              "primitive": "pair",
+              "share": 0.165374677002584
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 133,
-          "considered": 375,
-          "first_solution_index": 133,
+          "cheapest_solution_index": 145,
+          "considered": 387,
+          "first_solution_index": 145,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 9.17,
+          "b_eff": 4.97,
+          "by_primitive": [
+            {
+              "considered": 396,
+              "primitive": "__const__",
+              "share": 0.8665207877461707
+            },
+            {
+              "considered": 380,
+              "primitive": "translate",
+              "share": 0.8315098468271335
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_h",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_v",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 70,
+              "primitive": "pair",
+              "share": 0.15317286652078774
+            },
+            {
+              "considered": 70,
+              "primitive": "stack",
+              "share": 0.15317286652078774
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 24,
-          "considered": 445,
-          "first_solution_index": 24,
+          "cheapest_solution_index": 36,
+          "considered": 457,
+          "first_solution_index": 36,
           "solve_generation": 1,
           "solved": true
         }
@@ -286,29 +535,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 7.59,
+          "b_eff": 4.12,
+          "by_primitive": [
+            {
+              "considered": 304,
+              "primitive": "__const__",
+              "share": 0.9411764705882353
+            },
+            {
+              "considered": 288,
+              "primitive": "translate",
+              "share": 0.891640866873065
+            },
+            {
+              "considered": 114,
+              "primitive": "concat_h",
+              "share": 0.35294117647058826
+            },
+            {
+              "considered": 114,
+              "primitive": "concat_v",
+              "share": 0.35294117647058826
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 311,
+          "considered": 323,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 8.38,
+          "b_eff": 4.54,
+          "by_primitive": [
+            {
+              "considered": 350,
+              "primitive": "__const__",
+              "share": 0.9043927648578811
+            },
+            {
+              "considered": 334,
+              "primitive": "translate",
+              "share": 0.8630490956072352
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_h",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_v",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 64,
+              "primitive": "pair",
+              "share": 0.165374677002584
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 133,
-          "considered": 375,
-          "first_solution_index": 133,
+          "cheapest_solution_index": 145,
+          "considered": 387,
+          "first_solution_index": 145,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 9.17,
+          "b_eff": 4.97,
+          "by_primitive": [
+            {
+              "considered": 396,
+              "primitive": "__const__",
+              "share": 0.8665207877461707
+            },
+            {
+              "considered": 380,
+              "primitive": "translate",
+              "share": 0.8315098468271335
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_h",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_v",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 70,
+              "primitive": "pair",
+              "share": 0.15317286652078774
+            },
+            {
+              "considered": 70,
+              "primitive": "stack",
+              "share": 0.15317286652078774
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 24,
-          "considered": 445,
-          "first_solution_index": 24,
+          "cheapest_solution_index": 36,
+          "considered": 457,
+          "first_solution_index": 36,
           "solve_generation": 1,
           "solved": true
         }
@@ -319,29 +649,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 7.59,
+          "b_eff": 4.12,
+          "by_primitive": [
+            {
+              "considered": 304,
+              "primitive": "__const__",
+              "share": 0.9411764705882353
+            },
+            {
+              "considered": 288,
+              "primitive": "translate",
+              "share": 0.891640866873065
+            },
+            {
+              "considered": 114,
+              "primitive": "concat_h",
+              "share": 0.35294117647058826
+            },
+            {
+              "considered": 114,
+              "primitive": "concat_v",
+              "share": 0.35294117647058826
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 311,
+          "considered": 323,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 8.38,
+          "b_eff": 4.54,
+          "by_primitive": [
+            {
+              "considered": 350,
+              "primitive": "__const__",
+              "share": 0.9043927648578811
+            },
+            {
+              "considered": 334,
+              "primitive": "translate",
+              "share": 0.8630490956072352
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_h",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_v",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 64,
+              "primitive": "pair",
+              "share": 0.165374677002584
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 375,
+          "considered": 387,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "2": {
-          "b_eff": 9.17,
+          "b_eff": 4.97,
+          "by_primitive": [
+            {
+              "considered": 396,
+              "primitive": "__const__",
+              "share": 0.8665207877461707
+            },
+            {
+              "considered": 380,
+              "primitive": "translate",
+              "share": 0.8315098468271335
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_h",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_v",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 70,
+              "primitive": "pair",
+              "share": 0.15317286652078774
+            },
+            {
+              "considered": 70,
+              "primitive": "stack",
+              "share": 0.15317286652078774
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 48,
-          "considered": 445,
-          "first_solution_index": 48,
+          "cheapest_solution_index": 60,
+          "considered": 457,
+          "first_solution_index": 60,
           "solve_generation": 2,
           "solved": true
         }
@@ -437,8 +848,7 @@
             "name": "translate",
             "param_types": [
               "grid",
-              "int",
-              "int"
+              "offset"
             ],
             "return_type": "grid",
             "variadic_param": null
@@ -506,13 +916,11 @@
                 },
                 {
                   "op": "const",
-                  "value": 1,
-                  "value_type": "int"
-                },
-                {
-                  "op": "const",
-                  "value": 0,
-                  "value_type": "int"
+                  "value": [
+                    1,
+                    0
+                  ],
+                  "value_type": "offset"
                 }
               ],
               "op": "apply",
@@ -622,12 +1030,176 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al16-layout-nest:train",
+      "learn": null,
+      "library": "al16-L0",
+      "run_dir": "20260803_203107_a4489b825823ca4f",
+      "run_id": "a4489b825823ca4f"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al16-layout-nest:train",
+      "learn": null,
+      "library": "al16-L0+pair",
+      "run_dir": "20260803_203107_6e8a6646eb0e8200",
+      "run_id": "6e8a6646eb0e8200"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al16-layout-nest:train",
+      "learn": null,
+      "library": "al16-L0+pair+stack",
+      "run_dir": "20260803_203107_33a2369aeacd36c5",
+      "run_id": "33a2369aeacd36c5"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/learn",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al16-layout-nest:train",
+      "learn": {
+        "iterations": 5,
+        "learn_engine": "GreedyMDLLearnEngine",
+        "metric": "CompressionMetric",
+        "proposer": "AntiunifyPairs"
+      },
+      "library": "al16-L0",
+      "run_dir": "20260803_203107_40f4b8b641c27ffe",
+      "run_id": "40f4b8b641c27ffe"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/train-usefulness",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al16-layout-nest:train",
+      "learn": null,
+      "library": "al16-L0+abs0+abs1",
+      "run_dir": "20260803_203107_b83f510089b7eac5",
+      "run_id": "b83f510089b7eac5"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/transfer",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al16-layout-nest:heldout",
+      "learn": null,
+      "library": "al16-L0+abs0+abs1",
+      "run_dir": "20260803_203107_834be6dcc48b875b",
+      "run_id": "834be6dcc48b875b"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "off-chain",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al16-layout-nest:train",
+      "learn": null,
+      "library": "al16-L0+stack",
+      "run_dir": "20260803_203107_03fec076894b5bcf",
+      "run_id": "03fec076894b5bcf"
+    },
+    {
+      "budget": {
+        "considered_limit": 18770,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "max_arity": 2,
+        "max_pool": 200000,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "raw-arm",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al16-layout-nest:train:raw-arm",
+      "learn": null,
+      "library": "al16-L0",
+      "run_dir": "20260803_203107_dcd32673df4c6c82",
+      "run_id": "dcd32673df4c6c82"
+    }
+  ],
+  "recorded_commits": [
+    "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10"
+  ],
   "rung_recovery": [
     {
       "level": 1,
       "matched_by": [
         "abs0"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "pair"
     },
@@ -636,6 +1208,8 @@
       "matched_by": [
         "abs1"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "stack"
     }
@@ -651,6 +1225,10 @@
       2,
       2
     ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": true
   },
   "wake_schedule": "full"
 }

@@ -1,0 +1,1140 @@
+{
+  "certificate": {
+    "admitted": false,
+    "demonstration_health": {
+      "1": 1.0,
+      "2": 1.0
+    },
+    "no_skip_paths": {
+      "1": true,
+      "2": null
+    },
+    "tractable_jumps": {
+      "1": true,
+      "2": true
+    }
+  },
+  "climb_executed": false,
+  "climb_trace": [],
+  "comparisons": {
+    "enablement": {
+      "1": [
+        "sym_both-00",
+        "sym_both-01"
+      ],
+      "2": [
+        "top-00"
+      ]
+    },
+    "loop_overhead_factor": null,
+    "loop_overhead_forfeited_by": null,
+    "marginal_rung_value": [
+      {
+        "censored": true,
+        "cost_with_rung": 100000,
+        "cost_without_rung": 1726,
+        "layer_above": "sym_both",
+        "own_tasks_speedup": 1.6818181818181819,
+        "own_tasks_to_first_with": 88,
+        "own_tasks_to_first_without": 148,
+        "ratio": 0.01726,
+        "rung": "sym_h"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 14894,
+        "cost_without_rung": 50000,
+        "layer_above": "top",
+        "own_tasks_speedup": 121.48148148148148,
+        "own_tasks_to_first_with": 108,
+        "own_tasks_to_first_without": 13120,
+        "ratio": 3.3570565328320128,
+        "rung": "sym_both"
+      }
+    ],
+    "vocabulary_tax": [
+      {
+        "at_full_library": 29788,
+        "at_own_level": 1726,
+        "factor": 17.258400926998842,
+        "rung": "sym_h"
+      },
+      {
+        "at_full_library": 29788,
+        "at_own_level": 100000,
+        "factor": 0.29788,
+        "rung": "sym_both"
+      }
+    ]
+  },
+  "compromises": [],
+  "config_generations": [
+    "max_arity=3 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+  ],
+  "cost": {
+    "amortization_ratio_considered": null,
+    "amortization_ratio_estimated": {
+      "high": 4.507331504030184,
+      "low": 0.590876350540216
+    },
+    "budget_compression_depth": {
+      "max_jump_depth": 3,
+      "raw_depth": 5
+    },
+    "jump_costs": {
+      "sym_both": 100000,
+      "sym_h": 1726
+    },
+    "jump_costs_to_first": {
+      "sym_both": 13120,
+      "sym_h": 148
+    },
+    "laddered_end_to_end_considered": null,
+    "laddered_marginal_considered": 116620,
+    "laddered_marginal_to_first": 27959,
+    "off_chain_top_solved": null,
+    "raw_arm": null,
+    "raw_censored": true,
+    "raw_considered": 863,
+    "raw_estimate": {
+      "available": true,
+      "caveats": [
+        "THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells",
+        "accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)",
+        "finite-space floors: both fits over-project (up to 3.71x) once the space is exhausted",
+        "error compounds per extrapolated round and is floor-dependent even at a 1-round gap",
+        "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
+        "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
+      ],
+      "d_raw": 5,
+      "estimate_high": 525645,
+      "estimate_low": 68908,
+      "growth_ratio_geometric": 8.63,
+      "growth_ratio_last": 24.82,
+      "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
+      "observed_composed": [
+        11,
+        33,
+        819
+      ],
+      "observed_considered": 863,
+      "observed_through_depth": 3,
+      "rounds_extrapolated": 2,
+      "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
+    },
+    "raw_limit_censored": false,
+    "raw_solved": false,
+    "top_jump_cost": 14894,
+    "top_jump_cost_to_first": 14691
+  },
+  "cost_matrix": [
+    {
+      "columns": {
+        "0": {
+          "b_eff": 8.63,
+          "by_primitive": [
+            {
+              "considered": 850,
+              "primitive": "__const__",
+              "share": 0.984936268829664
+            },
+            {
+              "considered": 840,
+              "primitive": "overlay",
+              "share": 0.9733487833140209
+            },
+            {
+              "considered": 456,
+              "primitive": "flip_h",
+              "share": 0.5283893395133256
+            },
+            {
+              "considered": 456,
+              "primitive": "flip_v",
+              "share": 0.5283893395133256
+            },
+            {
+              "considered": 456,
+              "primitive": "transpose",
+              "share": 0.5283893395133256
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 863,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 23.16,
+          "by_primitive": [
+            {
+              "considered": 49987,
+              "primitive": "__const__",
+              "share": 0.99974
+            },
+            {
+              "considered": 49885,
+              "primitive": "overlay",
+              "share": 0.9977
+            },
+            {
+              "considered": 47265,
+              "primitive": "sym_h",
+              "share": 0.9453
+            },
+            {
+              "considered": 35534,
+              "primitive": "flip_v",
+              "share": 0.71068
+            },
+            {
+              "considered": 21790,
+              "primitive": "flip_h",
+              "share": 0.4358
+            },
+            {
+              "considered": 17838,
+              "primitive": "transpose",
+              "share": 0.35676
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 6560,
+          "considered": 50000,
+          "first_solution_index": 6560,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 36.72,
+          "by_primitive": [
+            {
+              "considered": 14881,
+              "primitive": "__const__",
+              "share": 0.9991271653014637
+            },
+            {
+              "considered": 14630,
+              "primitive": "overlay",
+              "share": 0.982274741506647
+            },
+            {
+              "considered": 10802,
+              "primitive": "sym_h",
+              "share": 0.725258493353028
+            },
+            {
+              "considered": 8939,
+              "primitive": "sym_both",
+              "share": 0.6001745669397073
+            },
+            {
+              "considered": 3563,
+              "primitive": "flip_h",
+              "share": 0.23922384852960923
+            },
+            {
+              "considered": 3563,
+              "primitive": "flip_v",
+              "share": 0.23922384852960923
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 54,
+          "considered": 14894,
+          "first_solution_index": 54,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "sym_both",
+      "task_id": "sym_both-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 8.63,
+          "by_primitive": [
+            {
+              "considered": 850,
+              "primitive": "__const__",
+              "share": 0.984936268829664
+            },
+            {
+              "considered": 840,
+              "primitive": "overlay",
+              "share": 0.9733487833140209
+            },
+            {
+              "considered": 456,
+              "primitive": "flip_h",
+              "share": 0.5283893395133256
+            },
+            {
+              "considered": 456,
+              "primitive": "flip_v",
+              "share": 0.5283893395133256
+            },
+            {
+              "considered": 456,
+              "primitive": "transpose",
+              "share": 0.5283893395133256
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 863,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 23.16,
+          "by_primitive": [
+            {
+              "considered": 49987,
+              "primitive": "__const__",
+              "share": 0.99974
+            },
+            {
+              "considered": 49885,
+              "primitive": "overlay",
+              "share": 0.9977
+            },
+            {
+              "considered": 47265,
+              "primitive": "sym_h",
+              "share": 0.9453
+            },
+            {
+              "considered": 35534,
+              "primitive": "flip_v",
+              "share": 0.71068
+            },
+            {
+              "considered": 21790,
+              "primitive": "flip_h",
+              "share": 0.4358
+            },
+            {
+              "considered": 17838,
+              "primitive": "transpose",
+              "share": 0.35676
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 6560,
+          "considered": 50000,
+          "first_solution_index": 6560,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 36.72,
+          "by_primitive": [
+            {
+              "considered": 14881,
+              "primitive": "__const__",
+              "share": 0.9991271653014637
+            },
+            {
+              "considered": 14630,
+              "primitive": "overlay",
+              "share": 0.982274741506647
+            },
+            {
+              "considered": 10802,
+              "primitive": "sym_h",
+              "share": 0.725258493353028
+            },
+            {
+              "considered": 8939,
+              "primitive": "sym_both",
+              "share": 0.6001745669397073
+            },
+            {
+              "considered": 3563,
+              "primitive": "flip_h",
+              "share": 0.23922384852960923
+            },
+            {
+              "considered": 3563,
+              "primitive": "flip_v",
+              "share": 0.23922384852960923
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 54,
+          "considered": 14894,
+          "first_solution_index": 54,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "sym_both",
+      "task_id": "sym_both-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 8.63,
+          "by_primitive": [
+            {
+              "considered": 850,
+              "primitive": "__const__",
+              "share": 0.984936268829664
+            },
+            {
+              "considered": 840,
+              "primitive": "overlay",
+              "share": 0.9733487833140209
+            },
+            {
+              "considered": 456,
+              "primitive": "flip_h",
+              "share": 0.5283893395133256
+            },
+            {
+              "considered": 456,
+              "primitive": "flip_v",
+              "share": 0.5283893395133256
+            },
+            {
+              "considered": 456,
+              "primitive": "transpose",
+              "share": 0.5283893395133256
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 74,
+          "considered": 863,
+          "first_solution_index": 74,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 23.16,
+          "by_primitive": [
+            {
+              "considered": 49987,
+              "primitive": "__const__",
+              "share": 0.99974
+            },
+            {
+              "considered": 49885,
+              "primitive": "overlay",
+              "share": 0.9977
+            },
+            {
+              "considered": 47265,
+              "primitive": "sym_h",
+              "share": 0.9453
+            },
+            {
+              "considered": 35534,
+              "primitive": "flip_v",
+              "share": 0.71068
+            },
+            {
+              "considered": 21790,
+              "primitive": "flip_h",
+              "share": 0.4358
+            },
+            {
+              "considered": 17838,
+              "primitive": "transpose",
+              "share": 0.35676
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 44,
+          "considered": 50000,
+          "first_solution_index": 44,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 36.72,
+          "by_primitive": [
+            {
+              "considered": 14881,
+              "primitive": "__const__",
+              "share": 0.9991271653014637
+            },
+            {
+              "considered": 14630,
+              "primitive": "overlay",
+              "share": 0.982274741506647
+            },
+            {
+              "considered": 10802,
+              "primitive": "sym_h",
+              "share": 0.725258493353028
+            },
+            {
+              "considered": 8939,
+              "primitive": "sym_both",
+              "share": 0.6001745669397073
+            },
+            {
+              "considered": 3563,
+              "primitive": "flip_h",
+              "share": 0.23922384852960923
+            },
+            {
+              "considered": 3563,
+              "primitive": "flip_v",
+              "share": 0.23922384852960923
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 44,
+          "considered": 14894,
+          "first_solution_index": 44,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "sym_h",
+      "task_id": "sym_h-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 8.63,
+          "by_primitive": [
+            {
+              "considered": 850,
+              "primitive": "__const__",
+              "share": 0.984936268829664
+            },
+            {
+              "considered": 840,
+              "primitive": "overlay",
+              "share": 0.9733487833140209
+            },
+            {
+              "considered": 456,
+              "primitive": "flip_h",
+              "share": 0.5283893395133256
+            },
+            {
+              "considered": 456,
+              "primitive": "flip_v",
+              "share": 0.5283893395133256
+            },
+            {
+              "considered": 456,
+              "primitive": "transpose",
+              "share": 0.5283893395133256
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 74,
+          "considered": 863,
+          "first_solution_index": 74,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 23.16,
+          "by_primitive": [
+            {
+              "considered": 49987,
+              "primitive": "__const__",
+              "share": 0.99974
+            },
+            {
+              "considered": 49885,
+              "primitive": "overlay",
+              "share": 0.9977
+            },
+            {
+              "considered": 47265,
+              "primitive": "sym_h",
+              "share": 0.9453
+            },
+            {
+              "considered": 35534,
+              "primitive": "flip_v",
+              "share": 0.71068
+            },
+            {
+              "considered": 21790,
+              "primitive": "flip_h",
+              "share": 0.4358
+            },
+            {
+              "considered": 17838,
+              "primitive": "transpose",
+              "share": 0.35676
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 44,
+          "considered": 50000,
+          "first_solution_index": 44,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 36.72,
+          "by_primitive": [
+            {
+              "considered": 14881,
+              "primitive": "__const__",
+              "share": 0.9991271653014637
+            },
+            {
+              "considered": 14630,
+              "primitive": "overlay",
+              "share": 0.982274741506647
+            },
+            {
+              "considered": 10802,
+              "primitive": "sym_h",
+              "share": 0.725258493353028
+            },
+            {
+              "considered": 8939,
+              "primitive": "sym_both",
+              "share": 0.6001745669397073
+            },
+            {
+              "considered": 3563,
+              "primitive": "flip_h",
+              "share": 0.23922384852960923
+            },
+            {
+              "considered": 3563,
+              "primitive": "flip_v",
+              "share": 0.23922384852960923
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 44,
+          "considered": 14894,
+          "first_solution_index": 44,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "sym_h",
+      "task_id": "sym_h-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 8.63,
+          "by_primitive": [
+            {
+              "considered": 850,
+              "primitive": "__const__",
+              "share": 0.984936268829664
+            },
+            {
+              "considered": 840,
+              "primitive": "overlay",
+              "share": 0.9733487833140209
+            },
+            {
+              "considered": 456,
+              "primitive": "flip_h",
+              "share": 0.5283893395133256
+            },
+            {
+              "considered": 456,
+              "primitive": "flip_v",
+              "share": 0.5283893395133256
+            },
+            {
+              "considered": 456,
+              "primitive": "transpose",
+              "share": 0.5283893395133256
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": null,
+          "considered": 863,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 23.16,
+          "by_primitive": [
+            {
+              "considered": 49987,
+              "primitive": "__const__",
+              "share": 0.99974
+            },
+            {
+              "considered": 49885,
+              "primitive": "overlay",
+              "share": 0.9977
+            },
+            {
+              "considered": 47265,
+              "primitive": "sym_h",
+              "share": 0.9453
+            },
+            {
+              "considered": 35534,
+              "primitive": "flip_v",
+              "share": 0.71068
+            },
+            {
+              "considered": 21790,
+              "primitive": "flip_h",
+              "share": 0.4358
+            },
+            {
+              "considered": 17838,
+              "primitive": "transpose",
+              "share": 0.35676
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 36.72,
+          "by_primitive": [
+            {
+              "considered": 14881,
+              "primitive": "__const__",
+              "share": 0.9991271653014637
+            },
+            {
+              "considered": 14630,
+              "primitive": "overlay",
+              "share": 0.982274741506647
+            },
+            {
+              "considered": 10802,
+              "primitive": "sym_h",
+              "share": 0.725258493353028
+            },
+            {
+              "considered": 8939,
+              "primitive": "sym_both",
+              "share": 0.6001745669397073
+            },
+            {
+              "considered": 3563,
+              "primitive": "flip_h",
+              "share": 0.23922384852960923
+            },
+            {
+              "considered": 3563,
+              "primitive": "flip_v",
+              "share": 0.23922384852960923
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 14691,
+          "considered": 14894,
+          "first_solution_index": 14691,
+          "solve_generation": 2,
+          "solved": true
+        }
+      },
+      "rung": "top",
+      "task_id": "top-00"
+    }
+  ],
+  "ladder": {
+    "budgets": [
+      {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 1000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      }
+    ],
+    "distractors": [],
+    "heldout_corpus": {
+      "content_hash": "ddfd73cdb66eb47f",
+      "name": "al13-symmetry-repair:heldout",
+      "task_count": 3
+    },
+    "reference_config": {
+      "attempts_per_test": 2,
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 1000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "constraints": [],
+      "cost": {
+        "kind": "ProgramSize"
+      },
+      "learn": {
+        "curriculum": null,
+        "early_stop": true,
+        "iterations": 5,
+        "kind": "LearnSpec",
+        "learn_engine": {
+          "kind": "GreedyMDLLearnEngine",
+          "metric": {
+            "bits_per_primitive": 1.0,
+            "cost": {
+              "kind": "ProgramSize"
+            },
+            "kind": "CompressionMetric"
+          },
+          "name_prefix": "abs",
+          "proposer": {
+            "bound_var_safe": false,
+            "kind": "AntiunifyPairs"
+          },
+          "selector": {
+            "kind": "GreedyMDL"
+          }
+        },
+        "reset_programs_each_wake": true,
+        "score_each_wake": false,
+        "wake_schedule": "full"
+      },
+      "library": {
+        "name": "al13-L0",
+        "primitives": [
+          {
+            "name": "overlay",
+            "param_types": [
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": "grid"
+          },
+          {
+            "name": "flip_h",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "flip_v",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "transpose",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          }
+        ],
+        "version": 1
+      },
+      "search_engine": {
+        "constant_sources": [
+          "finite-enumerate"
+        ],
+        "function_hole_fill_mode": "none",
+        "function_sample_size": 4,
+        "inverse_semantics_propagation": false,
+        "kind": "BottomUpSearchEngine",
+        "polymorphism_instantiation": "monomorphize",
+        "unpinned_type_var_mode": "reject"
+      }
+    },
+    "rungs": [
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 0,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "sym_h"
+            },
+            "task_id": "sym_h-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 0,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "sym_h"
+            },
+            "task_id": "sym_h-01"
+          }
+        ],
+        "level": 1,
+        "name": "sym_h",
+        "template": {
+          "args": [
+            {
+              "index": 1,
+              "op": "param",
+              "value_type": "color"
+            },
+            {
+              "index": 0,
+              "op": "param",
+              "value_type": "grid"
+            },
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "flip_h"
+            }
+          ],
+          "op": "apply",
+          "primitive": "overlay"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 0,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "sym_both"
+            },
+            "task_id": "sym_both-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 0,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "sym_both"
+            },
+            "task_id": "sym_both-01"
+          }
+        ],
+        "level": 2,
+        "name": "sym_both",
+        "template": {
+          "args": [
+            {
+              "index": 1,
+              "op": "param",
+              "value_type": "color"
+            },
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                },
+                {
+                  "index": 1,
+                  "op": "param",
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "sym_h"
+            },
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    },
+                    {
+                      "index": 1,
+                      "op": "param",
+                      "value_type": "color"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "sym_h"
+                }
+              ],
+              "op": "apply",
+              "primitive": "flip_v"
+            }
+          ],
+          "op": "apply",
+          "primitive": "overlay"
+        }
+      }
+    ],
+    "top": {
+      "reference_solutions": [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 0,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "sym_both"
+            }
+          ],
+          "op": "apply",
+          "primitive": "transpose"
+        }
+      ],
+      "task_ids": [
+        "top-00"
+      ]
+    },
+    "train_corpus": {
+      "content_hash": "6ac71b46d63a68f3",
+      "name": "al13-symmetry-repair:train",
+      "task_count": 5
+    }
+  },
+  "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 1000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al13-symmetry-repair:train",
+      "learn": null,
+      "library": "al13-L0",
+      "run_dir": "20260803_203023_cad292df6338e790",
+      "run_id": "cad292df6338e790"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 5000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al13-symmetry-repair:train",
+      "learn": null,
+      "library": "al13-L0+sym_h",
+      "run_dir": "20260803_203023_014840ab3c2db009",
+      "run_id": "014840ab3c2db009"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 1000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al13-symmetry-repair:train",
+      "learn": null,
+      "library": "al13-L0+sym_h+sym_both",
+      "run_dir": "20260803_203031_70ab57d0978110fc",
+      "run_id": "70ab57d0978110fc"
+    }
+  ],
+  "recorded_commits": [
+    "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10"
+  ],
+  "rung_recovery": [],
+  "shape": {
+    "height": 3,
+    "lint_ok": false,
+    "max_jump_depth": 3,
+    "raw_depth_profile": [
+      5
+    ],
+    "validity_window": [
+      3,
+      3
+    ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": null
+  },
+  "wake_schedule": "full"
+}

@@ -1,0 +1,1773 @@
+{
+  "certificate": {
+    "admitted": false,
+    "demonstration_health": {
+      "1": 0.5,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "no_skip_paths": {
+      "1": null,
+      "2": null,
+      "3": null
+    },
+    "tractable_jumps": {
+      "1": false,
+      "2": false,
+      "3": false
+    }
+  },
+  "climb_executed": false,
+  "climb_trace": [],
+  "comparisons": {
+    "enablement": {
+      "1": [
+        "move_cell_up-01"
+      ],
+      "2": [
+        "move_row_up-00",
+        "move_row_up-01"
+      ],
+      "3": [
+        "move_grid_up-00",
+        "move_grid_up-01"
+      ]
+    },
+    "loop_overhead_factor": null,
+    "loop_overhead_forfeited_by": null,
+    "marginal_rung_value": [
+      {
+        "censored": true,
+        "cost_with_rung": 100000,
+        "cost_without_rung": 100000,
+        "layer_above": "move_row_up",
+        "own_tasks_speedup": null,
+        "own_tasks_to_first_with": 648,
+        "own_tasks_to_first_without": null,
+        "ratio": 1.0,
+        "rung": "move_cell_up"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 100000,
+        "cost_without_rung": 100000,
+        "layer_above": "move_grid_up",
+        "own_tasks_speedup": null,
+        "own_tasks_to_first_with": 687,
+        "own_tasks_to_first_without": null,
+        "ratio": 1.0,
+        "rung": "move_row_up"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 50000,
+        "cost_without_rung": 50000,
+        "layer_above": "top",
+        "own_tasks_speedup": null,
+        "own_tasks_to_first_with": 692,
+        "own_tasks_to_first_without": null,
+        "ratio": 1.0,
+        "rung": "move_grid_up"
+      }
+    ],
+    "vocabulary_tax": [
+      {
+        "at_full_library": 100000,
+        "at_own_level": 100000,
+        "factor": 1.0,
+        "rung": "move_cell_up"
+      },
+      {
+        "at_full_library": 100000,
+        "at_own_level": 100000,
+        "factor": 1.0,
+        "rung": "move_row_up"
+      },
+      {
+        "at_full_library": 100000,
+        "at_own_level": 100000,
+        "factor": 1.0,
+        "rung": "move_grid_up"
+      }
+    ]
+  },
+  "compromises": [],
+  "config_generations": [
+    "max_arity=4 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+  ],
+  "cost": {
+    "amortization_ratio_considered": null,
+    "amortization_ratio_estimated": {
+      "high": 7.584395996259341e+61,
+      "low": 7.584395996259341e+61
+    },
+    "budget_compression_depth": {
+      "max_jump_depth": 3,
+      "raw_depth": 54
+    },
+    "jump_costs": {
+      "move_cell_up": 100000,
+      "move_grid_up": 100000,
+      "move_row_up": 100000
+    },
+    "jump_costs_to_first": {
+      "move_cell_up": null,
+      "move_grid_up": null,
+      "move_row_up": null
+    },
+    "laddered_end_to_end_considered": null,
+    "laddered_marginal_considered": 350000,
+    "laddered_marginal_to_first": null,
+    "off_chain_top_solved": null,
+    "raw_arm": null,
+    "raw_censored": true,
+    "raw_considered": 50000,
+    "raw_estimate": {
+      "available": true,
+      "caveats": [
+        "THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells",
+        "accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)",
+        "finite-space floors: both fits over-project (up to 3.71x) once the space is exhausted",
+        "error compounds per extrapolated round and is floor-dependent even at a 1-round gap",
+        "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
+        "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
+      ],
+      "d_raw": 54,
+      "estimate_high": 26545385986907694163204924547391390847489629886231883884933473632256,
+      "estimate_low": 26545385986907694163204924547391390847489629886231883884933473632256,
+      "growth_ratio_geometric": 18.75,
+      "growth_ratio_last": 18.75,
+      "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
+      "observed_composed": [
+        16,
+        300
+      ],
+      "observed_considered": 316,
+      "observed_through_depth": 3,
+      "rounds_extrapolated": 51,
+      "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
+    },
+    "raw_limit_censored": true,
+    "raw_solved": false,
+    "top_jump_cost": 50000,
+    "top_jump_cost_to_first": null
+  },
+  "cost_matrix": [
+    {
+      "columns": {
+        "0": {
+          "b_eff": 18.75,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49878,
+              "primitive": "set_cell",
+              "share": 0.99756
+            },
+            {
+              "considered": 34434,
+              "primitive": "sub",
+              "share": 0.68868
+            },
+            {
+              "considered": 21099,
+              "primitive": "read",
+              "share": 0.42198
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 43631,
+          "considered": 50000,
+          "first_solution_index": 43631,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 20.31,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49124,
+              "primitive": "set_cell",
+              "share": 0.98248
+            },
+            {
+              "considered": 34534,
+              "primitive": "sub",
+              "share": 0.69068
+            },
+            {
+              "considered": 21614,
+              "primitive": "read",
+              "share": 0.43228
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 321,
+          "considered": 50000,
+          "first_solution_index": 321,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 20.62,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 48876,
+              "primitive": "set_cell",
+              "share": 0.97752
+            },
+            {
+              "considered": 34454,
+              "primitive": "sub",
+              "share": 0.68908
+            },
+            {
+              "considered": 21786,
+              "primitive": "read",
+              "share": 0.43572
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 321,
+          "considered": 50000,
+          "first_solution_index": 321,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 20.69,
+          "by_primitive": [
+            {
+              "considered": 49998,
+              "primitive": "__const__",
+              "share": 0.99996
+            },
+            {
+              "considered": 48794,
+              "primitive": "set_cell",
+              "share": 0.97588
+            },
+            {
+              "considered": 34428,
+              "primitive": "sub",
+              "share": 0.68856
+            },
+            {
+              "considered": 21843,
+              "primitive": "read",
+              "share": 0.43686
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 321,
+          "considered": 50000,
+          "first_solution_index": 321,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "move_cell_up",
+      "task_id": "move_cell_up-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 18.75,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49878,
+              "primitive": "set_cell",
+              "share": 0.99756
+            },
+            {
+              "considered": 34434,
+              "primitive": "sub",
+              "share": 0.68868
+            },
+            {
+              "considered": 21099,
+              "primitive": "read",
+              "share": 0.42198
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 20.31,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49124,
+              "primitive": "set_cell",
+              "share": 0.98248
+            },
+            {
+              "considered": 34534,
+              "primitive": "sub",
+              "share": 0.69068
+            },
+            {
+              "considered": 21614,
+              "primitive": "read",
+              "share": 0.43228
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 327,
+          "considered": 50000,
+          "first_solution_index": 327,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 20.62,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 48876,
+              "primitive": "set_cell",
+              "share": 0.97752
+            },
+            {
+              "considered": 34454,
+              "primitive": "sub",
+              "share": 0.68908
+            },
+            {
+              "considered": 21786,
+              "primitive": "read",
+              "share": 0.43572
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 327,
+          "considered": 50000,
+          "first_solution_index": 327,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 20.69,
+          "by_primitive": [
+            {
+              "considered": 49998,
+              "primitive": "__const__",
+              "share": 0.99996
+            },
+            {
+              "considered": 48794,
+              "primitive": "set_cell",
+              "share": 0.97588
+            },
+            {
+              "considered": 34428,
+              "primitive": "sub",
+              "share": 0.68856
+            },
+            {
+              "considered": 21843,
+              "primitive": "read",
+              "share": 0.43686
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 327,
+          "considered": 50000,
+          "first_solution_index": 327,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "move_cell_up",
+      "task_id": "move_cell_up-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 18.75,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49878,
+              "primitive": "set_cell",
+              "share": 0.99756
+            },
+            {
+              "considered": 34434,
+              "primitive": "sub",
+              "share": 0.68868
+            },
+            {
+              "considered": 21099,
+              "primitive": "read",
+              "share": 0.42198
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 20.31,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49124,
+              "primitive": "set_cell",
+              "share": 0.98248
+            },
+            {
+              "considered": 34534,
+              "primitive": "sub",
+              "share": 0.69068
+            },
+            {
+              "considered": 21614,
+              "primitive": "read",
+              "share": 0.43228
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 20.62,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 48876,
+              "primitive": "set_cell",
+              "share": 0.97752
+            },
+            {
+              "considered": 34454,
+              "primitive": "sub",
+              "share": 0.68908
+            },
+            {
+              "considered": 21786,
+              "primitive": "read",
+              "share": 0.43572
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "3": {
+          "b_eff": 20.69,
+          "by_primitive": [
+            {
+              "considered": 49998,
+              "primitive": "__const__",
+              "share": 0.99996
+            },
+            {
+              "considered": 48794,
+              "primitive": "set_cell",
+              "share": 0.97588
+            },
+            {
+              "considered": 34428,
+              "primitive": "sub",
+              "share": 0.68856
+            },
+            {
+              "considered": 21843,
+              "primitive": "read",
+              "share": 0.43686
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 346,
+          "considered": 50000,
+          "first_solution_index": 346,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "move_grid_up",
+      "task_id": "move_grid_up-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 18.75,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49878,
+              "primitive": "set_cell",
+              "share": 0.99756
+            },
+            {
+              "considered": 34434,
+              "primitive": "sub",
+              "share": 0.68868
+            },
+            {
+              "considered": 21099,
+              "primitive": "read",
+              "share": 0.42198
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 20.31,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49124,
+              "primitive": "set_cell",
+              "share": 0.98248
+            },
+            {
+              "considered": 34534,
+              "primitive": "sub",
+              "share": 0.69068
+            },
+            {
+              "considered": 21614,
+              "primitive": "read",
+              "share": 0.43228
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 20.62,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 48876,
+              "primitive": "set_cell",
+              "share": 0.97752
+            },
+            {
+              "considered": 34454,
+              "primitive": "sub",
+              "share": 0.68908
+            },
+            {
+              "considered": 21786,
+              "primitive": "read",
+              "share": 0.43572
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "3": {
+          "b_eff": 20.69,
+          "by_primitive": [
+            {
+              "considered": 49998,
+              "primitive": "__const__",
+              "share": 0.99996
+            },
+            {
+              "considered": 48794,
+              "primitive": "set_cell",
+              "share": 0.97588
+            },
+            {
+              "considered": 34428,
+              "primitive": "sub",
+              "share": 0.68856
+            },
+            {
+              "considered": 21843,
+              "primitive": "read",
+              "share": 0.43686
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 346,
+          "considered": 50000,
+          "first_solution_index": 346,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "move_grid_up",
+      "task_id": "move_grid_up-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 18.75,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49878,
+              "primitive": "set_cell",
+              "share": 0.99756
+            },
+            {
+              "considered": 34434,
+              "primitive": "sub",
+              "share": 0.68868
+            },
+            {
+              "considered": 21099,
+              "primitive": "read",
+              "share": 0.42198
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 20.31,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49124,
+              "primitive": "set_cell",
+              "share": 0.98248
+            },
+            {
+              "considered": 34534,
+              "primitive": "sub",
+              "share": 0.69068
+            },
+            {
+              "considered": 21614,
+              "primitive": "read",
+              "share": 0.43228
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 20.62,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 48876,
+              "primitive": "set_cell",
+              "share": 0.97752
+            },
+            {
+              "considered": 34454,
+              "primitive": "sub",
+              "share": 0.68908
+            },
+            {
+              "considered": 21786,
+              "primitive": "read",
+              "share": 0.43572
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 343,
+          "considered": 50000,
+          "first_solution_index": 343,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 20.69,
+          "by_primitive": [
+            {
+              "considered": 49998,
+              "primitive": "__const__",
+              "share": 0.99996
+            },
+            {
+              "considered": 48794,
+              "primitive": "set_cell",
+              "share": 0.97588
+            },
+            {
+              "considered": 34428,
+              "primitive": "sub",
+              "share": 0.68856
+            },
+            {
+              "considered": 21843,
+              "primitive": "read",
+              "share": 0.43686
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 343,
+          "considered": 50000,
+          "first_solution_index": 343,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "move_row_up",
+      "task_id": "move_row_up-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 18.75,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49878,
+              "primitive": "set_cell",
+              "share": 0.99756
+            },
+            {
+              "considered": 34434,
+              "primitive": "sub",
+              "share": 0.68868
+            },
+            {
+              "considered": 21099,
+              "primitive": "read",
+              "share": 0.42198
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 20.31,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49124,
+              "primitive": "set_cell",
+              "share": 0.98248
+            },
+            {
+              "considered": 34534,
+              "primitive": "sub",
+              "share": 0.69068
+            },
+            {
+              "considered": 21614,
+              "primitive": "read",
+              "share": 0.43228
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 20.62,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 48876,
+              "primitive": "set_cell",
+              "share": 0.97752
+            },
+            {
+              "considered": 34454,
+              "primitive": "sub",
+              "share": 0.68908
+            },
+            {
+              "considered": 21786,
+              "primitive": "read",
+              "share": 0.43572
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 344,
+          "considered": 50000,
+          "first_solution_index": 344,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 20.69,
+          "by_primitive": [
+            {
+              "considered": 49998,
+              "primitive": "__const__",
+              "share": 0.99996
+            },
+            {
+              "considered": 48794,
+              "primitive": "set_cell",
+              "share": 0.97588
+            },
+            {
+              "considered": 34428,
+              "primitive": "sub",
+              "share": 0.68856
+            },
+            {
+              "considered": 21843,
+              "primitive": "read",
+              "share": 0.43686
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 344,
+          "considered": 50000,
+          "first_solution_index": 344,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "move_row_up",
+      "task_id": "move_row_up-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 18.75,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49878,
+              "primitive": "set_cell",
+              "share": 0.99756
+            },
+            {
+              "considered": 34434,
+              "primitive": "sub",
+              "share": 0.68868
+            },
+            {
+              "considered": 21099,
+              "primitive": "read",
+              "share": 0.42198
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 20.31,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 49124,
+              "primitive": "set_cell",
+              "share": 0.98248
+            },
+            {
+              "considered": 34534,
+              "primitive": "sub",
+              "share": 0.69068
+            },
+            {
+              "considered": 21614,
+              "primitive": "read",
+              "share": 0.43228
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 20.62,
+          "by_primitive": [
+            {
+              "considered": 49999,
+              "primitive": "__const__",
+              "share": 0.99998
+            },
+            {
+              "considered": 48876,
+              "primitive": "set_cell",
+              "share": 0.97752
+            },
+            {
+              "considered": 34454,
+              "primitive": "sub",
+              "share": 0.68908
+            },
+            {
+              "considered": 21786,
+              "primitive": "read",
+              "share": 0.43572
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "3": {
+          "b_eff": 20.69,
+          "by_primitive": [
+            {
+              "considered": 49998,
+              "primitive": "__const__",
+              "share": 0.99996
+            },
+            {
+              "considered": 48794,
+              "primitive": "set_cell",
+              "share": 0.97588
+            },
+            {
+              "considered": 34428,
+              "primitive": "sub",
+              "share": 0.68856
+            },
+            {
+              "considered": 21843,
+              "primitive": "read",
+              "share": 0.43686
+            },
+            {
+              "considered": 10960,
+              "primitive": "move_cell_up",
+              "share": 0.2192
+            },
+            {
+              "considered": 3650,
+              "primitive": "move_row_up",
+              "share": 0.073
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        }
+      },
+      "rung": "top",
+      "task_id": "top-00"
+    }
+  ],
+  "ladder": {
+    "budgets": [
+      {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "kind": "Budget",
+        "max_arity": 4,
+        "max_pool": 2000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      }
+    ],
+    "distractors": [],
+    "heldout_corpus": {
+      "content_hash": "00ca33c55f6caa94",
+      "name": "al14-cell-row-grid:heldout",
+      "task_count": 4
+    },
+    "reference_config": {
+      "attempts_per_test": 2,
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "kind": "Budget",
+        "max_arity": 4,
+        "max_pool": 2000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "constraints": [],
+      "cost": {
+        "kind": "ProgramSize"
+      },
+      "learn": {
+        "curriculum": null,
+        "early_stop": true,
+        "iterations": 6,
+        "kind": "LearnSpec",
+        "learn_engine": {
+          "kind": "GreedyMDLLearnEngine",
+          "metric": {
+            "bits_per_primitive": 1.0,
+            "cost": {
+              "kind": "ProgramSize"
+            },
+            "kind": "CompressionMetric"
+          },
+          "name_prefix": "abs",
+          "proposer": {
+            "bound_var_safe": false,
+            "kind": "AntiunifyPairs"
+          },
+          "selector": {
+            "kind": "GreedyMDL"
+          }
+        },
+        "reset_programs_each_wake": true,
+        "score_each_wake": false,
+        "wake_schedule": "full"
+      },
+      "library": {
+        "name": "al14-L0",
+        "primitives": [
+          {
+            "name": "read",
+            "param_types": [
+              "grid",
+              "int",
+              "int"
+            ],
+            "return_type": "color",
+            "variadic_param": null
+          },
+          {
+            "name": "set_cell",
+            "param_types": [
+              "grid",
+              "int",
+              "int",
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "sub",
+            "param_types": [
+              "int",
+              "int"
+            ],
+            "return_type": "int",
+            "variadic_param": null
+          }
+        ],
+        "version": 1
+      },
+      "search_engine": {
+        "constant_sources": [
+          "finite-enumerate"
+        ],
+        "function_hole_fill_mode": "none",
+        "function_sample_size": 4,
+        "inverse_semantics_propagation": false,
+        "kind": "BottomUpSearchEngine",
+        "polymorphism_instantiation": "monomorphize",
+        "unpinned_type_var_mode": "reject"
+      }
+    },
+    "rungs": [
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 1,
+                  "value_type": "int"
+                },
+                {
+                  "op": "const",
+                  "value": 0,
+                  "value_type": "int"
+                }
+              ],
+              "op": "apply",
+              "primitive": "move_cell_up"
+            },
+            "task_id": "move_cell_up-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 2,
+                  "value_type": "int"
+                },
+                {
+                  "op": "const",
+                  "value": 1,
+                  "value_type": "int"
+                }
+              ],
+              "op": "apply",
+              "primitive": "move_cell_up"
+            },
+            "task_id": "move_cell_up-01"
+          }
+        ],
+        "level": 1,
+        "name": "move_cell_up",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                },
+                {
+                  "args": [
+                    {
+                      "index": 1,
+                      "op": "param",
+                      "value_type": "int"
+                    },
+                    {
+                      "op": "const",
+                      "value": 1,
+                      "value_type": "int"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "sub"
+                },
+                {
+                  "index": 2,
+                  "op": "param",
+                  "value_type": "int"
+                },
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    },
+                    {
+                      "index": 1,
+                      "op": "param",
+                      "value_type": "int"
+                    },
+                    {
+                      "index": 2,
+                      "op": "param",
+                      "value_type": "int"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "read"
+                }
+              ],
+              "op": "apply",
+              "primitive": "set_cell"
+            },
+            {
+              "index": 1,
+              "op": "param",
+              "value_type": "int"
+            },
+            {
+              "index": 2,
+              "op": "param",
+              "value_type": "int"
+            },
+            {
+              "op": "const",
+              "value": 0,
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "set_cell"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 2,
+                  "value_type": "int"
+                }
+              ],
+              "op": "apply",
+              "primitive": "move_row_up"
+            },
+            "task_id": "move_row_up-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 3,
+                  "value_type": "int"
+                }
+              ],
+              "op": "apply",
+              "primitive": "move_row_up"
+            },
+            "task_id": "move_row_up-01"
+          }
+        ],
+        "level": 2,
+        "name": "move_row_up",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    },
+                    {
+                      "index": 1,
+                      "op": "param",
+                      "value_type": "int"
+                    },
+                    {
+                      "op": "const",
+                      "value": 0,
+                      "value_type": "int"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "move_cell_up"
+                },
+                {
+                  "index": 1,
+                  "op": "param",
+                  "value_type": "int"
+                },
+                {
+                  "op": "const",
+                  "value": 1,
+                  "value_type": "int"
+                }
+              ],
+              "op": "apply",
+              "primitive": "move_cell_up"
+            },
+            {
+              "index": 1,
+              "op": "param",
+              "value_type": "int"
+            },
+            {
+              "op": "const",
+              "value": 2,
+              "value_type": "int"
+            }
+          ],
+          "op": "apply",
+          "primitive": "move_cell_up"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "move_grid_up"
+            },
+            "task_id": "move_grid_up-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "move_grid_up"
+            },
+            "task_id": "move_grid_up-01"
+          }
+        ],
+        "level": 3,
+        "name": "move_grid_up",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    },
+                    {
+                      "op": "const",
+                      "value": 1,
+                      "value_type": "int"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "move_row_up"
+                },
+                {
+                  "op": "const",
+                  "value": 2,
+                  "value_type": "int"
+                }
+              ],
+              "op": "apply",
+              "primitive": "move_row_up"
+            },
+            {
+              "op": "const",
+              "value": 3,
+              "value_type": "int"
+            }
+          ],
+          "op": "apply",
+          "primitive": "move_row_up"
+        }
+      }
+    ],
+    "top": {
+      "reference_solutions": [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "move_grid_up"
+            }
+          ],
+          "op": "apply",
+          "primitive": "move_grid_up"
+        }
+      ],
+      "task_ids": [
+        "top-00"
+      ]
+    },
+    "train_corpus": {
+      "content_hash": "236c03d8c4f51fb0",
+      "name": "al14-cell-row-grid:train",
+      "task_count": 7
+    }
+  },
+  "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 4,
+        "max_pool": 10000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al14-cell-row-grid:train",
+      "learn": null,
+      "library": "al14-L0",
+      "run_dir": "20260803_203039_61351b097d57fb09",
+      "run_id": "61351b097d57fb09"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 4,
+        "max_pool": 10000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al14-cell-row-grid:train",
+      "learn": null,
+      "library": "al14-L0+move_cell_up",
+      "run_dir": "20260803_203044_367046231b2fde23",
+      "run_id": "367046231b2fde23"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 4,
+        "max_pool": 10000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al14-cell-row-grid:train",
+      "learn": null,
+      "library": "al14-L0+move_cell_up+move_row_up",
+      "run_dir": "20260803_203049_0be1e3dbd439284d",
+      "run_id": "0be1e3dbd439284d"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 4,
+        "max_pool": 2000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L3",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al14-cell-row-grid:train",
+      "learn": null,
+      "library": "al14-L0+move_cell_up+move_row_up+move_grid_up",
+      "run_dir": "20260803_203055_4c750c54331c06f5",
+      "run_id": "4c750c54331c06f5"
+    }
+  ],
+  "recorded_commits": [
+    "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10"
+  ],
+  "rung_recovery": [],
+  "shape": {
+    "height": 4,
+    "lint_ok": false,
+    "max_jump_depth": 3,
+    "raw_depth_profile": [
+      54
+    ],
+    "validity_window": [
+      3,
+      5
+    ]
+  },
+  "top_reachable": {
+    "chain": null,
+    "climb": null
+  },
+  "wake_schedule": "full"
+}

@@ -1,0 +1,473 @@
+{
+  "certificate": {
+    "admitted": false,
+    "demonstration_health": {
+      "1": 1.0
+    },
+    "no_skip_paths": {
+      "1": false
+    },
+    "tractable_jumps": {
+      "1": true
+    }
+  },
+  "climb_executed": false,
+  "climb_trace": [],
+  "comparisons": {
+    "enablement": {
+      "1": []
+    },
+    "loop_overhead_factor": null,
+    "loop_overhead_forfeited_by": null,
+    "marginal_rung_value": [
+      {
+        "censored": false,
+        "cost_with_rung": 25,
+        "cost_without_rung": 15,
+        "layer_above": "top",
+        "own_tasks_speedup": 1.3333333333333333,
+        "own_tasks_to_first_with": 6,
+        "own_tasks_to_first_without": 8,
+        "ratio": 0.6,
+        "rung": "rot90"
+      }
+    ],
+    "vocabulary_tax": [
+      {
+        "at_full_library": 50,
+        "at_own_level": 30,
+        "factor": 1.6666666666666667,
+        "rung": "rot90"
+      }
+    ]
+  },
+  "compromises": [],
+  "config_generations": [
+    "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+  ],
+  "cost": {
+    "amortization_ratio_considered": 0.2727272727272727,
+    "amortization_ratio_estimated": null,
+    "budget_compression_depth": {
+      "max_jump_depth": 2,
+      "raw_depth": 4
+    },
+    "jump_costs": {
+      "rot90": 30
+    },
+    "jump_costs_to_first": {
+      "rot90": 8
+    },
+    "laddered_end_to_end_considered": null,
+    "laddered_marginal_considered": 55,
+    "laddered_marginal_to_first": 20,
+    "off_chain_top_solved": null,
+    "raw_arm": null,
+    "raw_censored": false,
+    "raw_considered": 15,
+    "raw_estimate": {
+      "available": false,
+      "reason": "raw solved outright -- measured, not estimated"
+    },
+    "raw_limit_censored": false,
+    "raw_solved": true,
+    "top_jump_cost": 25,
+    "top_jump_cost_to_first": 12
+  },
+  "cost_matrix": [
+    {
+      "columns": {
+        "0": {
+          "b_eff": 1.41,
+          "by_primitive": [
+            {
+              "considered": 12,
+              "primitive": "flip_h",
+              "share": 0.8
+            },
+            {
+              "considered": 12,
+              "primitive": "transpose",
+              "share": 0.8
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 4,
+          "considered": 15,
+          "first_solution_index": 4,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 2.29,
+          "by_primitive": [
+            {
+              "considered": 16,
+              "primitive": "rot90",
+              "share": 0.64
+            },
+            {
+              "considered": 14,
+              "primitive": "flip_h",
+              "share": 0.56
+            },
+            {
+              "considered": 14,
+              "primitive": "transpose",
+              "share": 0.56
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 3,
+          "considered": 25,
+          "first_solution_index": 3,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "rot90",
+      "task_id": "rot90-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 1.41,
+          "by_primitive": [
+            {
+              "considered": 12,
+              "primitive": "flip_h",
+              "share": 0.8
+            },
+            {
+              "considered": 12,
+              "primitive": "transpose",
+              "share": 0.8
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 4,
+          "considered": 15,
+          "first_solution_index": 4,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 2.29,
+          "by_primitive": [
+            {
+              "considered": 16,
+              "primitive": "rot90",
+              "share": 0.64
+            },
+            {
+              "considered": 14,
+              "primitive": "flip_h",
+              "share": 0.56
+            },
+            {
+              "considered": 14,
+              "primitive": "transpose",
+              "share": 0.56
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 3,
+          "considered": 25,
+          "first_solution_index": 3,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "rot90",
+      "task_id": "rot90-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 1.41,
+          "by_primitive": [
+            {
+              "considered": 12,
+              "primitive": "flip_h",
+              "share": 0.8
+            },
+            {
+              "considered": 12,
+              "primitive": "transpose",
+              "share": 0.8
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 12,
+          "considered": 15,
+          "first_solution_index": 12,
+          "solve_generation": 4,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 2.29,
+          "by_primitive": [
+            {
+              "considered": 16,
+              "primitive": "rot90",
+              "share": 0.64
+            },
+            {
+              "considered": 14,
+              "primitive": "flip_h",
+              "share": 0.56
+            },
+            {
+              "considered": 14,
+              "primitive": "transpose",
+              "share": 0.56
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 12,
+          "considered": 25,
+          "first_solution_index": 12,
+          "solve_generation": 2,
+          "solved": true
+        }
+      },
+      "rung": "top",
+      "task_id": "top-00"
+    }
+  ],
+  "ladder": {
+    "budgets": [
+      {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "kind": "Budget",
+        "max_arity": 2,
+        "max_pool": 4000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      }
+    ],
+    "distractors": [],
+    "heldout_corpus": {
+      "content_hash": "d7faeeb7f16315bb",
+      "name": "al10-skippable:heldout",
+      "task_count": 2
+    },
+    "reference_config": {
+      "attempts_per_test": 2,
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "kind": "Budget",
+        "max_arity": 2,
+        "max_pool": 4000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "constraints": [],
+      "cost": {
+        "kind": "ProgramSize"
+      },
+      "learn": {
+        "curriculum": null,
+        "early_stop": true,
+        "iterations": 4,
+        "kind": "LearnSpec",
+        "learn_engine": {
+          "kind": "GreedyMDLLearnEngine",
+          "metric": {
+            "bits_per_primitive": 1.0,
+            "cost": {
+              "kind": "ProgramSize"
+            },
+            "kind": "CompressionMetric"
+          },
+          "name_prefix": "abs",
+          "proposer": {
+            "bound_var_safe": false,
+            "kind": "AntiunifyPairs"
+          },
+          "selector": {
+            "kind": "GreedyMDL"
+          }
+        },
+        "reset_programs_each_wake": true,
+        "score_each_wake": false,
+        "wake_schedule": "full"
+      },
+      "library": {
+        "name": "al2-L0",
+        "primitives": [
+          {
+            "name": "flip_h",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "transpose",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          }
+        ],
+        "version": 1
+      },
+      "search_engine": {
+        "constant_sources": [],
+        "function_hole_fill_mode": "none",
+        "function_sample_size": 4,
+        "inverse_semantics_propagation": false,
+        "kind": "BottomUpSearchEngine",
+        "polymorphism_instantiation": "monomorphize",
+        "unpinned_type_var_mode": "reject"
+      }
+    },
+    "rungs": [
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "rot90"
+            },
+            "task_id": "rot90-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "rot90"
+            },
+            "task_id": "rot90-01"
+          }
+        ],
+        "level": 1,
+        "name": "rot90",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                }
+              ],
+              "op": "apply",
+              "primitive": "transpose"
+            }
+          ],
+          "op": "apply",
+          "primitive": "flip_h"
+        }
+      }
+    ],
+    "top": {
+      "reference_solutions": [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "rot90"
+            }
+          ],
+          "op": "apply",
+          "primitive": "rot90"
+        }
+      ],
+      "task_ids": [
+        "top-00"
+      ]
+    },
+    "train_corpus": {
+      "content_hash": "0bb49138c62c03c9",
+      "name": "al10-skippable:train",
+      "task_count": 3
+    }
+  },
+  "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "max_arity": 2,
+        "max_pool": 100000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al10-skippable:train",
+      "learn": null,
+      "library": "al2-L0",
+      "run_dir": "20260803_203023_51369f34f2420869",
+      "run_id": "51369f34f2420869"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "max_arity": 2,
+        "max_pool": 100000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al10-skippable:train",
+      "learn": null,
+      "library": "al2-L0+rot90",
+      "run_dir": "20260803_203023_d97c6cee686590ee",
+      "run_id": "d97c6cee686590ee"
+    }
+  ],
+  "recorded_commits": [
+    "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10"
+  ],
+  "rung_recovery": [],
+  "shape": {
+    "height": 2,
+    "lint_ok": false,
+    "max_jump_depth": 2,
+    "raw_depth_profile": [
+      4
+    ],
+    "validity_window": [
+      2,
+      3
+    ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": null
+  },
+  "wake_schedule": "full"
+}

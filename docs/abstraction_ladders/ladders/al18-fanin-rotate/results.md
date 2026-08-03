@@ -12,30 +12,32 @@
 | 1    | yes       | yes          | 1.0                  |
 | 2    | yes       | yes          | 1.0                  |
 
+- Top reachable at the ladder's own budget -- chain (oracle `L_k`): **REACHED**; climb (learned library): **REACHED**
+
 ## Climb trace
 
 | iter | wake solved                                           | considered (all tasks) | minted | converged |
 | ---- | ----------------------------------------------------- | ---------------------- | ------ | --------- |
-| 0    | 2: `pair-00`, `pair-01`                               | 1,875                  | `abs0` | no        |
-| 1    | 4: `pair-00`, `pair-01`, `rot-00`, `rot-01`           | 2,225                  | `abs1` | no        |
-| 2    | 5: `pair-00`, `pair-01`, `rot-00`, `rot-01`, `top-00` | 2,605                  | -      | yes       |
+| 0    | 2: `pair-00`, `pair-01`                               | 1,935                  | `abs0` | no        |
+| 1    | 4: `pair-00`, `pair-01`, `rot-00`, `rot-01`           | 2,285                  | `abs1` | no        |
+| 2    | 5: `pair-00`, `pair-01`, `rot-00`, `rot-01`, `top-00` | 2,665                  | -      | yes       |
 
 ## Rung recovery
 
-| rung   | level | recovered | matched by |
-| ------ | ----- | --------- | ---------- |
-| `pair` | 1     | yes       | `abs0`     |
-| `rot`  | 2     | yes       | `abs1`     |
+| rung   | level | recovered | matched by | if not, where it broke |
+| ------ | ----- | --------- | ---------- | ---------------------- |
+| `pair` | 1     | yes       | `abs0`     | -                      |
+| `rot`  | 2     | yes       | `abs1`     | -                      |
 
 ## Cost matrix (considered count per task x library)
 
 | task      | rung | L_0   | L_1   | L_2   |
 | --------- | ---- | ----- | ----- | ----- |
-| `pair-00` | pair | 375 * | 445 * | 521 * |
-| `pair-01` | pair | 375 * | 445 * | 521 * |
-| `rot-00`  | rot  | 375   | 445 * | 521 * |
-| `rot-01`  | rot  | 375   | 445 * | 521 * |
-| `top-00`  | top  | 375   | 445   | 521 * |
+| `pair-00` | pair | 387 * | 457 * | 533 * |
+| `pair-01` | pair | 387 * | 457 * | 533 * |
+| `rot-00`  | rot  | 387   | 457 * | 533 * |
+| `rot-01`  | rot  | 387   | 457 * | 533 * |
+| `top-00`  | top  | 387   | 457   | 533 * |
 
 - `*` = the search solved that task in that column; a bare number is cost-paid-full on an unsolved task (a censored lower bound on what solving would cost).
 - `!` = that search was cut short by a `Budget.considered_limit`, so its number is the limit itself, not a measurement -- and its `unsolved` says nothing about whether a solution exists within the budget.
@@ -46,30 +48,53 @@
 
 | task      | library | solve generation | first solution index | cheapest solution index | considered | b_eff |
 | --------- | ------- | ---------------- | -------------------- | ----------------------- | ---------- | ----- |
-| `pair-00` | L_0     | 2                | 30                   | 30                      | 375        | 8.38  |
-| `pair-00` | L_1     | 1                | 24                   | 24                      | 445        | 9.17  |
-| `pair-00` | L_2     | 1                | 24                   | 24                      | 521        | 9.95  |
-| `pair-01` | L_0     | 2                | 30                   | 30                      | 375        | 8.38  |
-| `pair-01` | L_1     | 1                | 24                   | 24                      | 445        | 9.17  |
-| `pair-01` | L_2     | 1                | 24                   | 24                      | 521        | 9.95  |
-| `rot-00`  | L_1     | 2                | 426                  | 426                     | 445        | 9.17  |
-| `rot-00`  | L_2     | 1                | 25                   | 25                      | 521        | 9.95  |
-| `rot-01`  | L_1     | 2                | 426                  | 426                     | 445        | 9.17  |
-| `rot-01`  | L_2     | 1                | 25                   | 25                      | 521        | 9.95  |
-| `top-00`  | L_2     | 2                | 195                  | 195                     | 521        | 9.95  |
+| `pair-00` | L_0     | 2                | 42                   | 42                      | 387        | 4.54  |
+| `pair-00` | L_1     | 1                | 36                   | 36                      | 457        | 4.97  |
+| `pair-00` | L_2     | 1                | 36                   | 36                      | 533        | 5.4   |
+| `pair-01` | L_0     | 2                | 42                   | 42                      | 387        | 4.54  |
+| `pair-01` | L_1     | 1                | 36                   | 36                      | 457        | 4.97  |
+| `pair-01` | L_2     | 1                | 36                   | 36                      | 533        | 5.4   |
+| `rot-00`  | L_1     | 2                | 438                  | 438                     | 457        | 4.97  |
+| `rot-00`  | L_2     | 1                | 37                   | 37                      | 533        | 5.4   |
+| `rot-01`  | L_1     | 2                | 438                  | 438                     | 457        | 4.97  |
+| `rot-01`  | L_2     | 1                | 37                   | 37                      | 533        | 5.4   |
+| `top-00`  | L_2     | 2                | 207                  | 207                     | 533        | 5.4   |
 
 - `first solution index` / `cheapest solution index`: the `candidate_index` at which the first / the globally-cheapest solution was absorbed (the solution sink -- exact, and independent of later pool eviction).
 - `solve generation`: the composition round the accepted solution was built at (round 0 = leaves).
 - `b_eff`: fitted per-round growth in composed candidates over pre-saturation rounds (`-` when the pool saturates too early to fit).
 
+## Spend attribution (`by_primitive`)
+
+| task      | library | spend by primitive (shares OVERLAP)                                                                                                      |
+| --------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `pair-00` | L_0     | `__const__` 350 (90.4%), `translate` 334 (86.3%), `concat_h` 136 (35.1%), `concat_v` 136 (35.1%), `rot180` 64 (16.5%)                    |
+| `pair-00` | L_1     | `__const__` 396 (86.7%), `translate` 380 (83.2%), `concat_h` 160 (35.0%), `concat_v` 160 (35.0%), `pair` 70 (15.3%), `rot180` 70 (15.3%) |
+| `pair-00` | L_2     | `__const__` 442 (82.9%), `translate` 426 (79.9%), `concat_h` 186 (34.9%), `concat_v` 186 (34.9%), `pair` 76 (14.3%), `rot` 76 (14.3%)    |
+| `pair-01` | L_0     | `__const__` 350 (90.4%), `translate` 334 (86.3%), `concat_h` 136 (35.1%), `concat_v` 136 (35.1%), `rot180` 64 (16.5%)                    |
+| `pair-01` | L_1     | `__const__` 396 (86.7%), `translate` 380 (83.2%), `concat_h` 160 (35.0%), `concat_v` 160 (35.0%), `pair` 70 (15.3%), `rot180` 70 (15.3%) |
+| `pair-01` | L_2     | `__const__` 442 (82.9%), `translate` 426 (79.9%), `concat_h` 186 (34.9%), `concat_v` 186 (34.9%), `pair` 76 (14.3%), `rot` 76 (14.3%)    |
+| `rot-00`  | L_0     | `__const__` 350 (90.4%), `translate` 334 (86.3%), `concat_h` 136 (35.1%), `concat_v` 136 (35.1%), `rot180` 64 (16.5%)                    |
+| `rot-00`  | L_1     | `__const__` 396 (86.7%), `translate` 380 (83.2%), `concat_h` 160 (35.0%), `concat_v` 160 (35.0%), `pair` 70 (15.3%), `rot180` 70 (15.3%) |
+| `rot-00`  | L_2     | `__const__` 442 (82.9%), `translate` 426 (79.9%), `concat_h` 186 (34.9%), `concat_v` 186 (34.9%), `pair` 76 (14.3%), `rot` 76 (14.3%)    |
+| `rot-01`  | L_0     | `__const__` 350 (90.4%), `translate` 334 (86.3%), `concat_h` 136 (35.1%), `concat_v` 136 (35.1%), `rot180` 64 (16.5%)                    |
+| `rot-01`  | L_1     | `__const__` 396 (86.7%), `translate` 380 (83.2%), `concat_h` 160 (35.0%), `concat_v` 160 (35.0%), `pair` 70 (15.3%), `rot180` 70 (15.3%) |
+| `rot-01`  | L_2     | `__const__` 442 (82.9%), `translate` 426 (79.9%), `concat_h` 186 (34.9%), `concat_v` 186 (34.9%), `pair` 76 (14.3%), `rot` 76 (14.3%)    |
+| `top-00`  | L_0     | `__const__` 350 (90.4%), `translate` 334 (86.3%), `concat_h` 136 (35.1%), `concat_v` 136 (35.1%), `rot180` 64 (16.5%)                    |
+| `top-00`  | L_1     | `__const__` 396 (86.7%), `translate` 380 (83.2%), `concat_h` 160 (35.0%), `concat_v` 160 (35.0%), `pair` 70 (15.3%), `rot180` 70 (15.3%) |
+| `top-00`  | L_2     | `__const__` 442 (82.9%), `translate` 426 (79.9%), `concat_h` 186 (34.9%), `concat_v` 186 (34.9%), `pair` 76 (14.3%), `rot` 76 (14.3%)    |
+
+- Shares **overlap and are not a partition**: one composition counts in every bucket it touches, so a depth-3 program over three primitives appears three times. Read a share as "what fraction of the spend involved this primitive".
+- A primitive at ~100% that the task's own solution never calls is the floor-tax signature: the cell is paying for vocabulary it cannot use. Cross-check against the round-1 breadth census in `spec.md`, and against `probe-ladder`'s floor tax, which measures the same thing directly.
+
 ## Cost (considered counts)
 
-- Laddered marginal: 2,161
-  - jump `pair`: 750
-  - jump `rot`: 890
-  - top jump: 521
-- Laddered end-to-end: 6,705 (every wake re-searches every task)
-- Raw (Floor on the top tasks, reference budget): 375 -- a full-budget FAILURE at the reference budget, not a raw cost (the top is unreachable raw by design); the raw ARM below is the RQ1 authority
+- Laddered marginal: 2,221
+  - jump `pair`: 774
+  - jump `rot`: 914
+  - top jump: 533
+- Laddered end-to-end: 6,885 (every wake re-searches every task)
+- Raw (Floor on the top tasks, reference budget): 387 -- a full-budget FAILURE at the reference budget, not a raw cost (the top is unreachable raw by design); the raw ARM below is the RQ1 authority
 - Amortization considered-ratio (reference-budget raw): n/a -- see the raw arm under RQ1
 - Depth compression: d_raw 4 -> max jump depth 2
 - Off-chain (Floor + top rung only) solves the top: no
@@ -80,16 +105,16 @@
 
 - **cost-paid-full**: the whole budgeted enumeration. With no early stop, every search pays it whether it solves at candidate 100 or not at all -- so it is nearly task-independent and it cannot show what a rung buys in cost terms.
 - **cost-to-first**: the `candidate_index` where the first solution was absorbed -- what an early-stopping search would have paid. This is the currency the rung-value comparisons below should be read in.
-- Laddered marginal, cost-paid-full: 2,161 vs cost-to-first: 1,107
-  - jump `pair`: 60
-  - jump `rot`: 852
-  - top jump: 195
+- Laddered marginal, cost-paid-full: 2,221 vs cost-to-first: 1,167
+  - jump `pair`: 84
+  - jump `rot`: 876
+  - top jump: 207
 
 ### Raw vs laddered (RQ1)
 
-- **Amortization ratio (lower-bound): 10.0x** -- raw arm spend 21,610 against laddered marginal 2,161, guard 10x laddered (21,610 per top task) at depth_limit 4, max_pool 200,000, solution_limit 1.
+- **Amortization ratio (lower-bound): 10.0x** -- raw arm spend 22,210 against laddered marginal 2,221, guard 10x laddered (22,210 per top task) at depth_limit 4, max_pool 200,000, solution_limit 1.
   - The arm censored without solving: raw cost provably exceeds the spend, so the ratio is a LOWER BOUND. Raise --raw-arm-k for a stronger claim.
-- Raw cost estimate (ADVISORY -- not an RQ1 input): 27,956 - 126,647 considered, extrapolated from observed composed counts [5, 19, 351] through depth 2 (2 rounds projected to `d_raw`=4). Validated 2026-07-23: the bracket contained the measured truth in 2 of 10 cells, erring both directions -- treat as an order-of-magnitude sketch of unknown sign, never a result.
+- Raw cost estimate (ADVISORY -- not an RQ1 input): 9,229 - 126,659 considered, extrapolated from observed composed counts [17, 19, 351] through depth 2 (2 rounds projected to `d_raw`=4). Validated 2026-07-23: the bracket contained the measured truth in 2 of 10 cells, erring both directions -- treat as an order-of-magnitude sketch of unknown sign, never a result.
   - caveat: THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells
   - caveat: accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)
   - caveat: finite-space floors: both fits over-project (up to 3.71x) once the space is exhausted
@@ -100,16 +125,16 @@
 
 ### Marginal vs end-to-end laddered cost
 
-- Marginal (jump costs only, the idealized bound): 2,161
-- End-to-end (every wake re-searches every task, incl. full-budget failures): 6,705
+- Marginal (jump costs only, the idealized bound): 2,221
+- End-to-end (every wake re-searches every task, incl. full-budget failures): 6,885
 - **Loop-overhead factor**: 3.10x -- what today's loop mechanics cost above the ideal (re-search + overshoot + termination + learned-vs-oracle gap)
 
 ### Marginal rung value
 
 | rung   | own tasks, cost-to-first without | with | **speedup** | layer above (paid-full) | censored |
 | ------ | -------------------------------- | ---- | ----------- | ----------------------- | -------- |
-| `pair` | 60                               | 48   | **1.25x**   | 0.84x vs `rot`          | yes      |
-| `rot`  | 852                              | 50   | **17.04x**  | 0.85x vs `top`          | yes      |
+| `pair` | 84                               | 72   | **1.17x**   | 0.85x vs `rot`          | yes      |
+| `rot`  | 876                              | 74   | **11.84x**  | 0.86x vs `top`          | yes      |
 
 - **The speedup column is the honest measure**: the rung's own demonstrating tasks, in cost-to-first, with vs without the rung gifted. Both sides are solved by construction, so it is uncensored.
 - The layer-above column is cost-paid-full on a CENSORED comparison (the layer above is unsolved without the rung -- that IS the double-jump claim), so it is not a speedup: a value near or below 1.0x there means the rung bought **reachability**, not cost. Read Enablement for that, never this number.
@@ -118,8 +143,8 @@
 
 | rung's tasks | at own level | at full library L_k | factor |
 | ------------ | ------------ | ------------------- | ------ |
-| `pair`       | 750          | 1,042               | 1.39x  |
-| `rot`        | 890          | 1,042               | 1.17x  |
+| `pair`       | 774          | 1,066               | 1.38x  |
+| `rot`        | 914          | 1,066               | 1.17x  |
 
 - These tasks never use the rungs above them, so the increase is pure tax: a wider round-0 leaf set and more compositions per round. It is paid INSIDE every later jump.
 
@@ -132,6 +157,21 @@
 
 - Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **no**.
 - When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
+## Provenance (which runs this report was built from)
+
+| cell                   | run_id           | run dir                          | commit   | library           | depth | pool   | stop    |
+| ---------------------- | ---------------- | -------------------------------- | -------- | ----------------- | ----- | ------ | ------- |
+| chain/L0               | 5453d4bb7d81ddf9 | 20260803_203118_5453d4bb7d81ddf9 | bedb33b8 | al18-L0           | 2     | 400    | exhaust |
+| chain/L1               | 00bd7e8683de663b | 20260803_203118_00bd7e8683de663b | bedb33b8 | al18-L0+pair      | 2     | 400    | exhaust |
+| chain/L2               | 68df5ebca31194a7 | 20260803_203118_68df5ebca31194a7 | bedb33b8 | al18-L0+pair+rot  | 2     | 400    | exhaust |
+| climb/learn            | 8b85d26c47cbb3bc | 20260803_203118_8b85d26c47cbb3bc | bedb33b8 | al18-L0           | 2     | 400    | exhaust |
+| climb/train-usefulness | 6cab0677c12150c3 | 20260803_203119_6cab0677c12150c3 | bedb33b8 | al18-L0+abs0+abs1 | 2     | 400    | exhaust |
+| climb/transfer         | 151087486a5047bf | 20260803_203119_151087486a5047bf | bedb33b8 | al18-L0+abs0+abs1 | 2     | 400    | exhaust |
+| off-chain              | 88b5d60e3f9e7eb6 | 20260803_203119_88b5d60e3f9e7eb6 | bedb33b8 | al18-L0+rot       | 2     | 400    | exhaust |
+| raw-arm                | 307765b1c9422d15 | 20260803_203119_307765b1c9422d15 | bedb33b8 | al18-L0           | 4     | 200000 | first-1 |
+
+- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the current spec and comparing IS the staleness test: a differing hash means this artifact describes runs the current code would no longer produce.
 
 ## Not computed here
 

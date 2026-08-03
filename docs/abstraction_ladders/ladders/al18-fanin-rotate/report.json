@@ -24,7 +24,7 @@
         "abs0"
       ],
       "proposal_count": 2,
-      "wake_considered": 1875,
+      "wake_considered": 1935,
       "wake_solved": [
         "pair-00",
         "pair-01"
@@ -38,7 +38,7 @@
         "abs1"
       ],
       "proposal_count": 4,
-      "wake_considered": 2225,
+      "wake_considered": 2285,
       "wake_solved": [
         "pair-00",
         "pair-01",
@@ -52,7 +52,7 @@
       "iteration": 2,
       "minted": [],
       "proposal_count": 2,
-      "wake_considered": 2605,
+      "wake_considered": 2665,
       "wake_solved": [
         "pair-00",
         "pair-01",
@@ -72,67 +72,72 @@
         "top-00"
       ]
     },
-    "loop_overhead_factor": 3.102730217491902,
+    "loop_overhead_factor": 3.09995497523638,
+    "loop_overhead_forfeited_by": null,
     "marginal_rung_value": [
       {
         "censored": true,
-        "cost_with_rung": 890,
-        "cost_without_rung": 750,
+        "cost_with_rung": 914,
+        "cost_without_rung": 774,
         "layer_above": "rot",
-        "own_tasks_speedup": 1.25,
-        "own_tasks_to_first_with": 48,
-        "own_tasks_to_first_without": 60,
-        "ratio": 0.8426966292134831,
+        "own_tasks_speedup": 1.1666666666666667,
+        "own_tasks_to_first_with": 72,
+        "own_tasks_to_first_without": 84,
+        "ratio": 0.8468271334792122,
         "rung": "pair"
       },
       {
         "censored": true,
-        "cost_with_rung": 521,
-        "cost_without_rung": 445,
+        "cost_with_rung": 533,
+        "cost_without_rung": 457,
         "layer_above": "top",
-        "own_tasks_speedup": 17.04,
-        "own_tasks_to_first_with": 50,
-        "own_tasks_to_first_without": 852,
-        "ratio": 0.8541266794625719,
+        "own_tasks_speedup": 11.837837837837839,
+        "own_tasks_to_first_with": 74,
+        "own_tasks_to_first_without": 876,
+        "ratio": 0.8574108818011257,
         "rung": "rot"
       }
     ],
     "vocabulary_tax": [
       {
-        "at_full_library": 1042,
-        "at_own_level": 750,
-        "factor": 1.3893333333333333,
+        "at_full_library": 1066,
+        "at_own_level": 774,
+        "factor": 1.3772609819121446,
         "rung": "pair"
       },
       {
-        "at_full_library": 1042,
-        "at_own_level": 890,
-        "factor": 1.1707865168539326,
+        "at_full_library": 1066,
+        "at_own_level": 914,
+        "factor": 1.1663019693654266,
         "rung": "rot"
       }
     ]
   },
+  "compromises": [],
+  "config_generations": [
+    "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+  ],
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
-      "high": 58.60573808422027,
-      "low": 12.936603424340584
+      "high": 57.02791535344439,
+      "low": 4.155335434488969
     },
     "budget_compression_depth": {
       "max_jump_depth": 2,
       "raw_depth": 4
     },
     "jump_costs": {
-      "pair": 750,
-      "rot": 890
+      "pair": 774,
+      "rot": 914
     },
     "jump_costs_to_first": {
-      "pair": 60,
-      "rot": 852
+      "pair": 84,
+      "rot": 876
     },
-    "laddered_end_to_end_considered": 6705,
-    "laddered_marginal_considered": 2161,
-    "laddered_marginal_to_first": 1107,
+    "laddered_end_to_end_considered": 6885,
+    "laddered_marginal_considered": 2221,
+    "laddered_marginal_to_first": 1167,
     "off_chain_top_solved": false,
     "raw_arm": {
       "amortization_ratio": 10.0,
@@ -142,16 +147,17 @@
         "max_pool": 200000,
         "solution_limit": 1
       },
-      "guard_per_task": 21610,
+      "guard_per_task": 22210,
       "k": 10,
-      "laddered_marginal": 2161,
+      "laddered_marginal": 2221,
+      "reused_recorded_arm": true,
       "saturated_at": null,
       "solved": false,
       "sound": true,
-      "spend_considered": 21610
+      "spend_considered": 22210
     },
     "raw_censored": true,
-    "raw_considered": 375,
+    "raw_considered": 387,
     "raw_estimate": {
       "available": true,
       "caveats": [
@@ -163,53 +169,144 @@
         "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
       ],
       "d_raw": 4,
-      "estimate_high": 126647,
-      "estimate_low": 27956,
-      "growth_ratio_geometric": 8.38,
+      "estimate_high": 126659,
+      "estimate_low": 9229,
+      "growth_ratio_geometric": 4.54,
       "growth_ratio_last": 18.47,
       "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
       "observed_composed": [
-        5,
+        17,
         19,
         351
       ],
-      "observed_considered": 375,
+      "observed_considered": 387,
       "observed_through_depth": 2,
       "rounds_extrapolated": 2,
       "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
     },
     "raw_limit_censored": false,
     "raw_solved": false,
-    "top_jump_cost": 521,
-    "top_jump_cost_to_first": 195
+    "top_jump_cost": 533,
+    "top_jump_cost_to_first": 207
   },
   "cost_matrix": [
     {
       "columns": {
         "0": {
-          "b_eff": 8.38,
+          "b_eff": 4.54,
+          "by_primitive": [
+            {
+              "considered": 350,
+              "primitive": "__const__",
+              "share": 0.9043927648578811
+            },
+            {
+              "considered": 334,
+              "primitive": "translate",
+              "share": 0.8630490956072352
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_h",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_v",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 64,
+              "primitive": "rot180",
+              "share": 0.165374677002584
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 30,
-          "considered": 375,
-          "first_solution_index": 30,
+          "cheapest_solution_index": 42,
+          "considered": 387,
+          "first_solution_index": 42,
           "solve_generation": 2,
           "solved": true
         },
         "1": {
-          "b_eff": 9.17,
+          "b_eff": 4.97,
+          "by_primitive": [
+            {
+              "considered": 396,
+              "primitive": "__const__",
+              "share": 0.8665207877461707
+            },
+            {
+              "considered": 380,
+              "primitive": "translate",
+              "share": 0.8315098468271335
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_h",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_v",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 70,
+              "primitive": "pair",
+              "share": 0.15317286652078774
+            },
+            {
+              "considered": 70,
+              "primitive": "rot180",
+              "share": 0.15317286652078774
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 24,
-          "considered": 445,
-          "first_solution_index": 24,
+          "cheapest_solution_index": 36,
+          "considered": 457,
+          "first_solution_index": 36,
           "solve_generation": 1,
           "solved": true
         },
         "2": {
-          "b_eff": 9.95,
+          "b_eff": 5.4,
+          "by_primitive": [
+            {
+              "considered": 442,
+              "primitive": "__const__",
+              "share": 0.8292682926829268
+            },
+            {
+              "considered": 426,
+              "primitive": "translate",
+              "share": 0.799249530956848
+            },
+            {
+              "considered": 186,
+              "primitive": "concat_h",
+              "share": 0.34896810506566606
+            },
+            {
+              "considered": 186,
+              "primitive": "concat_v",
+              "share": 0.34896810506566606
+            },
+            {
+              "considered": 76,
+              "primitive": "pair",
+              "share": 0.1425891181988743
+            },
+            {
+              "considered": 76,
+              "primitive": "rot",
+              "share": 0.1425891181988743
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 24,
-          "considered": 521,
-          "first_solution_index": 24,
+          "cheapest_solution_index": 36,
+          "considered": 533,
+          "first_solution_index": 36,
           "solve_generation": 1,
           "solved": true
         }
@@ -220,29 +317,120 @@
     {
       "columns": {
         "0": {
-          "b_eff": 8.38,
+          "b_eff": 4.54,
+          "by_primitive": [
+            {
+              "considered": 350,
+              "primitive": "__const__",
+              "share": 0.9043927648578811
+            },
+            {
+              "considered": 334,
+              "primitive": "translate",
+              "share": 0.8630490956072352
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_h",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_v",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 64,
+              "primitive": "rot180",
+              "share": 0.165374677002584
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 30,
-          "considered": 375,
-          "first_solution_index": 30,
+          "cheapest_solution_index": 42,
+          "considered": 387,
+          "first_solution_index": 42,
           "solve_generation": 2,
           "solved": true
         },
         "1": {
-          "b_eff": 9.17,
+          "b_eff": 4.97,
+          "by_primitive": [
+            {
+              "considered": 396,
+              "primitive": "__const__",
+              "share": 0.8665207877461707
+            },
+            {
+              "considered": 380,
+              "primitive": "translate",
+              "share": 0.8315098468271335
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_h",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_v",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 70,
+              "primitive": "pair",
+              "share": 0.15317286652078774
+            },
+            {
+              "considered": 70,
+              "primitive": "rot180",
+              "share": 0.15317286652078774
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 24,
-          "considered": 445,
-          "first_solution_index": 24,
+          "cheapest_solution_index": 36,
+          "considered": 457,
+          "first_solution_index": 36,
           "solve_generation": 1,
           "solved": true
         },
         "2": {
-          "b_eff": 9.95,
+          "b_eff": 5.4,
+          "by_primitive": [
+            {
+              "considered": 442,
+              "primitive": "__const__",
+              "share": 0.8292682926829268
+            },
+            {
+              "considered": 426,
+              "primitive": "translate",
+              "share": 0.799249530956848
+            },
+            {
+              "considered": 186,
+              "primitive": "concat_h",
+              "share": 0.34896810506566606
+            },
+            {
+              "considered": 186,
+              "primitive": "concat_v",
+              "share": 0.34896810506566606
+            },
+            {
+              "considered": 76,
+              "primitive": "pair",
+              "share": 0.1425891181988743
+            },
+            {
+              "considered": 76,
+              "primitive": "rot",
+              "share": 0.1425891181988743
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 24,
-          "considered": 521,
-          "first_solution_index": 24,
+          "cheapest_solution_index": 36,
+          "considered": 533,
+          "first_solution_index": 36,
           "solve_generation": 1,
           "solved": true
         }
@@ -253,29 +441,120 @@
     {
       "columns": {
         "0": {
-          "b_eff": 8.38,
+          "b_eff": 4.54,
+          "by_primitive": [
+            {
+              "considered": 350,
+              "primitive": "__const__",
+              "share": 0.9043927648578811
+            },
+            {
+              "considered": 334,
+              "primitive": "translate",
+              "share": 0.8630490956072352
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_h",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_v",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 64,
+              "primitive": "rot180",
+              "share": 0.165374677002584
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 375,
+          "considered": 387,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 9.17,
+          "b_eff": 4.97,
+          "by_primitive": [
+            {
+              "considered": 396,
+              "primitive": "__const__",
+              "share": 0.8665207877461707
+            },
+            {
+              "considered": 380,
+              "primitive": "translate",
+              "share": 0.8315098468271335
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_h",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_v",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 70,
+              "primitive": "pair",
+              "share": 0.15317286652078774
+            },
+            {
+              "considered": 70,
+              "primitive": "rot180",
+              "share": 0.15317286652078774
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 426,
-          "considered": 445,
-          "first_solution_index": 426,
+          "cheapest_solution_index": 438,
+          "considered": 457,
+          "first_solution_index": 438,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 9.95,
+          "b_eff": 5.4,
+          "by_primitive": [
+            {
+              "considered": 442,
+              "primitive": "__const__",
+              "share": 0.8292682926829268
+            },
+            {
+              "considered": 426,
+              "primitive": "translate",
+              "share": 0.799249530956848
+            },
+            {
+              "considered": 186,
+              "primitive": "concat_h",
+              "share": 0.34896810506566606
+            },
+            {
+              "considered": 186,
+              "primitive": "concat_v",
+              "share": 0.34896810506566606
+            },
+            {
+              "considered": 76,
+              "primitive": "pair",
+              "share": 0.1425891181988743
+            },
+            {
+              "considered": 76,
+              "primitive": "rot",
+              "share": 0.1425891181988743
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 25,
-          "considered": 521,
-          "first_solution_index": 25,
+          "cheapest_solution_index": 37,
+          "considered": 533,
+          "first_solution_index": 37,
           "solve_generation": 1,
           "solved": true
         }
@@ -286,29 +565,120 @@
     {
       "columns": {
         "0": {
-          "b_eff": 8.38,
+          "b_eff": 4.54,
+          "by_primitive": [
+            {
+              "considered": 350,
+              "primitive": "__const__",
+              "share": 0.9043927648578811
+            },
+            {
+              "considered": 334,
+              "primitive": "translate",
+              "share": 0.8630490956072352
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_h",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_v",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 64,
+              "primitive": "rot180",
+              "share": 0.165374677002584
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 375,
+          "considered": 387,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 9.17,
+          "b_eff": 4.97,
+          "by_primitive": [
+            {
+              "considered": 396,
+              "primitive": "__const__",
+              "share": 0.8665207877461707
+            },
+            {
+              "considered": 380,
+              "primitive": "translate",
+              "share": 0.8315098468271335
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_h",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_v",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 70,
+              "primitive": "pair",
+              "share": 0.15317286652078774
+            },
+            {
+              "considered": 70,
+              "primitive": "rot180",
+              "share": 0.15317286652078774
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 426,
-          "considered": 445,
-          "first_solution_index": 426,
+          "cheapest_solution_index": 438,
+          "considered": 457,
+          "first_solution_index": 438,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 9.95,
+          "b_eff": 5.4,
+          "by_primitive": [
+            {
+              "considered": 442,
+              "primitive": "__const__",
+              "share": 0.8292682926829268
+            },
+            {
+              "considered": 426,
+              "primitive": "translate",
+              "share": 0.799249530956848
+            },
+            {
+              "considered": 186,
+              "primitive": "concat_h",
+              "share": 0.34896810506566606
+            },
+            {
+              "considered": 186,
+              "primitive": "concat_v",
+              "share": 0.34896810506566606
+            },
+            {
+              "considered": 76,
+              "primitive": "pair",
+              "share": 0.1425891181988743
+            },
+            {
+              "considered": 76,
+              "primitive": "rot",
+              "share": 0.1425891181988743
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 25,
-          "considered": 521,
-          "first_solution_index": 25,
+          "cheapest_solution_index": 37,
+          "considered": 533,
+          "first_solution_index": 37,
           "solve_generation": 1,
           "solved": true
         }
@@ -319,29 +689,120 @@
     {
       "columns": {
         "0": {
-          "b_eff": 8.38,
+          "b_eff": 4.54,
+          "by_primitive": [
+            {
+              "considered": 350,
+              "primitive": "__const__",
+              "share": 0.9043927648578811
+            },
+            {
+              "considered": 334,
+              "primitive": "translate",
+              "share": 0.8630490956072352
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_h",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 136,
+              "primitive": "concat_v",
+              "share": 0.35142118863049093
+            },
+            {
+              "considered": 64,
+              "primitive": "rot180",
+              "share": 0.165374677002584
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 375,
+          "considered": 387,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 9.17,
+          "b_eff": 4.97,
+          "by_primitive": [
+            {
+              "considered": 396,
+              "primitive": "__const__",
+              "share": 0.8665207877461707
+            },
+            {
+              "considered": 380,
+              "primitive": "translate",
+              "share": 0.8315098468271335
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_h",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 160,
+              "primitive": "concat_v",
+              "share": 0.350109409190372
+            },
+            {
+              "considered": 70,
+              "primitive": "pair",
+              "share": 0.15317286652078774
+            },
+            {
+              "considered": 70,
+              "primitive": "rot180",
+              "share": 0.15317286652078774
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 445,
+          "considered": 457,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "2": {
-          "b_eff": 9.95,
+          "b_eff": 5.4,
+          "by_primitive": [
+            {
+              "considered": 442,
+              "primitive": "__const__",
+              "share": 0.8292682926829268
+            },
+            {
+              "considered": 426,
+              "primitive": "translate",
+              "share": 0.799249530956848
+            },
+            {
+              "considered": 186,
+              "primitive": "concat_h",
+              "share": 0.34896810506566606
+            },
+            {
+              "considered": 186,
+              "primitive": "concat_v",
+              "share": 0.34896810506566606
+            },
+            {
+              "considered": 76,
+              "primitive": "pair",
+              "share": 0.1425891181988743
+            },
+            {
+              "considered": 76,
+              "primitive": "rot",
+              "share": 0.1425891181988743
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 195,
-          "considered": 521,
-          "first_solution_index": 195,
+          "cheapest_solution_index": 207,
+          "considered": 533,
+          "first_solution_index": 207,
           "solve_generation": 2,
           "solved": true
         }
@@ -437,8 +898,7 @@
             "name": "translate",
             "param_types": [
               "grid",
-              "int",
-              "int"
+              "offset"
             ],
             "return_type": "grid",
             "variadic_param": null
@@ -514,13 +974,11 @@
                 },
                 {
                   "op": "const",
-                  "value": 1,
-                  "value_type": "int"
-                },
-                {
-                  "op": "const",
-                  "value": 0,
-                  "value_type": "int"
+                  "value": [
+                    1,
+                    0
+                  ],
+                  "value_type": "offset"
                 }
               ],
               "op": "apply",
@@ -619,12 +1077,176 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al18-fanin-rotate:train",
+      "learn": null,
+      "library": "al18-L0",
+      "run_dir": "20260803_203118_5453d4bb7d81ddf9",
+      "run_id": "5453d4bb7d81ddf9"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al18-fanin-rotate:train",
+      "learn": null,
+      "library": "al18-L0+pair",
+      "run_dir": "20260803_203118_00bd7e8683de663b",
+      "run_id": "00bd7e8683de663b"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al18-fanin-rotate:train",
+      "learn": null,
+      "library": "al18-L0+pair+rot",
+      "run_dir": "20260803_203118_68df5ebca31194a7",
+      "run_id": "68df5ebca31194a7"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/learn",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al18-fanin-rotate:train",
+      "learn": {
+        "iterations": 5,
+        "learn_engine": "GreedyMDLLearnEngine",
+        "metric": "CompressionMetric",
+        "proposer": "AntiunifyPairs"
+      },
+      "library": "al18-L0",
+      "run_dir": "20260803_203118_8b85d26c47cbb3bc",
+      "run_id": "8b85d26c47cbb3bc"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/train-usefulness",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al18-fanin-rotate:train",
+      "learn": null,
+      "library": "al18-L0+abs0+abs1",
+      "run_dir": "20260803_203119_6cab0677c12150c3",
+      "run_id": "6cab0677c12150c3"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/transfer",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al18-fanin-rotate:heldout",
+      "learn": null,
+      "library": "al18-L0+abs0+abs1",
+      "run_dir": "20260803_203119_151087486a5047bf",
+      "run_id": "151087486a5047bf"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "off-chain",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al18-fanin-rotate:train",
+      "learn": null,
+      "library": "al18-L0+rot",
+      "run_dir": "20260803_203119_88b5d60e3f9e7eb6",
+      "run_id": "88b5d60e3f9e7eb6"
+    },
+    {
+      "budget": {
+        "considered_limit": 22210,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "max_arity": 2,
+        "max_pool": 200000,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "raw-arm",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al18-fanin-rotate:train:raw-arm",
+      "learn": null,
+      "library": "al18-L0",
+      "run_dir": "20260803_203119_307765b1c9422d15",
+      "run_id": "307765b1c9422d15"
+    }
+  ],
+  "recorded_commits": [
+    "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10"
+  ],
   "rung_recovery": [
     {
       "level": 1,
       "matched_by": [
         "abs0"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "pair"
     },
@@ -633,6 +1255,8 @@
       "matched_by": [
         "abs1"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "rot"
     }
@@ -648,6 +1272,10 @@
       2,
       2
     ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": true
   },
   "wake_schedule": "full"
 }

@@ -56,7 +56,10 @@
         "dae9d2b5"
       ]
     },
-    "loop_overhead_factor": 7.942504485059633,
+    "loop_overhead_factor": null,
+    "loop_overhead_forfeited_by": [
+      "solution-limit"
+    ],
     "marginal_rung_value": [
       {
         "censored": true,
@@ -99,12 +102,15 @@
   "compromises": [
     {
       "code": "solution-limit",
-      "forfeits": "`cheapest_solution_index`, cost-to-exhaust, and a complete `by_primitive` attribution. RQ1 SURVIVES: `first_solution_index` is exact either way",
+      "forfeits": "`cheapest_solution_index`, cost-to-exhaust, and a complete `by_primitive` attribution. **AND the loop-overhead factor** -- added 2026-07-27 after it was found missing from this list by measurement, not by review: `laddered_marginal` is read off the CHAIN and `laddered_end_to_end` off the CLIMB, and an early stop truncates the two at different points, so their ratio stops comparing like with like. Observed range moved 2.16-3.88x -> 0.30-10.52x, including a member reporting end-to-end BELOW marginal (0.30x), which is impossible for a quantity defined as re-search overhead. Do not quote loop overhead from a run carrying this option. RQ1 SURVIVES: `first_solution_index` is exact either way",
       "label": "early stop at the first solution(s)",
       "saves": "large, whenever solutions are found well below `depth_limit` -- the run stops paying instead of enumerating the rest of the budget",
       "severity": "narrows",
       "when_justified": "a cell whose only question is cost-to-first, or a guarded baseline arm where exhausting is the thing being avoided (the raw arm runs `solution_limit=1` by design)"
     }
+  ],
+  "config_generations": [
+    "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
   ],
   "cost": {
     "amortization_ratio_considered": null,
@@ -1078,12 +1084,157 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L0",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-halves-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0",
+      "run_dir": "20260727_163113_d6375445aae9d8b6",
+      "run_id": "d6375445aae9d8b6"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L1",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-halves-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+west",
+      "run_dir": "20260727_163114_705f6a336647a63c",
+      "run_id": "705f6a336647a63c"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L2",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-halves-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+west+east",
+      "run_dir": "20260727_163115_dd470ffdea52eeca",
+      "run_id": "dd470ffdea52eeca"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "climb/learn",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-halves-lean:train",
+      "learn": {
+        "iterations": 5,
+        "learn_engine": "GreedyMDLLearnEngine",
+        "metric": "CompressionMetric",
+        "proposer": "AntiunifyPairs"
+      },
+      "library": "dae9d2b5-split-L0",
+      "run_dir": "20260727_163135_9295b91486953165",
+      "run_id": "9295b91486953165"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "climb/train-usefulness",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-halves-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+abs0+abs1",
+      "run_dir": "20260727_163428_5553ed8cd524c66e",
+      "run_id": "5553ed8cd524c66e"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "climb/transfer",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-halves-lean:heldout",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+abs0+abs1",
+      "run_dir": "20260727_163447_01df9553d0731b06",
+      "run_id": "01df9553d0731b06"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "off-chain",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-halves-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+east",
+      "run_dir": "20260727_163458_e83403a22b944792",
+      "run_id": "e83403a22b944792"
+    }
+  ],
+  "recorded_commits": [
+    "260fa76b8d20fd72a8d2898c46ac906749157adb"
+  ],
   "rung_recovery": [
     {
       "level": 1,
       "matched_by": [
         "abs1"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "west"
     },
@@ -1092,6 +1243,8 @@
       "matched_by": [
         "abs0"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "east"
     }
@@ -1107,6 +1260,10 @@
       3,
       3
     ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": true
   },
   "wake_schedule": "full"
 }

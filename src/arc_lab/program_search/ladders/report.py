@@ -16,14 +16,25 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from arc_lab.program_search.analysis.behavioral import MAX_PROBE_COMBOS, matches_target
+from arc_lab.program_search.analysis.behavioral import MAX_PROBE_COMBOS
 from arc_lab.program_search.execution.model.run_record import RunRecord
 from arc_lab.program_search.ladders import graph
 from arc_lab.program_search.ladders._render import table
 from arc_lab.program_search.ladders.certificate import search_censored_ids
 from arc_lab.program_search.ladders.compromise import compromises_in
+from arc_lab.program_search.ladders.provenance import (
+    config_generations,
+    ladder_provenance,
+    recorded_commits,
+)
+from arc_lab.program_search.ladders.recovery import (
+    NO_MATERIAL,
+    NOT_PROPOSED,
+    PROPOSED_NOT_SELECTED,
+    UNDIAGNOSED,
+    rung_recovery_rows,
+)
 from arc_lab.program_search.ladders.run import LadderResult
-from arc_lab.program_search.substrate.abstraction import make_abstraction
 
 
 def create_ladder_report(result: LadderResult) -> dict[str, object]:
@@ -45,6 +56,7 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
         for option in active_compromises
         if option.code in ("solution-limit", "wake-schedule", "pruned-library")
     )
+    provenance = ladder_provenance(result)
     cells = {level: _per_task_cells(rec) for level, rec in result.oracle_chain.items()}
     considered: dict[int, dict[str, int]] = {
         level: {tid: _as_int(cell["considered"]) for tid, cell in by_task.items()}
@@ -129,24 +141,11 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
     climb: list[dict[str, object]] = []
     end_to_end: int | None = None
     if result.learn is not None:
-        learned = result.learn.learn.learned_library()
-        floor_names = {p.name for p in spec.floor().primitives}
-        invented = [p for p in learned.primitives if p.name not in floor_names]
-        probes = tuple(
-            example.input for entry in spec.train_corpus.entries for example in entry.task.train
-        )
-        for i, rung in enumerate(spec.rungs, start=1):
-            target = make_abstraction(rung.name, rung.template, spec.oracle_library(i - 1))
-            matched = [p.name for p in invented if matches_target(p, target, probes)]
-            recovery.append(
-                {
-                    "rung": rung.name,
-                    "level": rung.level,
-                    "recovered": bool(matched),
-                    "matched_by": matched,
-                }
-            )
-
+        # `not_recovered_because` separates the three mechanically different failures the boolean
+        # rendered identically -- no material / proposer reach / governance preference. The third
+        # is not necessarily a defect (2026-07-27: minting nothing was the DL-optimum at the
+        # batch's real operating point), which is exactly why a governance arm needs it.
+        recovery = list(rung_recovery_rows(result))
         climb = _climb_trace(result.learn.learn)
         # End-to-end laddered cost: every wake re-searches every task, iteration after iteration.
         end_to_end = 0
@@ -193,6 +192,11 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
         raw_arm_view = {
             "k": arm.k,
             "guard_per_task": arm.guard_per_task,
+            # True when a previously-recorded arm with a DOMINATING guard was accepted instead of
+            # re-enumerating. Sound either way (a larger guard strengthens a censored bound, and
+            # `first_solution_index` is stop-independent), but the reader should know the spend
+            # belongs to an earlier run.
+            "reused_recorded_arm": arm.reused,
             "laddered_marginal": arm.laddered_marginal,
             "conditions": {
                 "depth_limit": arm.depth_limit,
@@ -337,6 +341,21 @@ def create_ladder_report(result: LadderResult) -> dict[str, object]:
             }
             for option in active_compromises
         ],
+        # Which recorded runs this report was built from, one row per cell, with each cell's
+        # comparability key read off its own `runspec.json` (`ladders/provenance.py`). Without it a
+        # committed number cannot be traced to its run and staleness cannot be detected at all --
+        # `run_id` is a content hash, but nothing said which hashes an artifact had used. Found by
+        # census 2026-08-03: 0 of 21 committed reports carried any provenance, and the only two
+        # ladders whose runs came from a single generation were the only two whose costs survived
+        # re-certification uncompromised.
+        "provenance": provenance,
+        # >1 generation means this report's cells ran under configs that are not mutually
+        # cost-comparable. The COMMIT is deliberately not part of that key (see the function's
+        # docstring): identity is the content hash and the codebase is deterministic, so cache
+        # hits across commits are the normal case, not drift. The commits are reported beside it
+        # as provenance -- how much of this report is cache -- never as a verdict.
+        "config_generations": config_generations(provenance),
+        "recorded_commits": recorded_commits(provenance),
         "climb_trace": climb,
         "rung_recovery": recovery,
         "probe_cap": MAX_PROBE_COMBOS,
@@ -524,8 +543,9 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
         )
     lines += ["", "## Climb trace", "", *table(climb_rows)]
 
-    recovery_rows = [["rung", "level", "recovered", "matched by"]]
-    for row in report.get("rung_recovery") or []:
+    recovery_report = list(report.get("rung_recovery") or [])
+    recovery_rows = [["rung", "level", "recovered", "matched by", "if not, where it broke"]]
+    for row in recovery_report:
         matched = row.get("matched_by") or []
         recovery_rows.append(
             [
@@ -533,9 +553,11 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
                 str(row.get("level")),
                 _yes_no(row.get("recovered")),
                 ", ".join(f"`{m}`" for m in matched) if matched else "-",
+                _recovery_diagnosis(row),
             ]
         )
     lines += ["", "## Rung recovery", "", *table(recovery_rows)]
+    lines += _recovery_legend(recovery_report)
 
     matrix = report.get("cost_matrix") or []
     if matrix:
@@ -825,6 +847,10 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
         "rungs are stepping stones for the **learning path**, not dependencies of the **search "
         "path**. That is the ladder thesis, measured rather than assumed.",
         "",
+    ]
+    lines += _provenance_lines(report)
+    lines += [
+        "",
         "## Not computed here",
         "",
     ]
@@ -838,6 +864,87 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
         "batch and does not exist yet.",
     ]
     return "\n".join(lines)
+
+
+def _recovery_diagnosis(row: Mapping[str, Any]) -> str:
+    """Where the recovery pipeline broke for one rung -- blank when it did not."""
+    because = row.get("not_recovered_because")
+    if not because:
+        return "-"
+    if because == PROPOSED_NOT_SELECTED:
+        at = row.get("proposed_at_iteration")
+        return f"{because} (iter {at})" if at is not None else str(because)
+    return str(because)
+
+
+def _recovery_legend(rows: list[Any]) -> list[str]:
+    """Spell out only the diagnoses actually present, and what each one licenses concluding."""
+    present = {row.get("not_recovered_because") for row in rows} - {None}
+    if not present:
+        return []
+    legend = {
+        NO_MATERIAL: "`no-material` -- the rung's demonstrating tasks were never solved, so sleep "
+        "never saw the programs to mine. A WAKE/BUDGET failure, upstream of learning.",
+        NOT_PROPOSED: "`not-proposed` -- the material was there and the proposer never offered a "
+        "behavioural match. Proposer REACH (the mechanism behind `FrequentSubtree`'s 0/4, 0/5, "
+        "0/2 on 2026-07-27: it mines `walk()[1:]`, so a full-solution demo's own root is "
+        "structurally invisible).",
+        PROPOSED_NOT_SELECTED: "`proposed-not-selected` -- the proposer DID offer a behavioural "
+        "match and governance kept something else. Governance PREFERENCE, not reach -- and **not "
+        "necessarily a defect**: at two distinct parameter values with two occurrences each, "
+        "minting nothing is the DL-optimum, so the learner can be right and the ladder wrong "
+        "(`experiments/2026-07-27-half-param-governance/`). Read it against the run's metric.",
+        UNDIAGNOSED: "`undiagnosed` -- no proposer was reachable on the configured learn engine, "
+        "so reach and preference cannot be told apart here. Recorded rather than guessed.",
+    }
+    order = (NO_MATERIAL, NOT_PROPOSED, PROPOSED_NOT_SELECTED, UNDIAGNOSED)
+    return [
+        "",
+        "Proposals are RECOMPUTED read-side from the recorded wake programs and libraries "
+        "(proposers are pure), not logged -- so this says what sleep actually saw.",
+        "",
+        *(f"- {legend[code]}" for code in order if code in present),
+    ]
+
+
+def _provenance_lines(report: Mapping[str, Any]) -> list[str]:
+    """The runs this report was built from, and whether they came from one generation."""
+    rows: list[Any] = list(report.get("provenance") or [])
+    if not rows:
+        return []
+    generations: list[Any] = list(report.get("config_generations") or [])
+    lines = ["## Provenance (which runs this report was built from)", ""]
+    if len(generations) > 1:
+        lines += [
+            f"> ⚠ **This report's cells span {len(generations)} config generations.** Its numbers "
+            "were assembled across a code or budget change, so the cost columns above are not "
+            "mutually comparable. Re-run the ladder under one generation before quoting them.",
+            "",
+        ]
+    table_rows = [["cell", "run_id", "run dir", "commit", "library", "depth", "pool", "stop"]]
+    for row in rows:
+        budget: Mapping[str, Any] = row.get("budget") or {}
+        stop = budget.get("solution_limit")
+        table_rows.append(
+            [
+                str(row.get("cell")),
+                str(row.get("run_id")),
+                str(row.get("run_dir")),
+                str(row.get("commit") or "-")[:8],
+                str(row.get("library") or "-"),
+                str(budget.get("depth_limit") or "-"),
+                str(budget.get("max_pool") or "-"),
+                "exhaust" if stop is None else f"first-{stop}",
+            ]
+        )
+    lines += table(table_rows)
+    lines += [
+        "",
+        "- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the "
+        "current spec and comparing IS the staleness test: a differing hash means this artifact "
+        "describes runs the current code would no longer produce.",
+    ]
+    return lines
 
 
 def _raw_arm_lines(cost: Mapping[str, Any]) -> list[str]:

@@ -25,14 +25,22 @@ iteration-0 wake -- simpler for the certificate, which needs per-task solve resu
 
 from __future__ import annotations
 
+import copy
+import json
 from dataclasses import dataclass, replace
 from math import ceil
 from pathlib import Path
+from typing import Any
 
 from arc_lab.core.dataset import Corpus
 from arc_lab.program_search.analysis.depth import min_depth_limit
-from arc_lab.program_search.execution.execute import execute
-from arc_lab.program_search.execution.model.run_record import RunRecord
+from arc_lab.program_search.execution.execute import DEFAULT_RUNS_ROOT, execute
+from arc_lab.program_search.execution.model.config import Config
+from arc_lab.program_search.execution.model.run_record import (
+    RUNSPEC_FILENAME,
+    RunRecord,
+    iter_run_dirs,
+)
 from arc_lab.program_search.execution.model.run_spec import RunSpec
 from arc_lab.program_search.execution.run_search_learn import LearnActivityResult, run_search_learn
 from arc_lab.program_search.ladders.certificate import LadderCertificate, certify
@@ -104,6 +112,10 @@ class RawArm:
     laddered_marginal: int
     depth_limit: int
     max_pool: int
+    #: True when an already-recorded arm with a dominating guard was accepted instead of
+    #: re-enumerating (:func:`dominating_raw_arm`). Recorded because the reader should know the
+    #: spend belongs to an earlier, larger-guarded run -- which only strengthens the bound.
+    reused: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,13 +231,81 @@ def run_ladder(
     )
 
 
+def _without_guard(config_dict: dict[str, Any]) -> dict[str, Any]:
+    """A config's identity minus ``considered_limit`` -- everything that decides WHAT is searched.
+
+    The guard decides only how far the search is allowed to get, so two configs equal under this
+    key describe the same enumeration truncated at different points.
+    """
+    stripped = copy.deepcopy(config_dict)
+    budget = stripped.get("budget")
+    if isinstance(budget, dict):
+        budget.pop("considered_limit", None)
+    return stripped
+
+
+def dominating_raw_arm(
+    config: Config, corpus: Corpus, guard: int, *, runs_root: Path | None = None
+) -> RunRecord | None:
+    """A recorded run that makes running ``config`` pointless, or ``None``.
+
+    A raw arm's guard is ``ceil(k x laddered_marginal / |top tasks|)`` -- a function of a MEASURED
+    quantity, so it lands in ``Budget`` -> ``Config`` -> ``run_id`` and any drift in the chain's
+    cost re-buys the whole enumeration. Measured 2026-08-03: ``94f9d214-nor-recolor`` and
+    ``fafffa47-nor-recolor`` each bought their arm twice (1.2M then 5.2M considered), the smaller
+    run entirely contained in the larger.
+
+    A recorded arm over the same corpus and the same config-minus-guard, stopped no earlier than
+    ``guard``, is a **strictly stronger** substitute, and both of RQ1's outcomes survive it:
+
+    - it censored -> raw cost exceeds the LARGER spend, so the ``>= k`` bound holds a fortiori;
+    - it solved -> ``first_solution_index`` is where the solution was absorbed, which no later stop
+      limit can move.
+
+    So this is a semantic cache hit where the content hash cannot see one. The most-guarded
+    qualifying run wins: it carries the most information.
+    """
+    root = DEFAULT_RUNS_ROOT if runs_root is None else runs_root
+    if not root.is_dir():
+        return None
+    wanted_key = _without_guard(config.to_dict())
+    wanted_corpus = corpus.content_hash()
+    best: tuple[int, RunRecord] | None = None
+    for run_dir in iter_run_dirs(root):
+        try:
+            spec = json.loads((run_dir / RUNSPEC_FILENAME).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue  # a torn or half-written run dir is not evidence
+        if spec.get("corpus_hash") != wanted_corpus:
+            continue
+        recorded = spec.get("config")
+        if not isinstance(recorded, dict) or _without_guard(recorded) != wanted_key:
+            continue
+        limit = (recorded.get("budget") or {}).get("considered_limit")
+        if not isinstance(limit, int) or limit < guard:
+            continue
+        record = RunRecord(run_id=str(spec.get("run_id", "")), run_dir=run_dir)
+        if record.completed and (best is None or limit > best[0]):
+            best = (limit, record)
+    return best[1] if best is not None else None
+
+
 def run_raw_arm(
-    spec: LadderSpec, laddered_marginal: int, *, k: int = 10, runs_root: Path | None = None
+    spec: LadderSpec,
+    laddered_marginal: int,
+    *,
+    k: int = 10,
+    runs_root: Path | None = None,
+    reuse: bool = True,
 ) -> RawArm | None:
     """Purchase the raw baseline: the top tasks under the Floor, guarded at ``k x laddered``.
 
     ``None`` when the ladder has no top tasks or the measured laddered cost is zero -- there is
     nothing to size the spend against, and an unguarded raw run is exactly what decision 1 forbids.
+
+    ``reuse`` (default on) accepts an already-recorded arm whose guard dominates this one rather
+    than re-enumerating -- see :func:`dominating_raw_arm` for why that is sound. Pass ``False`` to
+    force the exact-guard purchase.
     """
     top_ids = set(spec.top.task_ids)
     by_id = {entry.task.task_id: entry.task for entry in spec.train_corpus.entries}
@@ -252,15 +332,36 @@ def run_raw_arm(
         f"{spec.train_corpus.name}:raw-arm",
         [by_id[tid] for tid in sorted(top_ids) if tid in by_id],
     )
-    record = execute(RunSpec(config=config, corpus=corpus), runs_root=runs_root)
+    reused = dominating_raw_arm(config, corpus, guard, runs_root=runs_root) if reuse else None
+    if reused is not None:
+        record, effective_guard = reused, _recorded_guard(reused, guard)
+    else:
+        record = execute(RunSpec(config=config, corpus=corpus), runs_root=runs_root)
+        effective_guard = guard
     return RawArm(
         record=record,
         k=k,
-        guard_per_task=guard,
+        # The guard actually in force, which a reused arm makes larger than the one computed here.
+        # The report divides SPEND by laddered cost, so a bigger guard only strengthens the bound.
+        guard_per_task=effective_guard,
         laddered_marginal=laddered_marginal,
         depth_limit=depth,
         max_pool=RAW_ARM_POOL,
+        reused=reused is not None,
     )
+
+
+def _recorded_guard(record: RunRecord, fallback: int) -> int:
+    """The ``considered_limit`` a recorded run actually ran under."""
+    try:
+        config = record.runspec().get("config")
+    except (OSError, ValueError):
+        return fallback
+    if isinstance(config, dict):
+        limit = (config.get("budget") or {}).get("considered_limit")
+        if isinstance(limit, int):
+            return limit
+    return fallback
 
 
 def _laddered_marginal(spec: LadderSpec, oracle_chain: dict[int, RunRecord]) -> int:

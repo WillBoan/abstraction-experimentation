@@ -14,6 +14,7 @@ import typer
 
 from . import (
     analyze_run,
+    batch,
     check_library_coherence,
     check_primitive_bundles,
     configs,
@@ -82,6 +83,7 @@ app.command(name="estimate")(estimate.estimate)
 app.command(name="learn")(learn.learn)
 app.command(name="run-study")(run_study.run_study_command)
 app.command(name="run-ladder")(ladder.run_ladder_command)
+app.command(name="run-batch")(batch.run_batch_command)
 app.command(name="lint-ladder")(lint_ladder.lint_ladder_command)
 app.command(name="new-ladder")(new_ladder.new_ladder_command)
 app.command(name="lint-checks")(lint_checks.lint_checks_command)

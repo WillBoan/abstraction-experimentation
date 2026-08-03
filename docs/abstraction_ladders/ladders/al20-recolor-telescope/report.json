@@ -24,7 +24,7 @@
         "abs0"
       ],
       "proposal_count": 2,
-      "wake_considered": 35275,
+      "wake_considered": 35335,
       "wake_solved": [
         "pair-00",
         "pair-01"
@@ -38,7 +38,7 @@
         "abs1"
       ],
       "proposal_count": 4,
-      "wake_considered": 36525,
+      "wake_considered": 36585,
       "wake_solved": [
         "pair-00",
         "pair-01",
@@ -52,7 +52,7 @@
       "iteration": 2,
       "minted": [],
       "proposal_count": 2,
-      "wake_considered": 37795,
+      "wake_considered": 37855,
       "wake_solved": [
         "pair-00",
         "pair-01",
@@ -72,67 +72,72 @@
         "top-00"
       ]
     },
-    "loop_overhead_factor": 3.020893629923647,
+    "loop_overhead_factor": 3.020859132061972,
+    "loop_overhead_forfeited_by": null,
     "marginal_rung_value": [
       {
         "censored": true,
-        "cost_with_rung": 14610,
-        "cost_without_rung": 14110,
+        "cost_with_rung": 14634,
+        "cost_without_rung": 14134,
         "layer_above": "recol",
-        "own_tasks_speedup": 1.0303030303030303,
-        "own_tasks_to_first_with": 264,
-        "own_tasks_to_first_without": 272,
-        "ratio": 0.9657768651608487,
+        "own_tasks_speedup": 1.0277777777777777,
+        "own_tasks_to_first_with": 288,
+        "own_tasks_to_first_without": 296,
+        "ratio": 0.96583299166325,
         "rung": "pair"
       },
       {
         "censored": true,
-        "cost_with_rung": 7559,
-        "cost_without_rung": 7305,
+        "cost_with_rung": 7571,
+        "cost_without_rung": 7317,
         "layer_above": "top",
-        "own_tasks_speedup": 21.639097744360903,
-        "own_tasks_to_first_with": 266,
-        "own_tasks_to_first_without": 5756,
-        "ratio": 0.9663976716496891,
+        "own_tasks_speedup": 19.93103448275862,
+        "own_tasks_to_first_with": 290,
+        "own_tasks_to_first_without": 5780,
+        "ratio": 0.9664509311847841,
         "rung": "recol"
       }
     ],
     "vocabulary_tax": [
       {
-        "at_full_library": 15118,
-        "at_own_level": 14110,
-        "factor": 1.071438695960312,
+        "at_full_library": 15142,
+        "at_own_level": 14134,
+        "factor": 1.0713173906891185,
         "rung": "pair"
       },
       {
-        "at_full_library": 15118,
-        "at_own_level": 14610,
-        "factor": 1.0347707049965778,
+        "at_full_library": 15142,
+        "at_own_level": 14634,
+        "factor": 1.034713680470138,
         "rung": "recol"
       }
     ]
   },
+  "compromises": [],
+  "config_generations": [
+    "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+  ],
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
-      "high": 40213.03244301111,
-      "low": 1984.4649246120346
+      "high": 40146.63628608382,
+      "low": 834.2925782217452
     },
     "budget_compression_depth": {
       "max_jump_depth": 2,
       "raw_depth": 5
     },
     "jump_costs": {
-      "pair": 14110,
-      "recol": 14610
+      "pair": 14134,
+      "recol": 14634
     },
     "jump_costs_to_first": {
-      "pair": 272,
-      "recol": 5756
+      "pair": 296,
+      "recol": 5780
     },
-    "laddered_end_to_end_considered": 109595,
-    "laddered_marginal_considered": 36279,
-    "laddered_marginal_to_first": 13498,
+    "laddered_end_to_end_considered": 109775,
+    "laddered_marginal_considered": 36339,
+    "laddered_marginal_to_first": 13558,
     "off_chain_top_solved": true,
     "raw_arm": {
       "amortization_ratio": 10.0,
@@ -142,16 +147,17 @@
         "max_pool": 200000,
         "solution_limit": 1
       },
-      "guard_per_task": 362790,
+      "guard_per_task": 363390,
       "k": 10,
-      "laddered_marginal": 36279,
+      "laddered_marginal": 36339,
+      "reused_recorded_arm": true,
       "saturated_at": null,
       "solved": false,
       "sound": true,
-      "spend_considered": 362790
+      "spend_considered": 363390
     },
     "raw_censored": true,
-    "raw_considered": 7055,
+    "raw_considered": 7067,
     "raw_estimate": {
       "available": true,
       "caveats": [
@@ -163,53 +169,134 @@
         "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
       ],
       "d_raw": 5,
-      "estimate_high": 1458888604,
-      "estimate_low": 71994403,
-      "growth_ratio_geometric": 21.48,
+      "estimate_high": 1458888616,
+      "estimate_low": 30317358,
+      "growth_ratio_geometric": 16.01,
       "growth_ratio_last": 59.17,
       "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
       "observed_composed": [
-        15,
+        27,
         117,
         6923
       ],
-      "observed_considered": 7055,
+      "observed_considered": 7067,
       "observed_through_depth": 2,
       "rounds_extrapolated": 3,
       "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
     },
     "raw_limit_censored": false,
     "raw_solved": false,
-    "top_jump_cost": 7559,
-    "top_jump_cost_to_first": 7470
+    "top_jump_cost": 7571,
+    "top_jump_cost_to_first": 7482
   },
   "cost_matrix": [
     {
       "columns": {
         "0": {
-          "b_eff": 21.48,
+          "b_eff": 16.01,
+          "by_primitive": [
+            {
+              "considered": 7062,
+              "primitive": "__const__",
+              "share": 0.999292486203481
+            },
+            {
+              "considered": 6848,
+              "primitive": "map_color",
+              "share": 0.9690108957124663
+            },
+            {
+              "considered": 2052,
+              "primitive": "concat_h",
+              "share": 0.2903636620914108
+            },
+            {
+              "considered": 1796,
+              "primitive": "translate",
+              "share": 0.25413895570963635
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 136,
-          "considered": 7055,
-          "first_solution_index": 136,
+          "cheapest_solution_index": 148,
+          "considered": 7067,
+          "first_solution_index": 148,
           "solve_generation": 2,
           "solved": true
         },
         "1": {
-          "b_eff": 21.87,
+          "b_eff": 16.3,
+          "by_primitive": [
+            {
+              "considered": 7304,
+              "primitive": "__const__",
+              "share": 0.998223315566489
+            },
+            {
+              "considered": 7056,
+              "primitive": "map_color",
+              "share": 0.964329643296433
+            },
+            {
+              "considered": 2142,
+              "primitive": "concat_h",
+              "share": 0.29274292742927427
+            },
+            {
+              "considered": 1830,
+              "primitive": "translate",
+              "share": 0.25010250102501025
+            },
+            {
+              "considered": 250,
+              "primitive": "pair",
+              "share": 0.034167008336750036
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 132,
-          "considered": 7305,
-          "first_solution_index": 132,
+          "cheapest_solution_index": 144,
+          "considered": 7317,
+          "first_solution_index": 144,
           "solve_generation": 1,
           "solved": true
         },
         "2": {
-          "b_eff": 22.25,
+          "b_eff": 16.58,
+          "by_primitive": [
+            {
+              "considered": 7546,
+              "primitive": "__const__",
+              "share": 0.9966979262977149
+            },
+            {
+              "considered": 7264,
+              "primitive": "map_color",
+              "share": 0.9594505349359398
+            },
+            {
+              "considered": 2234,
+              "primitive": "concat_h",
+              "share": 0.29507330603619075
+            },
+            {
+              "considered": 1864,
+              "primitive": "translate",
+              "share": 0.24620261524237222
+            },
+            {
+              "considered": 254,
+              "primitive": "pair",
+              "share": 0.03354906881521596
+            },
+            {
+              "considered": 254,
+              "primitive": "recol",
+              "share": 0.03354906881521596
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 132,
-          "considered": 7559,
-          "first_solution_index": 132,
+          "cheapest_solution_index": 144,
+          "considered": 7571,
+          "first_solution_index": 144,
           "solve_generation": 1,
           "solved": true
         }
@@ -220,29 +307,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 21.48,
+          "b_eff": 16.01,
+          "by_primitive": [
+            {
+              "considered": 7062,
+              "primitive": "__const__",
+              "share": 0.999292486203481
+            },
+            {
+              "considered": 6848,
+              "primitive": "map_color",
+              "share": 0.9690108957124663
+            },
+            {
+              "considered": 2052,
+              "primitive": "concat_h",
+              "share": 0.2903636620914108
+            },
+            {
+              "considered": 1796,
+              "primitive": "translate",
+              "share": 0.25413895570963635
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 136,
-          "considered": 7055,
-          "first_solution_index": 136,
+          "cheapest_solution_index": 148,
+          "considered": 7067,
+          "first_solution_index": 148,
           "solve_generation": 2,
           "solved": true
         },
         "1": {
-          "b_eff": 21.87,
+          "b_eff": 16.3,
+          "by_primitive": [
+            {
+              "considered": 7304,
+              "primitive": "__const__",
+              "share": 0.998223315566489
+            },
+            {
+              "considered": 7056,
+              "primitive": "map_color",
+              "share": 0.964329643296433
+            },
+            {
+              "considered": 2142,
+              "primitive": "concat_h",
+              "share": 0.29274292742927427
+            },
+            {
+              "considered": 1830,
+              "primitive": "translate",
+              "share": 0.25010250102501025
+            },
+            {
+              "considered": 250,
+              "primitive": "pair",
+              "share": 0.034167008336750036
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 132,
-          "considered": 7305,
-          "first_solution_index": 132,
+          "cheapest_solution_index": 144,
+          "considered": 7317,
+          "first_solution_index": 144,
           "solve_generation": 1,
           "solved": true
         },
         "2": {
-          "b_eff": 22.25,
+          "b_eff": 16.58,
+          "by_primitive": [
+            {
+              "considered": 7546,
+              "primitive": "__const__",
+              "share": 0.9966979262977149
+            },
+            {
+              "considered": 7264,
+              "primitive": "map_color",
+              "share": 0.9594505349359398
+            },
+            {
+              "considered": 2234,
+              "primitive": "concat_h",
+              "share": 0.29507330603619075
+            },
+            {
+              "considered": 1864,
+              "primitive": "translate",
+              "share": 0.24620261524237222
+            },
+            {
+              "considered": 254,
+              "primitive": "pair",
+              "share": 0.03354906881521596
+            },
+            {
+              "considered": 254,
+              "primitive": "recol",
+              "share": 0.03354906881521596
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 132,
-          "considered": 7559,
-          "first_solution_index": 132,
+          "cheapest_solution_index": 144,
+          "considered": 7571,
+          "first_solution_index": 144,
           "solve_generation": 1,
           "solved": true
         }
@@ -253,29 +421,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 21.48,
+          "b_eff": 16.01,
+          "by_primitive": [
+            {
+              "considered": 7062,
+              "primitive": "__const__",
+              "share": 0.999292486203481
+            },
+            {
+              "considered": 6848,
+              "primitive": "map_color",
+              "share": 0.9690108957124663
+            },
+            {
+              "considered": 2052,
+              "primitive": "concat_h",
+              "share": 0.2903636620914108
+            },
+            {
+              "considered": 1796,
+              "primitive": "translate",
+              "share": 0.25413895570963635
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 7055,
+          "considered": 7067,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 21.87,
+          "b_eff": 16.3,
+          "by_primitive": [
+            {
+              "considered": 7304,
+              "primitive": "__const__",
+              "share": 0.998223315566489
+            },
+            {
+              "considered": 7056,
+              "primitive": "map_color",
+              "share": 0.964329643296433
+            },
+            {
+              "considered": 2142,
+              "primitive": "concat_h",
+              "share": 0.29274292742927427
+            },
+            {
+              "considered": 1830,
+              "primitive": "translate",
+              "share": 0.25010250102501025
+            },
+            {
+              "considered": 250,
+              "primitive": "pair",
+              "share": 0.034167008336750036
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 2878,
-          "considered": 7305,
-          "first_solution_index": 2878,
+          "cheapest_solution_index": 2890,
+          "considered": 7317,
+          "first_solution_index": 2890,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 22.25,
+          "b_eff": 16.58,
+          "by_primitive": [
+            {
+              "considered": 7546,
+              "primitive": "__const__",
+              "share": 0.9966979262977149
+            },
+            {
+              "considered": 7264,
+              "primitive": "map_color",
+              "share": 0.9594505349359398
+            },
+            {
+              "considered": 2234,
+              "primitive": "concat_h",
+              "share": 0.29507330603619075
+            },
+            {
+              "considered": 1864,
+              "primitive": "translate",
+              "share": 0.24620261524237222
+            },
+            {
+              "considered": 254,
+              "primitive": "pair",
+              "share": 0.03354906881521596
+            },
+            {
+              "considered": 254,
+              "primitive": "recol",
+              "share": 0.03354906881521596
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 133,
-          "considered": 7559,
-          "first_solution_index": 133,
+          "cheapest_solution_index": 145,
+          "considered": 7571,
+          "first_solution_index": 145,
           "solve_generation": 1,
           "solved": true
         }
@@ -286,29 +535,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 21.48,
+          "b_eff": 16.01,
+          "by_primitive": [
+            {
+              "considered": 7062,
+              "primitive": "__const__",
+              "share": 0.999292486203481
+            },
+            {
+              "considered": 6848,
+              "primitive": "map_color",
+              "share": 0.9690108957124663
+            },
+            {
+              "considered": 2052,
+              "primitive": "concat_h",
+              "share": 0.2903636620914108
+            },
+            {
+              "considered": 1796,
+              "primitive": "translate",
+              "share": 0.25413895570963635
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 7055,
+          "considered": 7067,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 21.87,
+          "b_eff": 16.3,
+          "by_primitive": [
+            {
+              "considered": 7304,
+              "primitive": "__const__",
+              "share": 0.998223315566489
+            },
+            {
+              "considered": 7056,
+              "primitive": "map_color",
+              "share": 0.964329643296433
+            },
+            {
+              "considered": 2142,
+              "primitive": "concat_h",
+              "share": 0.29274292742927427
+            },
+            {
+              "considered": 1830,
+              "primitive": "translate",
+              "share": 0.25010250102501025
+            },
+            {
+              "considered": 250,
+              "primitive": "pair",
+              "share": 0.034167008336750036
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 2878,
-          "considered": 7305,
-          "first_solution_index": 2878,
+          "cheapest_solution_index": 2890,
+          "considered": 7317,
+          "first_solution_index": 2890,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 22.25,
+          "b_eff": 16.58,
+          "by_primitive": [
+            {
+              "considered": 7546,
+              "primitive": "__const__",
+              "share": 0.9966979262977149
+            },
+            {
+              "considered": 7264,
+              "primitive": "map_color",
+              "share": 0.9594505349359398
+            },
+            {
+              "considered": 2234,
+              "primitive": "concat_h",
+              "share": 0.29507330603619075
+            },
+            {
+              "considered": 1864,
+              "primitive": "translate",
+              "share": 0.24620261524237222
+            },
+            {
+              "considered": 254,
+              "primitive": "pair",
+              "share": 0.03354906881521596
+            },
+            {
+              "considered": 254,
+              "primitive": "recol",
+              "share": 0.03354906881521596
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 133,
-          "considered": 7559,
-          "first_solution_index": 133,
+          "cheapest_solution_index": 145,
+          "considered": 7571,
+          "first_solution_index": 145,
           "solve_generation": 1,
           "solved": true
         }
@@ -319,29 +649,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 21.48,
+          "b_eff": 16.01,
+          "by_primitive": [
+            {
+              "considered": 7062,
+              "primitive": "__const__",
+              "share": 0.999292486203481
+            },
+            {
+              "considered": 6848,
+              "primitive": "map_color",
+              "share": 0.9690108957124663
+            },
+            {
+              "considered": 2052,
+              "primitive": "concat_h",
+              "share": 0.2903636620914108
+            },
+            {
+              "considered": 1796,
+              "primitive": "translate",
+              "share": 0.25413895570963635
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 7055,
+          "considered": 7067,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 21.87,
+          "b_eff": 16.3,
+          "by_primitive": [
+            {
+              "considered": 7304,
+              "primitive": "__const__",
+              "share": 0.998223315566489
+            },
+            {
+              "considered": 7056,
+              "primitive": "map_color",
+              "share": 0.964329643296433
+            },
+            {
+              "considered": 2142,
+              "primitive": "concat_h",
+              "share": 0.29274292742927427
+            },
+            {
+              "considered": 1830,
+              "primitive": "translate",
+              "share": 0.25010250102501025
+            },
+            {
+              "considered": 250,
+              "primitive": "pair",
+              "share": 0.034167008336750036
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 7305,
+          "considered": 7317,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "2": {
-          "b_eff": 22.25,
+          "b_eff": 16.58,
+          "by_primitive": [
+            {
+              "considered": 7546,
+              "primitive": "__const__",
+              "share": 0.9966979262977149
+            },
+            {
+              "considered": 7264,
+              "primitive": "map_color",
+              "share": 0.9594505349359398
+            },
+            {
+              "considered": 2234,
+              "primitive": "concat_h",
+              "share": 0.29507330603619075
+            },
+            {
+              "considered": 1864,
+              "primitive": "translate",
+              "share": 0.24620261524237222
+            },
+            {
+              "considered": 254,
+              "primitive": "pair",
+              "share": 0.03354906881521596
+            },
+            {
+              "considered": 254,
+              "primitive": "recol",
+              "share": 0.03354906881521596
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 7470,
-          "considered": 7559,
-          "first_solution_index": 7470,
+          "cheapest_solution_index": 7482,
+          "considered": 7571,
+          "first_solution_index": 7482,
           "solve_generation": 2,
           "solved": true
         }
@@ -428,8 +839,7 @@
             "name": "translate",
             "param_types": [
               "grid",
-              "int",
-              "int"
+              "offset"
             ],
             "return_type": "grid",
             "variadic_param": null
@@ -507,13 +917,11 @@
                 },
                 {
                   "op": "const",
-                  "value": 1,
-                  "value_type": "int"
-                },
-                {
-                  "op": "const",
-                  "value": 0,
-                  "value_type": "int"
+                  "value": [
+                    1,
+                    0
+                  ],
+                  "value_type": "offset"
                 }
               ],
               "op": "apply",
@@ -613,12 +1021,176 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al20-recolor-telescope:train",
+      "learn": null,
+      "library": "al20-L0",
+      "run_dir": "20260803_203138_f0d2e8bd60428f70",
+      "run_id": "f0d2e8bd60428f70"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al20-recolor-telescope:train",
+      "learn": null,
+      "library": "al20-L0+pair",
+      "run_dir": "20260803_203139_c7839bcec9405c39",
+      "run_id": "c7839bcec9405c39"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al20-recolor-telescope:train",
+      "learn": null,
+      "library": "al20-L0+pair+recol",
+      "run_dir": "20260803_203140_37a7eb836dc74ba3",
+      "run_id": "37a7eb836dc74ba3"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/learn",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al20-recolor-telescope:train",
+      "learn": {
+        "iterations": 5,
+        "learn_engine": "GreedyMDLLearnEngine",
+        "metric": "CompressionMetric",
+        "proposer": "AntiunifyPairs"
+      },
+      "library": "al20-L0",
+      "run_dir": "20260803_203141_9a84ca44c49201a7",
+      "run_id": "9a84ca44c49201a7"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/train-usefulness",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al20-recolor-telescope:train",
+      "learn": null,
+      "library": "al20-L0+abs0+abs1",
+      "run_dir": "20260803_203143_534b120b639031d0",
+      "run_id": "534b120b639031d0"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/transfer",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al20-recolor-telescope:heldout",
+      "learn": null,
+      "library": "al20-L0+abs0+abs1",
+      "run_dir": "20260803_203144_a66652c4a051f47d",
+      "run_id": "a66652c4a051f47d"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "off-chain",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al20-recolor-telescope:train",
+      "learn": null,
+      "library": "al20-L0+recol",
+      "run_dir": "20260803_203145_021543979b1db8e1",
+      "run_id": "021543979b1db8e1"
+    },
+    {
+      "budget": {
+        "considered_limit": 363390,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 5,
+        "max_arity": 2,
+        "max_pool": 200000,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "raw-arm",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al20-recolor-telescope:train:raw-arm",
+      "learn": null,
+      "library": "al20-L0",
+      "run_dir": "20260803_203146_a6d6e2d7f05fd3d9",
+      "run_id": "a6d6e2d7f05fd3d9"
+    }
+  ],
+  "recorded_commits": [
+    "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10"
+  ],
   "rung_recovery": [
     {
       "level": 1,
       "matched_by": [
         "abs0"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "pair"
     },
@@ -627,6 +1199,8 @@
       "matched_by": [
         "abs1"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "recol"
     }
@@ -642,6 +1216,10 @@
       2,
       2
     ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": true
   },
   "wake_schedule": "full"
 }

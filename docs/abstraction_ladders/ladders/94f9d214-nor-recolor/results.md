@@ -14,8 +14,10 @@
 | 3    | yes       | yes          | 1.0                  |
 | 4    | yes       | yes          | 1.0                  |
 
+- Top reachable at the ladder's own budget -- chain (oracle `L_k`): **REACHED**; climb (learned library): **REACHED**
+
 > **COMPROMISE OPTIONS IN EFFECT (1).** This run traded cost for claim strength. Every figure below is qualified by these, and must carry the label wherever it is quoted:
-> - **`solution-limit`** (early stop at the first solution(s)) -- saves: large, whenever solutions are found well below `depth_limit` -- the run stops paying instead of enumerating the rest of the budget. FORFEITS: `cheapest_solution_index`, cost-to-exhaust, and a complete `by_primitive` attribution. RQ1 SURVIVES: `first_solution_index` is exact either way.
+> - **`solution-limit`** (early stop at the first solution(s)) -- saves: large, whenever solutions are found well below `depth_limit` -- the run stops paying instead of enumerating the rest of the budget. FORFEITS: `cheapest_solution_index`, cost-to-exhaust, and a complete `by_primitive` attribution. **AND the loop-overhead factor** -- added 2026-07-27 after it was found missing from this list by measurement, not by review: `laddered_marginal` is read off the CHAIN and `laddered_end_to_end` off the CLIMB, and an early stop truncates the two at different points, so their ratio stops comparing like with like. Observed range moved 2.16-3.88x -> 0.30-10.52x, including a member reporting end-to-end BELOW marginal (0.30x), which is impossible for a quantity defined as re-search overhead. Do not quote loop overhead from a run carrying this option. RQ1 SURVIVES: `first_solution_index` is exact either way.
 
 ## Climb trace
 
@@ -29,12 +31,12 @@
 
 ## Rung recovery
 
-| rung              | level | recovered | matched by                      |
-| ----------------- | ----- | --------- | ------------------------------- |
-| `north`           | 1     | yes       | `abs1`, `abs5`, `abs9`, `abs14` |
-| `south`           | 2     | yes       | `abs4`, `abs6`, `abs12`         |
-| `recolored_north` | 3     | yes       | `abs2`, `abs10`                 |
-| `recolored_south` | 4     | yes       | `abs3`, `abs11`, `abs15`        |
+| rung              | level | recovered | matched by                      | if not, where it broke |
+| ----------------- | ----- | --------- | ------------------------------- | ---------------------- |
+| `north`           | 1     | yes       | `abs1`, `abs5`, `abs9`, `abs14` | -                      |
+| `south`           | 2     | yes       | `abs4`, `abs6`, `abs12`         | -                      |
+| `recolored_north` | 3     | yes       | `abs2`, `abs10`                 | -                      |
+| `recolored_south` | 4     | yes       | `abs3`, `abs11`, `abs15`        | -                      |
 
 ## Cost matrix (considered count per task x library)
 
@@ -196,7 +198,7 @@
 
 - Marginal (jump costs only, the idealized bound): 523,174
 - End-to-end (every wake re-searches every task, incl. full-budget failures): 5,505,471
-- **Loop-overhead factor**: 10.52x -- what today's loop mechanics cost above the ideal (re-search + overshoot + termination + learned-vs-oracle gap)
+- **Loop-overhead factor**: FORFEITED by solution-limit -- what today's loop mechanics cost above the ideal (re-search + overshoot + termination + learned-vs-oracle gap)
 
 ### Marginal rung value
 
@@ -232,6 +234,23 @@
 
 - Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **no**.
 - When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
+## Provenance (which runs this report was built from)
+
+| cell                   | run_id           | run dir                          | commit   | library                                                                                      | depth | pool   | stop    |
+| ---------------------- | ---------------- | -------------------------------- | -------- | -------------------------------------------------------------------------------------------- | ----- | ------ | ------- |
+| chain/L0               | d89bb69f0f492c2d | 20260727_163113_d89bb69f0f492c2d | 260fa76b | nor-L0                                                                                       | 2     | 30     | first-1 |
+| chain/L1               | 2a835be710613be5 | 20260727_163116_2a835be710613be5 | 260fa76b | nor-L0+north                                                                                 | 2     | 30     | first-1 |
+| chain/L2               | 013371ccc77e2352 | 20260727_163118_013371ccc77e2352 | 260fa76b | nor-L0+north+south                                                                           | 2     | 30     | first-1 |
+| chain/L3               | 9f08c60dfa7c8ceb | 20260727_163120_9f08c60dfa7c8ceb | 260fa76b | nor-L0+north+south+recolored_north                                                           | 2     | 30     | first-1 |
+| chain/L4               | fda8beb88e35555f | 20260727_163121_fda8beb88e35555f | 260fa76b | nor-L0+north+south+recolored_north+recolored_south                                           | 3     | 150    | first-1 |
+| climb/learn            | d3911a32d39dae64 | 20260727_163141_d3911a32d39dae64 | 260fa76b | nor-L0                                                                                       | 3     | 150    | first-1 |
+| climb/train-usefulness | 488a9742fc5b28c0 | 20260727_163549_488a9742fc5b28c0 | 260fa76b | nor-L0+abs0+abs1+abs2+abs3+abs4+abs5+abs6+abs7+abs8+abs9+abs10+abs11+abs12+abs13+abs14+abs15 | 3     | 150    | first-1 |
+| climb/transfer         | 0e1134e841991441 | 20260727_163611_0e1134e841991441 | 260fa76b | nor-L0+abs0+abs1+abs2+abs3+abs4+abs5+abs6+abs7+abs8+abs9+abs10+abs11+abs12+abs13+abs14+abs15 | 3     | 150    | first-1 |
+| off-chain              | 20fde0cdc96a8f30 | 20260727_163629_20fde0cdc96a8f30 | 260fa76b | nor-L0+recolored_south                                                                       | 3     | 30     | first-1 |
+| raw-arm                | e54a715f27fba43b | 20260727_163631_e54a715f27fba43b | 260fa76b | nor-L0                                                                                       | 5     | 200000 | first-1 |
+
+- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the current spec and comparing IS the staleness test: a differing hash means this artifact describes runs the current code would no longer produce.
 
 ## Not computed here
 

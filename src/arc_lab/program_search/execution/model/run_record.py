@@ -143,6 +143,17 @@ class RunRecord:
         """True iff ``results.json`` exists — the cache-hit test ``execute`` runs first."""
         return self.results_path.is_file()
 
+    def runspec(self) -> dict[str, object]:
+        """The run's identity + provenance payload (``config``, ``corpus_name``, ``commit``), parsed.
+
+        Written first by ``execute``, so it is present even for a crashed run -- unlike
+        :meth:`results`, whose absence is what ``completed`` tests for."""
+        with self.runspec_path.open(encoding="utf-8") as handle:
+            data: object = json.load(handle)
+        if not isinstance(data, dict):
+            raise ValueError(f"malformed {RUNSPEC_FILENAME} in {self.run_dir}")
+        return data
+
     def results(self) -> dict[str, object]:
         """The run-level results payload (metrics + per-task rows), parsed."""
         with self.results_path.open(encoding="utf-8") as handle:

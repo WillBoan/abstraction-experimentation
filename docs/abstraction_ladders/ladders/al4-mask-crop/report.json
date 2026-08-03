@@ -1,0 +1,1943 @@
+{
+  "certificate": {
+    "admitted": false,
+    "demonstration_health": {
+      "1": 1.0,
+      "2": 0.5,
+      "3": 1.0
+    },
+    "no_skip_paths": {
+      "1": false,
+      "2": null,
+      "3": false
+    },
+    "tractable_jumps": {
+      "1": true,
+      "2": false,
+      "3": true
+    }
+  },
+  "climb_executed": false,
+  "climb_trace": [],
+  "comparisons": {
+    "enablement": {
+      "1": [],
+      "2": [
+        "flatten_content-01",
+        "stamp-00",
+        "stamp-01",
+        "top-00"
+      ],
+      "3": []
+    },
+    "loop_overhead_factor": null,
+    "loop_overhead_forfeited_by": null,
+    "marginal_rung_value": [
+      {
+        "censored": true,
+        "cost_with_rung": 100000,
+        "cost_without_rung": 100000,
+        "layer_above": "flatten_content",
+        "own_tasks_speedup": 8.504347826086956,
+        "own_tasks_to_first_with": 230,
+        "own_tasks_to_first_without": 1956,
+        "ratio": 1.0,
+        "rung": "nonbg_mask"
+      },
+      {
+        "censored": true,
+        "cost_with_rung": 87379,
+        "cost_without_rung": 100000,
+        "layer_above": "stamp",
+        "own_tasks_speedup": null,
+        "own_tasks_to_first_with": 60,
+        "own_tasks_to_first_without": null,
+        "ratio": 1.1444397395255153,
+        "rung": "flatten_content"
+      },
+      {
+        "censored": false,
+        "cost_with_rung": 50000,
+        "cost_without_rung": 50000,
+        "layer_above": "top",
+        "own_tasks_speedup": 119.43315508021391,
+        "own_tasks_to_first_with": 187,
+        "own_tasks_to_first_without": 22334,
+        "ratio": 1.0,
+        "rung": "stamp"
+      }
+    ],
+    "vocabulary_tax": [
+      {
+        "at_full_library": 100000,
+        "at_own_level": 100000,
+        "factor": 1.0,
+        "rung": "nonbg_mask"
+      },
+      {
+        "at_full_library": 100000,
+        "at_own_level": 100000,
+        "factor": 1.0,
+        "rung": "flatten_content"
+      },
+      {
+        "at_full_library": 100000,
+        "at_own_level": 87379,
+        "factor": 1.1444397395255153,
+        "rung": "stamp"
+      }
+    ]
+  },
+  "compromises": [],
+  "config_generations": [
+    "max_arity=3 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+  ],
+  "cost": {
+    "amortization_ratio_considered": null,
+    "amortization_ratio_estimated": {
+      "high": 947233407297095.1,
+      "low": 26266124.452900153
+    },
+    "budget_compression_depth": {
+      "max_jump_depth": 4,
+      "raw_depth": 12
+    },
+    "jump_costs": {
+      "flatten_content": 100000,
+      "nonbg_mask": 100000,
+      "stamp": 87379
+    },
+    "jump_costs_to_first": {
+      "flatten_content": null,
+      "nonbg_mask": 1956,
+      "stamp": 22334
+    },
+    "laddered_end_to_end_considered": null,
+    "laddered_marginal_considered": 337379,
+    "laddered_marginal_to_first": null,
+    "off_chain_top_solved": null,
+    "raw_arm": null,
+    "raw_censored": true,
+    "raw_considered": 50000,
+    "raw_estimate": {
+      "available": true,
+      "caveats": [
+        "THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells",
+        "accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)",
+        "finite-space floors: both fits over-project (up to 3.71x) once the space is exhausted",
+        "error compounds per extrapolated round and is floor-dependent even at a 1-round gap",
+        "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
+        "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
+      ],
+      "d_raw": 12,
+      "estimate_high": 319576659720486649856,
+      "estimate_low": 8861638801795,
+      "growth_ratio_geometric": 11.99,
+      "growth_ratio_last": 106.61,
+      "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
+      "observed_composed": [
+        11,
+        13,
+        178,
+        18976
+      ],
+      "observed_considered": 19178,
+      "observed_through_depth": 4,
+      "rounds_extrapolated": 8,
+      "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
+    },
+    "raw_limit_censored": true,
+    "raw_solved": false,
+    "top_jump_cost": 50000,
+    "top_jump_cost_to_first": 70
+  },
+  "cost_matrix": [
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.99,
+          "by_primitive": [
+            {
+              "considered": 49993,
+              "primitive": "__const__",
+              "share": 0.99986
+            },
+            {
+              "considered": 49983,
+              "primitive": "mask_by_color",
+              "share": 0.99966
+            },
+            {
+              "considered": 48864,
+              "primitive": "paint_through_mask",
+              "share": 0.97728
+            },
+            {
+              "considered": 32045,
+              "primitive": "flip_h",
+              "share": 0.6409
+            },
+            {
+              "considered": 14025,
+              "primitive": "crop_to_mask",
+              "share": 0.2805
+            },
+            {
+              "considered": 10098,
+              "primitive": "mask_complement",
+              "share": 0.20196
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 2390,
+          "considered": 50000,
+          "first_solution_index": 2390,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 12.54,
+          "by_primitive": [
+            {
+              "considered": 49976,
+              "primitive": "__const__",
+              "share": 0.99952
+            },
+            {
+              "considered": 49776,
+              "primitive": "mask_by_color",
+              "share": 0.99552
+            },
+            {
+              "considered": 48810,
+              "primitive": "paint_through_mask",
+              "share": 0.9762
+            },
+            {
+              "considered": 26443,
+              "primitive": "flip_h",
+              "share": 0.52886
+            },
+            {
+              "considered": 18283,
+              "primitive": "nonbg_mask",
+              "share": 0.36566
+            },
+            {
+              "considered": 13515,
+              "primitive": "crop_to_mask",
+              "share": 0.2703
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 2776,
+          "considered": 50000,
+          "first_solution_index": 2776,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 10.15,
+          "by_primitive": [
+            {
+              "considered": 49980,
+              "primitive": "__const__",
+              "share": 0.9996
+            },
+            {
+              "considered": 45519,
+              "primitive": "mask_by_color",
+              "share": 0.91038
+            },
+            {
+              "considered": 44599,
+              "primitive": "paint_through_mask",
+              "share": 0.89198
+            },
+            {
+              "considered": 32625,
+              "primitive": "flatten_content",
+              "share": 0.6525
+            },
+            {
+              "considered": 14016,
+              "primitive": "flip_h",
+              "share": 0.28032
+            },
+            {
+              "considered": 12853,
+              "primitive": "mask_union",
+              "share": 0.25706
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 28,
+          "considered": 50000,
+          "first_solution_index": 28,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 43.74,
+          "by_primitive": [
+            {
+              "considered": 49986,
+              "primitive": "__const__",
+              "share": 0.99972
+            },
+            {
+              "considered": 46911,
+              "primitive": "stamp",
+              "share": 0.93822
+            },
+            {
+              "considered": 36111,
+              "primitive": "mask_by_color",
+              "share": 0.72222
+            },
+            {
+              "considered": 24907,
+              "primitive": "flatten_content",
+              "share": 0.49814
+            },
+            {
+              "considered": 14286,
+              "primitive": "least_common_color",
+              "share": 0.28572
+            },
+            {
+              "considered": 8275,
+              "primitive": "paint_through_mask",
+              "share": 0.1655
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 28,
+          "considered": 50000,
+          "first_solution_index": 28,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "flatten_content",
+      "task_id": "flatten_content-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.99,
+          "by_primitive": [
+            {
+              "considered": 49993,
+              "primitive": "__const__",
+              "share": 0.99986
+            },
+            {
+              "considered": 49983,
+              "primitive": "mask_by_color",
+              "share": 0.99966
+            },
+            {
+              "considered": 48992,
+              "primitive": "paint_through_mask",
+              "share": 0.97984
+            },
+            {
+              "considered": 32691,
+              "primitive": "flip_h",
+              "share": 0.65382
+            },
+            {
+              "considered": 8914,
+              "primitive": "mask_complement",
+              "share": 0.17828
+            },
+            {
+              "considered": 6937,
+              "primitive": "mask_union",
+              "share": 0.13874
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 12.45,
+          "by_primitive": [
+            {
+              "considered": 49976,
+              "primitive": "__const__",
+              "share": 0.99952
+            },
+            {
+              "considered": 49776,
+              "primitive": "mask_by_color",
+              "share": 0.99552
+            },
+            {
+              "considered": 48984,
+              "primitive": "paint_through_mask",
+              "share": 0.97968
+            },
+            {
+              "considered": 28951,
+              "primitive": "flip_h",
+              "share": 0.57902
+            },
+            {
+              "considered": 12563,
+              "primitive": "nonbg_mask",
+              "share": 0.25126
+            },
+            {
+              "considered": 7597,
+              "primitive": "mask_union",
+              "share": 0.15194
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 14.88,
+          "by_primitive": [
+            {
+              "considered": 37355,
+              "primitive": "__const__",
+              "share": 0.9993579282484818
+            },
+            {
+              "considered": 34903,
+              "primitive": "mask_by_color",
+              "share": 0.9337595976350357
+            },
+            {
+              "considered": 34125,
+              "primitive": "paint_through_mask",
+              "share": 0.9129457716899864
+            },
+            {
+              "considered": 17351,
+              "primitive": "flip_h",
+              "share": 0.46419112335803525
+            },
+            {
+              "considered": 15888,
+              "primitive": "flatten_content",
+              "share": 0.4250514995050697
+            },
+            {
+              "considered": 9421,
+              "primitive": "mask_union",
+              "share": 0.2520399154605527
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 32,
+          "considered": 37379,
+          "first_solution_index": 32,
+          "solve_generation": 1,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 43.74,
+          "by_primitive": [
+            {
+              "considered": 49980,
+              "primitive": "__const__",
+              "share": 0.9996
+            },
+            {
+              "considered": 41419,
+              "primitive": "stamp",
+              "share": 0.82838
+            },
+            {
+              "considered": 31511,
+              "primitive": "mask_by_color",
+              "share": 0.63022
+            },
+            {
+              "considered": 23709,
+              "primitive": "paint_through_mask",
+              "share": 0.47418
+            },
+            {
+              "considered": 13577,
+              "primitive": "flatten_content",
+              "share": 0.27154
+            },
+            {
+              "considered": 10926,
+              "primitive": "crop_to_mask",
+              "share": 0.21852
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 32,
+          "considered": 50000,
+          "first_solution_index": 32,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "flatten_content",
+      "task_id": "flatten_content-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.99,
+          "by_primitive": [
+            {
+              "considered": 49993,
+              "primitive": "__const__",
+              "share": 0.99986
+            },
+            {
+              "considered": 49983,
+              "primitive": "mask_by_color",
+              "share": 0.99966
+            },
+            {
+              "considered": 48992,
+              "primitive": "paint_through_mask",
+              "share": 0.97984
+            },
+            {
+              "considered": 32691,
+              "primitive": "flip_h",
+              "share": 0.65382
+            },
+            {
+              "considered": 8914,
+              "primitive": "mask_complement",
+              "share": 0.17828
+            },
+            {
+              "considered": 6937,
+              "primitive": "mask_union",
+              "share": 0.13874
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 93,
+          "considered": 50000,
+          "first_solution_index": 93,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 12.45,
+          "by_primitive": [
+            {
+              "considered": 49976,
+              "primitive": "__const__",
+              "share": 0.99952
+            },
+            {
+              "considered": 49776,
+              "primitive": "mask_by_color",
+              "share": 0.99552
+            },
+            {
+              "considered": 48984,
+              "primitive": "paint_through_mask",
+              "share": 0.97968
+            },
+            {
+              "considered": 28951,
+              "primitive": "flip_h",
+              "share": 0.57902
+            },
+            {
+              "considered": 12563,
+              "primitive": "nonbg_mask",
+              "share": 0.25126
+            },
+            {
+              "considered": 7597,
+              "primitive": "mask_union",
+              "share": 0.15194
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 115,
+          "considered": 50000,
+          "first_solution_index": 115,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 14.88,
+          "by_primitive": [
+            {
+              "considered": 37355,
+              "primitive": "__const__",
+              "share": 0.9993579282484818
+            },
+            {
+              "considered": 34903,
+              "primitive": "mask_by_color",
+              "share": 0.9337595976350357
+            },
+            {
+              "considered": 34125,
+              "primitive": "paint_through_mask",
+              "share": 0.9129457716899864
+            },
+            {
+              "considered": 17351,
+              "primitive": "flip_h",
+              "share": 0.46419112335803525
+            },
+            {
+              "considered": 15888,
+              "primitive": "flatten_content",
+              "share": 0.4250514995050697
+            },
+            {
+              "considered": 9421,
+              "primitive": "mask_union",
+              "share": 0.2520399154605527
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 245,
+          "considered": 37379,
+          "first_solution_index": 245,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 43.74,
+          "by_primitive": [
+            {
+              "considered": 49980,
+              "primitive": "__const__",
+              "share": 0.9996
+            },
+            {
+              "considered": 41419,
+              "primitive": "stamp",
+              "share": 0.82838
+            },
+            {
+              "considered": 31511,
+              "primitive": "mask_by_color",
+              "share": 0.63022
+            },
+            {
+              "considered": 23709,
+              "primitive": "paint_through_mask",
+              "share": 0.47418
+            },
+            {
+              "considered": 13577,
+              "primitive": "flatten_content",
+              "share": 0.27154
+            },
+            {
+              "considered": 10926,
+              "primitive": "crop_to_mask",
+              "share": 0.21852
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 1533,
+          "considered": 50000,
+          "first_solution_index": 1533,
+          "solve_generation": 2,
+          "solved": true
+        }
+      },
+      "rung": "nonbg_mask",
+      "task_id": "nonbg_mask-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.99,
+          "by_primitive": [
+            {
+              "considered": 49993,
+              "primitive": "__const__",
+              "share": 0.99986
+            },
+            {
+              "considered": 49983,
+              "primitive": "mask_by_color",
+              "share": 0.99966
+            },
+            {
+              "considered": 48864,
+              "primitive": "paint_through_mask",
+              "share": 0.97728
+            },
+            {
+              "considered": 32045,
+              "primitive": "flip_h",
+              "share": 0.6409
+            },
+            {
+              "considered": 14025,
+              "primitive": "crop_to_mask",
+              "share": 0.2805
+            },
+            {
+              "considered": 10098,
+              "primitive": "mask_complement",
+              "share": 0.20196
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 1863,
+          "considered": 50000,
+          "first_solution_index": 1863,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 12.54,
+          "by_primitive": [
+            {
+              "considered": 49976,
+              "primitive": "__const__",
+              "share": 0.99952
+            },
+            {
+              "considered": 49776,
+              "primitive": "mask_by_color",
+              "share": 0.99552
+            },
+            {
+              "considered": 48810,
+              "primitive": "paint_through_mask",
+              "share": 0.9762
+            },
+            {
+              "considered": 26443,
+              "primitive": "flip_h",
+              "share": 0.52886
+            },
+            {
+              "considered": 18283,
+              "primitive": "nonbg_mask",
+              "share": 0.36566
+            },
+            {
+              "considered": 13515,
+              "primitive": "crop_to_mask",
+              "share": 0.2703
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 115,
+          "considered": 50000,
+          "first_solution_index": 115,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "2": {
+          "b_eff": 10.15,
+          "by_primitive": [
+            {
+              "considered": 49980,
+              "primitive": "__const__",
+              "share": 0.9996
+            },
+            {
+              "considered": 45519,
+              "primitive": "mask_by_color",
+              "share": 0.91038
+            },
+            {
+              "considered": 44599,
+              "primitive": "paint_through_mask",
+              "share": 0.89198
+            },
+            {
+              "considered": 32625,
+              "primitive": "flatten_content",
+              "share": 0.6525
+            },
+            {
+              "considered": 14016,
+              "primitive": "flip_h",
+              "share": 0.28032
+            },
+            {
+              "considered": 12853,
+              "primitive": "mask_union",
+              "share": 0.25706
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 245,
+          "considered": 50000,
+          "first_solution_index": 245,
+          "solve_generation": 2,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 43.74,
+          "by_primitive": [
+            {
+              "considered": 49986,
+              "primitive": "__const__",
+              "share": 0.99972
+            },
+            {
+              "considered": 46911,
+              "primitive": "stamp",
+              "share": 0.93822
+            },
+            {
+              "considered": 36111,
+              "primitive": "mask_by_color",
+              "share": 0.72222
+            },
+            {
+              "considered": 24907,
+              "primitive": "flatten_content",
+              "share": 0.49814
+            },
+            {
+              "considered": 14286,
+              "primitive": "least_common_color",
+              "share": 0.28572
+            },
+            {
+              "considered": 8275,
+              "primitive": "paint_through_mask",
+              "share": 0.1655
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 1533,
+          "considered": 50000,
+          "first_solution_index": 1533,
+          "solve_generation": 2,
+          "solved": true
+        }
+      },
+      "rung": "nonbg_mask",
+      "task_id": "nonbg_mask-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.99,
+          "by_primitive": [
+            {
+              "considered": 49993,
+              "primitive": "__const__",
+              "share": 0.99986
+            },
+            {
+              "considered": 49983,
+              "primitive": "mask_by_color",
+              "share": 0.99966
+            },
+            {
+              "considered": 48992,
+              "primitive": "paint_through_mask",
+              "share": 0.97984
+            },
+            {
+              "considered": 32691,
+              "primitive": "flip_h",
+              "share": 0.65382
+            },
+            {
+              "considered": 8914,
+              "primitive": "mask_complement",
+              "share": 0.17828
+            },
+            {
+              "considered": 6937,
+              "primitive": "mask_union",
+              "share": 0.13874
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 12.45,
+          "by_primitive": [
+            {
+              "considered": 49976,
+              "primitive": "__const__",
+              "share": 0.99952
+            },
+            {
+              "considered": 49776,
+              "primitive": "mask_by_color",
+              "share": 0.99552
+            },
+            {
+              "considered": 48984,
+              "primitive": "paint_through_mask",
+              "share": 0.97968
+            },
+            {
+              "considered": 28951,
+              "primitive": "flip_h",
+              "share": 0.57902
+            },
+            {
+              "considered": 12563,
+              "primitive": "nonbg_mask",
+              "share": 0.25126
+            },
+            {
+              "considered": 7597,
+              "primitive": "mask_union",
+              "share": 0.15194
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 14.88,
+          "by_primitive": [
+            {
+              "considered": 37355,
+              "primitive": "__const__",
+              "share": 0.9993579282484818
+            },
+            {
+              "considered": 34903,
+              "primitive": "mask_by_color",
+              "share": 0.9337595976350357
+            },
+            {
+              "considered": 34125,
+              "primitive": "paint_through_mask",
+              "share": 0.9129457716899864
+            },
+            {
+              "considered": 17351,
+              "primitive": "flip_h",
+              "share": 0.46419112335803525
+            },
+            {
+              "considered": 15888,
+              "primitive": "flatten_content",
+              "share": 0.4250514995050697
+            },
+            {
+              "considered": 9421,
+              "primitive": "mask_union",
+              "share": 0.2520399154605527
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 9429,
+          "considered": 37379,
+          "first_solution_index": 9429,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 43.74,
+          "by_primitive": [
+            {
+              "considered": 49980,
+              "primitive": "__const__",
+              "share": 0.9996
+            },
+            {
+              "considered": 41419,
+              "primitive": "stamp",
+              "share": 0.82838
+            },
+            {
+              "considered": 31511,
+              "primitive": "mask_by_color",
+              "share": 0.63022
+            },
+            {
+              "considered": 23709,
+              "primitive": "paint_through_mask",
+              "share": 0.47418
+            },
+            {
+              "considered": 13577,
+              "primitive": "flatten_content",
+              "share": 0.27154
+            },
+            {
+              "considered": 10926,
+              "primitive": "crop_to_mask",
+              "share": 0.21852
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 73,
+          "considered": 50000,
+          "first_solution_index": 73,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "stamp",
+      "task_id": "stamp-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.99,
+          "by_primitive": [
+            {
+              "considered": 49993,
+              "primitive": "__const__",
+              "share": 0.99986
+            },
+            {
+              "considered": 49983,
+              "primitive": "mask_by_color",
+              "share": 0.99966
+            },
+            {
+              "considered": 48864,
+              "primitive": "paint_through_mask",
+              "share": 0.97728
+            },
+            {
+              "considered": 32045,
+              "primitive": "flip_h",
+              "share": 0.6409
+            },
+            {
+              "considered": 14025,
+              "primitive": "crop_to_mask",
+              "share": 0.2805
+            },
+            {
+              "considered": 10098,
+              "primitive": "mask_complement",
+              "share": 0.20196
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 12.54,
+          "by_primitive": [
+            {
+              "considered": 49976,
+              "primitive": "__const__",
+              "share": 0.99952
+            },
+            {
+              "considered": 49776,
+              "primitive": "mask_by_color",
+              "share": 0.99552
+            },
+            {
+              "considered": 48810,
+              "primitive": "paint_through_mask",
+              "share": 0.9762
+            },
+            {
+              "considered": 26443,
+              "primitive": "flip_h",
+              "share": 0.52886
+            },
+            {
+              "considered": 18283,
+              "primitive": "nonbg_mask",
+              "share": 0.36566
+            },
+            {
+              "considered": 13515,
+              "primitive": "crop_to_mask",
+              "share": 0.2703
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 10.15,
+          "by_primitive": [
+            {
+              "considered": 49980,
+              "primitive": "__const__",
+              "share": 0.9996
+            },
+            {
+              "considered": 45519,
+              "primitive": "mask_by_color",
+              "share": 0.91038
+            },
+            {
+              "considered": 44599,
+              "primitive": "paint_through_mask",
+              "share": 0.89198
+            },
+            {
+              "considered": 32625,
+              "primitive": "flatten_content",
+              "share": 0.6525
+            },
+            {
+              "considered": 14016,
+              "primitive": "flip_h",
+              "share": 0.28032
+            },
+            {
+              "considered": 12853,
+              "primitive": "mask_union",
+              "share": 0.25706
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 12905,
+          "considered": 50000,
+          "first_solution_index": 12905,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 43.74,
+          "by_primitive": [
+            {
+              "considered": 49986,
+              "primitive": "__const__",
+              "share": 0.99972
+            },
+            {
+              "considered": 46911,
+              "primitive": "stamp",
+              "share": 0.93822
+            },
+            {
+              "considered": 36111,
+              "primitive": "mask_by_color",
+              "share": 0.72222
+            },
+            {
+              "considered": 24907,
+              "primitive": "flatten_content",
+              "share": 0.49814
+            },
+            {
+              "considered": 14286,
+              "primitive": "least_common_color",
+              "share": 0.28572
+            },
+            {
+              "considered": 8275,
+              "primitive": "paint_through_mask",
+              "share": 0.1655
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 114,
+          "considered": 50000,
+          "first_solution_index": 114,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "stamp",
+      "task_id": "stamp-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 11.99,
+          "by_primitive": [
+            {
+              "considered": 49993,
+              "primitive": "__const__",
+              "share": 0.99986
+            },
+            {
+              "considered": 49983,
+              "primitive": "mask_by_color",
+              "share": 0.99966
+            },
+            {
+              "considered": 48864,
+              "primitive": "paint_through_mask",
+              "share": 0.97728
+            },
+            {
+              "considered": 32045,
+              "primitive": "flip_h",
+              "share": 0.6409
+            },
+            {
+              "considered": 14025,
+              "primitive": "crop_to_mask",
+              "share": 0.2805
+            },
+            {
+              "considered": 10098,
+              "primitive": "mask_complement",
+              "share": 0.20196
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 12.54,
+          "by_primitive": [
+            {
+              "considered": 49976,
+              "primitive": "__const__",
+              "share": 0.99952
+            },
+            {
+              "considered": 49776,
+              "primitive": "mask_by_color",
+              "share": 0.99552
+            },
+            {
+              "considered": 48810,
+              "primitive": "paint_through_mask",
+              "share": 0.9762
+            },
+            {
+              "considered": 26443,
+              "primitive": "flip_h",
+              "share": 0.52886
+            },
+            {
+              "considered": 18283,
+              "primitive": "nonbg_mask",
+              "share": 0.36566
+            },
+            {
+              "considered": 13515,
+              "primitive": "crop_to_mask",
+              "share": 0.2703
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 50000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "2": {
+          "b_eff": 10.15,
+          "by_primitive": [
+            {
+              "considered": 49980,
+              "primitive": "__const__",
+              "share": 0.9996
+            },
+            {
+              "considered": 45519,
+              "primitive": "mask_by_color",
+              "share": 0.91038
+            },
+            {
+              "considered": 44599,
+              "primitive": "paint_through_mask",
+              "share": 0.89198
+            },
+            {
+              "considered": 32625,
+              "primitive": "flatten_content",
+              "share": 0.6525
+            },
+            {
+              "considered": 14016,
+              "primitive": "flip_h",
+              "share": 0.28032
+            },
+            {
+              "considered": 12853,
+              "primitive": "mask_union",
+              "share": 0.25706
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 11981,
+          "considered": 50000,
+          "first_solution_index": 11981,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "3": {
+          "b_eff": 43.74,
+          "by_primitive": [
+            {
+              "considered": 49986,
+              "primitive": "__const__",
+              "share": 0.99972
+            },
+            {
+              "considered": 46911,
+              "primitive": "stamp",
+              "share": 0.93822
+            },
+            {
+              "considered": 36111,
+              "primitive": "mask_by_color",
+              "share": 0.72222
+            },
+            {
+              "considered": 24907,
+              "primitive": "flatten_content",
+              "share": 0.49814
+            },
+            {
+              "considered": 14286,
+              "primitive": "least_common_color",
+              "share": 0.28572
+            },
+            {
+              "considered": 8275,
+              "primitive": "paint_through_mask",
+              "share": 0.1655
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 70,
+          "considered": 50000,
+          "first_solution_index": 70,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "top",
+      "task_id": "top-00"
+    }
+  ],
+  "ladder": {
+    "budgets": [
+      {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 2000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      }
+    ],
+    "distractors": [],
+    "heldout_corpus": {
+      "content_hash": "6047debadcdd8697",
+      "name": "al4-mask-crop:heldout",
+      "task_count": 4
+    },
+    "reference_config": {
+      "attempts_per_test": 2,
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 2000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "constraints": [],
+      "cost": {
+        "kind": "ProgramSize"
+      },
+      "learn": {
+        "curriculum": null,
+        "early_stop": true,
+        "iterations": 6,
+        "kind": "LearnSpec",
+        "learn_engine": {
+          "kind": "GreedyMDLLearnEngine",
+          "metric": {
+            "bits_per_primitive": 1.0,
+            "cost": {
+              "kind": "ProgramSize"
+            },
+            "kind": "CompressionMetric"
+          },
+          "name_prefix": "abs",
+          "proposer": {
+            "kind": "FrequentSubtree",
+            "min_frequency": 2
+          },
+          "selector": {
+            "kind": "GreedyMDL"
+          }
+        },
+        "reset_programs_each_wake": true,
+        "score_each_wake": false,
+        "wake_schedule": "full"
+      },
+      "library": {
+        "name": "al4-L0",
+        "primitives": [
+          {
+            "name": "mask_by_color",
+            "param_types": [
+              "grid",
+              "color"
+            ],
+            "return_type": "mask",
+            "variadic_param": null
+          },
+          {
+            "name": "most_common_color",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "color",
+            "variadic_param": null
+          },
+          {
+            "name": "least_common_color",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "color",
+            "variadic_param": null
+          },
+          {
+            "name": "mask_complement",
+            "param_types": [
+              "mask"
+            ],
+            "return_type": "mask",
+            "variadic_param": null
+          },
+          {
+            "name": "mask_union",
+            "param_types": [
+              "mask",
+              "mask"
+            ],
+            "return_type": "mask",
+            "variadic_param": null
+          },
+          {
+            "name": "mask_intersect",
+            "param_types": [
+              "mask",
+              "mask"
+            ],
+            "return_type": "mask",
+            "variadic_param": null
+          },
+          {
+            "name": "crop_to_mask",
+            "param_types": [
+              "grid",
+              "mask"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "paint_through_mask",
+            "param_types": [
+              "grid",
+              "mask",
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          },
+          {
+            "name": "flip_h",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          }
+        ],
+        "version": 1
+      },
+      "search_engine": {
+        "constant_sources": [
+          "finite-enumerate"
+        ],
+        "function_hole_fill_mode": "none",
+        "function_sample_size": 4,
+        "inverse_semantics_propagation": false,
+        "kind": "BottomUpSearchEngine",
+        "polymorphism_instantiation": "monomorphize",
+        "unpinned_type_var_mode": "reject"
+      }
+    },
+    "rungs": [
+      {
+        "demonstrations": [
+          {
+            "kind": "fragment_identical",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "args": [
+                    {
+                      "op": "input"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "nonbg_mask"
+                }
+              ],
+              "op": "apply",
+              "primitive": "crop_to_mask"
+            },
+            "task_id": "nonbg_mask-00"
+          },
+          {
+            "kind": "fragment_identical",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "args": [
+                    {
+                      "op": "input"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "nonbg_mask"
+                }
+              ],
+              "op": "apply",
+              "primitive": "crop_to_mask"
+            },
+            "task_id": "nonbg_mask-01"
+          }
+        ],
+        "level": 1,
+        "name": "nonbg_mask",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                },
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "most_common_color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "mask_by_color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "mask_complement"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 3,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "flatten_content"
+            },
+            "task_id": "flatten_content-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 7,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "flatten_content"
+            },
+            "task_id": "flatten_content-01"
+          }
+        ],
+        "level": 2,
+        "name": "flatten_content",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "index": 0,
+                  "op": "param",
+                  "value_type": "grid"
+                },
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "nonbg_mask"
+                }
+              ],
+              "op": "apply",
+              "primitive": "crop_to_mask"
+            },
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    },
+                    {
+                      "args": [
+                        {
+                          "index": 0,
+                          "op": "param",
+                          "value_type": "grid"
+                        }
+                      ],
+                      "op": "apply",
+                      "primitive": "nonbg_mask"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "crop_to_mask"
+                }
+              ],
+              "op": "apply",
+              "primitive": "nonbg_mask"
+            },
+            {
+              "index": 1,
+              "op": "param",
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "paint_through_mask"
+        }
+      },
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 3,
+                  "value_type": "color"
+                },
+                {
+                  "op": "const",
+                  "value": 8,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "stamp"
+            },
+            "task_id": "stamp-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                },
+                {
+                  "op": "const",
+                  "value": 7,
+                  "value_type": "color"
+                },
+                {
+                  "op": "const",
+                  "value": 9,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "stamp"
+            },
+            "task_id": "stamp-01"
+          }
+        ],
+        "level": 3,
+        "name": "stamp",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    },
+                    {
+                      "index": 1,
+                      "op": "param",
+                      "value_type": "color"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "flatten_content"
+                }
+              ],
+              "op": "apply",
+              "primitive": "flip_h"
+            },
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    },
+                    {
+                      "index": 1,
+                      "op": "param",
+                      "value_type": "color"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "flatten_content"
+                },
+                {
+                  "index": 1,
+                  "op": "param",
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "mask_by_color"
+            },
+            {
+              "index": 2,
+              "op": "param",
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "paint_through_mask"
+        }
+      }
+    ],
+    "top": {
+      "reference_solutions": [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "op": "input"
+                    },
+                    {
+                      "op": "const",
+                      "value": 3,
+                      "value_type": "color"
+                    },
+                    {
+                      "op": "const",
+                      "value": 5,
+                      "value_type": "color"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "stamp"
+                }
+              ],
+              "op": "apply",
+              "primitive": "flip_h"
+            }
+          ],
+          "op": "apply",
+          "primitive": "flip_h"
+        }
+      ],
+      "task_ids": [
+        "top-00"
+      ]
+    },
+    "train_corpus": {
+      "content_hash": "6de94d9fc9451544",
+      "name": "al4-mask-crop:train",
+      "task_count": 7
+    }
+  },
+  "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "max_arity": 3,
+        "max_pool": 50000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al4-mask-crop:train",
+      "learn": null,
+      "library": "al4-L0",
+      "run_dir": "20260803_203208_fb84e1980b1391dc",
+      "run_id": "fb84e1980b1391dc"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "max_arity": 3,
+        "max_pool": 50000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al4-mask-crop:train",
+      "learn": null,
+      "library": "al4-L0+nonbg_mask",
+      "run_dir": "20260803_203245_503727ad0b7e3e18",
+      "run_id": "503727ad0b7e3e18"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 10000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al4-mask-crop:train",
+      "learn": null,
+      "library": "al4-L0+nonbg_mask+flatten_content",
+      "run_dir": "20260803_203323_ae6ce6dafa90d61e",
+      "run_id": "ae6ce6dafa90d61e"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 10000,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L3",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al4-mask-crop:train",
+      "learn": null,
+      "library": "al4-L0+nonbg_mask+flatten_content+stamp",
+      "run_dir": "20260803_203331_5407957368521dd8",
+      "run_id": "5407957368521dd8"
+    }
+  ],
+  "recorded_commits": [
+    "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10"
+  ],
+  "rung_recovery": [],
+  "shape": {
+    "height": 4,
+    "lint_ok": false,
+    "max_jump_depth": 4,
+    "raw_depth_profile": [
+      12
+    ],
+    "validity_window": [
+      4,
+      4
+    ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": null
+  },
+  "wake_schedule": "full"
+}

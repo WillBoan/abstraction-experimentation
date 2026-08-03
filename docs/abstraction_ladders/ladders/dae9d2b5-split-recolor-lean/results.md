@@ -14,6 +14,8 @@
 | 3    | yes       | yes          | 1.0                  |
 | 4    | yes       | yes          | 1.0                  |
 
+- Top reachable at the ladder's own budget -- chain (oracle `L_k`): **REACHED**; climb (learned library): **REACHED**
+
 ## Climb trace
 
 | iter | wake solved                                                                                                                                   | considered (all tasks) | minted         | converged |
@@ -24,12 +26,12 @@
 
 ## Rung recovery
 
-| rung             | level | recovered | matched by |
-| ---------------- | ----- | --------- | ---------- |
-| `west`           | 1     | yes       | `abs1`     |
-| `east`           | 2     | yes       | `abs0`     |
-| `recolored_west` | 3     | yes       | `abs3`     |
-| `recolored_east` | 4     | yes       | `abs2`     |
+| rung             | level | recovered | matched by | if not, where it broke |
+| ---------------- | ----- | --------- | ---------- | ---------------------- |
+| `west`           | 1     | yes       | `abs1`     | -                      |
+| `east`           | 2     | yes       | `abs0`     | -                      |
+| `recolored_west` | 3     | yes       | `abs3`     | -                      |
+| `recolored_east` | 4     | yes       | `abs2`     | -                      |
 
 ## Cost matrix (considered count per task x library)
 
@@ -176,8 +178,7 @@
 
 ### Raw vs laddered (RQ1)
 
-- **Amortization ratio (lower-bound): 10.0x** -- raw arm spend 1,009,730 against laddered marginal 100,973, guard 10x laddered (1,009,730 per top task) at depth_limit 4, max_pool 200,000, solution_limit 1.
-  - The arm censored without solving: raw cost provably exceeds the spend, so the ratio is a LOWER BOUND. Raise --raw-arm-k for a stronger claim.
+- Raw arm: NOT RUN (the climb stage was skipped, or the ladder has nothing to size the spend against). RQ1 has no answer for this ladder.
 - Raw cost estimate (ADVISORY -- not an RQ1 input): 22,745,657 - 464,208,298 considered, extrapolated from observed composed counts [18, 131, 19928] through depth 2 (2 rounds projected to `d_raw`=4). Validated 2026-07-23: the bracket contained the measured truth in 2 of 10 cells, erring both directions -- treat as an order-of-magnitude sketch of unknown sign, never a result.
   - caveat: THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells
   - caveat: accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)
@@ -227,6 +228,22 @@
 
 - Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **no**.
 - When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
+## Provenance (which runs this report was built from)
+
+| cell                   | run_id           | run dir                          | commit   | library                                                   | depth | pool | stop    |
+| ---------------------- | ---------------- | -------------------------------- | -------- | --------------------------------------------------------- | ----- | ---- | ------- |
+| chain/L0               | b8821b64356b1555 | 20260727_135941_b8821b64356b1555 | 6012073d | dae9d2b5-split-L0                                         | 2     | 30   | exhaust |
+| chain/L1               | a8b017c16da5b386 | 20260727_135945_a8b017c16da5b386 | 6012073d | dae9d2b5-split-L0+west                                    | 2     | 30   | exhaust |
+| chain/L2               | 768c50ea212addb7 | 20260727_135949_768c50ea212addb7 | 6012073d | dae9d2b5-split-L0+west+east                               | 2     | 30   | exhaust |
+| chain/L3               | b0657247279af43a | 20260727_135952_b0657247279af43a | 6012073d | dae9d2b5-split-L0+west+east+recolored_west                | 2     | 30   | exhaust |
+| chain/L4               | a37f68031985556c | 20260727_135955_a37f68031985556c | 6012073d | dae9d2b5-split-L0+west+east+recolored_west+recolored_east | 2     | 30   | exhaust |
+| climb/learn            | 957cd8e7377170c0 | 20260727_135958_957cd8e7377170c0 | 6012073d | dae9d2b5-split-L0                                         | 2     | 30   | exhaust |
+| climb/train-usefulness | 0ced1b8593fc463b | 20260727_140008_0ced1b8593fc463b | 6012073d | dae9d2b5-split-L0+abs0+abs1+abs2+abs3                     | 2     | 30   | exhaust |
+| climb/transfer         | f90667a0ad158e2e | 20260727_140011_f90667a0ad158e2e | 6012073d | dae9d2b5-split-L0+abs0+abs1+abs2+abs3                     | 2     | 30   | exhaust |
+| off-chain              | 11527db6e95d8e49 | 20260727_140012_11527db6e95d8e49 | 6012073d | dae9d2b5-split-L0+recolored_east                          | 2     | 30   | exhaust |
+
+- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the current spec and comparing IS the staleness test: a differing hash means this artifact describes runs the current code would no longer produce.
 
 ## Not computed here
 

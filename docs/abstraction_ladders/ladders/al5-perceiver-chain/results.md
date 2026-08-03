@@ -13,6 +13,8 @@
 | 2    | yes       | INCONCLUSIVE (censored) | 0.5                  |
 | 3    | yes       | no                      | 1.0                  |
 
+- Top reachable at the ladder's own budget -- chain (oracle `L_k`): **REACHED**; climb (learned library): **NOT ESTABLISHED (censored or not run)**
+
 > An INCONCLUSIVE skip-path verdict means that jump's probe search was **censored** (`Budget.considered_limit`), so it went unsolved without being searched to completion -- absence of a skip path was never established. Such a ladder is not admitted: re-run the oracle chain with a higher (or no) `considered_limit` to settle it.
 
 ## Climb: SKIPPED
@@ -26,8 +28,8 @@
 
 ## Rung recovery
 
-| rung | level | recovered | matched by |
-| ---- | ----- | --------- | ---------- |
+| rung | level | recovered | matched by | if not, where it broke |
+| ---- | ----- | --------- | ---------- | ---------------------- |
 
 ## Cost matrix (considered count per task x library)
 
@@ -78,6 +80,42 @@
 - `first solution index` / `cheapest solution index`: the `candidate_index` at which the first / the globally-cheapest solution was absorbed (the solution sink -- exact, and independent of later pool eviction).
 - `solve generation`: the composition round the accepted solution was built at (round 0 = leaves).
 - `b_eff`: fitted per-round growth in composed candidates over pre-saturation rounds (`-` when the pool saturates too early to fit).
+
+## Spend attribution (`by_primitive`)
+
+| task               | library | spend by primitive (shares OVERLAP)                                                                                                                                                           |
+| ------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `swap_extremes-00` | L_0     | `__const__` 49,983 (100.0%), `map_color` 49,977 (100.0%), `most_common_color` 29,880 (59.8%), `least_common_color` 17,215 (34.4%), `flip_h` 16,800 (33.6%), `flip_v` 12,390 (24.8%)           |
+| `swap_extremes-00` | L_1     | `map_color` 49,969 (99.9%), `__const__` 49,947 (99.9%), `most_common_color` 26,686 (53.4%), `least_common_color` 20,901 (41.8%), `flip_h` 17,243 (34.5%), `flip_v` 11,466 (22.9%)             |
+| `swap_extremes-00` | L_2     | `__const__` 49,943 (99.9%), `map_color` 49,765 (99.5%), `swap_mirror` 33,905 (67.8%), `most_common_color` 31,118 (62.2%), `least_common_color` 21,561 (43.1%), `flip_h` 8,689 (17.4%)         |
+| `swap_extremes-00` | L_3     | `__const__` 19,844 (99.8%), `map_color` 14,249 (71.7%), `swap_stack` 13,016 (65.5%), `most_common_color` 3,388 (17.0%), `swap_mirror` 3,317 (16.7%), `flip_h` 334 (1.7%)                      |
+| `swap_extremes-01` | L_0     | `map_color` 49,977 (100.0%), `__const__` 49,971 (99.9%), `least_common_color` 27,147 (54.3%), `most_common_color` 24,016 (48.0%), `flip_h` 16,800 (33.6%), `flip_v` 6,657 (13.3%)             |
+| `swap_extremes-01` | L_1     | `map_color` 49,969 (99.9%), `__const__` 49,907 (99.8%), `least_common_color` 27,104 (54.2%), `most_common_color` 24,007 (48.0%), `flip_h` 17,243 (34.5%), `swap_extremes` 6,275 (12.6%)       |
+| `swap_extremes-01` | L_2     | `__const__` 49,881 (99.8%), `map_color` 49,751 (99.5%), `least_common_color` 27,279 (54.6%), `most_common_color` 23,752 (47.5%), `swap_mirror` 19,172 (38.3%), `swap_extremes` 11,026 (22.1%) |
+| `swap_extremes-01` | L_3     | `__const__` 23,435 (99.7%), `map_color` 16,884 (71.9%), `swap_stack` 15,435 (65.7%), `swap_mirror` 3,854 (16.4%), `least_common_color` 3,696 (15.7%), `most_common_color` 3,696 (15.7%)       |
+| `swap_mirror-00`   | L_0     | `__const__` 49,983 (100.0%), `map_color` 49,977 (100.0%), `most_common_color` 26,539 (53.1%), `least_common_color` 21,200 (42.4%), `flip_h` 18,092 (36.2%), `flip_v` 14,497 (29.0%)           |
+| `swap_mirror-00`   | L_1     | `map_color` 49,969 (99.9%), `__const__` 49,947 (99.9%), `most_common_color` 22,800 (45.6%), `least_common_color` 21,254 (42.5%), `flip_h` 14,123 (28.2%), `flip_v` 14,123 (28.2%)             |
+| `swap_mirror-00`   | L_2     | `__const__` 49,943 (99.9%), `map_color` 49,765 (99.5%), `swap_mirror` 37,362 (74.7%), `most_common_color` 28,195 (56.4%), `least_common_color` 23,354 (46.7%), `swap_extremes` 11,907 (23.8%) |
+| `swap_mirror-00`   | L_3     | `__const__` 15,458 (99.8%), `map_color` 12,192 (78.7%), `swap_stack` 8,630 (55.7%), `swap_mirror` 3,130 (20.2%), `least_common_color` 2,640 (17.0%), `flip_h` 317 (2.0%)                      |
+| `swap_mirror-01`   | L_0     | `map_color` 49,977 (100.0%), `__const__` 49,971 (99.9%), `least_common_color` 27,147 (54.3%), `most_common_color` 24,016 (48.0%), `flip_h` 16,800 (33.6%), `flip_v` 6,657 (13.3%)             |
+| `swap_mirror-01`   | L_1     | `map_color` 49,969 (99.9%), `__const__` 49,907 (99.8%), `least_common_color` 27,104 (54.2%), `most_common_color` 24,007 (48.0%), `flip_h` 17,243 (34.5%), `swap_extremes` 6,275 (12.6%)       |
+| `swap_mirror-01`   | L_2     | `__const__` 49,881 (99.8%), `map_color` 49,751 (99.5%), `least_common_color` 27,279 (54.6%), `most_common_color` 23,752 (47.5%), `swap_mirror` 19,172 (38.3%), `swap_extremes` 11,026 (22.1%) |
+| `swap_mirror-01`   | L_3     | `__const__` 23,435 (99.7%), `map_color` 16,884 (71.9%), `swap_stack` 15,435 (65.7%), `swap_mirror` 3,854 (16.4%), `least_common_color` 3,696 (15.7%), `most_common_color` 3,696 (15.7%)       |
+| `swap_stack-00`    | L_0     | `__const__` 49,983 (100.0%), `map_color` 49,977 (100.0%), `least_common_color` 24,672 (49.3%), `most_common_color` 21,807 (43.6%), `flip_h` 15,875 (31.8%), `flip_v` 15,242 (30.5%)           |
+| `swap_stack-00`    | L_1     | `map_color` 49,969 (99.9%), `__const__` 49,947 (99.9%), `least_common_color` 27,547 (55.1%), `most_common_color` 17,933 (35.9%), `swap_extremes` 15,719 (31.4%), `flip_h` 15,243 (30.5%)      |
+| `swap_stack-00`    | L_2     | `__const__` 49,943 (99.9%), `map_color` 49,765 (99.5%), `swap_mirror` 36,186 (72.4%), `least_common_color` 27,711 (55.4%), `most_common_color` 24,839 (49.7%), `flip_h` 7,354 (14.7%)         |
+| `swap_stack-00`    | L_3     | `__const__` 15,200 (99.8%), `map_color` 11,934 (78.3%), `swap_stack` 8,509 (55.9%), `swap_mirror` 3,119 (20.5%), `least_common_color` 2,596 (17.0%), `flip_h` 316 (2.1%)                      |
+| `swap_stack-01`    | L_0     | `map_color` 49,977 (100.0%), `__const__` 49,971 (99.9%), `least_common_color` 27,147 (54.3%), `most_common_color` 24,016 (48.0%), `flip_h` 16,800 (33.6%), `flip_v` 6,657 (13.3%)             |
+| `swap_stack-01`    | L_1     | `map_color` 49,969 (99.9%), `__const__` 49,907 (99.8%), `least_common_color` 27,104 (54.2%), `most_common_color` 24,007 (48.0%), `flip_h` 17,243 (34.5%), `swap_extremes` 6,275 (12.6%)       |
+| `swap_stack-01`    | L_2     | `__const__` 49,881 (99.8%), `map_color` 49,751 (99.5%), `least_common_color` 27,279 (54.6%), `most_common_color` 23,752 (47.5%), `swap_mirror` 19,172 (38.3%), `swap_extremes` 11,026 (22.1%) |
+| `swap_stack-01`    | L_3     | `__const__` 23,435 (99.7%), `map_color` 16,884 (71.9%), `swap_stack` 15,435 (65.7%), `swap_mirror` 3,854 (16.4%), `least_common_color` 3,696 (15.7%), `most_common_color` 3,696 (15.7%)       |
+| `top-00`           | L_0     | `__const__` 49,983 (100.0%), `map_color` 49,977 (100.0%), `most_common_color` 32,904 (65.8%), `flip_h` 16,242 (32.5%), `flip_v` 16,242 (32.5%), `least_common_color` 10,471 (20.9%)           |
+| `top-00`           | L_1     | `map_color` 49,969 (99.9%), `__const__` 49,947 (99.9%), `most_common_color` 25,688 (51.4%), `least_common_color` 15,238 (30.5%), `swap_extremes` 14,286 (28.6%), `flip_h` 12,680 (25.4%)      |
+| `top-00`           | L_2     | `__const__` 49,943 (99.9%), `map_color` 49,765 (99.5%), `swap_mirror` 38,525 (77.0%), `most_common_color` 31,574 (63.1%), `least_common_color` 17,706 (35.4%), `swap_extremes` 11,993 (24.0%) |
+| `top-00`           | L_3     | `__const__` 19,844 (99.8%), `map_color` 14,249 (71.7%), `swap_stack` 13,016 (65.5%), `most_common_color` 3,388 (17.0%), `swap_mirror` 3,317 (16.7%), `flip_h` 334 (1.7%)                      |
+
+- Shares **overlap and are not a partition**: one composition counts in every bucket it touches, so a depth-3 program over three primitives appears three times. Read a share as "what fraction of the spend involved this primitive".
+- A primitive at ~100% that the task's own solution never calls is the floor-tax signature: the cell is paying for vocabulary it cannot use. Cross-check against the round-1 breadth census in `spec.md`, and against `probe-ladder`'s floor tax, which measures the same thing directly.
 
 ## Cost (considered counts)
 
@@ -147,6 +185,17 @@
 
 - Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **-**.
 - When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
+## Provenance (which runs this report was built from)
+
+| cell     | run_id           | run dir                          | commit   | library                                     | depth | pool | stop    |
+| -------- | ---------------- | -------------------------------- | -------- | ------------------------------------------- | ----- | ---- | ------- |
+| chain/L0 | 9d5d829d0b5c5fbb | 20260803_203358_9d5d829d0b5c5fbb | bedb33b8 | al5-L0                                      | 3     | 7500 | exhaust |
+| chain/L1 | 14311dbc93d90f83 | 20260803_203413_14311dbc93d90f83 | bedb33b8 | al5-L0+swap_extremes                        | 3     | 7500 | exhaust |
+| chain/L2 | fe613d5e9b9022d9 | 20260803_203428_fe613d5e9b9022d9 | bedb33b8 | al5-L0+swap_extremes+swap_mirror            | 3     | 7500 | exhaust |
+| chain/L3 | ec20e04ab9a263a4 | 20260726_204031_ec20e04ab9a263a4 | 99d38b28 | al5-L0+swap_extremes+swap_mirror+swap_stack | 2     | 1500 | exhaust |
+
+- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the current spec and comparing IS the staleness test: a differing hash means this artifact describes runs the current code would no longer produce.
 
 ## Not computed here
 

@@ -184,7 +184,11 @@ def test_a_censoring_raw_arm_is_a_lower_bound_not_a_measurement(tmp_path: Path) 
 
     spec = make_ladder("al2-rot90-calibration")
     result = run_ladder(spec, runs_root=tmp_path)
-    tiny = run_raw_arm(spec, 1, k=1, runs_root=tmp_path)
+    # `reuse=False` is required to CONSTRUCT this scenario: `run_ladder` above already recorded a
+    # properly-guarded arm that solved, and reuse would (correctly) serve that stronger result
+    # instead of a deliberately under-guarded one. Fabricating a weaker arm is a test affordance,
+    # never something a real run wants.
+    tiny = run_raw_arm(spec, 1, k=1, runs_root=tmp_path, reuse=False)
     assert tiny is not None and tiny.guard_per_task == 1
 
     report = create_ladder_report(dataclasses.replace(result, raw_arm=tiny))

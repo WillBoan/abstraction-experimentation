@@ -96,6 +96,7 @@
       ]
     },
     "loop_overhead_factor": 3.000415952779456,
+    "loop_overhead_forfeited_by": null,
     "marginal_rung_value": [
       {
         "censored": true,
@@ -170,6 +171,9 @@
     ]
   },
   "compromises": [],
+  "config_generations": [
+    "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+  ],
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
@@ -196,22 +200,7 @@
     "laddered_marginal_considered": 100973,
     "laddered_marginal_to_first": 35778,
     "off_chain_top_solved": false,
-    "raw_arm": {
-      "amortization_ratio": 10.0,
-      "amortization_ratio_kind": "lower-bound",
-      "conditions": {
-        "depth_limit": 4,
-        "max_pool": 200000,
-        "solution_limit": 1
-      },
-      "guard_per_task": 1009730,
-      "k": 10,
-      "laddered_marginal": 100973,
-      "saturated_at": null,
-      "solved": false,
-      "sound": true,
-      "spend_considered": 1009730
-    },
+    "raw_arm": null,
     "raw_censored": true,
     "raw_considered": 20077,
     "raw_estimate": {
@@ -2501,12 +2490,195 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "6012073d54d9dac48e3df7b41a911ea591eb90c3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-recolor-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0",
+      "run_dir": "20260727_135941_b8821b64356b1555",
+      "run_id": "b8821b64356b1555"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "6012073d54d9dac48e3df7b41a911ea591eb90c3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-recolor-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+west",
+      "run_dir": "20260727_135945_a8b017c16da5b386",
+      "run_id": "a8b017c16da5b386"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "6012073d54d9dac48e3df7b41a911ea591eb90c3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-recolor-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+west+east",
+      "run_dir": "20260727_135949_768c50ea212addb7",
+      "run_id": "768c50ea212addb7"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L3",
+      "commit": "6012073d54d9dac48e3df7b41a911ea591eb90c3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-recolor-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+west+east+recolored_west",
+      "run_dir": "20260727_135952_b0657247279af43a",
+      "run_id": "b0657247279af43a"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L4",
+      "commit": "6012073d54d9dac48e3df7b41a911ea591eb90c3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-recolor-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+west+east+recolored_west+recolored_east",
+      "run_dir": "20260727_135955_a37f68031985556c",
+      "run_id": "a37f68031985556c"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/learn",
+      "commit": "6012073d54d9dac48e3df7b41a911ea591eb90c3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-recolor-lean:train",
+      "learn": {
+        "iterations": 5,
+        "learn_engine": "GreedyMDLLearnEngine",
+        "metric": "CompressionMetric",
+        "proposer": "AntiunifyPairs"
+      },
+      "library": "dae9d2b5-split-L0",
+      "run_dir": "20260727_135958_957cd8e7377170c0",
+      "run_id": "957cd8e7377170c0"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/train-usefulness",
+      "commit": "6012073d54d9dac48e3df7b41a911ea591eb90c3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-recolor-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+abs0+abs1+abs2+abs3",
+      "run_dir": "20260727_140008_0ced1b8593fc463b",
+      "run_id": "0ced1b8593fc463b"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/transfer",
+      "commit": "6012073d54d9dac48e3df7b41a911ea591eb90c3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-recolor-lean:heldout",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+abs0+abs1+abs2+abs3",
+      "run_dir": "20260727_140011_f90667a0ad158e2e",
+      "run_id": "f90667a0ad158e2e"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "off-chain",
+      "commit": "6012073d54d9dac48e3df7b41a911ea591eb90c3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-split-recolor-lean:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+recolored_east",
+      "run_dir": "20260727_140012_11527db6e95d8e49",
+      "run_id": "11527db6e95d8e49"
+    }
+  ],
+  "recorded_commits": [
+    "6012073d54d9dac48e3df7b41a911ea591eb90c3"
+  ],
   "rung_recovery": [
     {
       "level": 1,
       "matched_by": [
         "abs1"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "west"
     },
@@ -2515,6 +2687,8 @@
       "matched_by": [
         "abs0"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "east"
     },
@@ -2523,6 +2697,8 @@
       "matched_by": [
         "abs3"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "recolored_west"
     },
@@ -2531,6 +2707,8 @@
       "matched_by": [
         "abs2"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "recolored_east"
     }
@@ -2546,6 +2724,10 @@
       2,
       2
     ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": true
   },
   "wake_schedule": "full"
 }

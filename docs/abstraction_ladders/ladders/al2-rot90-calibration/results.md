@@ -11,6 +11,8 @@
 | ---- | --------- | ------------ | -------------------- |
 | 1    | yes       | yes          | 1.0                  |
 
+- Top reachable at the ladder's own budget -- chain (oracle `L_k`): **REACHED**; climb (learned library): **REACHED**
+
 ## Climb trace
 
 | iter | wake solved                         | considered (all tasks) | minted | converged |
@@ -20,9 +22,9 @@
 
 ## Rung recovery
 
-| rung    | level | recovered | matched by |
-| ------- | ----- | --------- | ---------- |
-| `rot90` | 1     | yes       | `abs0`     |
+| rung    | level | recovered | matched by | if not, where it broke |
+| ------- | ----- | --------- | ---------- | ---------------------- |
+| `rot90` | 1     | yes       | `abs0`     | -                      |
 
 ## Cost matrix (considered count per task x library)
 
@@ -50,6 +52,20 @@
 - `first solution index` / `cheapest solution index`: the `candidate_index` at which the first / the globally-cheapest solution was absorbed (the solution sink -- exact, and independent of later pool eviction).
 - `solve generation`: the composition round the accepted solution was built at (round 0 = leaves).
 - `b_eff`: fitted per-round growth in composed candidates over pre-saturation rounds (`-` when the pool saturates too early to fit).
+
+## Spend attribution (`by_primitive`)
+
+| task       | library | spend by primitive (shares OVERLAP)                          |
+| ---------- | ------- | ------------------------------------------------------------ |
+| `rot90-00` | L_0     | `flip_h` 4 (57.1%), `transpose` 4 (57.1%)                    |
+| `rot90-00` | L_1     | `flip_h` 6 (46.2%), `rot90` 6 (46.2%), `transpose` 6 (46.2%) |
+| `rot90-01` | L_0     | `flip_h` 4 (57.1%), `transpose` 4 (57.1%)                    |
+| `rot90-01` | L_1     | `flip_h` 6 (46.2%), `rot90` 6 (46.2%), `transpose` 6 (46.2%) |
+| `top-00`   | L_0     | `flip_h` 4 (57.1%), `transpose` 4 (57.1%)                    |
+| `top-00`   | L_1     | `flip_h` 6 (46.2%), `rot90` 6 (46.2%), `transpose` 6 (46.2%) |
+
+- Shares **overlap and are not a partition**: one composition counts in every bucket it touches, so a depth-3 program over three primitives appears three times. Read a share as "what fraction of the spend involved this primitive".
+- A primitive at ~100% that the task's own solution never calls is the floor-tax signature: the cell is paying for vocabulary it cannot use. Cross-check against the round-1 breadth census in `spec.md`, and against `probe-ladder`'s floor tax, which measures the same thing directly.
 
 ## Cost (considered counts)
 
@@ -116,6 +132,20 @@
 
 - Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **yes**.
 - When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
+## Provenance (which runs this report was built from)
+
+| cell                   | run_id           | run dir                          | commit   | library      | depth | pool   | stop    |
+| ---------------------- | ---------------- | -------------------------------- | -------- | ------------ | ----- | ------ | ------- |
+| chain/L0               | 1bbde6bd1f01ae04 | 20260720_195148_1bbde6bd1f01ae04 | 532e1255 | al2-L0       | 2     | 400    | exhaust |
+| chain/L1               | 51d15513a9b8d15c | 20260720_195148_51d15513a9b8d15c | 532e1255 | al2-L0+rot90 | 2     | 400    | exhaust |
+| climb/learn            | 35afb03c8453bd6d | 20260722_212647_35afb03c8453bd6d | 2dbb2534 | al2-L0       | 2     | 400    | exhaust |
+| climb/train-usefulness | efea1b32c5171238 | 20260720_195148_efea1b32c5171238 | 532e1255 | al2-L0+abs0  | 2     | 400    | exhaust |
+| climb/transfer         | 81df42552d5243b7 | 20260720_195148_81df42552d5243b7 | 532e1255 | al2-L0+abs0  | 2     | 400    | exhaust |
+| off-chain              | 51d15513a9b8d15c | 20260720_195148_51d15513a9b8d15c | 532e1255 | al2-L0+rot90 | 2     | 400    | exhaust |
+| raw-arm                | 6485231f8aa786d7 | 20260722_212647_6485231f8aa786d7 | 2dbb2534 | al2-L0       | 4     | 200000 | first-1 |
+
+- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the current spec and comparing IS the staleness test: a differing hash means this artifact describes runs the current code would no longer produce.
 
 ## Not computed here
 

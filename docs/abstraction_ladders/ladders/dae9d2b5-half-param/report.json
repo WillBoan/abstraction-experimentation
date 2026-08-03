@@ -149,6 +149,9 @@
     ]
   },
   "compromises": [],
+  "config_generations": [
+    "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+  ],
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
@@ -2096,10 +2099,174 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-half-param:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0",
+      "run_dir": "20260727_214203_8ddbe7ae3c49cb3e",
+      "run_id": "8ddbe7ae3c49cb3e"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-half-param:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+half",
+      "run_dir": "20260727_214207_f1377158eb014809",
+      "run_id": "f1377158eb014809"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-half-param:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+half+recolored_west",
+      "run_dir": "20260727_214211_2a28ac351ebc2a49",
+      "run_id": "2a28ac351ebc2a49"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L3",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-half-param:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+half+recolored_west+recolored_east",
+      "run_dir": "20260727_214214_2738456a51da620f",
+      "run_id": "2738456a51da620f"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/learn",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-half-param:train",
+      "learn": {
+        "iterations": 5,
+        "learn_engine": "GreedyMDLLearnEngine",
+        "metric": "CompressionMetric",
+        "proposer": "AntiunifyPairs"
+      },
+      "library": "dae9d2b5-split-L0",
+      "run_dir": "20260727_214216_227c31c8b21174cc",
+      "run_id": "227c31c8b21174cc"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/train-usefulness",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-half-param:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+abs0+abs1+abs2+abs3",
+      "run_dir": "20260727_214227_7aa514d437b011dd",
+      "run_id": "7aa514d437b011dd"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/transfer",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-half-param:heldout",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+abs0+abs1+abs2+abs3",
+      "run_dir": "20260727_214229_38533c52e14d13bb",
+      "run_id": "38533c52e14d13bb"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "off-chain",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "dae9d2b5-half-param:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+recolored_east",
+      "run_dir": "20260727_214231_ddb3da552f8562f1",
+      "run_id": "ddb3da552f8562f1"
+    }
+  ],
+  "recorded_commits": [
+    "1b43b3a469bb32df7005130e817ab4565fc713e3"
+  ],
   "rung_recovery": [
     {
       "level": 1,
       "matched_by": [],
+      "not_recovered_because": "proposed-not-selected",
+      "proposed_at_iteration": 0,
       "recovered": false,
       "rung": "half"
     },
@@ -2108,6 +2275,8 @@
       "matched_by": [
         "abs3"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "recolored_west"
     },
@@ -2116,6 +2285,8 @@
       "matched_by": [
         "abs2"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "recolored_east"
     }

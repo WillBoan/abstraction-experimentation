@@ -24,7 +24,7 @@
         "abs0"
       ],
       "proposal_count": 2,
-      "wake_considered": 17935,
+      "wake_considered": 18015,
       "wake_solved": [
         "shift_stack-00",
         "shift_stack-01"
@@ -38,7 +38,7 @@
         "abs1"
       ],
       "proposal_count": 4,
-      "wake_considered": 18795,
+      "wake_considered": 18875,
       "wake_solved": [
         "framed-00",
         "framed-01",
@@ -52,7 +52,7 @@
       "iteration": 2,
       "minted": [],
       "proposal_count": 2,
-      "wake_considered": 19675,
+      "wake_considered": 19755,
       "wake_solved": [
         "framed-00",
         "framed-01",
@@ -72,67 +72,72 @@
         "top-00"
       ]
     },
-    "loop_overhead_factor": 3.0281312073871263,
+    "loop_overhead_factor": 3.0280109050088204,
+    "loop_overhead_forfeited_by": null,
     "marginal_rung_value": [
       {
         "censored": true,
-        "cost_with_rung": 7518,
-        "cost_without_rung": 7174,
+        "cost_with_rung": 7550,
+        "cost_without_rung": 7206,
         "layer_above": "framed",
-        "own_tasks_speedup": 1.0138888888888888,
-        "own_tasks_to_first_with": 144,
-        "own_tasks_to_first_without": 146,
-        "ratio": 0.954243149773876,
+        "own_tasks_speedup": 1.0113636363636365,
+        "own_tasks_to_first_with": 176,
+        "own_tasks_to_first_without": 178,
+        "ratio": 0.9544370860927153,
         "rung": "shift_stack"
       },
       {
         "censored": true,
-        "cost_with_rung": 3935,
-        "cost_without_rung": 3759,
+        "cost_with_rung": 3951,
+        "cost_without_rung": 3775,
         "layer_above": "top",
-        "own_tasks_speedup": 30.356164383561644,
-        "own_tasks_to_first_with": 146,
-        "own_tasks_to_first_without": 4432,
-        "ratio": 0.9552731893265566,
+        "own_tasks_speedup": 25.078651685393258,
+        "own_tasks_to_first_with": 178,
+        "own_tasks_to_first_without": 4464,
+        "ratio": 0.9554543153631991,
         "rung": "framed"
       }
     ],
     "vocabulary_tax": [
       {
-        "at_full_library": 7870,
-        "at_own_level": 7174,
-        "factor": 1.0970170058544746,
+        "at_full_library": 7902,
+        "at_own_level": 7206,
+        "factor": 1.096586178184846,
         "rung": "shift_stack"
       },
       {
-        "at_full_library": 7870,
-        "at_own_level": 7518,
-        "factor": 1.0468209630220804,
+        "at_full_library": 7902,
+        "at_own_level": 7550,
+        "factor": 1.0466225165562915,
         "rung": "framed"
       }
     ]
   },
+  "compromises": [],
+  "config_generations": [
+    "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+  ],
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
-      "high": 44981.5258495732,
-      "low": 724.2150104686744
+      "high": 44789.16437697119,
+      "low": 250.3630726466029
     },
     "budget_compression_depth": {
       "max_jump_depth": 2,
       "raw_depth": 5
     },
     "jump_costs": {
-      "framed": 7518,
-      "shift_stack": 7174
+      "framed": 7550,
+      "shift_stack": 7206
     },
     "jump_costs_to_first": {
-      "framed": 4432,
-      "shift_stack": 146
+      "framed": 4464,
+      "shift_stack": 178
     },
-    "laddered_end_to_end_considered": 56405,
-    "laddered_marginal_considered": 18627,
-    "laddered_marginal_to_first": 8436,
+    "laddered_end_to_end_considered": 56645,
+    "laddered_marginal_considered": 18707,
+    "laddered_marginal_to_first": 8516,
     "off_chain_top_solved": false,
     "raw_arm": {
       "amortization_ratio": 10.0,
@@ -142,16 +147,17 @@
         "max_pool": 200000,
         "solution_limit": 1
       },
-      "guard_per_task": 186270,
+      "guard_per_task": 187070,
       "k": 10,
-      "laddered_marginal": 18627,
+      "laddered_marginal": 18707,
+      "reused_recorded_arm": true,
       "saturated_at": null,
       "solved": false,
       "sound": true,
-      "spend_considered": 186270
+      "spend_considered": 187070
     },
     "raw_censored": true,
-    "raw_considered": 3587,
+    "raw_considered": 3603,
     "raw_estimate": {
       "available": true,
       "caveats": [
@@ -163,53 +169,134 @@
         "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
       ],
       "d_raw": 5,
-      "estimate_high": 837870882,
-      "estimate_low": 13489953,
-      "growth_ratio_geometric": 15.31,
+      "estimate_high": 837870898,
+      "estimate_low": 4683542,
+      "growth_ratio_geometric": 10.65,
       "growth_ratio_last": 61.67,
       "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
       "observed_composed": [
-        15,
+        31,
         57,
         3515
       ],
-      "observed_considered": 3587,
+      "observed_considered": 3603,
       "observed_through_depth": 2,
       "rounds_extrapolated": 3,
       "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
     },
     "raw_limit_censored": false,
     "raw_solved": false,
-    "top_jump_cost": 3935,
-    "top_jump_cost_to_first": 3858
+    "top_jump_cost": 3951,
+    "top_jump_cost_to_first": 3874
   },
   "cost_matrix": [
     {
       "columns": {
         "0": {
-          "b_eff": 15.31,
+          "b_eff": 10.65,
+          "by_primitive": [
+            {
+              "considered": 3598,
+              "primitive": "__const__",
+              "share": 0.9986122675548155
+            },
+            {
+              "considered": 3380,
+              "primitive": "pad",
+              "share": 0.9381071329447682
+            },
+            {
+              "considered": 1500,
+              "primitive": "concat_v",
+              "share": 0.4163197335553705
+            },
+            {
+              "considered": 1268,
+              "primitive": "translate",
+              "share": 0.35192894809880654
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 3587,
+          "considered": 3603,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 15.68,
+          "b_eff": 10.9,
+          "by_primitive": [
+            {
+              "considered": 3762,
+              "primitive": "__const__",
+              "share": 0.9965562913907284
+            },
+            {
+              "considered": 3510,
+              "primitive": "pad",
+              "share": 0.9298013245033112
+            },
+            {
+              "considered": 1578,
+              "primitive": "concat_v",
+              "share": 0.4180132450331126
+            },
+            {
+              "considered": 1302,
+              "primitive": "translate",
+              "share": 0.3449006622516556
+            },
+            {
+              "considered": 172,
+              "primitive": "shift_stack",
+              "share": 0.04556291390728477
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 2216,
-          "considered": 3759,
-          "first_solution_index": 2216,
+          "cheapest_solution_index": 2232,
+          "considered": 3775,
+          "first_solution_index": 2232,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 16.04,
+          "b_eff": 11.16,
+          "by_primitive": [
+            {
+              "considered": 3926,
+              "primitive": "__const__",
+              "share": 0.9936724879777271
+            },
+            {
+              "considered": 3640,
+              "primitive": "pad",
+              "share": 0.9212857504429258
+            },
+            {
+              "considered": 1658,
+              "primitive": "concat_v",
+              "share": 0.4196405973171349
+            },
+            {
+              "considered": 1336,
+              "primitive": "translate",
+              "share": 0.3381422424702607
+            },
+            {
+              "considered": 176,
+              "primitive": "framed",
+              "share": 0.04454568463680081
+            },
+            {
+              "considered": 176,
+              "primitive": "shift_stack",
+              "share": 0.04454568463680081
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 73,
-          "considered": 3935,
-          "first_solution_index": 73,
+          "cheapest_solution_index": 89,
+          "considered": 3951,
+          "first_solution_index": 89,
           "solve_generation": 1,
           "solved": true
         }
@@ -220,29 +307,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 15.31,
+          "b_eff": 10.65,
+          "by_primitive": [
+            {
+              "considered": 3598,
+              "primitive": "__const__",
+              "share": 0.9986122675548155
+            },
+            {
+              "considered": 3380,
+              "primitive": "pad",
+              "share": 0.9381071329447682
+            },
+            {
+              "considered": 1500,
+              "primitive": "concat_v",
+              "share": 0.4163197335553705
+            },
+            {
+              "considered": 1268,
+              "primitive": "translate",
+              "share": 0.35192894809880654
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 3587,
+          "considered": 3603,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 15.68,
+          "b_eff": 10.9,
+          "by_primitive": [
+            {
+              "considered": 3762,
+              "primitive": "__const__",
+              "share": 0.9965562913907284
+            },
+            {
+              "considered": 3510,
+              "primitive": "pad",
+              "share": 0.9298013245033112
+            },
+            {
+              "considered": 1578,
+              "primitive": "concat_v",
+              "share": 0.4180132450331126
+            },
+            {
+              "considered": 1302,
+              "primitive": "translate",
+              "share": 0.3449006622516556
+            },
+            {
+              "considered": 172,
+              "primitive": "shift_stack",
+              "share": 0.04556291390728477
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 2216,
-          "considered": 3759,
-          "first_solution_index": 2216,
+          "cheapest_solution_index": 2232,
+          "considered": 3775,
+          "first_solution_index": 2232,
           "solve_generation": 2,
           "solved": true
         },
         "2": {
-          "b_eff": 16.04,
+          "b_eff": 11.16,
+          "by_primitive": [
+            {
+              "considered": 3926,
+              "primitive": "__const__",
+              "share": 0.9936724879777271
+            },
+            {
+              "considered": 3640,
+              "primitive": "pad",
+              "share": 0.9212857504429258
+            },
+            {
+              "considered": 1658,
+              "primitive": "concat_v",
+              "share": 0.4196405973171349
+            },
+            {
+              "considered": 1336,
+              "primitive": "translate",
+              "share": 0.3381422424702607
+            },
+            {
+              "considered": 176,
+              "primitive": "framed",
+              "share": 0.04454568463680081
+            },
+            {
+              "considered": 176,
+              "primitive": "shift_stack",
+              "share": 0.04454568463680081
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 73,
-          "considered": 3935,
-          "first_solution_index": 73,
+          "cheapest_solution_index": 89,
+          "considered": 3951,
+          "first_solution_index": 89,
           "solve_generation": 1,
           "solved": true
         }
@@ -253,29 +421,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 15.31,
+          "b_eff": 10.65,
+          "by_primitive": [
+            {
+              "considered": 3598,
+              "primitive": "__const__",
+              "share": 0.9986122675548155
+            },
+            {
+              "considered": 3380,
+              "primitive": "pad",
+              "share": 0.9381071329447682
+            },
+            {
+              "considered": 1500,
+              "primitive": "concat_v",
+              "share": 0.4163197335553705
+            },
+            {
+              "considered": 1268,
+              "primitive": "translate",
+              "share": 0.35192894809880654
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 73,
-          "considered": 3587,
-          "first_solution_index": 73,
+          "cheapest_solution_index": 89,
+          "considered": 3603,
+          "first_solution_index": 89,
           "solve_generation": 2,
           "solved": true
         },
         "1": {
-          "b_eff": 15.68,
+          "b_eff": 10.9,
+          "by_primitive": [
+            {
+              "considered": 3762,
+              "primitive": "__const__",
+              "share": 0.9965562913907284
+            },
+            {
+              "considered": 3510,
+              "primitive": "pad",
+              "share": 0.9298013245033112
+            },
+            {
+              "considered": 1578,
+              "primitive": "concat_v",
+              "share": 0.4180132450331126
+            },
+            {
+              "considered": 1302,
+              "primitive": "translate",
+              "share": 0.3449006622516556
+            },
+            {
+              "considered": 172,
+              "primitive": "shift_stack",
+              "share": 0.04556291390728477
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 72,
-          "considered": 3759,
-          "first_solution_index": 72,
+          "cheapest_solution_index": 88,
+          "considered": 3775,
+          "first_solution_index": 88,
           "solve_generation": 1,
           "solved": true
         },
         "2": {
-          "b_eff": 16.04,
+          "b_eff": 11.16,
+          "by_primitive": [
+            {
+              "considered": 3926,
+              "primitive": "__const__",
+              "share": 0.9936724879777271
+            },
+            {
+              "considered": 3640,
+              "primitive": "pad",
+              "share": 0.9212857504429258
+            },
+            {
+              "considered": 1658,
+              "primitive": "concat_v",
+              "share": 0.4196405973171349
+            },
+            {
+              "considered": 1336,
+              "primitive": "translate",
+              "share": 0.3381422424702607
+            },
+            {
+              "considered": 176,
+              "primitive": "framed",
+              "share": 0.04454568463680081
+            },
+            {
+              "considered": 176,
+              "primitive": "shift_stack",
+              "share": 0.04454568463680081
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 72,
-          "considered": 3935,
-          "first_solution_index": 72,
+          "cheapest_solution_index": 88,
+          "considered": 3951,
+          "first_solution_index": 88,
           "solve_generation": 1,
           "solved": true
         }
@@ -286,29 +535,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 15.31,
+          "b_eff": 10.65,
+          "by_primitive": [
+            {
+              "considered": 3598,
+              "primitive": "__const__",
+              "share": 0.9986122675548155
+            },
+            {
+              "considered": 3380,
+              "primitive": "pad",
+              "share": 0.9381071329447682
+            },
+            {
+              "considered": 1500,
+              "primitive": "concat_v",
+              "share": 0.4163197335553705
+            },
+            {
+              "considered": 1268,
+              "primitive": "translate",
+              "share": 0.35192894809880654
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 73,
-          "considered": 3587,
-          "first_solution_index": 73,
+          "cheapest_solution_index": 89,
+          "considered": 3603,
+          "first_solution_index": 89,
           "solve_generation": 2,
           "solved": true
         },
         "1": {
-          "b_eff": 15.68,
+          "b_eff": 10.9,
+          "by_primitive": [
+            {
+              "considered": 3762,
+              "primitive": "__const__",
+              "share": 0.9965562913907284
+            },
+            {
+              "considered": 3510,
+              "primitive": "pad",
+              "share": 0.9298013245033112
+            },
+            {
+              "considered": 1578,
+              "primitive": "concat_v",
+              "share": 0.4180132450331126
+            },
+            {
+              "considered": 1302,
+              "primitive": "translate",
+              "share": 0.3449006622516556
+            },
+            {
+              "considered": 172,
+              "primitive": "shift_stack",
+              "share": 0.04556291390728477
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 72,
-          "considered": 3759,
-          "first_solution_index": 72,
+          "cheapest_solution_index": 88,
+          "considered": 3775,
+          "first_solution_index": 88,
           "solve_generation": 1,
           "solved": true
         },
         "2": {
-          "b_eff": 16.04,
+          "b_eff": 11.16,
+          "by_primitive": [
+            {
+              "considered": 3926,
+              "primitive": "__const__",
+              "share": 0.9936724879777271
+            },
+            {
+              "considered": 3640,
+              "primitive": "pad",
+              "share": 0.9212857504429258
+            },
+            {
+              "considered": 1658,
+              "primitive": "concat_v",
+              "share": 0.4196405973171349
+            },
+            {
+              "considered": 1336,
+              "primitive": "translate",
+              "share": 0.3381422424702607
+            },
+            {
+              "considered": 176,
+              "primitive": "framed",
+              "share": 0.04454568463680081
+            },
+            {
+              "considered": 176,
+              "primitive": "shift_stack",
+              "share": 0.04454568463680081
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 72,
-          "considered": 3935,
-          "first_solution_index": 72,
+          "cheapest_solution_index": 88,
+          "considered": 3951,
+          "first_solution_index": 88,
           "solve_generation": 1,
           "solved": true
         }
@@ -319,29 +649,110 @@
     {
       "columns": {
         "0": {
-          "b_eff": 15.31,
+          "b_eff": 10.65,
+          "by_primitive": [
+            {
+              "considered": 3598,
+              "primitive": "__const__",
+              "share": 0.9986122675548155
+            },
+            {
+              "considered": 3380,
+              "primitive": "pad",
+              "share": 0.9381071329447682
+            },
+            {
+              "considered": 1500,
+              "primitive": "concat_v",
+              "share": 0.4163197335553705
+            },
+            {
+              "considered": 1268,
+              "primitive": "translate",
+              "share": 0.35192894809880654
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 3587,
+          "considered": 3603,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 15.68,
+          "b_eff": 10.9,
+          "by_primitive": [
+            {
+              "considered": 3762,
+              "primitive": "__const__",
+              "share": 0.9965562913907284
+            },
+            {
+              "considered": 3510,
+              "primitive": "pad",
+              "share": 0.9298013245033112
+            },
+            {
+              "considered": 1578,
+              "primitive": "concat_v",
+              "share": 0.4180132450331126
+            },
+            {
+              "considered": 1302,
+              "primitive": "translate",
+              "share": 0.3449006622516556
+            },
+            {
+              "considered": 172,
+              "primitive": "shift_stack",
+              "share": 0.04556291390728477
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 3759,
+          "considered": 3775,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "2": {
-          "b_eff": 16.04,
+          "b_eff": 11.16,
+          "by_primitive": [
+            {
+              "considered": 3926,
+              "primitive": "__const__",
+              "share": 0.9936724879777271
+            },
+            {
+              "considered": 3640,
+              "primitive": "pad",
+              "share": 0.9212857504429258
+            },
+            {
+              "considered": 1658,
+              "primitive": "concat_v",
+              "share": 0.4196405973171349
+            },
+            {
+              "considered": 1336,
+              "primitive": "translate",
+              "share": 0.3381422424702607
+            },
+            {
+              "considered": 176,
+              "primitive": "framed",
+              "share": 0.04454568463680081
+            },
+            {
+              "considered": 176,
+              "primitive": "shift_stack",
+              "share": 0.04454568463680081
+            }
+          ],
           "censored": false,
-          "cheapest_solution_index": 3858,
-          "considered": 3935,
-          "first_solution_index": 3858,
+          "cheapest_solution_index": 3874,
+          "considered": 3951,
+          "first_solution_index": 3874,
           "solve_generation": 2,
           "solved": true
         }
@@ -428,8 +839,7 @@
             "name": "translate",
             "param_types": [
               "grid",
-              "int",
-              "int"
+              "offset"
             ],
             "return_type": "grid",
             "variadic_param": null
@@ -507,13 +917,11 @@
                 },
                 {
                   "op": "const",
-                  "value": 0,
-                  "value_type": "int"
-                },
-                {
-                  "op": "const",
-                  "value": 1,
-                  "value_type": "int"
+                  "value": [
+                    0,
+                    1
+                  ],
+                  "value_type": "offset"
                 }
               ],
               "op": "apply",
@@ -613,12 +1021,176 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al15-shift-frame:train",
+      "learn": null,
+      "library": "al15-L0",
+      "run_dir": "20260803_203100_9aa53bcf58764d31",
+      "run_id": "9aa53bcf58764d31"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al15-shift-frame:train",
+      "learn": null,
+      "library": "al15-L0+shift_stack",
+      "run_dir": "20260803_203100_b28c68cc8196f86b",
+      "run_id": "b28c68cc8196f86b"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al15-shift-frame:train",
+      "learn": null,
+      "library": "al15-L0+shift_stack+framed",
+      "run_dir": "20260803_203101_ba0f3e3a43c069a7",
+      "run_id": "ba0f3e3a43c069a7"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/learn",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al15-shift-frame:train",
+      "learn": {
+        "iterations": 5,
+        "learn_engine": "GreedyMDLLearnEngine",
+        "metric": "CompressionMetric",
+        "proposer": "AntiunifyPairs"
+      },
+      "library": "al15-L0",
+      "run_dir": "20260803_203101_551e05c8a2682815",
+      "run_id": "551e05c8a2682815"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/train-usefulness",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al15-shift-frame:train",
+      "learn": null,
+      "library": "al15-L0+abs0+abs1",
+      "run_dir": "20260803_203103_0246b265b64bb949",
+      "run_id": "0246b265b64bb949"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/transfer",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al15-shift-frame:heldout",
+      "learn": null,
+      "library": "al15-L0+abs0+abs1",
+      "run_dir": "20260803_203103_e27e12d0806bfca1",
+      "run_id": "e27e12d0806bfca1"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 400,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "off-chain",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al15-shift-frame:train",
+      "learn": null,
+      "library": "al15-L0+framed",
+      "run_dir": "20260803_203103_185a133188a0776e",
+      "run_id": "185a133188a0776e"
+    },
+    {
+      "budget": {
+        "considered_limit": 187070,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 5,
+        "max_arity": 2,
+        "max_pool": 200000,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "raw-arm",
+      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "completed": true,
+      "corpus_name": "al15-shift-frame:train:raw-arm",
+      "learn": null,
+      "library": "al15-L0",
+      "run_dir": "20260803_203104_f19fe07e308d565a",
+      "run_id": "f19fe07e308d565a"
+    }
+  ],
+  "recorded_commits": [
+    "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10"
+  ],
   "rung_recovery": [
     {
       "level": 1,
       "matched_by": [
         "abs0"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "shift_stack"
     },
@@ -627,6 +1199,8 @@
       "matched_by": [
         "abs1"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "framed"
     }
@@ -642,6 +1216,10 @@
       2,
       2
     ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": true
   },
   "wake_schedule": "full"
 }

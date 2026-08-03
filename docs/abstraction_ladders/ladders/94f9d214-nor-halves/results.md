@@ -12,8 +12,12 @@
 | 1    | yes       | yes          | 1.0                  |
 | 2    | yes       | yes          | 1.0                  |
 
+- Top reachable at the ladder's own budget -- chain (oracle `L_k`): **NOT ESTABLISHED (censored or not run)**; climb (learned library): **NOT REACHED**
+
+> **THE LADDER DOES NOT (PROVABLY) REACH ITS OWN GOAL.** Admission is rung-scoped -- every rung can certify clean while the goal stays out of reach. Any cost or curve figure quoted from this run describes a climb that never arrived; treat the member as a censored bound, not a measured point.
+
 > **COMPROMISE OPTIONS IN EFFECT (1).** This run traded cost for claim strength. Every figure below is qualified by these, and must carry the label wherever it is quoted:
-> - **`solution-limit`** (early stop at the first solution(s)) -- saves: large, whenever solutions are found well below `depth_limit` -- the run stops paying instead of enumerating the rest of the budget. FORFEITS: `cheapest_solution_index`, cost-to-exhaust, and a complete `by_primitive` attribution. RQ1 SURVIVES: `first_solution_index` is exact either way.
+> - **`solution-limit`** (early stop at the first solution(s)) -- saves: large, whenever solutions are found well below `depth_limit` -- the run stops paying instead of enumerating the rest of the budget. FORFEITS: `cheapest_solution_index`, cost-to-exhaust, and a complete `by_primitive` attribution. **AND the loop-overhead factor** -- added 2026-07-27 after it was found missing from this list by measurement, not by review: `laddered_marginal` is read off the CHAIN and `laddered_end_to_end` off the CLIMB, and an early stop truncates the two at different points, so their ratio stops comparing like with like. Observed range moved 2.16-3.88x -> 0.30-10.52x, including a member reporting end-to-end BELOW marginal (0.30x), which is impossible for a quantity defined as re-search overhead. Do not quote loop overhead from a run carrying this option. RQ1 SURVIVES: `first_solution_index` is exact either way.
 
 ## Climb trace
 
@@ -24,10 +28,10 @@
 
 ## Rung recovery
 
-| rung    | level | recovered | matched by |
-| ------- | ----- | --------- | ---------- |
-| `north` | 1     | yes       | `abs0`     |
-| `south` | 2     | yes       | `abs1`     |
+| rung    | level | recovered | matched by | if not, where it broke |
+| ------- | ----- | --------- | ---------- | ---------------------- |
+| `north` | 1     | yes       | `abs0`     | -                      |
+| `south` | 2     | yes       | `abs1`     | -                      |
 
 ## Cost matrix (considered count per task x library)
 
@@ -127,7 +131,7 @@
 
 - Marginal (jump costs only, the idealized bound): 2,001,048
 - End-to-end (every wake re-searches every task, incl. full-budget failures): 4,002,148
-- **Loop-overhead factor**: 2.00x -- what today's loop mechanics cost above the ideal (re-search + overshoot + termination + learned-vs-oracle gap)
+- **Loop-overhead factor**: FORFEITED by solution-limit -- what today's loop mechanics cost above the ideal (re-search + overshoot + termination + learned-vs-oracle gap)
 
 ### Marginal rung value
 
@@ -157,6 +161,20 @@
 
 - Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **no**.
 - When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
+## Provenance (which runs this report was built from)
+
+| cell                   | run_id           | run dir                          | commit   | library            | depth | pool | stop    |
+| ---------------------- | ---------------- | -------------------------------- | -------- | ------------------ | ----- | ---- | ------- |
+| chain/L0               | f1f46ac3a09e6ac5 | 20260727_164123_f1f46ac3a09e6ac5 | 260fa76b | nor-L0             | 2     | 30   | first-1 |
+| chain/L1               | ed0724033f9763cc | 20260727_164123_ed0724033f9763cc | 260fa76b | nor-L0+north       | 2     | 30   | first-1 |
+| chain/L2               | 0299175e19df43c8 | 20260727_164124_0299175e19df43c8 | 260fa76b | nor-L0+north+south | 4     | 750  | first-1 |
+| climb/learn            | 2d5aa49b6ebf28b6 | 20260727_164304_2d5aa49b6ebf28b6 | 260fa76b | nor-L0             | 3     | 150  | first-1 |
+| climb/train-usefulness | cb137e96cf6caa14 | 20260727_164558_cb137e96cf6caa14 | 260fa76b | nor-L0+abs0+abs1   | 3     | 150  | first-1 |
+| climb/transfer         | b3deba9f3179b702 | 20260727_164705_b3deba9f3179b702 | 260fa76b | nor-L0+abs0+abs1   | 3     | 150  | first-1 |
+| off-chain              | ee256a5081ff62c2 | 20260727_164800_ee256a5081ff62c2 | 260fa76b | nor-L0+south       | 3     | 30   | first-1 |
+
+- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the current spec and comparing IS the staleness test: a differing hash means this artifact describes runs the current code would no longer produce.
 
 ## Not computed here
 

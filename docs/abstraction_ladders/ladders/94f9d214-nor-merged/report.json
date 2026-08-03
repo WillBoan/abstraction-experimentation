@@ -219,6 +219,9 @@
     ]
   },
   "compromises": [],
+  "config_generations": [
+    "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+  ],
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
@@ -3526,12 +3529,214 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-merged:train",
+      "learn": null,
+      "library": "nor-L0",
+      "run_dir": "20260727_190504_c2cf731bd54f23ef",
+      "run_id": "c2cf731bd54f23ef"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-merged:train",
+      "learn": null,
+      "library": "nor-L0+north",
+      "run_dir": "20260727_190509_f714af44c67f70df",
+      "run_id": "f714af44c67f70df"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-merged:train",
+      "learn": null,
+      "library": "nor-L0+north+south",
+      "run_dir": "20260727_190514_88a83f394961cb10",
+      "run_id": "88a83f394961cb10"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L3",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-merged:train",
+      "learn": null,
+      "library": "nor-L0+north+south+recolored_north",
+      "run_dir": "20260727_190518_880171c35ed55edd",
+      "run_id": "880171c35ed55edd"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L4",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-merged:train",
+      "learn": null,
+      "library": "nor-L0+north+south+recolored_north+recolored_south",
+      "run_dir": "20260727_190522_48f37ff961981902",
+      "run_id": "48f37ff961981902"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L5",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-merged:train",
+      "learn": null,
+      "library": "nor-L0+north+south+recolored_north+recolored_south+merged",
+      "run_dir": "20260727_190525_7092328d5f864194",
+      "run_id": "7092328d5f864194"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/learn",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-merged:train",
+      "learn": {
+        "iterations": 5,
+        "learn_engine": "GreedyMDLLearnEngine",
+        "metric": "CompressionMetric",
+        "proposer": "AntiunifyPairs"
+      },
+      "library": "nor-L0",
+      "run_dir": "20260727_190529_7c8d723f82019b49",
+      "run_id": "7c8d723f82019b49"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/train-usefulness",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-merged:train",
+      "learn": null,
+      "library": "nor-L0+abs0+abs1+abs2+abs3+abs4",
+      "run_dir": "20260727_190545_28b32f421b6ea48c",
+      "run_id": "28b32f421b6ea48c"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/transfer",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-merged:heldout",
+      "learn": null,
+      "library": "nor-L0+abs0+abs1+abs2+abs3+abs4",
+      "run_dir": "20260727_190548_682dfad7ec480d50",
+      "run_id": "682dfad7ec480d50"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "off-chain",
+      "commit": "1b43b3a469bb32df7005130e817ab4565fc713e3",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-merged:train",
+      "learn": null,
+      "library": "nor-L0+merged",
+      "run_dir": "20260727_190549_0ac43164e26b022c",
+      "run_id": "0ac43164e26b022c"
+    }
+  ],
+  "recorded_commits": [
+    "1b43b3a469bb32df7005130e817ab4565fc713e3"
+  ],
   "rung_recovery": [
     {
       "level": 1,
       "matched_by": [
         "abs0"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "north"
     },
@@ -3540,6 +3745,8 @@
       "matched_by": [
         "abs1"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "south"
     },
@@ -3548,6 +3755,8 @@
       "matched_by": [
         "abs2"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "recolored_north"
     },
@@ -3556,6 +3765,8 @@
       "matched_by": [
         "abs3"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "recolored_south"
     },
@@ -3564,6 +3775,8 @@
       "matched_by": [
         "abs4"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "merged"
     }

@@ -12,6 +12,8 @@
 | 1    | yes       | yes          | 1.0                  |
 | 2    | yes       | yes          | 1.0                  |
 
+- Top reachable at the ladder's own budget -- chain (oracle `L_k`): **REACHED**; climb (learned library): **REACHED**
+
 ## Climb trace
 
 | iter | wake solved                                                                   | considered (all tasks) | minted         | converged |
@@ -21,10 +23,10 @@
 
 ## Rung recovery
 
-| rung          | level | recovered | matched by |
-| ------------- | ----- | --------- | ---------- |
-| `mirror_h`    | 1     | yes       | `abs1`     |
-| `mirror_flip` | 2     | yes       | `abs0`     |
+| rung          | level | recovered | matched by | if not, where it broke |
+| ------------- | ----- | --------- | ---------- | ---------------------- |
+| `mirror_h`    | 1     | yes       | `abs1`     | -                      |
+| `mirror_flip` | 2     | yes       | `abs0`     | -                      |
 
 ## Cost matrix (considered count per task x library)
 
@@ -62,6 +64,29 @@
 - `first solution index` / `cheapest solution index`: the `candidate_index` at which the first / the globally-cheapest solution was absorbed (the solution sink -- exact, and independent of later pool eviction).
 - `solve generation`: the composition round the accepted solution was built at (round 0 = leaves).
 - `b_eff`: fitted per-round growth in composed candidates over pre-saturation rounds (`-` when the pool saturates too early to fit).
+
+## Spend attribution (`by_primitive`)
+
+| task             | library | spend by primitive (shares OVERLAP)                                                                                                     |
+| ---------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `mirror_flip-00` | L_0     | `concat_h` 36 (59.0%), `concat_v` 36 (59.0%), `flip_h` 24 (39.3%), `flip_v` 24 (39.3%)                                                  |
+| `mirror_flip-00` | L_1     | `concat_h` 50 (54.9%), `concat_v` 50 (54.9%), `flip_h` 30 (33.0%), `flip_v` 30 (33.0%), `mirror_h` 30 (33.0%)                           |
+| `mirror_flip-00` | L_2     | `concat_h` 66 (52.0%), `concat_v` 66 (52.0%), `flip_h` 36 (28.3%), `flip_v` 36 (28.3%), `mirror_flip` 36 (28.3%), `mirror_h` 36 (28.3%) |
+| `mirror_flip-01` | L_0     | `concat_h` 36 (59.0%), `concat_v` 36 (59.0%), `flip_h` 24 (39.3%), `flip_v` 24 (39.3%)                                                  |
+| `mirror_flip-01` | L_1     | `concat_h` 50 (54.9%), `concat_v` 50 (54.9%), `flip_h` 30 (33.0%), `flip_v` 30 (33.0%), `mirror_h` 30 (33.0%)                           |
+| `mirror_flip-01` | L_2     | `concat_h` 66 (52.0%), `concat_v` 66 (52.0%), `flip_h` 36 (28.3%), `flip_v` 36 (28.3%), `mirror_flip` 36 (28.3%), `mirror_h` 36 (28.3%) |
+| `mirror_h-00`    | L_0     | `concat_h` 36 (59.0%), `concat_v` 36 (59.0%), `flip_h` 24 (39.3%), `flip_v` 24 (39.3%)                                                  |
+| `mirror_h-00`    | L_1     | `concat_h` 50 (54.9%), `concat_v` 50 (54.9%), `flip_h` 30 (33.0%), `flip_v` 30 (33.0%), `mirror_h` 30 (33.0%)                           |
+| `mirror_h-00`    | L_2     | `concat_h` 66 (52.0%), `concat_v` 66 (52.0%), `flip_h` 36 (28.3%), `flip_v` 36 (28.3%), `mirror_flip` 36 (28.3%), `mirror_h` 36 (28.3%) |
+| `mirror_h-01`    | L_0     | `concat_h` 36 (59.0%), `concat_v` 36 (59.0%), `flip_h` 24 (39.3%), `flip_v` 24 (39.3%)                                                  |
+| `mirror_h-01`    | L_1     | `concat_h` 50 (54.9%), `concat_v` 50 (54.9%), `flip_h` 30 (33.0%), `flip_v` 30 (33.0%), `mirror_h` 30 (33.0%)                           |
+| `mirror_h-01`    | L_2     | `concat_h` 66 (52.0%), `concat_v` 66 (52.0%), `flip_h` 36 (28.3%), `flip_v` 36 (28.3%), `mirror_flip` 36 (28.3%), `mirror_h` 36 (28.3%) |
+| `top-00`         | L_0     | `concat_h` 36 (59.0%), `concat_v` 36 (59.0%), `flip_h` 24 (39.3%), `flip_v` 24 (39.3%)                                                  |
+| `top-00`         | L_1     | `concat_h` 50 (54.9%), `concat_v` 50 (54.9%), `flip_h` 30 (33.0%), `flip_v` 30 (33.0%), `mirror_h` 30 (33.0%)                           |
+| `top-00`         | L_2     | `concat_h` 66 (52.0%), `concat_v` 66 (52.0%), `flip_h` 36 (28.3%), `flip_v` 36 (28.3%), `mirror_flip` 36 (28.3%), `mirror_h` 36 (28.3%) |
+
+- Shares **overlap and are not a partition**: one composition counts in every bucket it touches, so a depth-3 program over three primitives appears three times. Read a share as "what fraction of the spend involved this primitive".
+- A primitive at ~100% that the task's own solution never calls is the floor-tax signature: the cell is paying for vocabulary it cannot use. Cross-check against the round-1 breadth census in `spec.md`, and against `probe-ladder`'s floor tax, which measures the same thing directly.
 
 ## Cost (considered counts)
 
@@ -133,6 +158,21 @@
 
 - Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **no**.
 - When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
+## Provenance (which runs this report was built from)
+
+| cell                   | run_id           | run dir                          | commit   | library                      | depth | pool   | stop    |
+| ---------------------- | ---------------- | -------------------------------- | -------- | ---------------------------- | ----- | ------ | ------- |
+| chain/L0               | 2662694f8cf89116 | 20260726_204628_2662694f8cf89116 | 99d38b28 | al21-L0                      | 2     | 400    | exhaust |
+| chain/L1               | 62834c53fa225511 | 20260726_204628_62834c53fa225511 | 99d38b28 | al21-L0+mirror_h             | 2     | 400    | exhaust |
+| chain/L2               | 66f89078584367ae | 20260726_204628_66f89078584367ae | 99d38b28 | al21-L0+mirror_h+mirror_flip | 2     | 400    | exhaust |
+| climb/learn            | 2394300fc1908dd5 | 20260726_204628_2394300fc1908dd5 | 99d38b28 | al21-L0                      | 2     | 400    | exhaust |
+| climb/train-usefulness | e91fc9cc4e64c549 | 20260726_204628_e91fc9cc4e64c549 | 99d38b28 | al21-L0+abs0+abs1            | 2     | 400    | exhaust |
+| climb/transfer         | 872b4d9cbdc76a2c | 20260726_204628_872b4d9cbdc76a2c | 99d38b28 | al21-L0+abs0+abs1            | 2     | 400    | exhaust |
+| off-chain              | a88e3cd8af632d04 | 20260726_204628_a88e3cd8af632d04 | 99d38b28 | al21-L0+mirror_flip          | 2     | 400    | exhaust |
+| raw-arm                | c7cb528a9b0f5b83 | 20260726_204628_c7cb528a9b0f5b83 | 99d38b28 | al21-L0                      | 3     | 200000 | first-1 |
+
+- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the current spec and comparing IS the staleness test: a differing hash means this artifact describes runs the current code would no longer produce.
 
 ## Not computed here
 

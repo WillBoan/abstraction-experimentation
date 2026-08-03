@@ -12,6 +12,8 @@
 | 1    | yes       | yes          | 1.0                  |
 | 2    | yes       | yes          | 1.0                  |
 
+- Top reachable at the ladder's own budget -- chain (oracle `L_k`): **REACHED**; climb (learned library): **REACHED**
+
 ## Climb trace
 
 | iter | wake solved                                                                       | considered (all tasks) | minted | converged |
@@ -22,10 +24,10 @@
 
 ## Rung recovery
 
-| rung             | level | recovered | matched by |
-| ---------------- | ----- | --------- | ---------- |
-| `rot180`         | 1     | yes       | `abs0`     |
-| `mirror_recolor` | 2     | yes       | `abs1`     |
+| rung             | level | recovered | matched by | if not, where it broke |
+| ---------------- | ----- | --------- | ---------- | ---------------------- |
+| `rot180`         | 1     | yes       | `abs0`     | -                      |
+| `mirror_recolor` | 2     | yes       | `abs1`     | -                      |
 
 ## Cost matrix (considered count per task x library)
 
@@ -61,6 +63,29 @@
 - `first solution index` / `cheapest solution index`: the `candidate_index` at which the first / the globally-cheapest solution was absorbed (the solution sink -- exact, and independent of later pool eviction).
 - `solve generation`: the composition round the accepted solution was built at (round 0 = leaves).
 - `b_eff`: fitted per-round growth in composed candidates over pre-saturation rounds (`-` when the pool saturates too early to fit).
+
+## Spend attribution (`by_primitive`)
+
+| task                 | library | spend by primitive (shares OVERLAP)                                                                                                                     |
+| -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mirror-recolor-1-2` | L_0     | `__const__` 6,736 (99.9%), `map_color` 6,726 (99.7%), `flip_h` 167 (2.5%), `flip_v` 167 (2.5%)                                                          |
+| `mirror-recolor-1-2` | L_1     | `__const__` 6,899 (99.8%), `map_color` 6,889 (99.7%), `flip_h` 169 (2.4%), `flip_v` 169 (2.4%), `rot180` 169 (2.4%)                                     |
+| `mirror-recolor-1-2` | L_2     | `__const__` 26,388 (100.0%), `map_color` 19,489 (73.8%), `mirror_recolor` 19,489 (73.8%), `flip_h` 332 (1.3%), `flip_v` 332 (1.3%), `rot180` 332 (1.3%) |
+| `mirror-recolor-3-4` | L_0     | `__const__` 6,736 (99.9%), `map_color` 6,726 (99.7%), `flip_h` 167 (2.5%), `flip_v` 167 (2.5%)                                                          |
+| `mirror-recolor-3-4` | L_1     | `__const__` 6,899 (99.8%), `map_color` 6,889 (99.7%), `flip_h` 169 (2.4%), `flip_v` 169 (2.4%), `rot180` 169 (2.4%)                                     |
+| `mirror-recolor-3-4` | L_2     | `__const__` 26,388 (100.0%), `map_color` 19,489 (73.8%), `mirror_recolor` 19,489 (73.8%), `flip_h` 332 (1.3%), `flip_v` 332 (1.3%), `rot180` 332 (1.3%) |
+| `rot180-00`          | L_0     | `__const__` 6,736 (99.9%), `map_color` 6,726 (99.7%), `flip_h` 167 (2.5%), `flip_v` 167 (2.5%)                                                          |
+| `rot180-00`          | L_1     | `__const__` 6,899 (99.8%), `map_color` 6,889 (99.7%), `flip_h` 169 (2.4%), `flip_v` 169 (2.4%), `rot180` 169 (2.4%)                                     |
+| `rot180-00`          | L_2     | `__const__` 26,388 (100.0%), `map_color` 19,489 (73.8%), `mirror_recolor` 19,489 (73.8%), `flip_h` 332 (1.3%), `flip_v` 332 (1.3%), `rot180` 332 (1.3%) |
+| `rot180-01`          | L_0     | `__const__` 6,736 (99.9%), `map_color` 6,726 (99.7%), `flip_h` 167 (2.5%), `flip_v` 167 (2.5%)                                                          |
+| `rot180-01`          | L_1     | `__const__` 6,899 (99.8%), `map_color` 6,889 (99.7%), `flip_h` 169 (2.4%), `flip_v` 169 (2.4%), `rot180` 169 (2.4%)                                     |
+| `rot180-01`          | L_2     | `__const__` 26,388 (100.0%), `map_color` 19,489 (73.8%), `mirror_recolor` 19,489 (73.8%), `flip_h` 332 (1.3%), `flip_v` 332 (1.3%), `rot180` 332 (1.3%) |
+| `top-00`             | L_0     | `__const__` 6,736 (99.9%), `map_color` 6,726 (99.7%), `flip_h` 167 (2.5%), `flip_v` 167 (2.5%)                                                          |
+| `top-00`             | L_1     | `__const__` 6,899 (99.8%), `map_color` 6,889 (99.7%), `flip_h` 169 (2.4%), `flip_v` 169 (2.4%), `rot180` 169 (2.4%)                                     |
+| `top-00`             | L_2     | `__const__` 26,388 (100.0%), `map_color` 19,489 (73.8%), `mirror_recolor` 19,489 (73.8%), `flip_h` 332 (1.3%), `flip_v` 332 (1.3%), `rot180` 332 (1.3%) |
+
+- Shares **overlap and are not a partition**: one composition counts in every bucket it touches, so a depth-3 program over three primitives appears three times. Read a share as "what fraction of the spend involved this primitive".
+- A primitive at ~100% that the task's own solution never calls is the floor-tax signature: the cell is paying for vocabulary it cannot use. Cross-check against the round-1 breadth census in `spec.md`, and against `probe-ladder`'s floor tax, which measures the same thing directly.
 
 ## Cost (considered counts)
 
@@ -132,6 +157,21 @@
 
 - Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **yes**.
 - When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
+## Provenance (which runs this report was built from)
+
+| cell                   | run_id           | run dir                          | commit   | library                      | depth | pool   | stop    |
+| ---------------------- | ---------------- | -------------------------------- | -------- | ---------------------------- | ----- | ------ | ------- |
+| chain/L0               | f2ed3aae91af7f14 | 20260720_195138_f2ed3aae91af7f14 | 532e1255 | al1-L0                       | 2     | 300    | exhaust |
+| chain/L1               | f51c440168c916a9 | 20260720_195139_f51c440168c916a9 | 532e1255 | al1-L0+rot180                | 2     | 300    | exhaust |
+| chain/L2               | c0950821fb447c67 | 20260720_195139_c0950821fb447c67 | 532e1255 | al1-L0+rot180+mirror_recolor | 2     | 300    | exhaust |
+| climb/learn            | c7dfd456076ff761 | 20260722_212625_c7dfd456076ff761 | 2dbb2534 | al1-L0                       | 2     | 300    | exhaust |
+| climb/train-usefulness | 3165aa298e96f905 | 20260720_195131_3165aa298e96f905 | 532e1255 | al1-L0+abs0+abs1             | 2     | 300    | exhaust |
+| climb/transfer         | 30f4a98e2521e9f5 | 20260720_195135_30f4a98e2521e9f5 | 532e1255 | al1-L0+abs0+abs1             | 2     | 300    | exhaust |
+| off-chain              | 0806d0bd08d4659d | 20260720_195144_0806d0bd08d4659d | 532e1255 | al1-L0+mirror_recolor        | 2     | 300    | exhaust |
+| raw-arm                | 9b745f2679c49801 | 20260722_212631_9b745f2679c49801 | 2dbb2534 | al1-L0                       | 4     | 200000 | first-1 |
+
+- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the current spec and comparing IS the staleness test: a differing hash means this artifact describes runs the current code would no longer produce.
 
 ## Not computed here
 

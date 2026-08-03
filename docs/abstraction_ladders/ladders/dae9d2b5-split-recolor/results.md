@@ -14,6 +14,8 @@
 | 3    | yes       | yes          | 1.0                  |
 | 4    | yes       | yes          | 1.0                  |
 
+- Top reachable at the ladder's own budget -- chain (oracle `L_k`): **REACHED**; climb (learned library): **REACHED**
+
 ## Climb trace
 
 | iter | wake solved                                                                                                                                   | considered (all tasks) | minted         | converged |
@@ -24,12 +26,12 @@
 
 ## Rung recovery
 
-| rung             | level | recovered | matched by |
-| ---------------- | ----- | --------- | ---------- |
-| `west`           | 1     | yes       | `abs1`     |
-| `east`           | 2     | yes       | `abs0`     |
-| `recolored_west` | 3     | yes       | `abs3`     |
-| `recolored_east` | 4     | yes       | `abs2`     |
+| rung             | level | recovered | matched by | if not, where it broke |
+| ---------------- | ----- | --------- | ---------- | ---------------------- |
+| `west`           | 1     | yes       | `abs1`     | -                      |
+| `east`           | 2     | yes       | `abs0`     | -                      |
+| `recolored_west` | 3     | yes       | `abs3`     | -                      |
+| `recolored_east` | 4     | yes       | `abs2`     | -                      |
 
 ## Cost matrix (considered count per task x library)
 
@@ -227,6 +229,23 @@
 
 - Off-chain (Floor + the top bridging rung only, no intermediate rungs) solves the top: **no**.
 - When this is `yes`, the intermediate rungs are NOT needed to express or find the top solution -- yet the top rung itself is unlearnable without them (its demonstrating tasks are unsolved at the lower library, so sleep never sees the material to mint it). The rungs are stepping stones for the **learning path**, not dependencies of the **search path**. That is the ladder thesis, measured rather than assumed.
+
+## Provenance (which runs this report was built from)
+
+| cell                   | run_id           | run dir                          | commit   | library                                                   | depth | pool   | stop    |
+| ---------------------- | ---------------- | -------------------------------- | -------- | --------------------------------------------------------- | ----- | ------ | ------- |
+| chain/L0               | 0103209e48742858 | 20260727_023652_0103209e48742858 | 272d13e5 | dae9d2b5-split-L0                                         | 2     | 150    | exhaust |
+| chain/L1               | 644c2597d91619ff | 20260727_023820_644c2597d91619ff | 272d13e5 | dae9d2b5-split-L0+west                                    | 2     | 150    | exhaust |
+| chain/L2               | e918fca4294f81df | 20260727_023955_e918fca4294f81df | 272d13e5 | dae9d2b5-split-L0+west+east                               | 2     | 150    | exhaust |
+| chain/L3               | 4ff16306983f8c96 | 20260727_024134_4ff16306983f8c96 | 272d13e5 | dae9d2b5-split-L0+west+east+recolored_west                | 2     | 150    | exhaust |
+| chain/L4               | 144a971546ae7d9a | 20260727_024319_144a971546ae7d9a | 272d13e5 | dae9d2b5-split-L0+west+east+recolored_west+recolored_east | 2     | 150    | exhaust |
+| climb/learn            | b7a2b5699ddba30c | 20260727_024508_b7a2b5699ddba30c | 272d13e5 | dae9d2b5-split-L0                                         | 2     | 150    | exhaust |
+| climb/train-usefulness | c2f0029234a69f82 | 20260727_025001_c2f0029234a69f82 | 272d13e5 | dae9d2b5-split-L0+abs0+abs1+abs2+abs3                     | 2     | 150    | exhaust |
+| climb/transfer         | 426b3895679e02d7 | 20260727_025145_426b3895679e02d7 | 272d13e5 | dae9d2b5-split-L0+abs0+abs1+abs2+abs3                     | 2     | 150    | exhaust |
+| off-chain              | b0c2f9dfc0f21341 | 20260727_025237_b0c2f9dfc0f21341 | 272d13e5 | dae9d2b5-split-L0+recolored_east                          | 2     | 150    | exhaust |
+| raw-arm                | 0b4d33c33c377526 | 20260727_025408_0b4d33c33c377526 | 272d13e5 | dae9d2b5-split-L0                                         | 4     | 200000 | first-1 |
+
+- `run_id` is the content hash of `RunSpec = Config x Corpus`, so re-deriving it from the current spec and comparing IS the staleness test: a differing hash means this artifact describes runs the current code would no longer produce.
 
 ## Not computed here
 

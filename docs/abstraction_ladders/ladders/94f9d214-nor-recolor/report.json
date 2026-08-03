@@ -152,7 +152,10 @@
         "94f9d214"
       ]
     },
-    "loop_overhead_factor": 10.523212162683926,
+    "loop_overhead_factor": null,
+    "loop_overhead_forfeited_by": [
+      "solution-limit"
+    ],
     "marginal_rung_value": [
       {
         "censored": true,
@@ -229,12 +232,15 @@
   "compromises": [
     {
       "code": "solution-limit",
-      "forfeits": "`cheapest_solution_index`, cost-to-exhaust, and a complete `by_primitive` attribution. RQ1 SURVIVES: `first_solution_index` is exact either way",
+      "forfeits": "`cheapest_solution_index`, cost-to-exhaust, and a complete `by_primitive` attribution. **AND the loop-overhead factor** -- added 2026-07-27 after it was found missing from this list by measurement, not by review: `laddered_marginal` is read off the CHAIN and `laddered_end_to_end` off the CLIMB, and an early stop truncates the two at different points, so their ratio stops comparing like with like. Observed range moved 2.16-3.88x -> 0.30-10.52x, including a member reporting end-to-end BELOW marginal (0.30x), which is impossible for a quantity defined as re-search overhead. Do not quote loop overhead from a run carrying this option. RQ1 SURVIVES: `first_solution_index` is exact either way",
       "label": "early stop at the first solution(s)",
       "saves": "large, whenever solutions are found well below `depth_limit` -- the run stops paying instead of enumerating the rest of the budget",
       "severity": "narrows",
       "when_justified": "a cell whose only question is cost-to-first, or a guarded baseline arm where exhausting is the thing being avoided (the raw arm runs `solution_limit=1` by design)"
     }
+  ],
+  "config_generations": [
+    "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
   ],
   "cost": {
     "amortization_ratio_considered": null,
@@ -273,6 +279,7 @@
       "guard_per_task": 5231740,
       "k": 10,
       "laddered_marginal": 523174,
+      "reused_recorded_arm": true,
       "saturated_at": null,
       "solved": false,
       "sound": true,
@@ -2638,6 +2645,206 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L0",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-recolor:train",
+      "learn": null,
+      "library": "nor-L0",
+      "run_dir": "20260727_163113_d89bb69f0f492c2d",
+      "run_id": "d89bb69f0f492c2d"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L1",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-recolor:train",
+      "learn": null,
+      "library": "nor-L0+north",
+      "run_dir": "20260727_163116_2a835be710613be5",
+      "run_id": "2a835be710613be5"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L2",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-recolor:train",
+      "learn": null,
+      "library": "nor-L0+north+south",
+      "run_dir": "20260727_163118_013371ccc77e2352",
+      "run_id": "013371ccc77e2352"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L3",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-recolor:train",
+      "learn": null,
+      "library": "nor-L0+north+south+recolored_north",
+      "run_dir": "20260727_163120_9f08c60dfa7c8ceb",
+      "run_id": "9f08c60dfa7c8ceb"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "chain/L4",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-recolor:train",
+      "learn": null,
+      "library": "nor-L0+north+south+recolored_north+recolored_south",
+      "run_dir": "20260727_163121_fda8beb88e35555f",
+      "run_id": "fda8beb88e35555f"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "climb/learn",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-recolor:train",
+      "learn": {
+        "iterations": 5,
+        "learn_engine": "GreedyMDLLearnEngine",
+        "metric": "CompressionMetric",
+        "proposer": "AntiunifyPairs"
+      },
+      "library": "nor-L0",
+      "run_dir": "20260727_163141_d3911a32d39dae64",
+      "run_id": "d3911a32d39dae64"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "climb/train-usefulness",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-recolor:train",
+      "learn": null,
+      "library": "nor-L0+abs0+abs1+abs2+abs3+abs4+abs5+abs6+abs7+abs8+abs9+abs10+abs11+abs12+abs13+abs14+abs15",
+      "run_dir": "20260727_163549_488a9742fc5b28c0",
+      "run_id": "488a9742fc5b28c0"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "climb/transfer",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-recolor:heldout",
+      "learn": null,
+      "library": "nor-L0+abs0+abs1+abs2+abs3+abs4+abs5+abs6+abs7+abs8+abs9+abs10+abs11+abs12+abs13+abs14+abs15",
+      "run_dir": "20260727_163611_0e1134e841991441",
+      "run_id": "0e1134e841991441"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "off-chain",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-recolor:train",
+      "learn": null,
+      "library": "nor-L0+recolored_south",
+      "run_dir": "20260727_163629_20fde0cdc96a8f30",
+      "run_id": "20fde0cdc96a8f30"
+    },
+    {
+      "budget": {
+        "considered_limit": 5231740,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 5,
+        "max_arity": 3,
+        "max_pool": 200000,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "raw-arm",
+      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "completed": true,
+      "corpus_name": "94f9d214-nor-recolor:train:raw-arm",
+      "learn": null,
+      "library": "nor-L0",
+      "run_dir": "20260727_163631_e54a715f27fba43b",
+      "run_id": "e54a715f27fba43b"
+    }
+  ],
+  "recorded_commits": [
+    "260fa76b8d20fd72a8d2898c46ac906749157adb"
+  ],
   "rung_recovery": [
     {
       "level": 1,
@@ -2647,6 +2854,8 @@
         "abs9",
         "abs14"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "north"
     },
@@ -2657,6 +2866,8 @@
         "abs6",
         "abs12"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "south"
     },
@@ -2666,6 +2877,8 @@
         "abs2",
         "abs10"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "recolored_north"
     },
@@ -2676,6 +2889,8 @@
         "abs11",
         "abs15"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "recolored_south"
     }
@@ -2691,6 +2906,10 @@
       3,
       2
     ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": true
   },
   "wake_schedule": "full"
 }

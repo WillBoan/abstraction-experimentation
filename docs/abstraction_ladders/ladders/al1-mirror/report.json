@@ -73,6 +73,7 @@
       ]
     },
     "loop_overhead_factor": 3.728845115525684,
+    "loop_overhead_forfeited_by": null,
     "marginal_rung_value": [
       {
         "censored": true,
@@ -112,6 +113,10 @@
       }
     ]
   },
+  "compromises": [],
+  "config_generations": [
+    "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+  ],
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
@@ -145,6 +150,7 @@
       "guard_per_task": 537110,
       "k": 10,
       "laddered_marginal": 53711,
+      "reused_recorded_arm": true,
       "saturated_at": null,
       "solved": true,
       "sound": true,
@@ -188,6 +194,28 @@
       "columns": {
         "0": {
           "b_eff": 24.55,
+          "by_primitive": [
+            {
+              "considered": 6736,
+              "primitive": "__const__",
+              "share": 0.9989618864007118
+            },
+            {
+              "considered": 6726,
+              "primitive": "map_color",
+              "share": 0.9974788669731574
+            },
+            {
+              "considered": 167,
+              "primitive": "flip_h",
+              "share": 0.024766424440160167
+            },
+            {
+              "considered": 167,
+              "primitive": "flip_v",
+              "share": 0.024766424440160167
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
           "considered": 6743,
@@ -197,6 +225,33 @@
         },
         "1": {
           "b_eff": 24.86,
+          "by_primitive": [
+            {
+              "considered": 6899,
+              "primitive": "__const__",
+              "share": 0.9981192129629629
+            },
+            {
+              "considered": 6889,
+              "primitive": "map_color",
+              "share": 0.9966724537037037
+            },
+            {
+              "considered": 169,
+              "primitive": "flip_h",
+              "share": 0.024450231481481483
+            },
+            {
+              "considered": 169,
+              "primitive": "flip_v",
+              "share": 0.024450231481481483
+            },
+            {
+              "considered": 169,
+              "primitive": "rot180",
+              "share": 0.024450231481481483
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 458,
           "considered": 6912,
@@ -206,6 +261,38 @@
         },
         "2": {
           "b_eff": 48.79,
+          "by_primitive": [
+            {
+              "considered": 26388,
+              "primitive": "__const__",
+              "share": 0.9995075944093027
+            },
+            {
+              "considered": 19489,
+              "primitive": "map_color",
+              "share": 0.7381917351615469
+            },
+            {
+              "considered": 19489,
+              "primitive": "mirror_recolor",
+              "share": 0.7381917351615469
+            },
+            {
+              "considered": 332,
+              "primitive": "flip_h",
+              "share": 0.012575281239346994
+            },
+            {
+              "considered": 332,
+              "primitive": "flip_v",
+              "share": 0.012575281239346994
+            },
+            {
+              "considered": 332,
+              "primitive": "rot180",
+              "share": 0.012575281239346994
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 126,
           "considered": 26401,
@@ -221,6 +308,28 @@
       "columns": {
         "0": {
           "b_eff": 24.55,
+          "by_primitive": [
+            {
+              "considered": 6736,
+              "primitive": "__const__",
+              "share": 0.9989618864007118
+            },
+            {
+              "considered": 6726,
+              "primitive": "map_color",
+              "share": 0.9974788669731574
+            },
+            {
+              "considered": 167,
+              "primitive": "flip_h",
+              "share": 0.024766424440160167
+            },
+            {
+              "considered": 167,
+              "primitive": "flip_v",
+              "share": 0.024766424440160167
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
           "considered": 6743,
@@ -230,6 +339,33 @@
         },
         "1": {
           "b_eff": 24.86,
+          "by_primitive": [
+            {
+              "considered": 6899,
+              "primitive": "__const__",
+              "share": 0.9981192129629629
+            },
+            {
+              "considered": 6889,
+              "primitive": "map_color",
+              "share": 0.9966724537037037
+            },
+            {
+              "considered": 169,
+              "primitive": "flip_h",
+              "share": 0.024450231481481483
+            },
+            {
+              "considered": 169,
+              "primitive": "flip_v",
+              "share": 0.024450231481481483
+            },
+            {
+              "considered": 169,
+              "primitive": "rot180",
+              "share": 0.024450231481481483
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 480,
           "considered": 6912,
@@ -239,6 +375,38 @@
         },
         "2": {
           "b_eff": 48.79,
+          "by_primitive": [
+            {
+              "considered": 26388,
+              "primitive": "__const__",
+              "share": 0.9995075944093027
+            },
+            {
+              "considered": 19489,
+              "primitive": "map_color",
+              "share": 0.7381917351615469
+            },
+            {
+              "considered": 19489,
+              "primitive": "mirror_recolor",
+              "share": 0.7381917351615469
+            },
+            {
+              "considered": 332,
+              "primitive": "flip_h",
+              "share": 0.012575281239346994
+            },
+            {
+              "considered": 332,
+              "primitive": "flip_v",
+              "share": 0.012575281239346994
+            },
+            {
+              "considered": 332,
+              "primitive": "rot180",
+              "share": 0.012575281239346994
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 148,
           "considered": 26401,
@@ -254,6 +422,28 @@
       "columns": {
         "0": {
           "b_eff": 24.55,
+          "by_primitive": [
+            {
+              "considered": 6736,
+              "primitive": "__const__",
+              "share": 0.9989618864007118
+            },
+            {
+              "considered": 6726,
+              "primitive": "map_color",
+              "share": 0.9974788669731574
+            },
+            {
+              "considered": 167,
+              "primitive": "flip_h",
+              "share": 0.024766424440160167
+            },
+            {
+              "considered": 167,
+              "primitive": "flip_v",
+              "share": 0.024766424440160167
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 114,
           "considered": 6743,
@@ -263,6 +453,33 @@
         },
         "1": {
           "b_eff": 24.86,
+          "by_primitive": [
+            {
+              "considered": 6899,
+              "primitive": "__const__",
+              "share": 0.9981192129629629
+            },
+            {
+              "considered": 6889,
+              "primitive": "map_color",
+              "share": 0.9966724537037037
+            },
+            {
+              "considered": 169,
+              "primitive": "flip_h",
+              "share": 0.024450231481481483
+            },
+            {
+              "considered": 169,
+              "primitive": "flip_v",
+              "share": 0.024450231481481483
+            },
+            {
+              "considered": 169,
+              "primitive": "rot180",
+              "share": 0.024450231481481483
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 113,
           "considered": 6912,
@@ -272,6 +489,38 @@
         },
         "2": {
           "b_eff": 48.79,
+          "by_primitive": [
+            {
+              "considered": 26388,
+              "primitive": "__const__",
+              "share": 0.9995075944093027
+            },
+            {
+              "considered": 19489,
+              "primitive": "map_color",
+              "share": 0.7381917351615469
+            },
+            {
+              "considered": 19489,
+              "primitive": "mirror_recolor",
+              "share": 0.7381917351615469
+            },
+            {
+              "considered": 332,
+              "primitive": "flip_h",
+              "share": 0.012575281239346994
+            },
+            {
+              "considered": 332,
+              "primitive": "flip_v",
+              "share": 0.012575281239346994
+            },
+            {
+              "considered": 332,
+              "primitive": "rot180",
+              "share": 0.012575281239346994
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 113,
           "considered": 26401,
@@ -287,6 +536,28 @@
       "columns": {
         "0": {
           "b_eff": 24.55,
+          "by_primitive": [
+            {
+              "considered": 6736,
+              "primitive": "__const__",
+              "share": 0.9989618864007118
+            },
+            {
+              "considered": 6726,
+              "primitive": "map_color",
+              "share": 0.9974788669731574
+            },
+            {
+              "considered": 167,
+              "primitive": "flip_h",
+              "share": 0.024766424440160167
+            },
+            {
+              "considered": 167,
+              "primitive": "flip_v",
+              "share": 0.024766424440160167
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 114,
           "considered": 6743,
@@ -296,6 +567,33 @@
         },
         "1": {
           "b_eff": 24.86,
+          "by_primitive": [
+            {
+              "considered": 6899,
+              "primitive": "__const__",
+              "share": 0.9981192129629629
+            },
+            {
+              "considered": 6889,
+              "primitive": "map_color",
+              "share": 0.9966724537037037
+            },
+            {
+              "considered": 169,
+              "primitive": "flip_h",
+              "share": 0.024450231481481483
+            },
+            {
+              "considered": 169,
+              "primitive": "flip_v",
+              "share": 0.024450231481481483
+            },
+            {
+              "considered": 169,
+              "primitive": "rot180",
+              "share": 0.024450231481481483
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 113,
           "considered": 6912,
@@ -305,6 +603,38 @@
         },
         "2": {
           "b_eff": 48.79,
+          "by_primitive": [
+            {
+              "considered": 26388,
+              "primitive": "__const__",
+              "share": 0.9995075944093027
+            },
+            {
+              "considered": 19489,
+              "primitive": "map_color",
+              "share": 0.7381917351615469
+            },
+            {
+              "considered": 19489,
+              "primitive": "mirror_recolor",
+              "share": 0.7381917351615469
+            },
+            {
+              "considered": 332,
+              "primitive": "flip_h",
+              "share": 0.012575281239346994
+            },
+            {
+              "considered": 332,
+              "primitive": "flip_v",
+              "share": 0.012575281239346994
+            },
+            {
+              "considered": 332,
+              "primitive": "rot180",
+              "share": 0.012575281239346994
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 113,
           "considered": 26401,
@@ -320,6 +650,28 @@
       "columns": {
         "0": {
           "b_eff": 24.55,
+          "by_primitive": [
+            {
+              "considered": 6736,
+              "primitive": "__const__",
+              "share": 0.9989618864007118
+            },
+            {
+              "considered": 6726,
+              "primitive": "map_color",
+              "share": 0.9974788669731574
+            },
+            {
+              "considered": 167,
+              "primitive": "flip_h",
+              "share": 0.024766424440160167
+            },
+            {
+              "considered": 167,
+              "primitive": "flip_v",
+              "share": 0.024766424440160167
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
           "considered": 6743,
@@ -329,6 +681,33 @@
         },
         "1": {
           "b_eff": 24.86,
+          "by_primitive": [
+            {
+              "considered": 6899,
+              "primitive": "__const__",
+              "share": 0.9981192129629629
+            },
+            {
+              "considered": 6889,
+              "primitive": "map_color",
+              "share": 0.9966724537037037
+            },
+            {
+              "considered": 169,
+              "primitive": "flip_h",
+              "share": 0.024450231481481483
+            },
+            {
+              "considered": 169,
+              "primitive": "flip_v",
+              "share": 0.024450231481481483
+            },
+            {
+              "considered": 169,
+              "primitive": "rot180",
+              "share": 0.024450231481481483
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": null,
           "considered": 6912,
@@ -338,6 +717,38 @@
         },
         "2": {
           "b_eff": 48.79,
+          "by_primitive": [
+            {
+              "considered": 26388,
+              "primitive": "__const__",
+              "share": 0.9995075944093027
+            },
+            {
+              "considered": 19489,
+              "primitive": "map_color",
+              "share": 0.7381917351615469
+            },
+            {
+              "considered": 19489,
+              "primitive": "mirror_recolor",
+              "share": 0.7381917351615469
+            },
+            {
+              "considered": 332,
+              "primitive": "flip_h",
+              "share": 0.012575281239346994
+            },
+            {
+              "considered": 332,
+              "primitive": "flip_v",
+              "share": 0.012575281239346994
+            },
+            {
+              "considered": 332,
+              "primitive": "rot180",
+              "share": 0.012575281239346994
+            }
+          ],
           "censored": false,
           "cheapest_solution_index": 7206,
           "considered": 26401,
@@ -635,12 +1046,177 @@
     }
   },
   "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 300,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "532e125525437aad226e5baae75ab8f835ae9b5f",
+      "completed": true,
+      "corpus_name": "al1-mirror:train",
+      "learn": null,
+      "library": "al1-L0",
+      "run_dir": "20260720_195138_f2ed3aae91af7f14",
+      "run_id": "f2ed3aae91af7f14"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 300,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "532e125525437aad226e5baae75ab8f835ae9b5f",
+      "completed": true,
+      "corpus_name": "al1-mirror:train",
+      "learn": null,
+      "library": "al1-L0+rot180",
+      "run_dir": "20260720_195139_f51c440168c916a9",
+      "run_id": "f51c440168c916a9"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 300,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L2",
+      "commit": "532e125525437aad226e5baae75ab8f835ae9b5f",
+      "completed": true,
+      "corpus_name": "al1-mirror:train",
+      "learn": null,
+      "library": "al1-L0+rot180+mirror_recolor",
+      "run_dir": "20260720_195139_c0950821fb447c67",
+      "run_id": "c0950821fb447c67"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 300,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/learn",
+      "commit": "2dbb253496d8ecb55f6374e77185864b5b5b0581",
+      "completed": true,
+      "corpus_name": "al1-mirror:train",
+      "learn": {
+        "iterations": 5,
+        "learn_engine": "GreedyMDLLearnEngine",
+        "metric": "CompressionMetric",
+        "proposer": "AntiunifyPairs"
+      },
+      "library": "al1-L0",
+      "run_dir": "20260722_212625_c7dfd456076ff761",
+      "run_id": "c7dfd456076ff761"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 300,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/train-usefulness",
+      "commit": "532e125525437aad226e5baae75ab8f835ae9b5f",
+      "completed": true,
+      "corpus_name": "al1-mirror:train",
+      "learn": null,
+      "library": "al1-L0+abs0+abs1",
+      "run_dir": "20260720_195131_3165aa298e96f905",
+      "run_id": "3165aa298e96f905"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 300,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "climb/transfer",
+      "commit": "532e125525437aad226e5baae75ab8f835ae9b5f",
+      "completed": true,
+      "corpus_name": "al1-mirror:heldout",
+      "learn": null,
+      "library": "al1-L0+abs0+abs1",
+      "run_dir": "20260720_195135_30f4a98e2521e9f5",
+      "run_id": "30f4a98e2521e9f5"
+    },
+    {
+      "budget": {
+        "considered_limit": 50000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 2,
+        "max_arity": 2,
+        "max_pool": 300,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "off-chain",
+      "commit": "532e125525437aad226e5baae75ab8f835ae9b5f",
+      "completed": true,
+      "corpus_name": "al1-mirror:train",
+      "learn": null,
+      "library": "al1-L0+mirror_recolor",
+      "run_dir": "20260720_195144_0806d0bd08d4659d",
+      "run_id": "0806d0bd08d4659d"
+    },
+    {
+      "budget": {
+        "considered_limit": 537110,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "max_arity": 2,
+        "max_pool": 200000,
+        "solution_limit": 1,
+        "solution_limit_mode": "immediate"
+      },
+      "cell": "raw-arm",
+      "commit": "2dbb253496d8ecb55f6374e77185864b5b5b0581",
+      "completed": true,
+      "corpus_name": "al1-mirror:train:raw-arm",
+      "learn": null,
+      "library": "al1-L0",
+      "run_dir": "20260722_212631_9b745f2679c49801",
+      "run_id": "9b745f2679c49801"
+    }
+  ],
+  "recorded_commits": [
+    "2dbb253496d8ecb55f6374e77185864b5b5b0581",
+    "532e125525437aad226e5baae75ab8f835ae9b5f"
+  ],
   "rung_recovery": [
     {
       "level": 1,
       "matched_by": [
         "abs0"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "rot180"
     },
@@ -649,6 +1225,8 @@
       "matched_by": [
         "abs1"
       ],
+      "not_recovered_because": null,
+      "proposed_at_iteration": null,
       "recovered": true,
       "rung": "mirror_recolor"
     }
@@ -664,6 +1242,10 @@
       2,
       2
     ]
+  },
+  "top_reachable": {
+    "chain": true,
+    "climb": true
   },
   "wake_schedule": "full"
 }

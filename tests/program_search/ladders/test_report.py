@@ -166,6 +166,100 @@ def test_renders_a_forfeited_loop_overhead_factor() -> None:
     )
 
 
+def test_renders_the_recovery_diagnosis_and_only_the_legends_in_play() -> None:
+    """A legend for a verdict this report does not carry would be noise; the renderer prints only
+    what is present."""
+    recovery: list[dict[str, object]] = [
+        {"rung": "a", "level": 1, "recovered": True, "matched_by": ["abs0"]},
+        {
+            "rung": "b",
+            "level": 2,
+            "recovered": False,
+            "matched_by": [],
+            "not_recovered_because": "proposed-not-selected",
+            "proposed_at_iteration": 0,
+        },
+    ]
+    text = _compact(render_report_markdown({**_REPORT, "rung_recovery": recovery}))
+
+    assert "| `a` | 1 | yes | `abs0` | - |" in text
+    assert "| `b` | 2 | no | - | proposed-not-selected (iter 0) |" in text
+    assert "Governance PREFERENCE, not reach" in text
+    assert "**not necessarily a defect**" in text
+    assert "`no-material`" not in text and "`not-proposed` --" not in text
+    assert "Proposals are RECOMPUTED read-side" in text
+
+
+def test_a_pre_diagnosis_report_renders_the_column_empty_and_no_legend() -> None:
+    """Every artifact committed before 2026-08-03 carries recovery rows with no diagnosis key. The
+    renderer must show them as undiagnosed-blank rather than inventing a verdict."""
+    text = _compact(render_report_markdown(_REPORT))
+
+    assert "| `mirror_recolor` | 2 | no | - | - |" in text
+    assert "Proposals are RECOMPUTED read-side" not in text
+
+
+_PROVENANCE: list[dict[str, object]] = [
+    {
+        "cell": "chain/L0",
+        "run_id": "abc123def4567890",
+        "run_dir": "20260803_120000_abc123def4567890",
+        "completed": True,
+        "commit": "1b43b3a4c0ffee00",
+        "corpus_name": "al1-mirror:train",
+        "library": "al1-L0",
+        "budget": {"depth_limit": 2, "max_pool": 300, "solution_limit": None},
+        "learn": None,
+    },
+    {
+        "cell": "raw-arm",
+        "run_id": "fee1dead00000000",
+        "run_dir": "20260803_120500_fee1dead00000000",
+        "completed": True,
+        "commit": "1b43b3a4c0ffee00",
+        "corpus_name": "al1-mirror:train:raw-arm",
+        "library": "al1-L0",
+        "budget": {"depth_limit": 4, "max_pool": 200000, "solution_limit": 1},
+        "learn": None,
+    },
+]
+
+
+def test_renders_provenance_so_a_number_can_be_traced_to_its_run() -> None:
+    report: dict[str, object] = {
+        **_REPORT,
+        "provenance": _PROVENANCE,
+        "config_generations": ["1b43b3a4c0ffee00 max_arity=2"],
+    }
+    text = _compact(render_report_markdown(report))
+
+    assert "## Provenance (which runs this report was built from)" in text
+    assert "| chain/L0 | abc123def4567890 | 20260803_120000_abc123def4567890 |" in text
+    assert "| 1b43b3a4 | al1-L0 | 2 | 300 | exhaust |" in text
+    assert "| raw-arm | fee1dead00000000 |" in text and "| first-1 |" in text
+    assert "re-deriving it from the current spec and comparing IS the staleness test" in text
+    assert "config generations" not in text.lower() or "⚠" not in text
+
+
+def test_banners_a_report_assembled_across_config_generations() -> None:
+    """The census's central failure mode, made visible in the artifact that carries the numbers."""
+    report: dict[str, object] = {
+        **_REPORT,
+        "provenance": _PROVENANCE,
+        "config_generations": ["532e1255 max_arity=2", "aad497c7 max_arity=2"],
+    }
+    text = _compact(render_report_markdown(report))
+
+    assert "⚠ **This report's cells span 2 config generations.**" in text
+    assert "not mutually comparable" in text
+
+
+def test_a_report_without_provenance_renders_no_provenance_section() -> None:
+    """Pre-2026-08-03 artifacts carry none; the renderer must not invent an empty table."""
+    text = _compact(render_report_markdown(_REPORT))
+    assert "## Provenance" not in text
+
+
 def test_renders_every_section_from_the_report_dict() -> None:
     text = _compact(render_report_markdown(_REPORT))
     assert "# Ladder results: al1-mirror" in text  # the :train suffix is stripped
