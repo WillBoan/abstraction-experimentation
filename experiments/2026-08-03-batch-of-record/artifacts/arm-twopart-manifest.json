@@ -1,0 +1,580 @@
+[
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [
+      "solution-limit"
+    ],
+    "diagnoses": [
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "94f9d214-nor-halves",
+    "rungs_recovered": 0,
+    "rungs_total": 2,
+    "seconds": 0.09342649998143315,
+    "top_chain": null,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "94f9d214-nor-merged",
+    "rungs_recovered": 0,
+    "rungs_total": 5,
+    "seconds": 0.19255212496500462,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [
+      "solution-limit"
+    ],
+    "diagnoses": [
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "94f9d214-nor-recolor",
+    "rungs_recovered": 0,
+    "rungs_total": 4,
+    "seconds": 168.34673237497918,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "al1-mirror",
+    "rungs_recovered": 0,
+    "rungs_total": 2,
+    "seconds": 0.9493582079885527,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
+    "name": "al10-skippable",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 0.009231000090949237,
+    "top_chain": true,
+    "top_climb": null
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
+    "name": "al11-greedy-trap",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 0.15720650006551296,
+    "top_chain": true,
+    "top_climb": null
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "not-proposed"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=4,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "al12-unlearnable",
+    "rungs_recovered": 0,
+    "rungs_total": 1,
+    "seconds": 0.09061220800504088,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
+    "name": "al13-symmetry-repair",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 0.025464541045948863,
+    "top_chain": true,
+    "top_climb": null
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "generations": [
+      "max_arity=4 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
+    "name": "al14-cell-row-grid",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 4.826549250050448,
+    "top_chain": null,
+    "top_climb": null
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "al15-shift-frame",
+    "rungs_recovered": 0,
+    "rungs_total": 2,
+    "seconds": 0.790813957923092,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "al16-layout-nest",
+    "rungs_recovered": 0,
+    "rungs_total": 2,
+    "seconds": 0.17716462502721697,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=6,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "al17-shift-frame-tall",
+    "rungs_recovered": 0,
+    "rungs_total": 3,
+    "seconds": 1.0646681248908862,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "al18-fanin-rotate",
+    "rungs_recovered": 0,
+    "rungs_total": 2,
+    "seconds": 0.1855949170421809,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "al19-fanin-recolor",
+    "rungs_recovered": 0,
+    "rungs_total": 2,
+    "seconds": 1.8083099579671398,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=4,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "al2-rot90-calibration",
+    "rungs_recovered": 0,
+    "rungs_total": 1,
+    "seconds": 0.10414912505075336,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "al20-recolor-telescope",
+    "rungs_recovered": 0,
+    "rungs_total": 2,
+    "seconds": 1.39078958297614,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "al21-dag-siblings",
+    "rungs_recovered": 0,
+    "rungs_total": 2,
+    "seconds": 0.1265356669900939,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
+    "name": "al3-quad-symmetrize",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 2.3175346249481663,
+    "top_chain": true,
+    "top_climb": null
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
+    "name": "al4-mask-crop",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 1.5860406249994412,
+    "top_chain": true,
+    "top_climb": null
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
+    "name": "al5-perceiver-chain",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 1.6679330420447513,
+    "top_chain": true,
+    "top_climb": null
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
+    "name": "al6-mirror-tall",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 3.6653129589976743,
+    "top_chain": true,
+    "top_climb": null
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
+    "name": "al7-fast-tower",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 0.15468441706616431,
+    "top_chain": true,
+    "top_climb": null
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
+    "name": "al8-lean-perceiver",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 0.641486833919771,
+    "top_chain": true,
+    "top_climb": null
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "generations": [
+      "max_arity=2 considered_limit=50000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
+    "name": "al9-decoy",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 0.1575719170505181,
+    "top_chain": true,
+    "top_climb": null
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "dae9d2b5-half-param",
+    "rungs_recovered": 0,
+    "rungs_total": 3,
+    "seconds": 6.662364625022747,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [
+      "solution-limit"
+    ],
+    "diagnoses": [
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "dae9d2b5-split-asym-lean",
+    "rungs_recovered": 1,
+    "rungs_total": 3,
+    "seconds": 493.3280271249823,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [
+      "solution-limit"
+    ],
+    "diagnoses": [
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "dae9d2b5-split-halves-lean",
+    "rungs_recovered": 0,
+    "rungs_total": 2,
+    "seconds": 301.52884733397514,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "dae9d2b5-split-recolor",
+    "rungs_recovered": 0,
+    "rungs_total": 4,
+    "seconds": 134.78906120802276,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "dae9d2b5-split-recolor-lean",
+    "rungs_recovered": 0,
+    "rungs_total": 4,
+    "seconds": 4.473103416967206,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [
+      "solution-limit"
+    ],
+    "diagnoses": [
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "fafffa47-nor-halves",
+    "rungs_recovered": 0,
+    "rungs_total": 2,
+    "seconds": 344.5125616249861,
+    "top_chain": null,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [],
+    "diagnoses": [
+      "no-material",
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "fafffa47-nor-merged",
+    "rungs_recovered": 0,
+    "rungs_total": 5,
+    "seconds": 6.413754416978918,
+    "top_chain": true,
+    "top_climb": false
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "compromises": [
+      "solution-limit"
+    ],
+    "diagnoses": [
+      "proposed-not-selected"
+    ],
+    "error": null,
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=TwoPartMDL,proposer=AntiunifyPairs]"
+    ],
+    "name": "fafffa47-nor-recolor",
+    "rungs_recovered": 0,
+    "rungs_total": 4,
+    "seconds": 466.4227350000292,
+    "top_chain": true,
+    "top_climb": false
+  }
+]

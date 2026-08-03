@@ -1,0 +1,104 @@
+========================================================================================================
+LADDER CELL MATRIX
+========================================================================================================
+
+## 1. Registry coverage: 39 ladders authored
+
+   with a committed report.json (the batch of record) : 32
+   probed only, never run                             : 6 ['94f9d214-recolor-first', 'a740d043-crop-normalize', 'dae9d2b5-recolor-first', 'dae9d2b5-recolor-solo', 'dae9d2b5-split-halves', 'fafffa47-recolor-first']
+   never touched at all                               : 0 []
+
+## 2. The batch of record -- cells per ladder (from committed `provenance`)
+
+ladder                       chain  learn  train-use  transfer  off-chain  raw  cells
+---------------------------  -----  -----  ---------  --------  ---------  ---  -----
+94f9d214-nor-halves          3      y      y          y         y          -    7    
+94f9d214-nor-merged          6      y      y          y         y          -    10   
+94f9d214-nor-recolor         5      y      y          y         y          y    10   
+al1-mirror                   3      y      y          y         y          y    8    
+al10-skippable               2      -      -          -         -          -    2    
+al11-greedy-trap             6      -      -          -         -          -    6    
+al12-unlearnable             2      y      y          y         y          y    7    
+al13-symmetry-repair         3      -      -          -         -          -    3    
+al14-cell-row-grid           4      -      -          -         -          -    4    
+al15-shift-frame             3      y      y          y         y          y    8    
+al16-layout-nest             3      y      y          y         y          y    8    
+al17-shift-frame-tall        4      y      y          y         y          y    9    
+al18-fanin-rotate            3      y      y          y         y          y    8    
+al19-fanin-recolor           3      y      y          y         y          y    8    
+al2-rot90-calibration        2      y      y          y         y          y    7    
+al20-recolor-telescope       3      y      y          y         y          y    8    
+al21-dag-siblings            3      y      y          y         y          y    8    
+al3-quad-symmetrize          4      -      -          -         -          -    4    
+al4-mask-crop                4      -      -          -         -          -    4    
+al5-perceiver-chain          4      -      -          -         -          -    4    
+al6-mirror-tall              5      -      -          -         -          -    5    
+al7-fast-tower               6      -      -          -         -          -    6    
+al8-lean-perceiver           4      -      -          -         -          -    4    
+al9-decoy                    6      -      -          -         -          -    6    
+dae9d2b5-half-param          4      y      y          y         y          -    8    
+dae9d2b5-split-asym-lean     4      y      y          y         y          -    8    
+dae9d2b5-split-halves-lean   3      y      y          y         y          -    7    
+dae9d2b5-split-recolor       5      y      y          y         y          y    10   
+dae9d2b5-split-recolor-lean  5      y      y          y         y          -    9    
+fafffa47-nor-halves          3      y      y          y         y          -    7    
+fafffa47-nor-merged          6      y      y          y         y          -    10   
+fafffa47-nor-recolor         5      y      y          y         y          y    10   
+
+   total cells in the batch of record: 223
+
+## 3. Arms -- which LEARN configurations have been run, per ladder
+
+ladder                       CompressionMetric  TwoPartMDL
+---------------------------  -----------------  ----------
+94f9d214-nor-halves          y                  y         
+94f9d214-nor-merged          y                  y         
+94f9d214-nor-recolor         y                  y         
+al1-mirror                   y                  y         
+al10-skippable               y                  -         
+al11-greedy-trap             y                  -         
+al12-unlearnable             y                  y         
+al13-symmetry-repair         y                  -         
+al14-cell-row-grid           y                  -         
+al15-shift-frame             y                  y         
+al16-layout-nest             y                  y         
+al17-shift-frame-tall        y                  y         
+al18-fanin-rotate            y                  y         
+al19-fanin-recolor           y                  y         
+al2-rot90-calibration        y                  y         
+al20-recolor-telescope       y                  y         
+al21-dag-siblings            y                  y         
+al3-quad-symmetrize          y                  -         
+al4-mask-crop                y                  -         
+al5-perceiver-chain          y                  -         
+al6-mirror-tall              y                  -         
+al7-fast-tower               y                  -         
+al8-lean-perceiver           y                  -         
+al9-decoy                    y                  -         
+dae9d2b5-half-param          y                  y         
+dae9d2b5-split-asym-lean     y                  y         
+dae9d2b5-split-halves-lean   y                  y         
+dae9d2b5-split-recolor       y                  y         
+dae9d2b5-split-recolor-lean  y                  y         
+fafffa47-nor-halves          y                  y         
+fafffa47-nor-merged          y                  y         
+fafffa47-nor-recolor         y                  y         
+
+   ladders that CLIMB (a metric arm is meaningful): 21
+   ladders that never climb (rejected -> metric inert): 11
+
+## 4. Proposer arms (the S15 axis) -- from the store
+
+   AntiunifyPairs                36 ladders  ['94f9d214-nor-halves', '94f9d214-nor-merged', '94f9d214-nor-recolor', 'al1-mirror', '...']
+   FrequentSubtree                4 ladders  ['94f9d214-nor-merged', 'al1-mirror', 'al4-mask-crop', 'dae9d2b5-split-recolor-lean']
+   TypeScopedFrequentSubtree      3 ladders  ['94f9d214-nor-merged', 'al1-mirror', 'dae9d2b5-split-recolor-lean']
+   StitchProposer                 3 ladders  ['94f9d214-nor-merged', 'al1-mirror', 'dae9d2b5-split-recolor-lean']
+
+## 5. Gaps
+
+   no climb                    11  -- certificate rejected -> learning never paid for (by design)
+      al10-skippable, al11-greedy-trap, al13-symmetry-repair, al14-cell-row-grid, al3-quad-symmetrize, al4-mask-crop, al5-perceiver-chain, al6-mirror-tall, al7-fast-tower, al8-lean-perceiver, al9-decoy
+   no raw arm                   8  -- RQ1 cited from its cohort sibling (once per cohort)
+      94f9d214-nor-halves, 94f9d214-nor-merged, dae9d2b5-half-param, dae9d2b5-split-asym-lean, dae9d2b5-split-halves-lean, dae9d2b5-split-recolor-lean, fafffa47-nor-halves, fafffa47-nor-merged
+   top unreachable (chain)      3  -- censored -- priced >30M for the d4 tops
+      94f9d214-nor-halves, al14-cell-row-grid, fafffa47-nor-halves

@@ -1,0 +1,49 @@
+32 members compared
+
+## Wiring assertion: a learn-side change must move NO chain cell
+   members whose certificate or chain-top moved: 0 []
+   (non-zero here invalidates everything below)
+
+## Rung recovery: record -> arm
+ladder                           record      arm  diagnosis (arm)
+-----------------------------------------------------------------
+94f9d214-nor-halves                 2/2      0/2  proposed-not-selected  <-- LOST
+94f9d214-nor-merged                 5/5      0/5  no-material, proposed-not-selected  <-- LOST
+94f9d214-nor-recolor                4/4      0/4  proposed-not-selected  <-- LOST
+al1-mirror                          2/2      0/2  no-material, proposed-not-selected  <-- LOST
+al12-unlearnable                    0/1      0/1  not-proposed
+al15-shift-frame                    2/2      0/2  no-material, proposed-not-selected  <-- LOST
+al16-layout-nest                    2/2      0/2  no-material, proposed-not-selected  <-- LOST
+al17-shift-frame-tall               3/3      0/3  no-material, proposed-not-selected  <-- LOST
+al18-fanin-rotate                   2/2      0/2  no-material, proposed-not-selected  <-- LOST
+al19-fanin-recolor                  2/2      0/2  no-material, proposed-not-selected  <-- LOST
+al2-rot90-calibration               1/1      0/1  proposed-not-selected  <-- LOST
+al20-recolor-telescope              2/2      0/2  no-material, proposed-not-selected  <-- LOST
+al21-dag-siblings                   2/2      0/2  proposed-not-selected  <-- LOST
+dae9d2b5-half-param                 2/3      0/3  no-material, proposed-not-selected  <-- LOST
+dae9d2b5-split-asym-lean            3/3      1/3  proposed-not-selected  <-- LOST
+dae9d2b5-split-halves-lean          2/2      0/2  proposed-not-selected  <-- LOST
+dae9d2b5-split-recolor              4/4      0/4  no-material, proposed-not-selected  <-- LOST
+dae9d2b5-split-recolor-lean         4/4      0/4  no-material, proposed-not-selected  <-- LOST
+fafffa47-nor-halves                 2/2      0/2  proposed-not-selected  <-- LOST
+fafffa47-nor-merged                 5/5      0/5  no-material, proposed-not-selected  <-- LOST
+fafffa47-nor-recolor                4/4      0/4  proposed-not-selected  <-- LOST
+
+   TOTAL rungs recovered: 55/57 (record) -> 1/57 (arm)
+   members losing recovery: 20
+   members holding recovery: 0 []
+   members with no rungs to recover (rejected/no climb): 11
+
+## Why the arm missed, by mechanism
+   proposed-not-selected    20 members
+   no-material              12 members
+   not-proposed             1 members
+
+   `proposed-not-selected` = the proposer OFFERED a behavioural match and governance
+   declined it. Under a two-part code that charges definition size, declining is the
+   DL-optimum when too few programs share the abstraction -- so this is the learner
+   being right, not failing.
+
+## Wall clock
+   record: 0.6 min
+   arm:    32.5 min
