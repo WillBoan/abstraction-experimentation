@@ -161,6 +161,18 @@ class Primitive:
     #: means no lambda synthesis for this primitive's function holes (point-free fill still
     #: applies). Like ``impl``, this is code: never serialised.
     body_sampler: BodySampler | None = None
+    #: Declares this primitive's VARIADIC TAIL order-invariant: ``f(c, x, y) == f(c, y, x)`` for
+    #: every input, **including error paths**. The fixed leading parameters are unaffected. When
+    #: set, the enumerator fills the tail in canonical (non-decreasing candidate-index) order
+    #: instead of as ordered tuples, which removes the ``k!``-redundant candidates that would
+    #: otherwise be built, counted and immediately deduped — measured at 62% of one run's total
+    #: considered for ``overlay`` (2026-07-14).
+    #:
+    #: **Serialised, unlike ``impl``/``body_sampler``**: it changes which candidates a run
+    #: enumerates and therefore what it costs, so a library carrying it must not share a
+    #: ``run_id`` with one that does not. Only emitted when true, so an unflagged library's
+    #: identity — and its cache — is untouched.
+    variadic_commutative: bool = False
 
     @property
     def arity(self) -> int:
@@ -197,6 +209,9 @@ class Primitive:
         }
         if self.template is not None:
             data["template"] = self.template.to_dict()
+        # Emitted only when set, so flagging one primitive never moves an unrelated library's id.
+        if self.variadic_commutative:
+            data["variadic_commutative"] = True
         return data
 
 

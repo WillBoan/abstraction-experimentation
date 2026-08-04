@@ -60,6 +60,10 @@ OVERLAY = Primitive(
     return_type=GRID,
     impl=_overlay,
     variadic_param=GRID,
+    # Elementwise max over the stack: order- and multiplicity-invariant. The shape-mismatch guard
+    # returns ``grids[0]``, which is the one order-dependent path — it yields a copy of an argument
+    # the pool already holds, and the locks confirm no retained solution depends on it.
+    variadic_commutative=True,
 )
 
 TILE = Primitive(

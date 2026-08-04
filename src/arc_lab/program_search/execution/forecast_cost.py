@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
-from math import prod
+from math import comb, prod
 
 from arc_lab.core.task import Task, train_with_output
 from arc_lab.program_search.search.context import Context
@@ -244,11 +244,32 @@ def _round_terms(
         slot_sets = _slot_types(primitive, max_arity)
         count = 0
         for slots in slot_sets:
-            now = prod(_available(t, census) for t in slots)
-            before = prod(_available(t, previous) for t in slots)
+            now = _tuples(primitive, slots, census)
+            before = _tuples(primitive, slots, previous)
             count += max(now - before, 0)
         terms.append((primitive, count))
     return terms
+
+
+def _tuples(primitive: Primitive, slots: tuple[Type, ...], census: Mapping[Type, int]) -> int:
+    """How many argument tuples ``slots`` admits over ``census``.
+
+    Ordered per slot — EXCEPT a :attr:`~...library.Primitive.variadic_commutative` tail, which the
+    enumerator fills in canonical order, so it contributes combinations-with-replacement
+    ``C(n+k-1, k)`` rather than ``n**k``. Modelling it as ordered would restore exactly the
+    ``k!``-fold over-count the flag exists to remove, in a quantity
+    :mod:`..ladders.breadth` documents as EXACT.
+    """
+    fixed = len(primitive.param_types)
+    head = prod(_available(slot, census) for slot in slots[:fixed])
+    tail = slots[fixed:]
+    if not tail:
+        return head
+    available = _available(tail[0], census)  # every tail slot shares ``variadic_param``
+    arity = len(tail)
+    if primitive.variadic_commutative:
+        return head * comb(available + arity - 1, arity)
+    return int(head * available**arity)
 
 
 def _slot_types(primitive: Primitive, max_arity: int) -> list[tuple[Type, ...]]:
