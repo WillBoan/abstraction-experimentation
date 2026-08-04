@@ -25,7 +25,7 @@
         "abs1"
       ],
       "proposal_count": 7,
-      "wake_considered": 2001134,
+      "wake_considered": 1896461,
       "wake_solved": [
         "north-00",
         "north-01",
@@ -39,7 +39,7 @@
       "iteration": 1,
       "minted": [],
       "proposal_count": 2,
-      "wake_considered": 2001014,
+      "wake_considered": 1790063,
       "wake_solved": [
         "north-00",
         "north-01",
@@ -60,24 +60,24 @@
     "marginal_rung_value": [
       {
         "censored": true,
-        "cost_with_rung": 21289,
-        "cost_without_rung": 21277,
+        "cost_with_rung": 6989,
+        "cost_without_rung": 6977,
         "layer_above": "top",
         "own_tasks_speedup": 1.0317460317460319,
         "own_tasks_to_first_with": 504,
         "own_tasks_to_first_without": 520,
-        "ratio": 0.9994363286204143,
+        "ratio": 0.9982830161682644,
         "rung": "north"
       },
       {
         "censored": true,
         "cost_with_rung": 2000000,
-        "cost_without_rung": 21289,
+        "cost_without_rung": 6989,
         "layer_above": "top",
         "own_tasks_speedup": 1.0355731225296443,
         "own_tasks_to_first_with": 506,
         "own_tasks_to_first_without": 524,
-        "ratio": 0.0106445,
+        "ratio": 0.0034945,
         "rung": "south"
       }
     ],
@@ -112,8 +112,8 @@
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
-      "high": 88.04602488296133,
-      "low": 12.646060964054834
+      "high": 2.9535903186730152,
+      "low": 1.3252195849374928
     },
     "budget_compression_depth": {
       "max_jump_depth": 2,
@@ -127,13 +127,13 @@
       "north": 520,
       "south": 524
     },
-    "laddered_end_to_end_considered": 4002148,
+    "laddered_end_to_end_considered": 3686524,
     "laddered_marginal_considered": 2001048,
     "laddered_marginal_to_first": null,
     "off_chain_top_solved": false,
     "raw_arm": null,
     "raw_censored": true,
-    "raw_considered": 21277,
+    "raw_considered": 6977,
     "raw_estimate": {
       "available": true,
       "caveats": [
@@ -145,17 +145,17 @@
         "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
       ],
       "d_raw": 5,
-      "estimate_high": 176184322,
-      "estimate_low": 25305375,
-      "growth_ratio_geometric": 34.18,
-      "growth_ratio_last": 91.03,
+      "estimate_high": 5910276,
+      "estimate_low": 2651828,
+      "growth_ratio_geometric": 19.33,
+      "growth_ratio_last": 29.13,
       "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
       "observed_composed": [
         18,
         231,
-        21028
+        6728
       ],
-      "observed_considered": 21277,
+      "observed_considered": 6977,
       "observed_through_depth": 3,
       "rounds_extrapolated": 2,
       "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
@@ -688,39 +688,39 @@
           "b_eff": 12.83,
           "by_primitive": [
             {
-              "considered": 21275,
+              "considered": 6975,
               "primitive": "__const__",
-              "share": 0.9999060017859661
+              "share": 0.9997133438440591
             },
             {
-              "considered": 21121,
+              "considered": 6821,
               "primitive": "map_color",
-              "share": 0.9926681393053532
+              "share": 0.977640819836606
             },
             {
-              "considered": 18840,
+              "considered": 4540,
               "primitive": "overlay",
-              "share": 0.8854631761996522
+              "share": 0.6507094739859538
             },
             {
               "considered": 1200,
               "primitive": "swap_colors",
-              "share": 0.05639892842036001
+              "share": 0.1719936935645693
             },
             {
               "considered": 19,
               "primitive": "split_v",
-              "share": 0.0008929830333223669
+              "share": 0.002723233481439014
             },
             {
               "considered": 7,
               "primitive": "nth",
-              "share": 0.0003289937491187667
+              "share": 0.001003296545793321
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 21277,
+          "considered": 6977,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
@@ -729,45 +729,45 @@
           "b_eff": 12.89,
           "by_primitive": [
             {
-              "considered": 21284,
+              "considered": 6984,
               "primitive": "__const__",
-              "share": 0.9997651369251727
+              "share": 0.9992845900701102
             },
             {
-              "considered": 20920,
+              "considered": 6670,
               "primitive": "map_color",
-              "share": 0.9826671050777397
+              "share": 0.9543568464730291
             },
             {
-              "considered": 18840,
+              "considered": 4540,
               "primitive": "overlay",
-              "share": 0.8849640659495515
-            },
-            {
-              "considered": 4423,
-              "primitive": "north",
-              "share": 0.20775987599229648
+              "share": 0.6495922163399628
             },
             {
               "considered": 1200,
               "primitive": "swap_colors",
-              "share": 0.05636713795857015
+              "share": 0.17169838317355846
+            },
+            {
+              "considered": 1123,
+              "primitive": "north",
+              "share": 0.16068107025325512
             },
             {
               "considered": 19,
               "primitive": "split_v",
-              "share": 0.0008924796843440275
+              "share": 0.0027185577335813423
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 21289,
+          "considered": 6989,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "2": {
-          "b_eff": 144.73,
+          "b_eff": 65.77,
           "by_primitive": [
             {
               "considered": 1999986,
@@ -775,9 +775,9 @@
               "share": 0.999993
             },
             {
-              "considered": 1995917,
+              "considered": 1997601,
               "primitive": "map_color",
-              "share": 0.9979585
+              "share": 0.9988005
             },
             {
               "considered": 1992742,
@@ -785,19 +785,19 @@
               "share": 0.996371
             },
             {
-              "considered": 275126,
+              "considered": 243160,
               "primitive": "swap_colors",
-              "share": 0.137563
+              "share": 0.12158
             },
             {
-              "considered": 153017,
+              "considered": 138373,
               "primitive": "north",
-              "share": 0.0765085
+              "share": 0.0691865
             },
             {
-              "considered": 148080,
+              "considered": 132946,
               "primitive": "south",
-              "share": 0.07404
+              "share": 0.066473
             }
           ],
           "censored": true,
@@ -915,6 +915,7 @@
               "color"
             ],
             "return_type": "grid",
+            "variadic_commutative": true,
             "variadic_param": "grid"
           },
           {
@@ -1166,13 +1167,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "chain/L0",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "fafffa47-nor-halves:train",
       "learn": null,
       "library": "nor-L0",
-      "run_dir": "20260727_164308_c8947371140b122a",
-      "run_id": "c8947371140b122a"
+      "run_dir": "20260804_210341_68770156156a9d64",
+      "run_id": "68770156156a9d64"
     },
     {
       "budget": {
@@ -1185,13 +1186,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "chain/L1",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "fafffa47-nor-halves:train",
       "learn": null,
       "library": "nor-L0+north",
-      "run_dir": "20260727_164310_06747f5253225076",
-      "run_id": "06747f5253225076"
+      "run_dir": "20260804_210341_dd36a4c8df4cb3ba",
+      "run_id": "dd36a4c8df4cb3ba"
     },
     {
       "budget": {
@@ -1204,13 +1205,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "chain/L2",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "fafffa47-nor-halves:train",
       "learn": null,
       "library": "nor-L0+north+south",
-      "run_dir": "20260727_164311_8ea526f68c0f0de9",
-      "run_id": "8ea526f68c0f0de9"
+      "run_dir": "20260804_210342_edf458843e626d35",
+      "run_id": "edf458843e626d35"
     },
     {
       "budget": {
@@ -1223,7 +1224,7 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "climb/learn",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "fafffa47-nor-halves:train",
       "learn": {
@@ -1233,8 +1234,8 @@
         "proposer": "AntiunifyPairs"
       },
       "library": "nor-L0",
-      "run_dir": "20260727_164508_77d752c36f9629a8",
-      "run_id": "77d752c36f9629a8"
+      "run_dir": "20260804_210543_ec9a6c359f3bee50",
+      "run_id": "ec9a6c359f3bee50"
     },
     {
       "budget": {
@@ -1247,13 +1248,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "climb/train-usefulness",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "fafffa47-nor-halves:train",
       "learn": null,
       "library": "nor-L0+abs0+abs1",
-      "run_dir": "20260727_164833_292b2b78b5a36b2d",
-      "run_id": "292b2b78b5a36b2d"
+      "run_dir": "20260804_210852_bfc8c4957c58b05f",
+      "run_id": "bfc8c4957c58b05f"
     },
     {
       "budget": {
@@ -1266,13 +1267,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "climb/transfer",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "fafffa47-nor-halves:heldout",
       "learn": null,
       "library": "nor-L0+abs0+abs1",
-      "run_dir": "20260727_164949_612ea3ddd8f3fa9a",
-      "run_id": "612ea3ddd8f3fa9a"
+      "run_dir": "20260804_210956_5ee8dcb378d8d53e",
+      "run_id": "5ee8dcb378d8d53e"
     },
     {
       "budget": {
@@ -1285,17 +1286,17 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "off-chain",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "fafffa47-nor-halves:train",
       "learn": null,
       "library": "nor-L0+south",
-      "run_dir": "20260727_165045_e101b7a10d48f686",
-      "run_id": "e101b7a10d48f686"
+      "run_dir": "20260804_211045_a110474443cdc32d",
+      "run_id": "a110474443cdc32d"
     }
   ],
   "recorded_commits": [
-    "260fa76b8d20fd72a8d2898c46ac906749157adb"
+    "69a536891ea6799d178ca633eb789c55ea36abb0"
   ],
   "rung_recovery": [
     {

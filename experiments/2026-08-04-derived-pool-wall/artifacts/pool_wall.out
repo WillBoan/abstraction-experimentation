@@ -1,0 +1,20 @@
+depth   pool  cells  censored   considered range
+    2     30      7    0/7    81,995 .. 109,673
+    2    150     18    0/18   2,923,962 .. 5,360,579
+    3     30      2    0/2    75,770 .. 98,592
+    3    150      6    6/6    6,000,000 .. 18,000,000
+    3    750      1    1/1    150,000,000
+
+every censored cell, against its guard:
+  dae9d2b5-split-halves-lean:train       d=3 pool=150    10,000,000 /   10,000,000  == guard
+  dae9d2b5-split-halves-lean:heldout     d=3 pool=150     6,000,000 /    6,000,000  == guard
+  dae9d2b5-split-asym-lean:train         d=3 pool=150    14,000,000 /   14,000,000  == guard
+  dae9d2b5-split-asym-lean:train         d=3 pool=150    14,000,000 /   14,000,000  == guard
+  dae9d2b5-split-asym-lean:heldout       d=3 pool=150     8,000,000 /    8,000,000  == guard
+  94f9d214-nor-recolor:train             d=3 pool=150    18,000,000 /   18,000,000  == guard
+  dae9d2b5-halves-union:train            d=3 pool=750   150,000,000 /  150,000,000  == guard
+
+cells: 34  (7 censored)
+considered today:      297,458,313
+  censored (unusable): 220,000,000  (74%)
+program history to 2026-08-03: 289,304,962

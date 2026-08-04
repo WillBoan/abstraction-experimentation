@@ -23,7 +23,8 @@ import abc
 import dataclasses
 import json
 from collections.abc import Mapping
-from typing import Any
+from types import UnionType
+from typing import Any, Union, get_args, get_origin, get_type_hints
 
 from arc_lab.program_search.substrate.library import Library
 
@@ -80,7 +81,27 @@ def _set_path(obj: object, parts: list[str], value: object, full_path: str) -> A
     current = getattr(obj, name)
     if len(parts) > 1:
         return dataclasses.replace(obj, **{name: _set_path(current, parts[1:], value, full_path)})
+    if value is None:
+        # Clearing an optional field back to its unset state (`--set budget.solution_limit=null`).
+        # `_coerce` cannot decide this: it sees only the CURRENT value, so a field holding `1` looks
+        # like a plain `int`. The declared type is the only thing that knows the field is optional.
+        if not _admits_none(obj, name):
+            raise ValueError(
+                f"cannot set {full_path!r} to null: "
+                f"{type(obj).__name__}.{name} is not an optional field"
+            )
+        return dataclasses.replace(obj, **{name: None})
     return dataclasses.replace(obj, **{name: _coerce(current, value, full_path)})
+
+
+def _admits_none(obj: object, name: str) -> bool:
+    """Whether ``obj``'s ``name`` field is declared optional, so ``None`` is a legal value."""
+    try:
+        hint = get_type_hints(type(obj)).get(name)
+    except (NameError, TypeError):  # an unresolvable forward reference: assume not optional
+        return False
+    # `int | None` and `Optional[int]` both normalise to a union containing `NoneType`.
+    return get_origin(hint) in (Union, UnionType) and type(None) in get_args(hint)
 
 
 def _coerce(current: object, value: object, full_path: str) -> object:

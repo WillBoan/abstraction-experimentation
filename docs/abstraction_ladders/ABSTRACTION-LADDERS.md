@@ -29,7 +29,7 @@ graph BT
 
 The solid edges are the Ladder; the dashed ones are questions asked about it, measured separately. A **skip path** bypasses a single rung, to test whether that rung is load-bearing. The **raw** path is the from-scratch search that the laddered cost is compared against.
 
-The diagram is a real Ladder — [`al17-shift-frame-tall`](../../src/arc_lab/program_search/ladders/registry/al17-shift-frame-tall.ladder) — whose floor, three rungs, demonstrations, and Top are that file's declared contents, minus the example grids and each rung's held-out demonstration. It is an admitted Ladder: at its declared budget every jump was affordable and no rung had a skip path. The [Ladder register](LADDERS.md) indexes the rest of the batch.
+The diagram is a real Ladder — [`al17-shift-frame-tall`](../../src/arc_lab/program_search/ladders/registry/al17-shift-frame-tall.ladder) — whose floor, three rungs, demonstrations, and Top are that file's declared contents, minus the example grids and each rung's held-out demonstration. It is an admitted Ladder: at its declared budget every jump was affordable and no rung had a skip path. The generated [batch of record](BATCH-OF-RECORD.md) carries the rest of the batch.
 
 The sequence may be a chain or a DAG. A higher rung can reuse any lower rung, and its **fan-in** is the number of such calls, counted with multiplicity. The central unit is therefore a trajectory from a stated floor, not a final program in isolation.
 
@@ -107,7 +107,7 @@ arc-lab taskgen <name>
 arc-lab run-ladder <name>
 ```
 
-Lint settles static questions cheaply. The probe drives the real engine to detect tractability failures, skip paths, task collisions, and mismatches between authored targets and what the learner can mint. The recorded run then supplies the oracle-chain, learned-climb, recovery, and held-out evaluation data. See the generated [check register](LINT-CHECKS.md), the [Ladder register](LADDERS.md), and the [activity model](../EXECUTION.md) for the concrete interfaces.
+Lint settles static questions cheaply. The probe drives the real engine to detect tractability failures, skip paths, task collisions, and mismatches between authored targets and what the learner can mint. The recorded run then supplies the oracle-chain, learned-climb, recovery, and held-out evaluation data. See the generated [check register](LINT-CHECKS.md), the generated [batch of record](BATCH-OF-RECORD.md), and the [activity model](../EXECUTION.md) for the concrete interfaces.
 
 ## Scope and Next Step
 

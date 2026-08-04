@@ -75,6 +75,25 @@ def test_stop_limits_are_settable_and_validated() -> None:
         apply_overrides(PRESETS["d4"], {"budget.solution_limit_mode": "eventually"})
 
 
+def test_an_optional_field_can_be_cleared_back_to_none() -> None:
+    """``--set path=null`` clears an optional field -- the only way to express an arm that REMOVES
+    a compromise (measured 2026-08-04: the ladder members carrying ``solution_limit: 1`` could not
+    be re-run exhaustively at all, because ``_coerce`` sees only the field's CURRENT value, so one
+    holding ``1`` looked like a plain ``int``). The declared type is what decides, so a required
+    field still refuses."""
+    pinned = apply_overrides(PRESETS["d4"], {"budget.solution_limit": 1})
+    assert pinned.budget.solution_limit == 1
+
+    cleared = apply_overrides(pinned, {"budget.solution_limit": None})
+    assert cleared.budget.solution_limit is None
+    # Clearing is a real config change, so the cleared config is not the pinned one (and, being
+    # part of `Config`, carries its own `RunSpec` identity -- pinned by the test below).
+    assert cleared != pinned
+
+    with pytest.raises(ValueError, match=r"budget.depth_limit.*not an optional field"):
+        apply_overrides(PRESETS["d4"], {"budget.depth_limit": None})
+
+
 def test_parse_set_values() -> None:
     parsed = parse_set_values(["budget.depth_limit=3", "library=d4", "flag=true"])
     assert parsed == {"budget.depth_limit": 3, "library": "d4", "flag": True}

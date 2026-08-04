@@ -78,9 +78,13 @@ def variadic_applications(
     assert isinstance(packed, ArrowType)
     *fixed, variadic = packed.params
     build = _apply_builder(primitive.name)
+    # Only the TAIL is order-invariant when declared so; the fixed leading parameters never are.
+    canonical_from = len(fixed) if primitive.variadic_commutative else None
     for arity in range(1, max_arity + 1):
         parameters = (*fixed, *(variadic for _ in range(arity)))
-        yield from _fill(build, parameters, packed.result, candidates)
+        yield from _fill(
+            build, parameters, packed.result, candidates, canonical_from=canonical_from
+        )
 
 
 def appfn_applications(
@@ -157,23 +161,35 @@ def _fill(
     parameters: tuple[Type, ...],
     result: Type,
     candidates: Sequence[TypedProgram],
+    *,
+    canonical_from: int | None = None,
 ) -> Iterator[TypedProgram]:
     """Fill ``parameters`` left-to-right from ``candidates``, threading one substitution.
 
     A candidate whose type fails to unify with the current parameter is skipped before the rest of the
     argument tuple is chosen, so ill-typed combinations are never fully built. ``build`` turns a
     completed argument tuple into the program node (an ``Apply`` or an ``AppFn``).
+
+    ``canonical_from`` marks the first index of an order-invariant run of parameters (a
+    :attr:`~...library.Primitive.variadic_commutative` tail): from there on, candidates are drawn in
+    non-decreasing index order, so the run is enumerated as combinations-with-replacement rather than
+    as ordered tuples. Same *set* of argument multisets, ``k!`` fewer candidates built and counted.
     """
 
     def recurse(
-        index: int, subst: Substitution, chosen: tuple[Program, ...]
+        index: int, subst: Substitution, chosen: tuple[Program, ...], start: int
     ) -> Iterator[TypedProgram]:
         if index == len(parameters):
             yield build(chosen), apply_subst(subst, result)
             return
-        for program, ptype in candidates:
+        canonical = canonical_from is not None and index >= canonical_from
+        for offset in range(start if canonical else 0, len(candidates)):
+            program, ptype = candidates[offset]
             threaded = unify(parameters[index], ptype, subst)
             if threaded is not None:
-                yield from recurse(index + 1, threaded, (*chosen, program))
+                # The ordering constraint applies only WITHIN the canonical run. A fixed leading
+                # parameter draws from the same candidate list, so threading its offset into the
+                # first tail slot would wrongly skip every earlier candidate there.
+                yield from recurse(index + 1, threaded, (*chosen, program), offset if canonical else 0)
 
-    yield from recurse(0, {}, ())
+    yield from recurse(0, {}, (), 0)
