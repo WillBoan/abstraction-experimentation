@@ -1,0 +1,33 @@
+Break-even `bits_per_primitive` per member, iteration 0 (read-side; no searches).
+Minting wins iff b < b*, and b >= 0 -- so b* <= 0 means declined at EVERY setting.
+
+ladder                         props     b*  defn  save  at b=1.0         class
+----------------------------------------------------------------------------------------
+94f9d214-nor-halves                3    0.0     4     4  declines         STRUCTURAL
+94f9d214-nor-merged                3    0.0     4     4  declines         STRUCTURAL
+94f9d214-nor-recolor               6    5.0     7    12  MINTS            already-mints
+al1-mirror                         1   -1.0     3     2  declines         STRUCTURAL
+al12-unlearnable                   0      -     -     -  -                no-proposals
+al15-shift-frame                   1    1.0     5     6  declines (tie)   CALIBRATION
+al16-layout-nest                   1    1.0     5     6  declines (tie)   CALIBRATION
+al17-shift-frame-tall              1    1.0     5     6  declines (tie)   CALIBRATION
+al18-fanin-rotate                  1    1.0     5     6  declines (tie)   CALIBRATION
+al19-fanin-recolor                 1    1.0     5     6  declines (tie)   CALIBRATION
+al2-rot90-calibration              1   -1.0     3     2  declines         STRUCTURAL
+al20-recolor-telescope             1    1.0     5     6  declines (tie)   CALIBRATION
+al21-dag-siblings                  2    0.0     4     4  declines         STRUCTURAL
+dae9d2b5-half-param                3    0.0     4     4  declines         STRUCTURAL
+dae9d2b5-split-asym-lean           4    4.0     4     8  MINTS            already-mints
+dae9d2b5-split-halves-lean         3    0.0     4     4  declines         STRUCTURAL
+dae9d2b5-split-recolor             3    0.0     4     4  declines         STRUCTURAL
+dae9d2b5-split-recolor-lean        3    0.0     4     4  declines         STRUCTURAL
+fafffa47-nor-halves                3    0.0     4     4  declines         STRUCTURAL
+fafffa47-nor-merged                3    0.0     4     4  declines         STRUCTURAL
+fafffa47-nor-recolor               6    5.0     7    12  MINTS            already-mints
+----------------------------------------------------------------------------------------
+tally: {'STRUCTURAL': 11, 'already-mints': 3, 'no-proposals': 1, 'CALIBRATION': 6}
+
+STRUCTURAL    b* <= 0 -- the definition term alone outweighs the saving; no b rescues it.
+CALIBRATION   0 < b* <= 1 -- some b below the current 1.0 would mint.
+already-mints b* > 1 -- minting already wins at b = 1.0 (recovery can still be 0 if what
+              it mints is not the authored rung -- see 94f9d214-nor-recolor).
