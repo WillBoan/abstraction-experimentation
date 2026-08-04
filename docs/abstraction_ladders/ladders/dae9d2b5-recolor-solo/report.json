@@ -1,0 +1,688 @@
+{
+  "certificate": {
+    "admitted": false,
+    "demonstration_health": {
+      "1": 1.0
+    },
+    "no_skip_paths": {
+      "1": null
+    },
+    "tractable_jumps": {
+      "1": true
+    }
+  },
+  "climb_executed": false,
+  "climb_trace": [],
+  "comparisons": {
+    "enablement": {
+      "1": []
+    },
+    "loop_overhead_factor": null,
+    "loop_overhead_forfeited_by": null,
+    "marginal_rung_value": [
+      {
+        "censored": true,
+        "cost_with_rung": 2000000,
+        "cost_without_rung": 2000000,
+        "layer_above": "top",
+        "own_tasks_speedup": 316.4671052631579,
+        "own_tasks_to_first_with": 304,
+        "own_tasks_to_first_without": 96206,
+        "ratio": 1.0,
+        "rung": "recolored_west"
+      }
+    ],
+    "vocabulary_tax": [
+      {
+        "at_full_library": 4000000,
+        "at_own_level": 3771426,
+        "factor": 1.0606067837470494,
+        "rung": "recolored_west"
+      }
+    ]
+  },
+  "compromises": [],
+  "config_generations": [
+    "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+  ],
+  "cost": {
+    "amortization_ratio_considered": null,
+    "amortization_ratio_estimated": {
+      "high": 3.0106356730554977,
+      "low": 0.43299125727333243
+    },
+    "budget_compression_depth": {
+      "max_jump_depth": 3,
+      "raw_depth": 4
+    },
+    "jump_costs": {
+      "recolored_west": 3771426
+    },
+    "jump_costs_to_first": {
+      "recolored_west": 96206
+    },
+    "laddered_end_to_end_considered": null,
+    "laddered_marginal_considered": 5771426,
+    "laddered_marginal_to_first": null,
+    "off_chain_top_solved": null,
+    "raw_arm": null,
+    "raw_censored": true,
+    "raw_considered": 2000000,
+    "raw_estimate": {
+      "available": true,
+      "caveats": [
+        "THE BRACKET IS NOT A CONTAINMENT CLAIM -- measured 2026-07-23, it held in 2/10 cells",
+        "accelerating-growth floors: BOTH fits under-project (82x-269x under at a 2-round gap)",
+        "finite-space floors: both fits over-project (up to 3.71x) once the space is exhausted",
+        "error compounds per extrapolated round and is floor-dependent even at a 1-round gap",
+        "assumes a pool large enough not to bind; a max_pool-capped run is cheaper but fails",
+        "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
+      ],
+      "d_raw": 4,
+      "estimate_high": 17375661,
+      "estimate_low": 2498977,
+      "growth_ratio_geometric": 51.45,
+      "growth_ratio_last": 363.69,
+      "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
+      "observed_composed": [
+        18,
+        131,
+        47644
+      ],
+      "observed_considered": 47793,
+      "observed_through_depth": 3,
+      "rounds_extrapolated": 1,
+      "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
+    },
+    "raw_limit_censored": true,
+    "raw_solved": false,
+    "top_jump_cost": 2000000,
+    "top_jump_cost_to_first": null
+  },
+  "cost_matrix": [
+    {
+      "columns": {
+        "0": {
+          "b_eff": 48.81,
+          "by_primitive": [
+            {
+              "considered": 1939863,
+              "primitive": "__const__",
+              "share": 0.9999989690004202
+            },
+            {
+              "considered": 1939643,
+              "primitive": "map_color",
+              "share": 0.9998855590466347
+            },
+            {
+              "considered": 1929190,
+              "primitive": "overlay",
+              "share": 0.9944970397424563
+            },
+            {
+              "considered": 108715,
+              "primitive": "split_h",
+              "share": 0.056042559662656935
+            },
+            {
+              "considered": 108614,
+              "primitive": "nth",
+              "share": 0.05599049418387362
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 48079,
+          "considered": 1939865,
+          "first_solution_index": 48079,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 51.2,
+          "by_primitive": [
+            {
+              "considered": 1999994,
+              "primitive": "__const__",
+              "share": 0.999997
+            },
+            {
+              "considered": 1999739,
+              "primitive": "map_color",
+              "share": 0.9998695
+            },
+            {
+              "considered": 1996501,
+              "primitive": "overlay",
+              "share": 0.9982505
+            },
+            {
+              "considered": 110091,
+              "primitive": "recolored_west",
+              "share": 0.0550455
+            },
+            {
+              "considered": 12207,
+              "primitive": "split_h",
+              "share": 0.0061035
+            },
+            {
+              "considered": 11507,
+              "primitive": "nth",
+              "share": 0.0057535
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 151,
+          "considered": 2000000,
+          "first_solution_index": 151,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "recolored_west",
+      "task_id": "recolored_west-00"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 46.54,
+          "by_primitive": [
+            {
+              "considered": 1831559,
+              "primitive": "__const__",
+              "share": 0.999998908035277
+            },
+            {
+              "considered": 1831335,
+              "primitive": "map_color",
+              "share": 0.9998766079863024
+            },
+            {
+              "considered": 1821030,
+              "primitive": "overlay",
+              "share": 0.9942502597511085
+            },
+            {
+              "considered": 104649,
+              "primitive": "split_h",
+              "share": 0.05713650814796777
+            },
+            {
+              "considered": 104550,
+              "primitive": "nth",
+              "share": 0.05708245589417988
+            }
+          ],
+          "censored": false,
+          "cheapest_solution_index": 48127,
+          "considered": 1831561,
+          "first_solution_index": 48127,
+          "solve_generation": 3,
+          "solved": true
+        },
+        "1": {
+          "b_eff": 48.82,
+          "by_primitive": [
+            {
+              "considered": 1999994,
+              "primitive": "__const__",
+              "share": 0.999997
+            },
+            {
+              "considered": 1999733,
+              "primitive": "map_color",
+              "share": 0.9998665
+            },
+            {
+              "considered": 1996441,
+              "primitive": "overlay",
+              "share": 0.9982205
+            },
+            {
+              "considered": 109789,
+              "primitive": "recolored_west",
+              "share": 0.0548945
+            },
+            {
+              "considered": 12231,
+              "primitive": "split_h",
+              "share": 0.0061155
+            },
+            {
+              "considered": 11533,
+              "primitive": "nth",
+              "share": 0.0057665
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": 153,
+          "considered": 2000000,
+          "first_solution_index": 153,
+          "solve_generation": 1,
+          "solved": true
+        }
+      },
+      "rung": "recolored_west",
+      "task_id": "recolored_west-01"
+    },
+    {
+      "columns": {
+        "0": {
+          "b_eff": 51.45,
+          "by_primitive": [
+            {
+              "considered": 1999998,
+              "primitive": "__const__",
+              "share": 0.999999
+            },
+            {
+              "considered": 1999782,
+              "primitive": "map_color",
+              "share": 0.999891
+            },
+            {
+              "considered": 1996881,
+              "primitive": "overlay",
+              "share": 0.9984405
+            },
+            {
+              "considered": 112661,
+              "primitive": "split_h",
+              "share": 0.0563305
+            },
+            {
+              "considered": 112558,
+              "primitive": "nth",
+              "share": 0.056279
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 2000000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        },
+        "1": {
+          "b_eff": 53.97,
+          "by_primitive": [
+            {
+              "considered": 1999994,
+              "primitive": "__const__",
+              "share": 0.999997
+            },
+            {
+              "considered": 1999745,
+              "primitive": "map_color",
+              "share": 0.9998725
+            },
+            {
+              "considered": 1996561,
+              "primitive": "overlay",
+              "share": 0.9982805
+            },
+            {
+              "considered": 110393,
+              "primitive": "recolored_west",
+              "share": 0.0551965
+            },
+            {
+              "considered": 12183,
+              "primitive": "split_h",
+              "share": 0.0060915
+            },
+            {
+              "considered": 11481,
+              "primitive": "nth",
+              "share": 0.0057405
+            }
+          ],
+          "censored": true,
+          "cheapest_solution_index": null,
+          "considered": 2000000,
+          "first_solution_index": null,
+          "solve_generation": null,
+          "solved": false
+        }
+      },
+      "rung": "top",
+      "task_id": "dae9d2b5"
+    }
+  ],
+  "ladder": {
+    "budgets": [
+      {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      }
+    ],
+    "cohort": "dae9d2b5/35b2a2",
+    "distractors": [],
+    "heldout_corpus": {
+      "content_hash": "5a817750f9803fda",
+      "name": "dae9d2b5-recolor-solo:heldout",
+      "task_count": 2
+    },
+    "reference_config": {
+      "attempts_per_test": 2,
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "kind": "Budget",
+        "max_arity": 3,
+        "max_pool": 30,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "constraints": [],
+      "cost": {
+        "kind": "ProgramSize"
+      },
+      "learn": {
+        "curriculum": null,
+        "early_stop": true,
+        "iterations": 5,
+        "kind": "LearnSpec",
+        "learn_engine": {
+          "kind": "GreedyMDLLearnEngine",
+          "metric": {
+            "bits_per_primitive": 1.0,
+            "cost": {
+              "kind": "ProgramSize"
+            },
+            "kind": "CompressionMetric"
+          },
+          "name_prefix": "abs",
+          "proposer": {
+            "bound_var_safe": false,
+            "kind": "AntiunifyPairs"
+          },
+          "selector": {
+            "kind": "GreedyMDL"
+          }
+        },
+        "reset_programs_each_wake": true,
+        "score_each_wake": false,
+        "wake_schedule": "full"
+      },
+      "library": {
+        "name": "dae9d2b5-split-L0",
+        "primitives": [
+          {
+            "name": "split_h",
+            "param_types": [
+              "grid"
+            ],
+            "return_type": {
+              "args": [
+                "grid"
+              ],
+              "con": "list"
+            },
+            "variadic_param": null
+          },
+          {
+            "name": "nth",
+            "param_types": [
+              {
+                "args": [
+                  {
+                    "var": "a"
+                  }
+                ],
+                "con": "list"
+              },
+              "int"
+            ],
+            "return_type": {
+              "var": "a"
+            },
+            "variadic_param": null
+          },
+          {
+            "name": "overlay",
+            "param_types": [
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_commutative": true,
+            "variadic_param": "grid"
+          },
+          {
+            "name": "map_color",
+            "param_types": [
+              "grid",
+              "color",
+              "color"
+            ],
+            "return_type": "grid",
+            "variadic_param": null
+          }
+        ],
+        "version": 1
+      },
+      "search_engine": {
+        "constant_sources": [
+          "finite-enumerate-scalars"
+        ],
+        "function_hole_fill_mode": "none",
+        "function_sample_size": 4,
+        "inverse_semantics_propagation": false,
+        "kind": "BottomUpSearchEngine",
+        "polymorphism_instantiation": "monomorphize",
+        "unpinned_type_var_mode": "reject"
+      }
+    },
+    "rungs": [
+      {
+        "demonstrations": [
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_west"
+            },
+            "task_id": "recolored_west-00"
+          },
+          {
+            "kind": "full_solution",
+            "solution": {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_west"
+            },
+            "task_id": "recolored_west-01"
+          }
+        ],
+        "level": 1,
+        "name": "recolored_west",
+        "template": {
+          "args": [
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "index": 0,
+                      "op": "param",
+                      "value_type": "grid"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "split_h"
+                },
+                {
+                  "op": "const",
+                  "value": 0,
+                  "value_type": "int"
+                }
+              ],
+              "op": "apply",
+              "primitive": "nth"
+            },
+            {
+              "op": "const",
+              "value": 4,
+              "value_type": "color"
+            },
+            {
+              "op": "const",
+              "value": 6,
+              "value_type": "color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "map_color"
+        }
+      }
+    ],
+    "task": "dae9d2b5",
+    "top": {
+      "reference_solutions": [
+        {
+          "args": [
+            {
+              "op": "const",
+              "value": 0,
+              "value_type": "color"
+            },
+            {
+              "args": [
+                {
+                  "op": "input"
+                }
+              ],
+              "op": "apply",
+              "primitive": "recolored_west"
+            },
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "args": [
+                        {
+                          "op": "input"
+                        }
+                      ],
+                      "op": "apply",
+                      "primitive": "split_h"
+                    },
+                    {
+                      "op": "const",
+                      "value": 1,
+                      "value_type": "int"
+                    }
+                  ],
+                  "op": "apply",
+                  "primitive": "nth"
+                },
+                {
+                  "op": "const",
+                  "value": 3,
+                  "value_type": "color"
+                },
+                {
+                  "op": "const",
+                  "value": 6,
+                  "value_type": "color"
+                }
+              ],
+              "op": "apply",
+              "primitive": "map_color"
+            }
+          ],
+          "op": "apply",
+          "primitive": "overlay"
+        }
+      ],
+      "task_ids": [
+        "dae9d2b5"
+      ]
+    },
+    "train_corpus": {
+      "content_hash": "a47006f5c2c15e4d",
+      "name": "dae9d2b5-recolor-solo:train",
+      "task_count": 3
+    }
+  },
+  "probe_cap": 512,
+  "provenance": [
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 3,
+        "max_arity": 3,
+        "max_pool": 150,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L0",
+      "commit": "2616efde625d66d7513ebf64c1504e23435dbbc9",
+      "completed": true,
+      "corpus_name": "dae9d2b5-recolor-solo:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0",
+      "run_dir": "20260804_212750_e36b4d6e074186dd",
+      "run_id": "e36b4d6e074186dd"
+    },
+    {
+      "budget": {
+        "considered_limit": 2000000,
+        "considered_limit_mode": "immediate",
+        "depth_limit": 4,
+        "max_arity": 3,
+        "max_pool": 750,
+        "solution_limit": null,
+        "solution_limit_mode": "generation-end"
+      },
+      "cell": "chain/L1",
+      "commit": "2616efde625d66d7513ebf64c1504e23435dbbc9",
+      "completed": true,
+      "corpus_name": "dae9d2b5-recolor-solo:train",
+      "learn": null,
+      "library": "dae9d2b5-split-L0+recolored_west",
+      "run_dir": "20260804_213312_7e003f5af95c2e70",
+      "run_id": "7e003f5af95c2e70"
+    }
+  ],
+  "recorded_commits": [
+    "2616efde625d66d7513ebf64c1504e23435dbbc9"
+  ],
+  "rung_recovery": [],
+  "shape": {
+    "height": 2,
+    "lint_ok": true,
+    "max_jump_depth": 3,
+    "raw_depth_profile": [
+      4
+    ],
+    "validity_window": [
+      4,
+      3
+    ]
+  },
+  "top_reachable": {
+    "chain": null,
+    "climb": null
+  },
+  "wake_schedule": "full"
+}

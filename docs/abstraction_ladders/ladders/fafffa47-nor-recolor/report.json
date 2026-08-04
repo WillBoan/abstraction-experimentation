@@ -279,7 +279,7 @@
       "guard_per_task": 1194460,
       "k": 10,
       "laddered_marginal": 119446,
-      "reused_recorded_arm": false,
+      "reused_recorded_arm": true,
       "saturated_at": null,
       "solved": false,
       "sound": true,

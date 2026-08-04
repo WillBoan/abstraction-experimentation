@@ -68,8 +68,6 @@ EXCLUDED: Mapping[str, str] = {
     "not something a bigger budget converts into a verdict (LADDER-PROCESS)",
     "94f9d214-recolor-first": "probe INCONCLUSIVE at the cohort guard (see above)",
     "fafffa47-recolor-first": "probe INCONCLUSIVE at the cohort guard (see above)",
-    "dae9d2b5-recolor-solo": "probe INCONCLUSIVE at a 500k smoke guard; the coarse endpoint is "
-    "bounded by cost, not by a structural defect",
     "a740d043-crop-normalize": "probe CONVICTED (a skip path at depth 3, verified); kept in the "
     "registry as a reproducible finding -- commuting factorisations cannot be laddered",
 }
