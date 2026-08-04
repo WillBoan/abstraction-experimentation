@@ -21,7 +21,7 @@
     "name": "94f9d214-nor-halves",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.15873450005892664,
+    "seconds": 339.7045340840705,
     "task": "94f9d214",
     "top_chain": null,
     "top_climb": false
@@ -46,7 +46,7 @@
     "name": "94f9d214-nor-merged",
     "rungs_recovered": 5,
     "rungs_total": 5,
-    "seconds": 0.3280838750069961,
+    "seconds": 18.66934812499676,
     "task": "94f9d214",
     "top_chain": true,
     "top_climb": true
@@ -73,7 +73,7 @@
     "name": "94f9d214-nor-recolor",
     "rungs_recovered": 4,
     "rungs_total": 4,
-    "seconds": 0.3868366669630632,
+    "seconds": 199.95541175000835,
     "task": "94f9d214",
     "top_chain": true,
     "top_climb": true
@@ -96,7 +96,7 @@
     "name": "al1-mirror",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.12364891590550542,
+    "seconds": 0.3263037089491263,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -118,7 +118,7 @@
     "name": "al10-skippable",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 0.00939866597764194,
+    "seconds": 0.010425374959595501,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -142,7 +142,7 @@
     "name": "al11-greedy-trap",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 0.2762090420583263,
+    "seconds": 0.28458712506107986,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -166,7 +166,7 @@
     "name": "al12-unlearnable",
     "rungs_recovered": 0,
     "rungs_total": 1,
-    "seconds": 0.06538687495049089,
+    "seconds": 0.07097012491431087,
     "task": "",
     "top_chain": true,
     "top_climb": false
@@ -190,7 +190,7 @@
     "name": "al13-symmetry-repair",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 0.028381292009726167,
+    "seconds": 8.718529958976433,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -213,7 +213,7 @@
     "name": "al14-cell-row-grid",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 9.38688987493515,
+    "seconds": 9.39807324996218,
     "task": "",
     "top_chain": null,
     "top_climb": null
@@ -236,7 +236,7 @@
     "name": "al15-shift-frame",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.08199516695458442,
+    "seconds": 0.22145158308558166,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -259,7 +259,7 @@
     "name": "al16-layout-nest",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.07978287502191961,
+    "seconds": 0.08468808396719396,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -282,7 +282,7 @@
     "name": "al17-shift-frame-tall",
     "rungs_recovered": 3,
     "rungs_total": 3,
-    "seconds": 0.10472391603980213,
+    "seconds": 0.10335337498690933,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -306,7 +306,7 @@
     "name": "al18-fanin-rotate",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.08856524992734194,
+    "seconds": 0.08961749996524304,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -330,7 +330,7 @@
     "name": "al19-fanin-recolor",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.12380204198416322,
+    "seconds": 0.12061754101887345,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -352,7 +352,7 @@
     "name": "al2-rot90-calibration",
     "rungs_recovered": 1,
     "rungs_total": 1,
-    "seconds": 0.06816212506964803,
+    "seconds": 0.07421983289532363,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -375,7 +375,7 @@
     "name": "al20-recolor-telescope",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.10206745902542025,
+    "seconds": 0.0972862500930205,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -399,7 +399,7 @@
     "name": "al21-dag-siblings",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.09410099999513477,
+    "seconds": 0.09180508402641863,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -423,7 +423,7 @@
     "name": "al3-quad-symmetrize",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 4.471732084057294,
+    "seconds": 4.340476582990959,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -452,7 +452,7 @@
     "name": "al4-mask-crop",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 3.1252364160027355,
+    "seconds": 3.023438207921572,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -477,7 +477,7 @@
     "name": "al5-perceiver-chain",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 3.223415125044994,
+    "seconds": 3.244901333004236,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -502,7 +502,7 @@
     "name": "al6-mirror-tall",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 6.741078665945679,
+    "seconds": 6.5037158749764785,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -526,7 +526,7 @@
     "name": "al7-fast-tower",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 0.29532508400734514,
+    "seconds": 0.2688759999582544,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -551,7 +551,7 @@
     "name": "al8-lean-perceiver",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 1.2669039580505341,
+    "seconds": 1.2163076670840383,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -575,7 +575,7 @@
     "name": "al9-decoy",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 0.2827502089785412,
+    "seconds": 0.284757083049044,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -601,7 +601,7 @@
     "name": "dae9d2b5-half-param",
     "rungs_recovered": 2,
     "rungs_total": 3,
-    "seconds": 0.10425674996804446,
+    "seconds": 10.302767416927963,
     "task": "dae9d2b5",
     "top_chain": true,
     "top_climb": true
@@ -627,7 +627,7 @@
     "name": "dae9d2b5-split-asym-lean",
     "rungs_recovered": 3,
     "rungs_total": 3,
-    "seconds": 0.0747765830019489,
+    "seconds": 171.9235380840255,
     "task": "dae9d2b5",
     "top_chain": true,
     "top_climb": true
@@ -653,7 +653,7 @@
     "name": "dae9d2b5-split-halves-lean",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.057827541953884065,
+    "seconds": 170.89783704199363,
     "task": "dae9d2b5",
     "top_chain": true,
     "top_climb": true
@@ -677,7 +677,7 @@
     "name": "dae9d2b5-split-recolor",
     "rungs_recovered": 4,
     "rungs_total": 4,
-    "seconds": 0.2793669169768691,
+    "seconds": 624.793225958012,
     "task": "dae9d2b5",
     "top_chain": true,
     "top_climb": true
@@ -701,7 +701,7 @@
     "name": "dae9d2b5-split-recolor-lean",
     "rungs_recovered": 4,
     "rungs_total": 4,
-    "seconds": 0.10310866707004607,
+    "seconds": 12.274274208000861,
     "task": "dae9d2b5",
     "top_chain": true,
     "top_climb": true
@@ -728,7 +728,7 @@
     "name": "fafffa47-nor-halves",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.1523472920525819,
+    "seconds": 424.94839558401145,
     "task": "fafffa47",
     "top_chain": null,
     "top_climb": false
@@ -753,7 +753,7 @@
     "name": "fafffa47-nor-merged",
     "rungs_recovered": 5,
     "rungs_total": 5,
-    "seconds": 0.3193494160659611,
+    "seconds": 21.288330167066306,
     "task": "fafffa47",
     "top_chain": true,
     "top_climb": true
@@ -780,7 +780,7 @@
     "name": "fafffa47-nor-recolor",
     "rungs_recovered": 4,
     "rungs_total": 4,
-    "seconds": 0.26489979098550975,
+    "seconds": 258.27788900001906,
     "task": "fafffa47",
     "top_chain": true,
     "top_climb": true

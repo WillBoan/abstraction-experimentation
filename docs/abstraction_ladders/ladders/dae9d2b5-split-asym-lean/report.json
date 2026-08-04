@@ -29,7 +29,7 @@
         "abs2"
       ],
       "proposal_count": 14,
-      "wake_considered": 2462328,
+      "wake_considered": 2096928,
       "wake_solved": [
         "east-00",
         "east-01",
@@ -45,7 +45,7 @@
       "iteration": 1,
       "minted": [],
       "proposal_count": 3,
-      "wake_considered": 313100,
+      "wake_considered": 65100,
       "wake_solved": [
         "dae9d2b5",
         "east-00",
@@ -75,35 +75,35 @@
     "marginal_rung_value": [
       {
         "censored": true,
-        "cost_with_rung": 17316,
-        "cost_without_rung": 18820,
+        "cost_with_rung": 4866,
+        "cost_without_rung": 6370,
         "layer_above": "recolored_west",
         "own_tasks_speedup": 1.0526315789473684,
         "own_tasks_to_first_with": 304,
         "own_tasks_to_first_without": 320,
-        "ratio": 1.0868560868560868,
+        "ratio": 1.3090834360871353,
         "rung": "west"
       },
       {
         "censored": true,
-        "cost_with_rung": 20101,
-        "cost_without_rung": 20089,
+        "cost_with_rung": 5801,
+        "cost_without_rung": 5789,
         "layer_above": "top",
         "own_tasks_speedup": 1.0657894736842106,
         "own_tasks_to_first_with": 304,
         "own_tasks_to_first_without": 324,
-        "ratio": 0.9994030147753843,
+        "ratio": 0.9979313911394587,
         "rung": "east"
       },
       {
         "censored": true,
-        "cost_with_rung": 312320,
-        "cost_without_rung": 20101,
+        "cost_with_rung": 64320,
+        "cost_without_rung": 5801,
         "layer_above": "top",
-        "own_tasks_speedup": 56.22077922077922,
+        "own_tasks_speedup": 15.7987012987013,
         "own_tasks_to_first_with": 308,
-        "own_tasks_to_first_without": 17316,
-        "ratio": 0.06436027151639344,
+        "own_tasks_to_first_without": 4866,
+        "ratio": 0.09018967661691542,
         "rung": "recolored_west"
       }
     ],
@@ -122,8 +122,8 @@
       },
       {
         "at_full_library": 310,
-        "at_own_level": 17318,
-        "factor": 0.01790045039842938,
+        "at_own_level": 4868,
+        "factor": 0.06368118323746919,
         "rung": "recolored_west"
       }
     ]
@@ -144,8 +144,8 @@
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
-      "high": 9.239162422869876,
-      "low": 2.0683468266895964
+      "high": 3.5449624835328484,
+      "low": 1.5077180823643965
     },
     "budget_compression_depth": {
       "max_jump_depth": 2,
@@ -153,21 +153,21 @@
     },
     "jump_costs": {
       "east": 326,
-      "recolored_west": 17318,
+      "recolored_west": 4868,
       "west": 322
     },
     "jump_costs_to_first": {
       "east": 324,
-      "recolored_west": 17316,
+      "recolored_west": 4866,
       "west": 320
     },
-    "laddered_end_to_end_considered": 2775428,
-    "laddered_marginal_considered": 330286,
-    "laddered_marginal_to_first": 330279,
+    "laddered_end_to_end_considered": 2162028,
+    "laddered_marginal_considered": 69836,
+    "laddered_marginal_to_first": 69829,
     "off_chain_top_solved": false,
     "raw_arm": null,
     "raw_censored": true,
-    "raw_considered": 20077,
+    "raw_considered": 5777,
     "raw_estimate": {
       "available": true,
       "caveats": [
@@ -179,25 +179,25 @@
         "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
       ],
       "d_raw": 4,
-      "estimate_high": 3051566,
-      "estimate_low": 683146,
-      "growth_ratio_geometric": 33.27,
-      "growth_ratio_last": 152.12,
+      "estimate_high": 247566,
+      "estimate_low": 105293,
+      "growth_ratio_geometric": 17.68,
+      "growth_ratio_last": 42.96,
       "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
       "observed_composed": [
         18,
         131,
-        19928
+        5628
       ],
-      "observed_considered": 20077,
+      "observed_considered": 5777,
       "observed_through_depth": 3,
       "rounds_extrapolated": 1,
       "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
     },
     "raw_limit_censored": false,
     "raw_solved": false,
-    "top_jump_cost": 312320,
-    "top_jump_cost_to_first": 312319
+    "top_jump_cost": 64320,
+    "top_jump_cost_to_first": 64319
   },
   "cost_matrix": [
     {
@@ -536,34 +536,34 @@
           "b_eff": 6.55,
           "by_primitive": [
             {
-              "considered": 12137,
+              "considered": 3887,
               "primitive": "__const__",
-              "share": 0.9998352417826839
+              "share": 0.999485728979172
             },
             {
-              "considered": 12079,
+              "considered": 3829,
               "primitive": "map_color",
-              "share": 0.9950572534805173
+              "share": 0.9845718693751607
             },
             {
-              "considered": 11100,
+              "considered": 2850,
               "primitive": "overlay",
-              "share": 0.9144081061042919
+              "share": 0.7328362046798663
             },
             {
               "considered": 19,
               "primitive": "split_h",
-              "share": 0.0015652030645028421
+              "share": 0.004885574697865775
             },
             {
               "considered": 9,
               "primitive": "nth",
-              "share": 0.0007414119779223989
+              "share": 0.0023142195937258937
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 12139,
+          "considered": 3889,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
@@ -572,40 +572,40 @@
           "b_eff": 6.6,
           "by_primitive": [
             {
-              "considered": 11283,
+              "considered": 3033,
               "primitive": "__const__",
-              "share": 0.9996456099937981
+              "share": 0.9986829107672045
             },
             {
-              "considered": 11115,
+              "considered": 2915,
               "primitive": "map_color",
-              "share": 0.9847612297333215
+              "share": 0.9598287783997366
             },
             {
-              "considered": 11100,
+              "considered": 2850,
               "primitive": "overlay",
-              "share": 0.9834322672100647
+              "share": 0.9384260783668094
             },
             {
-              "considered": 2959,
+              "considered": 709,
               "primitive": "west",
-              "share": 0.26216000708780013
+              "share": 0.23345406651300626
             },
             {
               "considered": 19,
               "primitive": "split_h",
-              "share": 0.0016833525294586693
+              "share": 0.006256173855778729
             },
             {
               "considered": 9,
               "primitive": "nth",
-              "share": 0.0007973775139541065
+              "share": 0.0029634507737899243
             }
           ],
           "censored": false,
-          "cheapest_solution_index": 11286,
-          "considered": 11287,
-          "first_solution_index": 11286,
+          "cheapest_solution_index": 3036,
+          "considered": 3037,
+          "first_solution_index": 3036,
           "solve_generation": 2,
           "solved": true
         },
@@ -613,40 +613,40 @@
           "b_eff": 6.65,
           "by_primitive": [
             {
-              "considered": 11282,
+              "considered": 3032,
               "primitive": "__const__",
-              "share": 0.9994684620836286
+              "share": 0.9980250164581962
             },
             {
-              "considered": 11100,
+              "considered": 2850,
               "primitive": "overlay",
-              "share": 0.9833451452870304
+              "share": 0.9381171823568137
             },
             {
-              "considered": 10864,
+              "considered": 2814,
               "primitive": "map_color",
-              "share": 0.96243798724309
+              "share": 0.9262672811059908
             },
             {
-              "considered": 2959,
+              "considered": 709,
               "primitive": "west",
-              "share": 0.2621367824238129
+              "share": 0.23337722185648452
             },
             {
-              "considered": 2912,
+              "considered": 662,
               "primitive": "east",
-              "share": 0.2579730687455705
+              "share": 0.21790651744568795
             },
             {
               "considered": 19,
               "primitive": "split_h",
-              "share": 0.0016832034018426647
+              "share": 0.006254114549045424
             }
           ],
           "censored": false,
-          "cheapest_solution_index": 11287,
-          "considered": 11288,
-          "first_solution_index": 11287,
+          "cheapest_solution_index": 3037,
+          "considered": 3038,
+          "first_solution_index": 3037,
           "solve_generation": 2,
           "solved": true
         },
@@ -701,34 +701,34 @@
           "b_eff": 5.95,
           "by_primitive": [
             {
-              "considered": 6679,
+              "considered": 2479,
               "primitive": "__const__",
-              "share": 0.9997006436162251
+              "share": 0.9991938734381298
             },
             {
-              "considered": 6617,
+              "considered": 2417,
               "primitive": "map_color",
-              "share": 0.9904205957192037
+              "share": 0.9742039500201531
             },
             {
-              "considered": 5840,
+              "considered": 1640,
               "primitive": "overlay",
-              "share": 0.8741206406226613
+              "share": 0.6610237807335752
             },
             {
               "considered": 19,
               "primitive": "split_h",
-              "share": 0.002843885645861398
+              "share": 0.007658202337767029
             },
             {
               "considered": 11,
               "primitive": "nth",
-              "share": 0.001646460110761862
+              "share": 0.004433696090286175
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 6681,
+          "considered": 2481,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
@@ -737,40 +737,40 @@
           "b_eff": 6.0,
           "by_primitive": [
             {
-              "considered": 6025,
+              "considered": 1825,
               "primitive": "__const__",
-              "share": 0.999336540056394
+              "share": 0.9978130125751777
             },
             {
-              "considered": 5853,
+              "considered": 1703,
               "primitive": "map_color",
-              "share": 0.9708077624813402
+              "share": 0.9311098961180974
             },
             {
-              "considered": 5840,
+              "considered": 1640,
               "primitive": "overlay",
-              "share": 0.968651517664621
+              "share": 0.896664844177146
             },
             {
-              "considered": 1899,
+              "considered": 499,
               "primitive": "west",
-              "share": 0.3149776082269033
+              "share": 0.2728266812465828
             },
             {
               "considered": 19,
               "primitive": "split_h",
-              "share": 0.0031514347321280477
+              "share": 0.01038819026790596
             },
             {
               "considered": 11,
               "primitive": "nth",
-              "share": 0.0018245148449162383
+              "share": 0.006014215418261345
             }
           ],
           "censored": false,
-          "cheapest_solution_index": 6028,
-          "considered": 6029,
-          "first_solution_index": 6028,
+          "cheapest_solution_index": 1828,
+          "considered": 1829,
+          "first_solution_index": 1828,
           "solve_generation": 2,
           "solved": true
         },
@@ -778,40 +778,40 @@
           "b_eff": 6.05,
           "by_primitive": [
             {
-              "considered": 6024,
+              "considered": 1824,
               "primitive": "__const__",
-              "share": 0.9990049751243781
+              "share": 0.9967213114754099
             },
             {
-              "considered": 5840,
+              "considered": 1640,
               "primitive": "overlay",
-              "share": 0.9684908789386402
+              "share": 0.8961748633879781
             },
             {
-              "considered": 5602,
+              "considered": 1602,
               "primitive": "map_color",
-              "share": 0.9290215588723051
+              "share": 0.8754098360655738
             },
             {
-              "considered": 1899,
+              "considered": 499,
               "primitive": "west",
-              "share": 0.31492537313432833
+              "share": 0.2726775956284153
             },
             {
-              "considered": 1852,
+              "considered": 452,
               "primitive": "east",
-              "share": 0.30713101160862355
+              "share": 0.24699453551912567
             },
             {
               "considered": 19,
               "primitive": "split_h",
-              "share": 0.003150912106135987
+              "share": 0.010382513661202186
             }
           ],
           "censored": false,
-          "cheapest_solution_index": 6029,
-          "considered": 6030,
-          "first_solution_index": 6029,
+          "cheapest_solution_index": 1829,
+          "considered": 1830,
+          "first_solution_index": 1829,
           "solve_generation": 2,
           "solved": true
         },
@@ -866,34 +866,34 @@
           "b_eff": 7.28,
           "by_primitive": [
             {
-              "considered": 20075,
+              "considered": 5775,
               "primitive": "__const__",
-              "share": 0.9999003835234348
+              "share": 0.9996537995499394
             },
             {
-              "considered": 20021,
+              "considered": 5721,
               "primitive": "map_color",
-              "share": 0.9972107386561737
+              "share": 0.9903063873983036
             },
             {
-              "considered": 18840,
+              "considered": 4540,
               "primitive": "overlay",
-              "share": 0.938387209244409
+              "share": 0.7858750216375281
             },
             {
               "considered": 19,
               "primitive": "split_h",
-              "share": 0.0009463565273696269
+              "share": 0.003288904275575558
             },
             {
               "considered": 7,
               "primitive": "nth",
-              "share": 0.0003486576679782836
+              "share": 0.0012117015752120478
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 20077,
+          "considered": 5777,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
@@ -902,39 +902,39 @@
           "b_eff": 7.33,
           "by_primitive": [
             {
-              "considered": 20084,
+              "considered": 5784,
               "primitive": "__const__",
-              "share": 0.9997511075713077
+              "share": 0.9991362929694247
             },
             {
-              "considered": 19920,
+              "considered": 5670,
               "primitive": "map_color",
-              "share": 0.9915874359101996
+              "share": 0.9794437726723095
             },
             {
-              "considered": 18840,
+              "considered": 4540,
               "primitive": "overlay",
-              "share": 0.9378266713126586
+              "share": 0.7842459837623078
             },
             {
-              "considered": 4323,
+              "considered": 1023,
               "primitive": "west",
-              "share": 0.21519239384737918
+              "share": 0.17671445845569184
             },
             {
               "considered": 19,
               "primitive": "split_h",
-              "share": 0.0009457912290308128
+              "share": 0.0032820867161858698
             },
             {
               "considered": 7,
               "primitive": "nth",
-              "share": 0.00034844940016924683
+              "share": 0.0012091898428053204
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 20089,
+          "considered": 5789,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
@@ -943,81 +943,81 @@
           "b_eff": 7.39,
           "by_primitive": [
             {
-              "considered": 20091,
+              "considered": 5791,
               "primitive": "__const__",
-              "share": 0.9995025123128203
+              "share": 0.9982761592828823
             },
             {
-              "considered": 19677,
+              "considered": 5577,
               "primitive": "map_color",
-              "share": 0.978906522063579
+              "share": 0.9613859679365626
             },
             {
-              "considered": 18840,
+              "considered": 4540,
               "primitive": "overlay",
-              "share": 0.9372668026466345
+              "share": 0.7826236855714532
             },
             {
-              "considered": 4324,
+              "considered": 1024,
               "primitive": "east",
-              "share": 0.21511367593652056
+              "share": 0.17652128943285642
             },
             {
-              "considered": 4324,
+              "considered": 1024,
               "primitive": "west",
-              "share": 0.21511367593652056
+              "share": 0.17652128943285642
             },
             {
               "considered": 19,
               "primitive": "split_h",
-              "share": 0.0009452266056415103
+              "share": 0.003275297362523703
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 20101,
+          "considered": 5801,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "3": {
-          "b_eff": 131.43,
+          "b_eff": 59.13,
           "by_primitive": [
             {
-              "considered": 312297,
+              "considered": 64297,
               "primitive": "__const__",
-              "share": 0.9999263575819672
+              "share": 0.9996424129353234
             },
             {
-              "considered": 311300,
+              "considered": 63800,
               "primitive": "map_color",
-              "share": 0.996734118852459
+              "share": 0.9919154228855721
             },
             {
-              "considered": 308792,
+              "considered": 60792,
               "primitive": "overlay",
-              "share": 0.988703893442623
+              "share": 0.9451492537313433
             },
             {
-              "considered": 29059,
+              "considered": 5809,
               "primitive": "east",
-              "share": 0.09304239241803279
+              "share": 0.09031405472636816
             },
             {
-              "considered": 29049,
+              "considered": 5799,
               "primitive": "west",
-              "share": 0.09301037397540983
+              "share": 0.09015858208955224
             },
             {
-              "considered": 28876,
+              "considered": 5626,
               "primitive": "recolored_west",
-              "share": 0.09245645491803278
+              "share": 0.08746890547263682
             }
           ],
           "censored": false,
-          "cheapest_solution_index": 312319,
-          "considered": 312320,
-          "first_solution_index": 312319,
+          "cheapest_solution_index": 64319,
+          "considered": 64320,
+          "first_solution_index": 64319,
           "solve_generation": 3,
           "solved": true
         }
@@ -1429,6 +1429,7 @@
               "color"
             ],
             "return_type": "grid",
+            "variadic_commutative": true,
             "variadic_param": "grid"
           },
           {
@@ -1697,13 +1698,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "chain/L0",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-asym-lean:train",
       "learn": null,
       "library": "dae9d2b5-split-L0",
-      "run_dir": "20260727_163500_1e1d569e8f7bb071",
-      "run_id": "1e1d569e8f7bb071"
+      "run_dir": "20260804_204721_03738f083c87cadc",
+      "run_id": "03738f083c87cadc"
     },
     {
       "budget": {
@@ -1716,13 +1717,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "chain/L1",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-asym-lean:train",
       "learn": null,
       "library": "dae9d2b5-split-L0+west",
-      "run_dir": "20260727_163502_0b6edacc0728e363",
-      "run_id": "0b6edacc0728e363"
+      "run_dir": "20260804_204722_fa28d396b769016d",
+      "run_id": "fa28d396b769016d"
     },
     {
       "budget": {
@@ -1735,13 +1736,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "chain/L2",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-asym-lean:train",
       "learn": null,
       "library": "dae9d2b5-split-L0+west+east",
-      "run_dir": "20260727_163504_0df86d0422ae6b36",
-      "run_id": "0df86d0422ae6b36"
+      "run_dir": "20260804_204722_bafcda8f4763adf1",
+      "run_id": "bafcda8f4763adf1"
     },
     {
       "budget": {
@@ -1754,13 +1755,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "chain/L3",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-asym-lean:train",
       "learn": null,
       "library": "dae9d2b5-split-L0+west+east+recolored_west",
-      "run_dir": "20260727_163506_8aaf60b9c1f7ba5c",
-      "run_id": "8aaf60b9c1f7ba5c"
+      "run_dir": "20260804_204723_3d2d22a45776775b",
+      "run_id": "3d2d22a45776775b"
     },
     {
       "budget": {
@@ -1773,7 +1774,7 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "climb/learn",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-asym-lean:train",
       "learn": {
@@ -1783,8 +1784,8 @@
         "proposer": "AntiunifyPairs"
       },
       "library": "dae9d2b5-split-L0",
-      "run_dir": "20260727_180316_052ecbd55da8fa27",
-      "run_id": "052ecbd55da8fa27"
+      "run_dir": "20260804_204726_be4030ec02ca0843",
+      "run_id": "be4030ec02ca0843"
     },
     {
       "budget": {
@@ -1797,13 +1798,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "climb/train-usefulness",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-asym-lean:train",
       "learn": null,
       "library": "dae9d2b5-split-L0+abs0+abs1+abs2",
-      "run_dir": "20260727_180628_9c38928ccf904e8b",
-      "run_id": "9c38928ccf904e8b"
+      "run_dir": "20260804_205006_16031294cbdfe34f",
+      "run_id": "16031294cbdfe34f"
     },
     {
       "budget": {
@@ -1816,13 +1817,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "climb/transfer",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-asym-lean:heldout",
       "learn": null,
       "library": "dae9d2b5-split-L0+abs0+abs1+abs2",
-      "run_dir": "20260727_180647_b5026f4940b03f71",
-      "run_id": "b5026f4940b03f71"
+      "run_dir": "20260804_205010_997e4606c6efdc02",
+      "run_id": "997e4606c6efdc02"
     },
     {
       "budget": {
@@ -1835,17 +1836,17 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "off-chain",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-asym-lean:train",
       "learn": null,
       "library": "dae9d2b5-split-L0+recolored_west",
-      "run_dir": "20260727_180658_525897a0b2f35e07",
-      "run_id": "525897a0b2f35e07"
+      "run_dir": "20260804_205012_88006a439fc57683",
+      "run_id": "88006a439fc57683"
     }
   ],
   "recorded_commits": [
-    "260fa76b8d20fd72a8d2898c46ac906749157adb"
+    "69a536891ea6799d178ca633eb789c55ea36abb0"
   ],
   "rung_recovery": [
     {

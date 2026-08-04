@@ -39,7 +39,7 @@
       "iteration": 1,
       "minted": [],
       "proposal_count": 2,
-      "wake_considered": 288143,
+      "wake_considered": 62652,
       "wake_solved": [
         "dae9d2b5",
         "east-00",
@@ -63,24 +63,24 @@
     "marginal_rung_value": [
       {
         "censored": true,
-        "cost_with_rung": 20089,
-        "cost_without_rung": 20077,
+        "cost_with_rung": 5789,
+        "cost_without_rung": 5777,
         "layer_above": "top",
         "own_tasks_speedup": 1.0526315789473684,
         "own_tasks_to_first_with": 304,
         "own_tasks_to_first_without": 320,
-        "ratio": 0.9994026581711384,
+        "ratio": 0.9979271031266195,
         "rung": "west"
       },
       {
         "censored": true,
-        "cost_with_rung": 287531,
-        "cost_without_rung": 20089,
+        "cost_with_rung": 62040,
+        "cost_without_rung": 5789,
         "layer_above": "top",
         "own_tasks_speedup": 1.0657894736842106,
         "own_tasks_to_first_with": 304,
         "own_tasks_to_first_without": 324,
-        "ratio": 0.06986724909661915,
+        "ratio": 0.09331076724693746,
         "rung": "east"
       }
     ],
@@ -115,8 +115,8 @@
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
-      "high": 10.589133836955503,
-      "low": 2.3705613524927216
+      "high": 3.949176875957121,
+      "low": 1.6796356559469117
     },
     "budget_compression_depth": {
       "max_jump_depth": 2,
@@ -130,13 +130,13 @@
       "east": 324,
       "west": 320
     },
-    "laddered_end_to_end_considered": 2288863,
-    "laddered_marginal_considered": 288179,
-    "laddered_marginal_to_first": 288174,
+    "laddered_end_to_end_considered": 2063372,
+    "laddered_marginal_considered": 62688,
+    "laddered_marginal_to_first": 62683,
     "off_chain_top_solved": false,
     "raw_arm": null,
     "raw_censored": true,
-    "raw_considered": 20077,
+    "raw_considered": 5777,
     "raw_estimate": {
       "available": true,
       "caveats": [
@@ -148,25 +148,25 @@
         "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
       ],
       "d_raw": 4,
-      "estimate_high": 3051566,
-      "estimate_low": 683146,
-      "growth_ratio_geometric": 33.27,
-      "growth_ratio_last": 152.12,
+      "estimate_high": 247566,
+      "estimate_low": 105293,
+      "growth_ratio_geometric": 17.68,
+      "growth_ratio_last": 42.96,
       "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
       "observed_composed": [
         18,
         131,
-        19928
+        5628
       ],
-      "observed_considered": 20077,
+      "observed_considered": 5777,
       "observed_through_depth": 3,
       "rounds_extrapolated": 1,
       "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
     },
     "raw_limit_censored": false,
     "raw_solved": false,
-    "top_jump_cost": 287531,
-    "top_jump_cost_to_first": 287530
+    "top_jump_cost": 62040,
+    "top_jump_cost_to_first": 62039
   },
   "cost_matrix": [
     {
@@ -423,34 +423,34 @@
           "b_eff": 7.28,
           "by_primitive": [
             {
-              "considered": 20075,
+              "considered": 5775,
               "primitive": "__const__",
-              "share": 0.9999003835234348
+              "share": 0.9996537995499394
             },
             {
-              "considered": 20021,
+              "considered": 5721,
               "primitive": "map_color",
-              "share": 0.9972107386561737
+              "share": 0.9903063873983036
             },
             {
-              "considered": 18840,
+              "considered": 4540,
               "primitive": "overlay",
-              "share": 0.938387209244409
+              "share": 0.7858750216375281
             },
             {
               "considered": 19,
               "primitive": "split_h",
-              "share": 0.0009463565273696269
+              "share": 0.003288904275575558
             },
             {
               "considered": 7,
               "primitive": "nth",
-              "share": 0.0003486576679782836
+              "share": 0.0012117015752120478
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 20077,
+          "considered": 5777,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
@@ -459,81 +459,81 @@
           "b_eff": 7.33,
           "by_primitive": [
             {
-              "considered": 20084,
+              "considered": 5784,
               "primitive": "__const__",
-              "share": 0.9997511075713077
+              "share": 0.9991362929694247
             },
             {
-              "considered": 19920,
+              "considered": 5670,
               "primitive": "map_color",
-              "share": 0.9915874359101996
+              "share": 0.9794437726723095
             },
             {
-              "considered": 18840,
+              "considered": 4540,
               "primitive": "overlay",
-              "share": 0.9378266713126586
+              "share": 0.7842459837623078
             },
             {
-              "considered": 4323,
+              "considered": 1023,
               "primitive": "west",
-              "share": 0.21519239384737918
+              "share": 0.17671445845569184
             },
             {
               "considered": 19,
               "primitive": "split_h",
-              "share": 0.0009457912290308128
+              "share": 0.0032820867161858698
             },
             {
               "considered": 7,
               "primitive": "nth",
-              "share": 0.00034844940016924683
+              "share": 0.0012091898428053204
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 20089,
+          "considered": 5789,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "2": {
-          "b_eff": 125.23,
+          "b_eff": 56.53,
           "by_primitive": [
             {
-              "considered": 287517,
+              "considered": 62026,
               "primitive": "__const__",
-              "share": 0.9999513095979217
+              "share": 0.9997743391360413
             },
             {
-              "considered": 286991,
+              "considered": 61718,
               "primitive": "map_color",
-              "share": 0.9981219416341195
+              "share": 0.994809800128949
             },
             {
-              "considered": 284141,
+              "considered": 58650,
               "primitive": "overlay",
-              "share": 0.9882099669253055
+              "share": 0.945357833655706
             },
             {
-              "considered": 29642,
+              "considered": 7180,
               "primitive": "west",
-              "share": 0.10309149274339115
+              "share": 0.1157317859445519
             },
             {
-              "considered": 28419,
+              "considered": 6512,
               "primitive": "east",
-              "share": 0.09883803833325798
+              "share": 0.1049645390070922
             },
             {
               "considered": 313,
               "primitive": "split_h",
-              "share": 0.0010885782750381697
+              "share": 0.005045132172791747
             }
           ],
           "censored": false,
-          "cheapest_solution_index": 287530,
-          "considered": 287531,
-          "first_solution_index": 287530,
+          "cheapest_solution_index": 62039,
+          "considered": 62040,
+          "first_solution_index": 62039,
           "solve_generation": 3,
           "solved": true
         }
@@ -873,6 +873,7 @@
               "color"
             ],
             "return_type": "grid",
+            "variadic_commutative": true,
             "variadic_param": "grid"
           },
           {
@@ -1098,13 +1099,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "chain/L0",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-halves-lean:train",
       "learn": null,
       "library": "dae9d2b5-split-L0",
-      "run_dir": "20260727_163113_d6375445aae9d8b6",
-      "run_id": "d6375445aae9d8b6"
+      "run_dir": "20260804_205013_37fa282dbd755102",
+      "run_id": "37fa282dbd755102"
     },
     {
       "budget": {
@@ -1117,13 +1118,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "chain/L1",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-halves-lean:train",
       "learn": null,
       "library": "dae9d2b5-split-L0+west",
-      "run_dir": "20260727_163114_705f6a336647a63c",
-      "run_id": "705f6a336647a63c"
+      "run_dir": "20260804_205013_99f79bdfb269899a",
+      "run_id": "99f79bdfb269899a"
     },
     {
       "budget": {
@@ -1136,13 +1137,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "chain/L2",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-halves-lean:train",
       "learn": null,
       "library": "dae9d2b5-split-L0+west+east",
-      "run_dir": "20260727_163115_dd470ffdea52eeca",
-      "run_id": "dd470ffdea52eeca"
+      "run_dir": "20260804_205014_0380c56626ebf4c2",
+      "run_id": "0380c56626ebf4c2"
     },
     {
       "budget": {
@@ -1155,7 +1156,7 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "climb/learn",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-halves-lean:train",
       "learn": {
@@ -1165,8 +1166,8 @@
         "proposer": "AntiunifyPairs"
       },
       "library": "dae9d2b5-split-L0",
-      "run_dir": "20260727_163135_9295b91486953165",
-      "run_id": "9295b91486953165"
+      "run_dir": "20260804_205018_5c799e43ffceb15b",
+      "run_id": "5c799e43ffceb15b"
     },
     {
       "budget": {
@@ -1179,13 +1180,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "climb/train-usefulness",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-halves-lean:train",
       "learn": null,
       "library": "dae9d2b5-split-L0+abs0+abs1",
-      "run_dir": "20260727_163428_5553ed8cd524c66e",
-      "run_id": "5553ed8cd524c66e"
+      "run_dir": "20260804_205257_c19059c2d1c29e13",
+      "run_id": "c19059c2d1c29e13"
     },
     {
       "budget": {
@@ -1198,13 +1199,13 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "climb/transfer",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-halves-lean:heldout",
       "learn": null,
       "library": "dae9d2b5-split-L0+abs0+abs1",
-      "run_dir": "20260727_163447_01df9553d0731b06",
-      "run_id": "01df9553d0731b06"
+      "run_dir": "20260804_205301_9442b97b9b44208a",
+      "run_id": "9442b97b9b44208a"
     },
     {
       "budget": {
@@ -1217,17 +1218,17 @@
         "solution_limit_mode": "immediate"
       },
       "cell": "off-chain",
-      "commit": "260fa76b8d20fd72a8d2898c46ac906749157adb",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "dae9d2b5-split-halves-lean:train",
       "learn": null,
       "library": "dae9d2b5-split-L0+east",
-      "run_dir": "20260727_163458_e83403a22b944792",
-      "run_id": "e83403a22b944792"
+      "run_dir": "20260804_205303_cfd85ef88016cf30",
+      "run_id": "cfd85ef88016cf30"
     }
   ],
   "recorded_commits": [
-    "260fa76b8d20fd72a8d2898c46ac906749157adb"
+    "69a536891ea6799d178ca633eb789c55ea36abb0"
   ],
   "rung_recovery": [
     {

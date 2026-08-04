@@ -32,37 +32,37 @@
       {
         "censored": true,
         "cost_with_rung": 100000,
-        "cost_without_rung": 1726,
+        "cost_without_rung": 726,
         "layer_above": "sym_both",
         "own_tasks_speedup": 1.6818181818181819,
         "own_tasks_to_first_with": 88,
         "own_tasks_to_first_without": 148,
-        "ratio": 0.01726,
+        "ratio": 0.00726,
         "rung": "sym_h"
       },
       {
         "censored": true,
-        "cost_with_rung": 14894,
+        "cost_with_rung": 3894,
         "cost_without_rung": 50000,
         "layer_above": "top",
-        "own_tasks_speedup": 121.48148148148148,
+        "own_tasks_speedup": 43.7037037037037,
         "own_tasks_to_first_with": 108,
-        "own_tasks_to_first_without": 13120,
-        "ratio": 3.3570565328320128,
+        "own_tasks_to_first_without": 4720,
+        "ratio": 12.840267077555213,
         "rung": "sym_both"
       }
     ],
     "vocabulary_tax": [
       {
-        "at_full_library": 29788,
-        "at_own_level": 1726,
-        "factor": 17.258400926998842,
+        "at_full_library": 7788,
+        "at_own_level": 726,
+        "factor": 10.727272727272727,
         "rung": "sym_h"
       },
       {
-        "at_full_library": 29788,
+        "at_full_library": 7788,
         "at_own_level": 100000,
-        "factor": 0.29788,
+        "factor": 0.07788,
         "rung": "sym_both"
       }
     ]
@@ -74,8 +74,8 @@
   "cost": {
     "amortization_ratio_considered": null,
     "amortization_ratio_estimated": {
-      "high": 4.507331504030184,
-      "low": 0.590876350540216
+      "high": 0.3178646530300134,
+      "low": 0.10830625119480022
     },
     "budget_compression_depth": {
       "max_jump_depth": 3,
@@ -83,19 +83,19 @@
     },
     "jump_costs": {
       "sym_both": 100000,
-      "sym_h": 1726
+      "sym_h": 726
     },
     "jump_costs_to_first": {
-      "sym_both": 13120,
+      "sym_both": 4720,
       "sym_h": 148
     },
     "laddered_end_to_end_considered": null,
-    "laddered_marginal_considered": 116620,
-    "laddered_marginal_to_first": 27959,
+    "laddered_marginal_considered": 104620,
+    "laddered_marginal_to_first": 8559,
     "off_chain_top_solved": null,
     "raw_arm": null,
     "raw_censored": true,
-    "raw_considered": 863,
+    "raw_considered": 363,
     "raw_estimate": {
       "available": true,
       "caveats": [
@@ -107,67 +107,67 @@
         "an RQ1 ratio built on this carries ~3 orders of magnitude of uncertainty, unknown sign"
       ],
       "d_raw": 5,
-      "estimate_high": 525645,
-      "estimate_low": 68908,
-      "growth_ratio_geometric": 8.63,
-      "growth_ratio_last": 24.82,
+      "estimate_high": 33255,
+      "estimate_low": 11331,
+      "growth_ratio_geometric": 5.39,
+      "growth_ratio_last": 9.67,
       "method": "geometric extrapolation of per-round composed growth (design doc 5.3)",
       "observed_composed": [
         11,
         33,
-        819
+        319
       ],
-      "observed_considered": 863,
+      "observed_considered": 363,
       "observed_through_depth": 3,
       "rounds_extrapolated": 2,
       "validated": "2026-07-23: bracket contained the measured truth in 2 of 10 cells"
     },
     "raw_limit_censored": false,
     "raw_solved": false,
-    "top_jump_cost": 14894,
-    "top_jump_cost_to_first": 14691
+    "top_jump_cost": 3894,
+    "top_jump_cost_to_first": 3691
   },
   "cost_matrix": [
     {
       "columns": {
         "0": {
-          "b_eff": 8.63,
+          "b_eff": 5.39,
           "by_primitive": [
             {
-              "considered": 850,
+              "considered": 350,
               "primitive": "__const__",
-              "share": 0.984936268829664
+              "share": 0.9641873278236914
             },
             {
-              "considered": 840,
+              "considered": 340,
               "primitive": "overlay",
-              "share": 0.9733487833140209
+              "share": 0.9366391184573003
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "flip_h",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "flip_v",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "transpose",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 863,
+          "considered": 363,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 23.16,
+          "b_eff": 12.44,
           "by_primitive": [
             {
               "considered": 49987,
@@ -180,70 +180,70 @@
               "share": 0.9977
             },
             {
-              "considered": 47265,
+              "considered": 48224,
               "primitive": "sym_h",
-              "share": 0.9453
+              "share": 0.96448
             },
             {
-              "considered": 35534,
+              "considered": 40051,
               "primitive": "flip_v",
-              "share": 0.71068
+              "share": 0.80102
             },
             {
-              "considered": 21790,
+              "considered": 25284,
               "primitive": "flip_h",
-              "share": 0.4358
+              "share": 0.50568
             },
             {
-              "considered": 17838,
+              "considered": 20435,
               "primitive": "transpose",
-              "share": 0.35676
+              "share": 0.4087
             }
           ],
           "censored": true,
-          "cheapest_solution_index": 6560,
+          "cheapest_solution_index": 2360,
           "considered": 50000,
-          "first_solution_index": 6560,
+          "first_solution_index": 2360,
           "solve_generation": 3,
           "solved": true
         },
         "2": {
-          "b_eff": 36.72,
+          "b_eff": 18.66,
           "by_primitive": [
             {
-              "considered": 14881,
+              "considered": 3881,
               "primitive": "__const__",
-              "share": 0.9991271653014637
+              "share": 0.9966615305598356
             },
             {
-              "considered": 14630,
+              "considered": 3630,
               "primitive": "overlay",
-              "share": 0.982274741506647
+              "share": 0.9322033898305084
             },
             {
-              "considered": 10802,
+              "considered": 2602,
               "primitive": "sym_h",
-              "share": 0.725258493353028
+              "share": 0.6682074987159733
             },
             {
-              "considered": 8939,
+              "considered": 2139,
               "primitive": "sym_both",
-              "share": 0.6001745669397073
+              "share": 0.5493066255778121
             },
             {
-              "considered": 3563,
+              "considered": 813,
               "primitive": "flip_h",
-              "share": 0.23922384852960923
+              "share": 0.20878274268104777
             },
             {
-              "considered": 3563,
+              "considered": 813,
               "primitive": "flip_v",
-              "share": 0.23922384852960923
+              "share": 0.20878274268104777
             }
           ],
           "censored": false,
           "cheapest_solution_index": 54,
-          "considered": 14894,
+          "considered": 3894,
           "first_solution_index": 54,
           "solve_generation": 1,
           "solved": true
@@ -255,43 +255,43 @@
     {
       "columns": {
         "0": {
-          "b_eff": 8.63,
+          "b_eff": 5.39,
           "by_primitive": [
             {
-              "considered": 850,
+              "considered": 350,
               "primitive": "__const__",
-              "share": 0.984936268829664
+              "share": 0.9641873278236914
             },
             {
-              "considered": 840,
+              "considered": 340,
               "primitive": "overlay",
-              "share": 0.9733487833140209
+              "share": 0.9366391184573003
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "flip_h",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "flip_v",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "transpose",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 863,
+          "considered": 363,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 23.16,
+          "b_eff": 12.44,
           "by_primitive": [
             {
               "considered": 49987,
@@ -304,70 +304,70 @@
               "share": 0.9977
             },
             {
-              "considered": 47265,
+              "considered": 48224,
               "primitive": "sym_h",
-              "share": 0.9453
+              "share": 0.96448
             },
             {
-              "considered": 35534,
+              "considered": 40051,
               "primitive": "flip_v",
-              "share": 0.71068
+              "share": 0.80102
             },
             {
-              "considered": 21790,
+              "considered": 25284,
               "primitive": "flip_h",
-              "share": 0.4358
+              "share": 0.50568
             },
             {
-              "considered": 17838,
+              "considered": 20435,
               "primitive": "transpose",
-              "share": 0.35676
+              "share": 0.4087
             }
           ],
           "censored": true,
-          "cheapest_solution_index": 6560,
+          "cheapest_solution_index": 2360,
           "considered": 50000,
-          "first_solution_index": 6560,
+          "first_solution_index": 2360,
           "solve_generation": 3,
           "solved": true
         },
         "2": {
-          "b_eff": 36.72,
+          "b_eff": 18.66,
           "by_primitive": [
             {
-              "considered": 14881,
+              "considered": 3881,
               "primitive": "__const__",
-              "share": 0.9991271653014637
+              "share": 0.9966615305598356
             },
             {
-              "considered": 14630,
+              "considered": 3630,
               "primitive": "overlay",
-              "share": 0.982274741506647
+              "share": 0.9322033898305084
             },
             {
-              "considered": 10802,
+              "considered": 2602,
               "primitive": "sym_h",
-              "share": 0.725258493353028
+              "share": 0.6682074987159733
             },
             {
-              "considered": 8939,
+              "considered": 2139,
               "primitive": "sym_both",
-              "share": 0.6001745669397073
+              "share": 0.5493066255778121
             },
             {
-              "considered": 3563,
+              "considered": 813,
               "primitive": "flip_h",
-              "share": 0.23922384852960923
+              "share": 0.20878274268104777
             },
             {
-              "considered": 3563,
+              "considered": 813,
               "primitive": "flip_v",
-              "share": 0.23922384852960923
+              "share": 0.20878274268104777
             }
           ],
           "censored": false,
           "cheapest_solution_index": 54,
-          "considered": 14894,
+          "considered": 3894,
           "first_solution_index": 54,
           "solve_generation": 1,
           "solved": true
@@ -379,43 +379,43 @@
     {
       "columns": {
         "0": {
-          "b_eff": 8.63,
+          "b_eff": 5.39,
           "by_primitive": [
             {
-              "considered": 850,
+              "considered": 350,
               "primitive": "__const__",
-              "share": 0.984936268829664
+              "share": 0.9641873278236914
             },
             {
-              "considered": 840,
+              "considered": 340,
               "primitive": "overlay",
-              "share": 0.9733487833140209
+              "share": 0.9366391184573003
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "flip_h",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "flip_v",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "transpose",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             }
           ],
           "censored": false,
           "cheapest_solution_index": 74,
-          "considered": 863,
+          "considered": 363,
           "first_solution_index": 74,
           "solve_generation": 2,
           "solved": true
         },
         "1": {
-          "b_eff": 23.16,
+          "b_eff": 12.44,
           "by_primitive": [
             {
               "considered": 49987,
@@ -428,24 +428,24 @@
               "share": 0.9977
             },
             {
-              "considered": 47265,
+              "considered": 48224,
               "primitive": "sym_h",
-              "share": 0.9453
+              "share": 0.96448
             },
             {
-              "considered": 35534,
+              "considered": 40051,
               "primitive": "flip_v",
-              "share": 0.71068
+              "share": 0.80102
             },
             {
-              "considered": 21790,
+              "considered": 25284,
               "primitive": "flip_h",
-              "share": 0.4358
+              "share": 0.50568
             },
             {
-              "considered": 17838,
+              "considered": 20435,
               "primitive": "transpose",
-              "share": 0.35676
+              "share": 0.4087
             }
           ],
           "censored": true,
@@ -456,42 +456,42 @@
           "solved": true
         },
         "2": {
-          "b_eff": 36.72,
+          "b_eff": 18.66,
           "by_primitive": [
             {
-              "considered": 14881,
+              "considered": 3881,
               "primitive": "__const__",
-              "share": 0.9991271653014637
+              "share": 0.9966615305598356
             },
             {
-              "considered": 14630,
+              "considered": 3630,
               "primitive": "overlay",
-              "share": 0.982274741506647
+              "share": 0.9322033898305084
             },
             {
-              "considered": 10802,
+              "considered": 2602,
               "primitive": "sym_h",
-              "share": 0.725258493353028
+              "share": 0.6682074987159733
             },
             {
-              "considered": 8939,
+              "considered": 2139,
               "primitive": "sym_both",
-              "share": 0.6001745669397073
+              "share": 0.5493066255778121
             },
             {
-              "considered": 3563,
+              "considered": 813,
               "primitive": "flip_h",
-              "share": 0.23922384852960923
+              "share": 0.20878274268104777
             },
             {
-              "considered": 3563,
+              "considered": 813,
               "primitive": "flip_v",
-              "share": 0.23922384852960923
+              "share": 0.20878274268104777
             }
           ],
           "censored": false,
           "cheapest_solution_index": 44,
-          "considered": 14894,
+          "considered": 3894,
           "first_solution_index": 44,
           "solve_generation": 1,
           "solved": true
@@ -503,43 +503,43 @@
     {
       "columns": {
         "0": {
-          "b_eff": 8.63,
+          "b_eff": 5.39,
           "by_primitive": [
             {
-              "considered": 850,
+              "considered": 350,
               "primitive": "__const__",
-              "share": 0.984936268829664
+              "share": 0.9641873278236914
             },
             {
-              "considered": 840,
+              "considered": 340,
               "primitive": "overlay",
-              "share": 0.9733487833140209
+              "share": 0.9366391184573003
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "flip_h",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "flip_v",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "transpose",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             }
           ],
           "censored": false,
           "cheapest_solution_index": 74,
-          "considered": 863,
+          "considered": 363,
           "first_solution_index": 74,
           "solve_generation": 2,
           "solved": true
         },
         "1": {
-          "b_eff": 23.16,
+          "b_eff": 12.44,
           "by_primitive": [
             {
               "considered": 49987,
@@ -552,24 +552,24 @@
               "share": 0.9977
             },
             {
-              "considered": 47265,
+              "considered": 48224,
               "primitive": "sym_h",
-              "share": 0.9453
+              "share": 0.96448
             },
             {
-              "considered": 35534,
+              "considered": 40051,
               "primitive": "flip_v",
-              "share": 0.71068
+              "share": 0.80102
             },
             {
-              "considered": 21790,
+              "considered": 25284,
               "primitive": "flip_h",
-              "share": 0.4358
+              "share": 0.50568
             },
             {
-              "considered": 17838,
+              "considered": 20435,
               "primitive": "transpose",
-              "share": 0.35676
+              "share": 0.4087
             }
           ],
           "censored": true,
@@ -580,42 +580,42 @@
           "solved": true
         },
         "2": {
-          "b_eff": 36.72,
+          "b_eff": 18.66,
           "by_primitive": [
             {
-              "considered": 14881,
+              "considered": 3881,
               "primitive": "__const__",
-              "share": 0.9991271653014637
+              "share": 0.9966615305598356
             },
             {
-              "considered": 14630,
+              "considered": 3630,
               "primitive": "overlay",
-              "share": 0.982274741506647
+              "share": 0.9322033898305084
             },
             {
-              "considered": 10802,
+              "considered": 2602,
               "primitive": "sym_h",
-              "share": 0.725258493353028
+              "share": 0.6682074987159733
             },
             {
-              "considered": 8939,
+              "considered": 2139,
               "primitive": "sym_both",
-              "share": 0.6001745669397073
+              "share": 0.5493066255778121
             },
             {
-              "considered": 3563,
+              "considered": 813,
               "primitive": "flip_h",
-              "share": 0.23922384852960923
+              "share": 0.20878274268104777
             },
             {
-              "considered": 3563,
+              "considered": 813,
               "primitive": "flip_v",
-              "share": 0.23922384852960923
+              "share": 0.20878274268104777
             }
           ],
           "censored": false,
           "cheapest_solution_index": 44,
-          "considered": 14894,
+          "considered": 3894,
           "first_solution_index": 44,
           "solve_generation": 1,
           "solved": true
@@ -627,43 +627,43 @@
     {
       "columns": {
         "0": {
-          "b_eff": 8.63,
+          "b_eff": 5.39,
           "by_primitive": [
             {
-              "considered": 850,
+              "considered": 350,
               "primitive": "__const__",
-              "share": 0.984936268829664
+              "share": 0.9641873278236914
             },
             {
-              "considered": 840,
+              "considered": 340,
               "primitive": "overlay",
-              "share": 0.9733487833140209
+              "share": 0.9366391184573003
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "flip_h",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "flip_v",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             },
             {
-              "considered": 456,
+              "considered": 156,
               "primitive": "transpose",
-              "share": 0.5283893395133256
+              "share": 0.4297520661157025
             }
           ],
           "censored": false,
           "cheapest_solution_index": null,
-          "considered": 863,
+          "considered": 363,
           "first_solution_index": null,
           "solve_generation": null,
           "solved": false
         },
         "1": {
-          "b_eff": 23.16,
+          "b_eff": 12.44,
           "by_primitive": [
             {
               "considered": 49987,
@@ -676,24 +676,24 @@
               "share": 0.9977
             },
             {
-              "considered": 47265,
+              "considered": 48224,
               "primitive": "sym_h",
-              "share": 0.9453
+              "share": 0.96448
             },
             {
-              "considered": 35534,
+              "considered": 40051,
               "primitive": "flip_v",
-              "share": 0.71068
+              "share": 0.80102
             },
             {
-              "considered": 21790,
+              "considered": 25284,
               "primitive": "flip_h",
-              "share": 0.4358
+              "share": 0.50568
             },
             {
-              "considered": 17838,
+              "considered": 20435,
               "primitive": "transpose",
-              "share": 0.35676
+              "share": 0.4087
             }
           ],
           "censored": true,
@@ -704,43 +704,43 @@
           "solved": false
         },
         "2": {
-          "b_eff": 36.72,
+          "b_eff": 18.66,
           "by_primitive": [
             {
-              "considered": 14881,
+              "considered": 3881,
               "primitive": "__const__",
-              "share": 0.9991271653014637
+              "share": 0.9966615305598356
             },
             {
-              "considered": 14630,
+              "considered": 3630,
               "primitive": "overlay",
-              "share": 0.982274741506647
+              "share": 0.9322033898305084
             },
             {
-              "considered": 10802,
+              "considered": 2602,
               "primitive": "sym_h",
-              "share": 0.725258493353028
+              "share": 0.6682074987159733
             },
             {
-              "considered": 8939,
+              "considered": 2139,
               "primitive": "sym_both",
-              "share": 0.6001745669397073
+              "share": 0.5493066255778121
             },
             {
-              "considered": 3563,
+              "considered": 813,
               "primitive": "flip_h",
-              "share": 0.23922384852960923
+              "share": 0.20878274268104777
             },
             {
-              "considered": 3563,
+              "considered": 813,
               "primitive": "flip_v",
-              "share": 0.23922384852960923
+              "share": 0.20878274268104777
             }
           ],
           "censored": false,
-          "cheapest_solution_index": 14691,
-          "considered": 14894,
-          "first_solution_index": 14691,
+          "cheapest_solution_index": 3691,
+          "considered": 3894,
+          "first_solution_index": 3691,
           "solve_generation": 2,
           "solved": true
         }
@@ -821,6 +821,7 @@
               "color"
             ],
             "return_type": "grid",
+            "variadic_commutative": true,
             "variadic_param": "grid"
           },
           {
@@ -1071,13 +1072,13 @@
         "solution_limit_mode": "generation-end"
       },
       "cell": "chain/L0",
-      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "al13-symmetry-repair:train",
       "learn": null,
       "library": "al13-L0",
-      "run_dir": "20260803_203023_cad292df6338e790",
-      "run_id": "cad292df6338e790"
+      "run_dir": "20260804_204633_0ac4ceb658afc1ae",
+      "run_id": "0ac4ceb658afc1ae"
     },
     {
       "budget": {
@@ -1090,13 +1091,13 @@
         "solution_limit_mode": "generation-end"
       },
       "cell": "chain/L1",
-      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "al13-symmetry-repair:train",
       "learn": null,
       "library": "al13-L0+sym_h",
-      "run_dir": "20260803_203023_014840ab3c2db009",
-      "run_id": "014840ab3c2db009"
+      "run_dir": "20260804_204633_12f28f13f52fa456",
+      "run_id": "12f28f13f52fa456"
     },
     {
       "budget": {
@@ -1109,17 +1110,17 @@
         "solution_limit_mode": "generation-end"
       },
       "cell": "chain/L2",
-      "commit": "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10",
+      "commit": "69a536891ea6799d178ca633eb789c55ea36abb0",
       "completed": true,
       "corpus_name": "al13-symmetry-repair:train",
       "learn": null,
       "library": "al13-L0+sym_h+sym_both",
-      "run_dir": "20260803_203031_70ab57d0978110fc",
-      "run_id": "70ab57d0978110fc"
+      "run_dir": "20260804_204641_17ee739ff81b6ba1",
+      "run_id": "17ee739ff81b6ba1"
     }
   ],
   "recorded_commits": [
-    "bedb33b8db39e6ef37f2b8d0f77b5fc29bf11d10"
+    "69a536891ea6799d178ca633eb789c55ea36abb0"
   ],
   "rung_recovery": [],
   "shape": {

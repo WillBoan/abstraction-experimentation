@@ -4,14 +4,14 @@
 
 | ladder                        | verdict  | top (chain/climb) | rungs | diagnoses             | gens | compromises    | wall |
 | ----------------------------- | -------- | ----------------- | ----- | --------------------- | ---- | -------------- | ---- |
-| `94f9d214-nor-halves`         | admitted | censored / NO     | 2/2   | -                     | 1    | solution-limit | 0s   |
-| `94f9d214-nor-merged`         | admitted | yes / yes         | 5/5   | -                     | 1    | -              | 0s   |
-| `94f9d214-nor-recolor`        | admitted | yes / yes         | 4/4   | -                     | 1    | solution-limit | 0s   |
+| `94f9d214-nor-halves`         | admitted | censored / NO     | 2/2   | -                     | 1    | solution-limit | 340s |
+| `94f9d214-nor-merged`         | admitted | yes / yes         | 5/5   | -                     | 1    | -              | 19s  |
+| `94f9d214-nor-recolor`        | admitted | yes / yes         | 4/4   | -                     | 1    | solution-limit | 200s |
 | `al1-mirror`                  | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
 | `al10-skippable`              | rejected | yes / n/a         | -     | -                     | 1    | -              | 0s   |
 | `al11-greedy-trap`            | rejected | yes / n/a         | -     | -                     | 1    | -              | 0s   |
 | `al12-unlearnable`            | admitted | yes / NO          | 0/1   | not-proposed          | 1    | -              | 0s   |
-| `al13-symmetry-repair`        | rejected | yes / n/a         | -     | -                     | 1    | -              | 0s   |
+| `al13-symmetry-repair`        | rejected | yes / n/a         | -     | -                     | 1    | -              | 9s   |
 | `al14-cell-row-grid`          | rejected | censored / n/a    | -     | -                     | 1    | -              | 9s   |
 | `al15-shift-frame`            | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
 | `al16-layout-nest`            | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
@@ -28,14 +28,14 @@
 | `al7-fast-tower`              | rejected | yes / n/a         | -     | -                     | 1    | -              | 0s   |
 | `al8-lean-perceiver`          | rejected | yes / n/a         | -     | -                     | 1    | -              | 1s   |
 | `al9-decoy`                   | rejected | yes / n/a         | -     | -                     | 1    | -              | 0s   |
-| `dae9d2b5-half-param`         | admitted | yes / yes         | 2/3   | proposed-not-selected | 1    | -              | 0s   |
-| `dae9d2b5-split-asym-lean`    | admitted | yes / yes         | 3/3   | -                     | 1    | solution-limit | 0s   |
-| `dae9d2b5-split-halves-lean`  | admitted | yes / yes         | 2/2   | -                     | 1    | solution-limit | 0s   |
-| `dae9d2b5-split-recolor`      | admitted | yes / yes         | 4/4   | -                     | 1    | -              | 0s   |
-| `dae9d2b5-split-recolor-lean` | admitted | yes / yes         | 4/4   | -                     | 1    | -              | 0s   |
-| `fafffa47-nor-halves`         | admitted | censored / NO     | 2/2   | -                     | 1    | solution-limit | 0s   |
-| `fafffa47-nor-merged`         | admitted | yes / yes         | 5/5   | -                     | 1    | -              | 0s   |
-| `fafffa47-nor-recolor`        | admitted | yes / yes         | 4/4   | -                     | 1    | solution-limit | 0s   |
+| `dae9d2b5-half-param`         | admitted | yes / yes         | 2/3   | proposed-not-selected | 1    | -              | 10s  |
+| `dae9d2b5-split-asym-lean`    | admitted | yes / yes         | 3/3   | -                     | 1    | solution-limit | 172s |
+| `dae9d2b5-split-halves-lean`  | admitted | yes / yes         | 2/2   | -                     | 1    | solution-limit | 171s |
+| `dae9d2b5-split-recolor`      | admitted | yes / yes         | 4/4   | -                     | 1    | -              | 625s |
+| `dae9d2b5-split-recolor-lean` | admitted | yes / yes         | 4/4   | -                     | 1    | -              | 12s  |
+| `fafffa47-nor-halves`         | admitted | censored / NO     | 2/2   | -                     | 1    | solution-limit | 425s |
+| `fafffa47-nor-merged`         | admitted | yes / yes         | 5/5   | -                     | 1    | -              | 21s  |
+| `fafffa47-nor-recolor`        | admitted | yes / yes         | 4/4   | -                     | 1    | solution-limit | 258s |
 
 ## What this batch samples
 
@@ -65,7 +65,7 @@ A cohort is a **shared task and a shared Floor** (`LADDER-RELATIONSHIPS-2026-07-
 
 ## Batch checks
 
-- Members run: **32**; wall clock **0.5 min**.
+- Members run: **32**; wall clock **38.2 min**.
 - Members that raised: **0**
 - Members whose cells span MORE THAN ONE config generation: **0**
 
