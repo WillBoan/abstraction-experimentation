@@ -5,33 +5,24 @@ A read-side investigation, zero new searches. The [tax-math notes](../../docs/ab
 - per-iteration climb costs are nearly **flat** (`split-recolor-lean`: 32,665 / 32,837 / 33,009), suggesting iteration cost is dominated by one constant component;
 - the 2026-07-23 **skip-solved** schedule arm saved **1.8–2.5x** by removing re-search of solved tasks, suggesting LR is roughly half the bill.
 
-Both turn out to be right. The resolution is the finding.
+Both turn out to be right, and the resolution is one of the findings.
 
-## Method
+## Method — and what can count as a finding here
 
-[`artifacts/curriculum_decomposition.py`](artifacts/curriculum_decomposition.py) — output: [`curriculum_decomposition.out`](artifacts/curriculum_decomposition.out) (summary tables) and [`curriculum_decomposition.json`](artifacts/curriculum_decomposition.json) (per-member, per-(task, wake) detail).
+[`artifacts/curriculum_decomposition.py`](artifacts/curriculum_decomposition.py) — output: [`curriculum_decomposition.out`](artifacts/curriculum_decomposition.out) (summary tables) and [`curriculum_decomposition.json`](artifacts/curriculum_decomposition.json), which persists the **439 per-(task, wake) rows**; every aggregate below is a derivation from them.
 
 For every batch member with a committed `report.json`, follow `provenance` to the `climb/learn` run dir and read `trace.jsonl`: per wake iteration, per task, `total.considered`, `solutions.first_index`, and the solved list. Classify each (task, wake) search by **realized** solve status: CR at its first-solve wake, HR before it, LR after it, **UN** if it never solves in the climb (kept separate from HR — a task unreachable at _every_ wake is a different defect from a task attempted prematurely). Cost under two accountings from the same records:
 
 - **actual** = `considered` (what the run paid under its own stop mode);
 - **to-first** = `first_index + 1` where the search solved, `considered` otherwise — the counterfactual stop-at-first bill, exact because `first_solution_index` is stop-independent.
 
-Caveats, stated up front: the classification is realized, not authored (no rung-assignment join); the CR denominator below is the **climb's own** current-rung compute, not the oracle chain's marginal (they nearly coincide on e.g. `split-recolor-lean`, 32.8k vs 35.8k, but are different quantities); the to-first counterfactual ignores generation-end granularity. All 21 members' cells are single-generation (the 2026-08-04 re-baseline).
+**The evidential frame, stated before the numbers.** Every quantity here factors through three channels: **design** (authored geometry determines the class _counts_ exactly — the invocation identities are arithmetic: every task pays exactly R non-current runs), **settings** (stop mode + budgets determine the class _cost rules_: exhaustion pays the space, stop-first pays solution rank, an unreachable search pays min(space, guard) either way), and the **residual** (what neither predicts: actual space sizes under semantic dedup, growth under mints, where solutions sit in enumeration order, mint timing). The separation test for any number below: _could it have been computed from the `.ladder` file and config before the run?_ If yes, it is an artifact of our own decisions — at best a confirmation of the mechanism model. Findings are residuals from that null, or mechanism laws with stated scope; the sound claim shapes are **within-member contrasts** (settings varied, design held) and **license-matched comparisons** (design varied, task x floor held). Pooled aggregates vary everything at once and license nothing — they appear below only as store bookkeeping. (This is AL-PLAN-2026-08-04 decision 7.)
 
-## Results
+Further caveats: the classification is realized, not authored (an authored-rung join is also computed and reported separately); the CR denominator throughout is the **climb's own** current-rung compute — not the oracle chain's marginal, and not `C_optimal`, which requires a CR-only arm that has never run (Phase 1 item 6); the to-first counterfactual ignores generation-end granularity. All 21 members' cells are single-generation (the 2026-08-04 re-baseline). Data vintage: this describes the store as of 2026-08-04 — the register moved to uniform exhaustive accounting on 2026-08-05, so the stop-first segment below describes runs that remain recorded but are no longer any member's register configuration.
 
-Store-wide, across all 21 climbs (19,456,316 considered total, actual accounting):
+## Findings I — mode-conditional laws (settings varied within member, design held)
 
-| class                                  | spend     | share     |
-| -------------------------------------- | --------- | --------- |
-| CR — current-rung acquisition          | 1,859,842 | **9.6%**  |
-| LR — re-search of acquired tasks       | 2,139,513 | **11.0%** |
-| HR — premature attempts (later solved) | 8,296,978 | **42.6%** |
-| UN — never-solved tasks                | 7,159,983 | **36.8%** |
-
-**~80% of everything the climbs ever spent went to searches that could not succeed at the moment they ran.** The UN mass is almost entirely the two known-broken `nor-halves` members (`climb-budget-covers-top` class): each burns ~3.5M re-exhausting a depth-4-unreachable top every wake — 99.9% of their climbs — and notably the unreachable top _exhausts its depth-3 space_ at ~1.7–1.8M, below the 2M guard, so it is not even censoring.
-
-### The puzzle resolved: the dominant class is an accounting-mode artifact
+**Which class dominates is an accounting-mode artifact.**
 
 | segment                                 | CR    | LR        | HR        |
 | --------------------------------------- | ----- | --------- | --------- |
@@ -39,46 +30,47 @@ Store-wide, across all 21 climbs (19,456,316 considered total, actual accounting
 | same members, to-first counterfactual   | 34.5% | 5.6%      | **56.0%** |
 | 4 healthy stop-at-first members, actual | 10.1% | 7.4%      | **82.6%** |
 
-Under the batch's default `solution_limit=None` generation-end accounting, a solved task's re-search still exhausts its depth-limited space — so every task pays roughly the same per wake regardless of class. That is why iterations are flat (cost ≈ n_tasks x per-task exhaustion, creeping up ~0.5%/wake with mints), and why LR is the largest slice (~43%), which is exactly what skip-solved's 1.8–2.5x was collecting. Under stop-at-first, re-finds are nearly free and the same members' split inverts to HR-dominated. The two `nor-recolor` members (5-wake, stop-first) measure **69.8% / 71.0% HR share** — the tax-math notes' worked example (70%) realized in the store. Consequence, now demonstrated rather than advised: **cross-member curriculum-tax comparisons must stratify by accounting mode.**
+Under generation-end accounting, a solved task's re-search still exhausts its depth-limited space — so every task pays roughly the same per wake regardless of class. That is why iterations are flat (cost ≈ n_tasks x per-task exhaustion, creeping ~0.5%/wake with mints), and why LR is the largest slice (~43%), which is exactly what skip-solved's 1.8–2.5x was collecting: the puzzle dissolves. Under stop-at-first, re-finds are nearly free and the split inverts to HR-dominated — the two `nor-recolor` members (5-wake, stop-first) measure **69.8% / 71.0% HR share**, the tax-math notes' worked example (70%) realized in the store. Any cross-member curriculum-tax comparison must therefore stratify by accounting mode.
 
-### The premature-top cell is the single dominant cost on d3-top members
+**M ≈ H under exhaustion.** If per-search cost is class-independent, the compute multiplier equals the invocation multiplier by arithmetic — so the _finding_ is the measured deviation being small: M/H = 1.00–1.04 on 11 of 15 exhaustive members (per-class mean costs 8,979 / 10,217 / 8,170), i.e., space size is nearly task- and class-independent there. Where the deviation is not small (1.24–1.27, tiny-pool synthetics), that excess is residual signal — mints matter more when the space is small. Stop-first members deviate 1.31–16.4x (1,533 on the broken-top members): the deviation _measures_ class-cost inequality.
 
-`split-asym-lean` wake 0: the top, attempted before any rung exists, censors at exactly **2,000,000**; one wake later, post-mint, the same top solves for **64,178**. `split-halves-lean`: 2,000,000 vs **62,040**. One badly-timed search is **31x** the eventual useful work, and it puts those members' full-vs-CR multipliers at **13.4x / 32.9x** — where the all-d2 members sit at 3.0–4.0x (this script's M reproduces the recorded loop-overhead factors on those members). The recorded "loop overhead is 3–4x" was measured only on the schedule shape that minimizes it.
+**ρ flips sign with the stop policy.** LR drift ρ (re-search cost / that task's own CR cost), median per member: exhaustive **1.0–1.2** — re-search costs slightly _more_ each wake as mints grow the space (up to 3.8 on tiny synthetic spaces), confirming BREADTH-AXIS C ("minting does not reduce search cost mid-climb") per-member; stop-first **0.85–0.93**, falling to **0.47** at distance 4 — re-finding beats the original solve because the mint made the solution shallower. Both opposing forces from the tax-math notes exist; **which wins is chosen by the stop policy, not by the library.**
 
-### The abstraction benefit is real but only a stop policy can cash it
+## Findings II — residuals (what no static instrument currently predicts)
 
-LR drift ρ (re-search cost / that task's own CR cost), median per member:
+- **~0.5%/wake cost creep** under exhaustion — the vocabulary tax operating inside the loop.
+- **Per-task cost spread at one budget**: 3,889 vs 5,777 considered for two tasks under the same library and budget — semantic dedup is data-dependent, and this heterogeneity is the hard part of any pool-aware predictor.
+- **Multi-mint schedule compression**: sleep mints more than one rung per iteration on these demo corpora, so the realized climb runs AHEAD of the authored one-level-per-wake schedule on **140 of 439 rows (12 of 21 members) — and never behind**. The zero-behind half is _derivative_ of 100% rung recovery under the default metric (a mint lands every productive iteration), not independent evidence. The nine zero-mismatch members are exactly the one-rung-per-level synthetics.
+- **Solution churn is universal**: every climbing member rewrites every acquired task's retained program at least once (post-mint re-compression); zero solve regressions anywhere.
 
-- exhaustive members: **ρ ≈ 1.0–1.2** — re-search costs slightly _more_ each wake as mints grow the space (up to 3.8 on tiny synthetic spaces: `al1`). BREADTH-AXIS C ("minting does not reduce search cost mid-climb") confirmed, per-member.
-- stop-at-first members: **ρ ≈ 0.85–0.93** — re-finding is _cheaper_ than the original solve, because the mint made the solution shallower (`first_index` drops).
+## Findings III — per-cell facts (mostly derivable, and stated as such)
 
-Both opposing forces from the tax-math notes exist; **which wins is chosen by the stop policy, not by the library.** Also measured in passing: solution churn is universal (every climbing member rewrites every acquired task's retained program at least once — the post-mint re-compression); zero solve regressions; invocation identities exact (every climb ran every task every wake — early-stop cuts wakes, never within-wake tasks — so the closed-form N identities apply with realized wake counts).
+An unreachable search pays min(space, guard). Given that the full schedule attempts the top at wake 0 by design, the dramatic numbers follow: `split-asym-lean`'s wake-0 top attempt censors at exactly **2,000,000**; one wake later, post-mint, the same top solves for **64,178** (`split-halves-lean`: 2,000,000 vs 62,040) — one attempt at 31x the eventual useful work, putting those members' full-vs-CR multipliers at **13.4x / 32.9x** where all-d2 members sit at 3.0–4.0x (reproducing the recorded loop overheads, which were only ever measured on the schedule shape that minimizes them). The residual content in these cells is only "the space exceeds the guard there"; everything else is schedule design plus the cost rule.
 
-### The removable bill
+Utilization, with the binding decision recorded per cell (`binding` ∈ guard / solution / space): exactly **2 guard-bound cells exist in the store** — the two premature-top censors (u = 1.0). The `nor-halves` unreachable tops are **space-bound** (exhausting at ~1.7–1.8M, below the 2M guard): raising the guard provably buys nothing there.
 
-A CR+LR schedule with to-first stopping — keep re-searching solved tasks (the recurrence evidence), never attempt not-yet-reachable ones, stop when found — would have cost **2,141,733** against the actual **19,456,316**: **9.1x of the total climb bill is removable by schedule and stop policy alone** (per-member 1.9x–1716x; median ~7.7x; the extremes are the broken-top members). Two caveats are part of the result: CR+LR requires knowing which tasks are reachable — an oracle privilege, so this prices the curriculum-order prior rather than promising a blind learner the discount — and to-first forfeits the exhaust-mode quantities (the standing compromise trade).
+## Findings IV — instrument results
 
-## Completion pass (same day — AL-PLAN-2026-08-04 Phase 0 item 1)
+- **The UN share re-detects defects.** The two `climb-budget-covers-top` members are flagged by their UN mass alone (99.9% of their climbs) — the decomposition works as a per-member diagnostic independent of any sample claim.
+- **Heavy tails are mode-dependent, so medians are mandatory**: stop-first CR mean 26,496 vs median **284** (93x apart — the mean is the d3-top solves, the median a demo re-find); LR mean 8,755 vs median 266. Exhaustive members are tail-light (means ≈ 2–3x medians).
+- **Identities verified**: `M = 1 + tau_LR + tau_HR + tau_UN` holds to float noise (worst abs err 4.6e-13; the transcript's form without `tau_UN` suffices on 18/21). Invocation identities exact — every climb ran every task every wake; early-stop cuts wakes, never within-wake tasks. The authored-rung join is clean (0 unmapped tasks; top level = shape height on 21/21).
 
-The first pass left the [tax-math notes'](../../docs/abstraction_ladders/2026-07-29_chatgpt%20-%20tax%20math.md) named metrics partially measured. The plan's decision 6 prioritized completing them; the script now measures the full residue off **persisted per-(task, wake) rows** (439 across the 21 climbs — every aggregate is a derivation from the committed JSON). What the completion added, and what it found:
+## Store bookkeeping (planning input — not findings)
 
-- **The identity, verified:** `M = 1 + tau_LR + tau_HR + tau_UN` holds to float noise (worst abs err 4.6e-13); the transcript's form (no `tau_UN`) suffices on 18/21 members.
-- **`M ≈ H` is an exhaustive-mode law.** M/H = 1.00–1.04 on 11 of 15 exhaustive members (max 1.27), because per-class mean costs are nearly equal there (CR 8,979 / LR 10,217 / HR 8,170) — exhaustion makes cost class-independent, so the compute multiplier collapses to the invocation multiplier H. On stop-first members M/H = 1.31–16.4 (1,533 on the broken-top members): the deviation _measures_ class-cost inequality.
-- **Heavy tails are real and mode-dependent** — the median/geomean reporting the notes asked for materially changes the stop-first picture: CR mean 26,496 vs median **284** (93x apart; the mean is the d3-top solves, the median is a demo re-find); LR mean 8,755 vs median 266. Exhaustive members are tail-light (means ≈ 2–3x medians).
-- **`rho_HR`, systematic** (was one ad-hoc point): exhaustive members 0.83–1.00 — a premature attempt costs about what the eventual solve costs, same exhaustion; stop-first members **14.4–32.2** — the premature attempt exhausts what the eventual solve early-stops out of.
-- **Named `tau` values** (denominator = the climb's own CR compute, stated as such — `C_optimal` awaits Phase 1's CR-only arm): exhaustive `tau_LR` 0.96–2.22, `tau_HR` 0.16–1.24; stop-first `tau_HR` 4.6–31.9. Three-way shares (UN excluded) sit beside the four-way in the JSON; they differ only on the 3 UN-carrying members.
-- **Distance curves, both variants.** Realized: exhaustive `mu_LR(d)` is flat (median rho 1.01–1.04 over d = 1..3) and `mu_HR(until)` flat (~4.9–5.3k); stop-first LR rho _falls_ with distance — 0.88 at d=1 to **0.47 at d=4** — older acquisitions re-find ever cheaper as later mints shorten their solutions. Ladders are short (d <= 4), as expected.
-- **The authored-rung join is clean** (0 unmapped tasks; top level = shape height on all 21) — and it produced the pass's sharpest new fact: **140 of 439 rows (31.9%, on 12 of 21 members) mismatch realized-vs-authored classification, and every one runs AHEAD of the authored one-level-per-wake schedule — 0 lag anywhere.** Sleep minting more than one rung per iteration compresses the realized schedule below the authored height; no member ever ran behind. The 9 zero-mismatch members are exactly the strictly-one-rung-per-level synthetics.
-- **Utilization, with the binding decision recorded**: per search, `binding` ∈ guard (censored at `considered_limit`) / solution (stopped by `solution_limit`) / space (exhausted the depth-limited space), plus `u_guard`. Exactly **2 guard-bound cells exist in the store** — the two premature-top censors (u = 1.0). The `nor-halves` unreachable tops are **space-bound** (exhaust at ~1.7–1.8M, below the 2M guard): raising the guard buys nothing there, now visible per cell.
+Pooled, compute-weighted, across all 21 climbs (19,456,316 considered): **CR 9.6% / LR 11.0% / HR 42.6% / UN 36.8%**. This is a fact about where this repo's climb compute historically went — dominated by the two known-broken members and the pathological cells — and licenses nothing beyond planning (it is one reason the schedule census is worth building). The per-member view is in Findings I; the UN detail: each `nor-halves` member burns ~3.5M re-exhausting its unreachable depth-4 top every wake.
 
-Still unmeasured after this pass, by design (plan decision 6): the `C_optimal`-denominated ratios (Phase 1 item 6, the CR-only arm), the old-solution-under-new-library replay (`G_new_abstraction`, Phase 3 item 11), and the surprisal variants (permanently N/A — no probabilistic grammar).
+**The removable bill.** A CR+LR schedule with to-first stopping — keep re-searching solved tasks (the recurrence evidence), never attempt not-yet-reachable ones, stop when found — costs a **median ~7.7x less per member** (range 1.9x–1716x; the extremes are the broken-top members; pooled 9.1x, bookkeeping). Two caveats are part of the result: CR+LR requires knowing which tasks are reachable — an oracle privilege, so this prices the curriculum-order prior rather than promising a blind learner the discount — and to-first forfeits the exhaust-mode quantities.
+
+## Scope — what generalizes, and why
+
+The mode-conditional laws generalize to unseen ladders _run under this machinery_ because they are mechanism-backed (we can say why they happen), not because this sample represents any population — it is a designed convenience set. The residuals are empirical facts about these runs, candidates for laws only if they recur with a mechanism. The per-cell and bookkeeping numbers are scoped to their cells and to the store respectively. Operationalized going forward (plan decision 7 + the Phase 0 item 5 spec): the schedule census emits each member's _predicted_ class profile — counts from the invocation identities, costs from the mode rules x breadth-census space estimates — and the ladder report renders measured vs predicted, so a share matching its prediction displays as model confirmation and "finding" means a recurring residual.
 
 ## Decisions and follow-ups this sets up
 
-1. **The CR+LR arm** is now the obvious next new-runs experiment, with registered predictions: mints byte-identical to the full schedule (sleep consumes solutions only; HR contributes none), savings per the table above. A confirmation makes "HR is deadweight, LR is the evidence" a measured statement.
-2. **Mode stratification** is a demonstrated comparability wall, not advice; any renderer/report adoption of these metrics must carry it.
-3. The **full-frozen replay cell** (full schedule against chain libraries, learning off) remains the missing cell for splitting overhead into direct tax vs learning effect.
-4. Candidate metrics worth promoting into the ladder report: class shares (both accountings), M vs CR, ρ drift, churn count.
+1. **The CR+LR arm** is the obvious next new-runs experiment, with registered predictions: mints byte-identical to the full schedule (sleep consumes solutions only; HR contributes none), savings per the table above. A confirmation makes "HR is deadweight, LR is the evidence" a measured statement.
+2. **Mode stratification** is a demonstrated comparability wall; any renderer adoption of these metrics carries it.
+3. The **full-frozen replay cell** (full schedule against chain libraries, learning off) remains the missing cell for splitting overhead into direct tax vs learning effect — and hosts the deferred old-solution replay (`G_new_abstraction`).
+4. Report metrics worth promoting: class shares (both accountings), M vs CR, ρ drift, churn, utilization/binding — rendered measured-vs-predicted per decision 7.
 
 ## Runs
 
