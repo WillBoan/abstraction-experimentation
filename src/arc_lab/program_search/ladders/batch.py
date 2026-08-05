@@ -64,10 +64,6 @@ EXCLUDED: Mapping[str, str] = {
     "unrun on purpose as the measured region-tier baseline",
     "dae9d2b5-split-halves": "superseded by `-split-halves-lean`; probed at pool 150 with the skip "
     "test inconclusive, never run",
-    "dae9d2b5-recolor-first": "probe INCONCLUSIVE at the cohort guard -- a non-result by design, "
-    "not something a bigger budget converts into a verdict (LADDER-PROCESS)",
-    "94f9d214-recolor-first": "probe INCONCLUSIVE at the cohort guard (see above)",
-    "fafffa47-recolor-first": "probe INCONCLUSIVE at the cohort guard (see above)",
     "a740d043-crop-normalize": "probe CONVICTED (a skip path at depth 3, verified); kept in the "
     "registry as a reproducible finding -- commuting factorisations cannot be laddered",
 }

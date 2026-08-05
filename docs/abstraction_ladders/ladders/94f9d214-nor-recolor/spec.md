@@ -76,8 +76,8 @@ The frozen ladder default with the source file's `config` block applied -- the e
   - max_pool: `30`
   - considered_limit: `2000000`
   - considered_limit_mode: `immediate`
-  - solution_limit: `1`
-  - solution_limit_mode: `immediate`
+  - solution_limit: `None`
+  - solution_limit_mode: `generation-end`
 - Search engine: `BottomUpSearchEngine`
   - constant_sources: `['finite-enumerate-scalars']`
   - function_hole_fill_mode: `none`

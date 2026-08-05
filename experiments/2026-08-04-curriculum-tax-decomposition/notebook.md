@@ -109,6 +109,54 @@ an oracle privilege, so this prices the curriculum-order prior rather than promi
 learner the discount — and to-first forfeits the exhaust-mode quantities (the standing
 compromise trade).
 
+## Completion pass (same day — AL-PLAN-2026-08-04 Phase 0 item 1)
+
+The first pass left the [tax-math notes'](../../docs/abstraction_ladders/2026-07-29_chatgpt%20-%20tax%20math.md)
+named metrics partially measured. The plan's decision 6 prioritized completing them; the script
+now measures the full residue off **persisted per-(task, wake) rows** (439 across the 21 climbs
+— every aggregate is a derivation from the committed JSON). What the completion added, and what
+it found:
+
+- **The identity, verified:** `M = 1 + tau_LR + tau_HR + tau_UN` holds to float noise (worst
+  abs err 4.6e-13); the transcript's form (no `tau_UN`) suffices on 18/21 members.
+- **`M ≈ H` is an exhaustive-mode law.** M/H = 1.00–1.04 on 11 of 15 exhaustive members (max
+  1.27), because per-class mean costs are nearly equal there (CR 8,979 / LR 10,217 / HR 8,170)
+  — exhaustion makes cost class-independent, so the compute multiplier collapses to the
+  invocation multiplier H. On stop-first members M/H = 1.31–16.4 (1,533 on the broken-top
+  members): the deviation *measures* class-cost inequality.
+- **Heavy tails are real and mode-dependent** — the median/geomean reporting the notes asked
+  for materially changes the stop-first picture: CR mean 26,496 vs median **284** (93x apart;
+  the mean is the d3-top solves, the median is a demo re-find); LR mean 8,755 vs median 266.
+  Exhaustive members are tail-light (means ≈ 2–3x medians).
+- **`rho_HR`, systematic** (was one ad-hoc point): exhaustive members 0.83–1.00 — a premature
+  attempt costs about what the eventual solve costs, same exhaustion; stop-first members
+  **14.4–32.2** — the premature attempt exhausts what the eventual solve early-stops out of.
+- **Named `tau` values** (denominator = the climb's own CR compute, stated as such —
+  `C_optimal` awaits Phase 1's CR-only arm): exhaustive `tau_LR` 0.96–2.22, `tau_HR`
+  0.16–1.24; stop-first `tau_HR` 4.6–31.9. Three-way shares (UN excluded) sit beside the
+  four-way in the JSON; they differ only on the 3 UN-carrying members.
+- **Distance curves, both variants.** Realized: exhaustive `mu_LR(d)` is flat (median rho
+  1.01–1.04 over d = 1..3) and `mu_HR(until)` flat (~4.9–5.3k); stop-first LR rho *falls* with
+  distance — 0.88 at d=1 to **0.47 at d=4** — older acquisitions re-find ever cheaper as later
+  mints shorten their solutions. Ladders are short (d <= 4), as expected.
+- **The authored-rung join is clean** (0 unmapped tasks; top level = shape height on all 21) —
+  and it produced the pass's sharpest new fact: **140 of 439 rows (31.9%, on 12 of 21 members)
+  mismatch realized-vs-authored classification, and every one runs AHEAD of the authored
+  one-level-per-wake schedule — 0 lag anywhere.** Sleep minting more than one rung per
+  iteration compresses the realized schedule below the authored height; no member ever ran
+  behind. The 9 zero-mismatch members are exactly the strictly-one-rung-per-level synthetics.
+- **Utilization, with the binding decision recorded**: per search, `binding` ∈ guard (censored
+  at `considered_limit`) / solution (stopped by `solution_limit`) / space (exhausted the
+  depth-limited space), plus `u_guard`. Exactly **2 guard-bound cells exist in the store** —
+  the two premature-top censors (u = 1.0). The `nor-halves` unreachable tops are
+  **space-bound** (exhaust at ~1.7–1.8M, below the 2M guard): raising the guard buys nothing
+  there, now visible per cell.
+
+Still unmeasured after this pass, by design (plan decision 6): the `C_optimal`-denominated
+ratios (Phase 1 item 6, the CR-only arm), the old-solution-under-new-library replay
+(`G_new_abstraction`, Phase 3 item 11), and the surprisal variants (permanently N/A — no
+probabilistic grammar).
+
 ## Decisions and follow-ups this sets up
 
 1. **The CR+LR arm** is now the obvious next new-runs experiment, with registered predictions:

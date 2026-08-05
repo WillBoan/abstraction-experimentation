@@ -1,0 +1,31 @@
+r_1 `recolored_west` over `dae9d2b5-split-L0` — OK
+
+| probe | task              | verdict     | gen | considered | depth (found/intended) |
+| ----- | ----------------- | ----------- | --- | ---------- | ---------------------- |
+| wake  | recolored_west-00 | alternative | 3   | 10675      | 3/3                    |
+| wake  | recolored_west-01 | alternative | 3   | 10531      | 3/3                    |
+| skip  | dae9d2b5          | no-skip     | -   | 10819      | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 4): ~14,977 considered, calibrated on this cell's funnel; dominated by overlay: color(10)
+
+- floor tax (recolored_west-00): pruned 21 vs full 10,675 = **508x** [clean]
+  kept ['map_color', 'nth', 'split_h']; dropped ['overlay']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 10,673 (100.0%), map_color 10,643 (99.7%), split_h 555 (5.2%), nth 454 (4.3%)
+
+r_2 `recolored_east` over `dae9d2b5-split-L0+recolored_west` — OK
+
+| probe | task              | verdict     | gen | considered | depth (found/intended) |
+| ----- | ----------------- | ----------- | --- | ---------- | ---------------------- |
+| wake  | recolored_east-00 | alternative | 3   | 1885275    | 3/3                    |
+| wake  | recolored_east-01 | alternative | 3   | 1779041    | 3/3                    |
+| skip  | dae9d2b5          | no-skip     | -   | 1995669    | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 4): ~61,058 considered, calibrated on this cell's funnel; dominated by overlay: color(6)
+
+- floor tax (recolored_east-00): pruned 21 vs full 1,885,275 = **89,775x** [clean]
+  kept ['map_color', 'nth', 'split_h']; dropped ['overlay', 'recolored_west']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 1,885,268 (100.0%), map_color 1,884,677 (100.0%), overlay 1,874,590 (99.4%), recolored_west 853,230 (45.3%), split_h 106,655 (5.7%), nth 106,555 (5.7%)
+
+2/2 rungs probe clean

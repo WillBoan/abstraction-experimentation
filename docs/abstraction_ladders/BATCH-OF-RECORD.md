@@ -2,71 +2,74 @@
 
 # Ladder batch of record
 
-| ladder                        | verdict  | top (chain/climb) | rungs | diagnoses             | gens | compromises    | wall |
-| ----------------------------- | -------- | ----------------- | ----- | --------------------- | ---- | -------------- | ---- |
-| `94f9d214-nor-halves`         | admitted | censored / NO     | 2/2   | -                     | 1    | solution-limit | 0s   |
-| `94f9d214-nor-merged`         | admitted | yes / yes         | 5/5   | -                     | 1    | -              | 0s   |
-| `94f9d214-nor-recolor`        | admitted | yes / yes         | 4/4   | -                     | 1    | solution-limit | 0s   |
-| `al1-mirror`                  | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
-| `al10-skippable`              | rejected | yes / n/a         | -     | -                     | 1    | -              | 0s   |
-| `al11-greedy-trap`            | rejected | yes / n/a         | -     | -                     | 1    | -              | 0s   |
-| `al12-unlearnable`            | admitted | yes / NO          | 0/1   | not-proposed          | 1    | -              | 0s   |
-| `al13-symmetry-repair`        | rejected | yes / n/a         | -     | -                     | 1    | -              | 0s   |
-| `al14-cell-row-grid`          | rejected | censored / n/a    | -     | -                     | 1    | -              | 10s  |
-| `al15-shift-frame`            | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
-| `al16-layout-nest`            | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
-| `al17-shift-frame-tall`       | admitted | yes / yes         | 3/3   | -                     | 1    | -              | 0s   |
-| `al18-fanin-rotate`           | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
-| `al19-fanin-recolor`          | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
-| `al2-rot90-calibration`       | admitted | yes / yes         | 1/1   | -                     | 1    | -              | 0s   |
-| `al20-recolor-telescope`      | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
-| `al21-dag-siblings`           | admitted | yes / yes         | 2/2   | -                     | 1    | -              | 0s   |
-| `al3-quad-symmetrize`         | rejected | yes / n/a         | -     | -                     | 1    | -              | 5s   |
-| `al4-mask-crop`               | rejected | yes / n/a         | -     | -                     | 1    | -              | 3s   |
-| `al5-perceiver-chain`         | rejected | yes / n/a         | -     | -                     | 1    | -              | 3s   |
-| `al6-mirror-tall`             | rejected | yes / n/a         | -     | -                     | 1    | -              | 7s   |
-| `al7-fast-tower`              | rejected | yes / n/a         | -     | -                     | 1    | -              | 0s   |
-| `al8-lean-perceiver`          | rejected | yes / n/a         | -     | -                     | 1    | -              | 1s   |
-| `al9-decoy`                   | rejected | yes / n/a         | -     | -                     | 1    | -              | 0s   |
-| `dae9d2b5-half-param`         | admitted | yes / yes         | 2/3   | proposed-not-selected | 1    | -              | 0s   |
-| `dae9d2b5-recolor-solo`       | rejected | censored / n/a    | -     | -                     | 1    | -              | 0s   |
-| `dae9d2b5-split-asym-lean`    | admitted | yes / yes         | 3/3   | -                     | 1    | solution-limit | 0s   |
-| `dae9d2b5-split-halves-lean`  | admitted | yes / yes         | 2/2   | -                     | 1    | solution-limit | 0s   |
-| `dae9d2b5-split-recolor`      | admitted | yes / yes         | 4/4   | -                     | 1    | -              | 0s   |
-| `dae9d2b5-split-recolor-lean` | admitted | yes / yes         | 4/4   | -                     | 1    | -              | 0s   |
-| `fafffa47-nor-halves`         | admitted | censored / NO     | 2/2   | -                     | 1    | solution-limit | 0s   |
-| `fafffa47-nor-merged`         | admitted | yes / yes         | 5/5   | -                     | 1    | -              | 0s   |
-| `fafffa47-nor-recolor`        | admitted | yes / yes         | 4/4   | -                     | 1    | solution-limit | 0s   |
+| ladder                        | verdict  | top (chain/climb) | rungs | diagnoses             | gens | compromises | wall  |
+| ----------------------------- | -------- | ----------------- | ----- | --------------------- | ---- | ----------- | ----- |
+| `94f9d214-nor-halves`         | admitted | censored / NO     | 2/2   | -                     | 1    | -           | 0s    |
+| `94f9d214-nor-merged`         | admitted | yes / yes         | 5/5   | -                     | 1    | -           | 0s    |
+| `94f9d214-nor-recolor`        | admitted | yes / yes         | 4/4   | -                     | 1    | -           | 0s    |
+| `94f9d214-recolor-first`      | admitted | yes / yes         | 2/2   | -                     | 1    | -           | 1774s |
+| `al1-mirror`                  | admitted | yes / yes         | 2/2   | -                     | 1    | -           | 0s    |
+| `al10-skippable`              | rejected | yes / n/a         | -     | -                     | 1    | -           | 0s    |
+| `al11-greedy-trap`            | rejected | yes / n/a         | -     | -                     | 1    | -           | 0s    |
+| `al12-unlearnable`            | admitted | yes / NO          | 0/1   | not-proposed          | 1    | -           | 0s    |
+| `al13-symmetry-repair`        | rejected | yes / n/a         | -     | -                     | 1    | -           | 0s    |
+| `al14-cell-row-grid`          | rejected | censored / n/a    | -     | -                     | 1    | -           | 9s    |
+| `al15-shift-frame`            | admitted | yes / yes         | 2/2   | -                     | 1    | -           | 0s    |
+| `al16-layout-nest`            | admitted | yes / yes         | 2/2   | -                     | 1    | -           | 0s    |
+| `al17-shift-frame-tall`       | admitted | yes / yes         | 3/3   | -                     | 1    | -           | 0s    |
+| `al18-fanin-rotate`           | admitted | yes / yes         | 2/2   | -                     | 1    | -           | 0s    |
+| `al19-fanin-recolor`          | admitted | yes / yes         | 2/2   | -                     | 1    | -           | 0s    |
+| `al2-rot90-calibration`       | admitted | yes / yes         | 1/1   | -                     | 1    | -           | 0s    |
+| `al20-recolor-telescope`      | admitted | yes / yes         | 2/2   | -                     | 1    | -           | 0s    |
+| `al21-dag-siblings`           | admitted | yes / yes         | 2/2   | -                     | 1    | -           | 0s    |
+| `al3-quad-symmetrize`         | rejected | yes / n/a         | -     | -                     | 1    | -           | 4s    |
+| `al4-mask-crop`               | rejected | yes / n/a         | -     | -                     | 1    | -           | 3s    |
+| `al5-perceiver-chain`         | rejected | yes / n/a         | -     | -                     | 1    | -           | 3s    |
+| `al6-mirror-tall`             | rejected | yes / n/a         | -     | -                     | 1    | -           | 6s    |
+| `al7-fast-tower`              | rejected | yes / n/a         | -     | -                     | 1    | -           | 0s    |
+| `al8-lean-perceiver`          | rejected | yes / n/a         | -     | -                     | 1    | -           | 1s    |
+| `al9-decoy`                   | rejected | yes / n/a         | -     | -                     | 1    | -           | 0s    |
+| `dae9d2b5-half-param`         | admitted | yes / yes         | 2/3   | proposed-not-selected | 1    | -           | 0s    |
+| `dae9d2b5-recolor-first`      | rejected | yes / n/a         | -     | -                     | 1    | -           | 1s    |
+| `dae9d2b5-recolor-solo`       | rejected | censored / n/a    | -     | -                     | 1    | -           | 0s    |
+| `dae9d2b5-split-asym-lean`    | admitted | yes / yes         | 3/3   | -                     | 1    | -           | 0s    |
+| `dae9d2b5-split-halves-lean`  | admitted | yes / yes         | 2/2   | -                     | 1    | -           | 0s    |
+| `dae9d2b5-split-recolor`      | admitted | yes / yes         | 4/4   | -                     | 1    | -           | 0s    |
+| `dae9d2b5-split-recolor-lean` | admitted | yes / yes         | 4/4   | -                     | 1    | -           | 0s    |
+| `fafffa47-nor-halves`         | admitted | censored / NO     | 2/2   | -                     | 1    | -           | 0s    |
+| `fafffa47-nor-merged`         | admitted | yes / yes         | 5/5   | -                     | 1    | -           | 0s    |
+| `fafffa47-nor-recolor`        | admitted | yes / yes         | 4/4   | -                     | 1    | -           | 0s    |
+| `fafffa47-recolor-first`      | admitted | yes / yes         | 2/2   | -                     | 1    | -           | 1880s |
 
 ## What this batch samples
 
-**33 members: 21 climbed** (the learning loop ran) and **12 chain-only** (the certificate rejected the ladder, so learning was never paid for). Every rung-recovery number in this manifest therefore rests on those 21.
+**36 members: 23 climbed** (the learning loop ran) and **13 chain-only** (the certificate rejected the ladder, so learning was never paid for). Every rung-recovery number in this manifest therefore rests on those 23.
 
 Rolled up from each cell's own recorded `runspec.json`, counted per member. **An axis with one value is an assumption, not a result** -- the batch cannot tell you whether its findings depend on it.
 
-| axis               | values sampled (members)               |
-| ------------------ | -------------------------------------- |
-| learn engine       | `GreedyMDLLearnEngine` (21)            |
-| proposer           | `AntiunifyPairs` (21)                  |
-| metric             | `CompressionMetric` (21)               |
-| learn iterations   | `4` (2), `5` (18), `6` (1)             |
-| accounting mode    | `exhaustive` (27), `stop-at-first` (6) |
-| `considered_limit` | `2000000` (12), `50000` (21)           |
-| `max_arity`        | `2` (15), `3` (17), `4` (1)            |
+| axis               | values sampled (members)     |
+| ------------------ | ---------------------------- |
+| learn engine       | `GreedyMDLLearnEngine` (23)  |
+| proposer           | `AntiunifyPairs` (23)        |
+| metric             | `CompressionMetric` (23)     |
+| learn iterations   | `4` (2), `5` (20), `6` (1)   |
+| accounting mode    | `exhaustive` (36)            |
+| `considered_limit` | `2000000` (15), `50000` (21) |
+| `max_arity`        | `2` (15), `3` (20), `4` (1)  |
 
 ### Cohorts -- what may be compared with what
 
 A cohort is a **shared task and a shared Floor** (`LADDER-RELATIONSHIPS-2026-07-23.md`), which makes raw search cost cancel and is what licenses reading two members' cost columns against each other. It is derived, never declared -- only `ladder.task` is authored, and the Floor half is a content hash, so a cohort cannot disagree with the Floors in it. Members absent from this table stand alone: their costs are readable on their own terms and against nothing else.
 
-| cohort            | task       | Floor                                                   | members                                                                                                                                                           |
-| ----------------- | ---------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `94f9d214/ef190b` | `94f9d214` | `map_color`, `nth`, `overlay`, `split_v`, `swap_colors` | `94f9d214-nor-halves`, `94f9d214-nor-merged`, `94f9d214-nor-recolor`                                                                                              |
-| `dae9d2b5/35b2a2` | `dae9d2b5` | `map_color`, `nth`, `overlay`, `split_h`                | `dae9d2b5-half-param`, `dae9d2b5-recolor-solo`, `dae9d2b5-split-asym-lean`, `dae9d2b5-split-halves-lean`, `dae9d2b5-split-recolor`, `dae9d2b5-split-recolor-lean` |
-| `fafffa47/ef190b` | `fafffa47` | `map_color`, `nth`, `overlay`, `split_v`, `swap_colors` | `fafffa47-nor-halves`, `fafffa47-nor-merged`, `fafffa47-nor-recolor`                                                                                              |
+| cohort            | task       | Floor                                                   | members                                                                                                                                                                                     |
+| ----------------- | ---------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `94f9d214/ef190b` | `94f9d214` | `map_color`, `nth`, `overlay`, `split_v`, `swap_colors` | `94f9d214-nor-halves`, `94f9d214-nor-merged`, `94f9d214-nor-recolor`, `94f9d214-recolor-first`                                                                                              |
+| `dae9d2b5/35b2a2` | `dae9d2b5` | `map_color`, `nth`, `overlay`, `split_h`                | `dae9d2b5-half-param`, `dae9d2b5-recolor-first`, `dae9d2b5-recolor-solo`, `dae9d2b5-split-asym-lean`, `dae9d2b5-split-halves-lean`, `dae9d2b5-split-recolor`, `dae9d2b5-split-recolor-lean` |
+| `fafffa47/ef190b` | `fafffa47` | `map_color`, `nth`, `overlay`, `split_v`, `swap_colors` | `fafffa47-nor-halves`, `fafffa47-nor-merged`, `fafffa47-nor-recolor`, `fafffa47-recolor-first`                                                                                              |
 
 ## Batch checks
 
-- Members run: **33**; wall clock **0.6 min**.
+- Members run: **36**; wall clock **61.4 min**.
 - Members that raised: **0**
 - Members whose cells span MORE THAN ONE config generation: **0**
 
@@ -76,9 +79,6 @@ A cohort is a **shared task and a shared Floor** (`LADDER-RELATIONSHIPS-2026-07-
 
 | ladder                    | reason                                                                                                                                            |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `94f9d214-recolor-first`  | probe INCONCLUSIVE at the cohort guard (see above)                                                                                                |
 | `a740d043-crop-normalize` | probe CONVICTED (a skip path at depth 3, verified); kept in the registry as a reproducible finding -- commuting factorisations cannot be laddered |
 | `dae9d2b5-halves-union`   | parked: a multi-hour enumeration (~21M considered per cell); kept unrun on purpose as the measured region-tier baseline                           |
-| `dae9d2b5-recolor-first`  | probe INCONCLUSIVE at the cohort guard -- a non-result by design, not something a bigger budget converts into a verdict (LADDER-PROCESS)          |
 | `dae9d2b5-split-halves`   | superseded by `-split-halves-lean`; probed at pool 150 with the skip test inconclusive, never run                                                 |
-| `fafffa47-recolor-first`  | probe INCONCLUSIVE at the cohort guard (see above)                                                                                                |

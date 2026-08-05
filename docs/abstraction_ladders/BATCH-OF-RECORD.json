@@ -3,9 +3,7 @@
     "admitted": true,
     "climbed": true,
     "cohort": "94f9d214/ef190b",
-    "compromises": [
-      "solution-limit"
-    ],
+    "compromises": [],
     "diagnoses": [],
     "error": null,
     "floor": [
@@ -16,12 +14,12 @@
       "swap_colors"
     ],
     "generations": [
-      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
     ],
     "name": "94f9d214-nor-halves",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.16336241690441966,
+    "seconds": 0.15815879101864994,
     "task": "94f9d214",
     "top_chain": null,
     "top_climb": false
@@ -46,7 +44,7 @@
     "name": "94f9d214-nor-merged",
     "rungs_recovered": 5,
     "rungs_total": 5,
-    "seconds": 0.3680088750552386,
+    "seconds": 0.3248837080318481,
     "task": "94f9d214",
     "top_chain": true,
     "top_climb": true
@@ -55,9 +53,7 @@
     "admitted": true,
     "climbed": true,
     "cohort": "94f9d214/ef190b",
-    "compromises": [
-      "solution-limit"
-    ],
+    "compromises": [],
     "diagnoses": [],
     "error": null,
     "floor": [
@@ -68,12 +64,37 @@
       "swap_colors"
     ],
     "generations": [
-      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
     ],
     "name": "94f9d214-nor-recolor",
     "rungs_recovered": 4,
     "rungs_total": 4,
-    "seconds": 0.486852667061612,
+    "seconds": 0.450715999933891,
+    "task": "94f9d214",
+    "top_chain": true,
+    "top_climb": true
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "cohort": "94f9d214/ef190b",
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "floor": [
+      "map_color",
+      "nth",
+      "overlay",
+      "split_v",
+      "swap_colors"
+    ],
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+    ],
+    "name": "94f9d214-recolor-first",
+    "rungs_recovered": 2,
+    "rungs_total": 2,
+    "seconds": 1773.957255999907,
     "task": "94f9d214",
     "top_chain": true,
     "top_climb": true
@@ -96,7 +117,7 @@
     "name": "al1-mirror",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.14974987495224923,
+    "seconds": 0.3644762500189245,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -118,7 +139,7 @@
     "name": "al10-skippable",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 0.010909167001955211,
+    "seconds": 0.010226874961517751,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -142,7 +163,7 @@
     "name": "al11-greedy-trap",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 0.288969959015958,
+    "seconds": 0.28171991696581244,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -166,7 +187,7 @@
     "name": "al12-unlearnable",
     "rungs_recovered": 0,
     "rungs_total": 1,
-    "seconds": 0.08944425010122359,
+    "seconds": 0.08495495794340968,
     "task": "",
     "top_chain": true,
     "top_climb": false
@@ -190,7 +211,7 @@
     "name": "al13-symmetry-repair",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 0.03373808297328651,
+    "seconds": 0.02899870800320059,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -213,7 +234,7 @@
     "name": "al14-cell-row-grid",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 9.662289042025805,
+    "seconds": 9.27993299998343,
     "task": "",
     "top_chain": null,
     "top_climb": null
@@ -236,7 +257,7 @@
     "name": "al15-shift-frame",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.10443562502041459,
+    "seconds": 0.09718162496574223,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -259,7 +280,7 @@
     "name": "al16-layout-nest",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.09804362489376217,
+    "seconds": 0.09166583302430809,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -282,7 +303,7 @@
     "name": "al17-shift-frame-tall",
     "rungs_recovered": 3,
     "rungs_total": 3,
-    "seconds": 0.11687387491110712,
+    "seconds": 0.10966562503017485,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -306,7 +327,7 @@
     "name": "al18-fanin-rotate",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.1058873749570921,
+    "seconds": 0.10174737498164177,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -330,7 +351,7 @@
     "name": "al19-fanin-recolor",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.13605500000994653,
+    "seconds": 0.13079004094470292,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -352,7 +373,7 @@
     "name": "al2-rot90-calibration",
     "rungs_recovered": 1,
     "rungs_total": 1,
-    "seconds": 0.09146887494716793,
+    "seconds": 0.08343454194255173,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -375,7 +396,7 @@
     "name": "al20-recolor-telescope",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.11059545807074755,
+    "seconds": 0.10718670801725239,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -399,7 +420,7 @@
     "name": "al21-dag-siblings",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.10779862501658499,
+    "seconds": 0.10291954199783504,
     "task": "",
     "top_chain": true,
     "top_climb": true
@@ -423,7 +444,7 @@
     "name": "al3-quad-symmetrize",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 4.525758959003724,
+    "seconds": 4.384100459050387,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -452,7 +473,7 @@
     "name": "al4-mask-crop",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 3.2189559580292553,
+    "seconds": 3.000708541017957,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -477,7 +498,7 @@
     "name": "al5-perceiver-chain",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 3.4402377500664443,
+    "seconds": 3.232262042001821,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -502,7 +523,7 @@
     "name": "al6-mirror-tall",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 7.338293334003538,
+    "seconds": 6.456749625038356,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -526,7 +547,7 @@
     "name": "al7-fast-tower",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 0.28850162494927645,
+    "seconds": 0.2721110410057008,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -551,7 +572,7 @@
     "name": "al8-lean-perceiver",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 1.2734196670353413,
+    "seconds": 1.3733259999426082,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -575,7 +596,7 @@
     "name": "al9-decoy",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 0.28770033293403685,
+    "seconds": 0.2737315830308944,
     "task": "",
     "top_chain": true,
     "top_climb": null
@@ -601,7 +622,7 @@
     "name": "dae9d2b5-half-param",
     "rungs_recovered": 2,
     "rungs_total": 3,
-    "seconds": 0.10791470797266811,
+    "seconds": 0.09767820802517235,
     "task": "dae9d2b5",
     "top_chain": true,
     "top_climb": true
@@ -622,10 +643,34 @@
     "generations": [
       "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
     ],
+    "name": "dae9d2b5-recolor-first",
+    "rungs_recovered": 0,
+    "rungs_total": 0,
+    "seconds": 0.5467738748993725,
+    "task": "dae9d2b5",
+    "top_chain": true,
+    "top_climb": null
+  },
+  {
+    "admitted": false,
+    "climbed": false,
+    "cohort": "dae9d2b5/35b2a2",
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "floor": [
+      "map_color",
+      "nth",
+      "overlay",
+      "split_h"
+    ],
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [learn=none]"
+    ],
     "name": "dae9d2b5-recolor-solo",
     "rungs_recovered": 0,
     "rungs_total": 0,
-    "seconds": 0.29011445795185864,
+    "seconds": 0.2789825840154663,
     "task": "dae9d2b5",
     "top_chain": null,
     "top_climb": null
@@ -634,9 +679,7 @@
     "admitted": true,
     "climbed": true,
     "cohort": "dae9d2b5/35b2a2",
-    "compromises": [
-      "solution-limit"
-    ],
+    "compromises": [],
     "diagnoses": [],
     "error": null,
     "floor": [
@@ -646,12 +689,12 @@
       "split_h"
     ],
     "generations": [
-      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
     ],
     "name": "dae9d2b5-split-asym-lean",
     "rungs_recovered": 3,
     "rungs_total": 3,
-    "seconds": 0.08065587503369898,
+    "seconds": 0.08317512494977564,
     "task": "dae9d2b5",
     "top_chain": true,
     "top_climb": true
@@ -660,9 +703,7 @@
     "admitted": true,
     "climbed": true,
     "cohort": "dae9d2b5/35b2a2",
-    "compromises": [
-      "solution-limit"
-    ],
+    "compromises": [],
     "diagnoses": [],
     "error": null,
     "floor": [
@@ -672,12 +713,12 @@
       "split_h"
     ],
     "generations": [
-      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
     ],
     "name": "dae9d2b5-split-halves-lean",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.062471834011375904,
+    "seconds": 0.06604408309794962,
     "task": "dae9d2b5",
     "top_chain": true,
     "top_climb": true
@@ -701,7 +742,7 @@
     "name": "dae9d2b5-split-recolor",
     "rungs_recovered": 4,
     "rungs_total": 4,
-    "seconds": 0.3250094170216471,
+    "seconds": 0.3422424999298528,
     "task": "dae9d2b5",
     "top_chain": true,
     "top_climb": true
@@ -725,7 +766,7 @@
     "name": "dae9d2b5-split-recolor-lean",
     "rungs_recovered": 4,
     "rungs_total": 4,
-    "seconds": 0.10823837493080646,
+    "seconds": 0.1030129580758512,
     "task": "dae9d2b5",
     "top_chain": true,
     "top_climb": true
@@ -734,9 +775,7 @@
     "admitted": true,
     "climbed": true,
     "cohort": "fafffa47/ef190b",
-    "compromises": [
-      "solution-limit"
-    ],
+    "compromises": [],
     "diagnoses": [],
     "error": null,
     "floor": [
@@ -747,12 +786,12 @@
       "swap_colors"
     ],
     "generations": [
-      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
     ],
     "name": "fafffa47-nor-halves",
     "rungs_recovered": 2,
     "rungs_total": 2,
-    "seconds": 0.15902991697657853,
+    "seconds": 0.16276899992953986,
     "task": "fafffa47",
     "top_chain": null,
     "top_climb": false
@@ -777,7 +816,7 @@
     "name": "fafffa47-nor-merged",
     "rungs_recovered": 5,
     "rungs_total": 5,
-    "seconds": 0.3410194159951061,
+    "seconds": 0.32428887498099357,
     "task": "fafffa47",
     "top_chain": true,
     "top_climb": true
@@ -786,9 +825,7 @@
     "admitted": true,
     "climbed": true,
     "cohort": "fafffa47/ef190b",
-    "compromises": [
-      "solution-limit"
-    ],
+    "compromises": [],
     "diagnoses": [],
     "error": null,
     "floor": [
@@ -799,12 +836,37 @@
       "swap_colors"
     ],
     "generations": [
-      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=1 solution_limit_mode=immediate [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
     ],
     "name": "fafffa47-nor-recolor",
     "rungs_recovered": 4,
     "rungs_total": 4,
-    "seconds": 0.39583649998530746,
+    "seconds": 0.2796999580459669,
+    "task": "fafffa47",
+    "top_chain": true,
+    "top_climb": true
+  },
+  {
+    "admitted": true,
+    "climbed": true,
+    "cohort": "fafffa47/ef190b",
+    "compromises": [],
+    "diagnoses": [],
+    "error": null,
+    "floor": [
+      "map_color",
+      "nth",
+      "overlay",
+      "split_v",
+      "swap_colors"
+    ],
+    "generations": [
+      "max_arity=3 considered_limit=2000000 considered_limit_mode=immediate solution_limit=None solution_limit_mode=generation-end [iterations=5,learn_engine=GreedyMDLLearnEngine,metric=CompressionMetric,proposer=AntiunifyPairs]"
+    ],
+    "name": "fafffa47-recolor-first",
+    "rungs_recovered": 2,
+    "rungs_total": 2,
+    "seconds": 1879.692644124967,
     "task": "fafffa47",
     "top_chain": true,
     "top_climb": true

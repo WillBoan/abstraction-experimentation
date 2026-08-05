@@ -1,60 +1,60 @@
 decomposed 21 climbs (0 errors, 12 never climbed)
 
-member                       wk    N C/L/H/U |      shares actual C/L/H/U |    shares to-first C/L/H/U |  M_act   M_tf | rho_med
+member                       mode       wk |      shares actual C/L/H/U |   tau_L   tau_H   tau_U |   M_act   M/H |  rhoL   rhoH
 --------------------------------------------------------------------------------------------------------------------------------
-94f9d214-nor-halves           2  4/ 4/ 0/ 2    |   0.0   0.0   0.0  99.9     |   0.0   0.0   0.0  99.9     | 3066.80 3066.80 |   0.894
-94f9d214-nor-merged           4 11/22/11/ 0    |  25.0  47.6  27.4   0.0     |  23.2   6.7  70.1   0.0     |   4.01   4.31 |   1.006
-94f9d214-nor-recolor          5  9/35/ 1/ 0    |  15.2  15.0  69.8   0.0     |  15.2  15.0  69.8   0.0     |   6.56   6.56 |   0.926
-al1-mirror                    3  5/ 6/ 4/ 0    |  26.8  59.6  13.6   0.0     |  23.1   2.0  74.9   0.0     |   3.73   4.33 |   3.820
-al12-unlearnable              1  1/ 0/ 0/ 1    |  50.0   0.0   0.0  50.0     |  41.7   0.0   0.0  58.3     |   2.00   2.40 |     nan
-al15-shift-frame              3  5/ 6/ 4/ 0    |  33.0  41.2  25.7   0.0     |  36.0   2.3  61.7   0.0     |   3.03   2.77 |   1.048
-al16-layout-nest              3  5/ 6/ 4/ 0    |  32.2  44.6  23.2   0.0     |  21.7  10.9  67.5   0.0     |   3.11   4.62 |   1.198
-al17-shift-frame-tall         4  7/12/ 9/ 0    |  24.8  44.5  30.8   0.0     |  30.2   2.2  67.6   0.0     |   4.04   3.31 |   1.071
-al18-fanin-rotate             3  5/ 6/ 4/ 0    |  32.3  44.2  23.5   0.0     |  38.9   7.4  53.7   0.0     |   3.10   2.57 |   1.181
-al19-fanin-recolor            3  5/ 6/ 4/ 0    |  33.1  41.0  25.9   0.0     |  25.2   1.7  73.1   0.0     |   3.02   3.97 |   1.037
-al2-rot90-calibration         2  3/ 2/ 1/ 0    |  45.0  43.3  11.7   0.0     |  60.5  21.1  18.4   0.0     |   2.22   1.65 |   1.857
-al20-recolor-telescope        3  5/ 6/ 4/ 0    |  33.1  40.9  26.0   0.0     |  31.6   2.0  66.4   0.0     |   3.02   3.17 |   1.035
-al21-dag-siblings             2  5/ 4/ 1/ 0    |  39.5  54.0   6.5   0.0     |  60.3  11.9  27.9   0.0     |   2.53   1.66 |   2.082
-dae9d2b5-half-param           3  9/12/ 6/ 0    |  33.3  42.0  24.7   0.0     |  29.4   5.0  65.7   0.0     |   3.00   3.41 |   1.006
-dae9d2b5-split-asym-lean      2  7/ 6/ 1/ 0    |   7.5   0.0  92.5   0.0     |   7.5   0.0  92.5   0.0     |  13.42  13.42 |   0.850
-dae9d2b5-split-halves-lean    2  5/ 4/ 1/ 0    |   3.0   0.0  96.9   0.0     |   3.0   0.0  96.9   0.0     |  32.88  32.88 |   0.850
-dae9d2b5-split-recolor        3  9/12/ 6/ 0    |  31.3  49.8  18.9   0.0     |  42.5   0.4  57.2   0.0     |   3.20   2.35 |   1.207
-dae9d2b5-split-recolor-lean   3  9/12/ 6/ 0    |  33.3  42.0  24.7   0.0     |  29.4   5.0  65.7   0.0     |   3.00   3.41 |   1.006
-fafffa47-nor-halves           2  4/ 4/ 0/ 2    |   0.0   0.0   0.0  99.9     |   0.0   0.0   0.0  99.9     | 3250.90 3250.90 |   0.894
-fafffa47-nor-merged           4 11/22/11/ 0    |  25.0  45.8  29.2   0.0     |  23.3   6.1  70.6   0.0     |   4.01   4.29 |   1.006
-fafffa47-nor-recolor          5  9/35/ 1/ 0    |  14.6  14.3  71.0   0.0     |  14.6  14.3  71.0   0.0     |   6.84   6.84 |   0.926
+94f9d214-nor-halves          stop-first  2 |   0.0   0.0   0.0  99.9     |    0.89    0.00 3064.90 | 3066.80 1533.40 |  0.89    nan
+94f9d214-nor-merged          exhaustive  4 |  25.0  47.6  27.4   0.0     |    1.91    1.10    0.00 |    4.01  1.00 |  1.01   1.00
+94f9d214-nor-recolor         stop-first  5 |  15.2  15.0  69.8   0.0     |    0.98    4.58    0.00 |    6.56  1.31 |  0.93  14.39
+al1-mirror                   exhaustive  3 |  26.8  59.6  13.6   0.0     |    2.22    0.51    0.00 |    3.73  1.24 |  3.82   0.62
+al12-unlearnable             exhaustive  1 |  50.0   0.0   0.0  50.0     |    0.00    0.00    1.00 |    2.00  2.00 |   nan    nan
+al15-shift-frame             exhaustive  3 |  33.0  41.2  25.7   0.0     |    1.25    0.78    0.00 |    3.03  1.01 |  1.05   0.95
+al16-layout-nest             exhaustive  3 |  32.2  44.6  23.2   0.0     |    1.39    0.72    0.00 |    3.11  1.04 |  1.20   0.83
+al17-shift-frame-tall        exhaustive  4 |  24.8  44.5  30.8   0.0     |    1.80    1.24    0.00 |    4.04  1.01 |  1.07   0.95
+al18-fanin-rotate            exhaustive  3 |  32.3  44.2  23.5   0.0     |    1.37    0.73    0.00 |    3.10  1.03 |  1.18   0.85
+al19-fanin-recolor           exhaustive  3 |  33.1  41.0  25.9   0.0     |    1.24    0.78    0.00 |    3.02  1.01 |  1.04   0.96
+al2-rot90-calibration        exhaustive  2 |  45.0  43.3  11.7   0.0     |    0.96    0.26    0.00 |    2.22  1.11 |  1.86   0.54
+al20-recolor-telescope       exhaustive  3 |  33.1  40.9  26.0   0.0     |    1.24    0.78    0.00 |    3.02  1.01 |  1.04   0.97
+al21-dag-siblings            exhaustive  2 |  39.5  54.0   6.5   0.0     |    1.37    0.16    0.00 |    2.53  1.27 |  2.08   0.48
+dae9d2b5-half-param          exhaustive  3 |  33.3  42.0  24.7   0.0     |    1.26    0.74    0.00 |    3.00  1.00 |  1.01   0.99
+dae9d2b5-split-asym-lean     stop-first  2 |   7.5   0.0  92.5   0.0     |    0.01   12.41    0.00 |   13.42  6.71 |  0.85  31.16
+dae9d2b5-split-halves-lean   stop-first  2 |   3.0   0.0  96.9   0.0     |    0.01   31.87    0.00 |   32.88 16.44 |  0.85  32.24
+dae9d2b5-split-recolor       exhaustive  3 |  31.3  49.8  18.9   0.0     |    1.59    0.60    0.00 |    3.20  1.07 |  1.21   0.83
+dae9d2b5-split-recolor-lean  exhaustive  3 |  33.3  42.0  24.7   0.0     |    1.26    0.74    0.00 |    3.00  1.00 |  1.01   0.99
+fafffa47-nor-halves          stop-first  2 |   0.0   0.0   0.0  99.9     |    0.89    0.00 3249.01 | 3250.90 1625.45 |  0.89    nan
+fafffa47-nor-merged          exhaustive  4 |  25.0  45.8  29.2   0.0     |    1.84    1.17    0.00 |    4.01  1.00 |  1.01   1.00
+fafffa47-nor-recolor         stop-first  5 |  14.6  14.3  71.0   0.0     |    0.98    4.86    0.00 |    6.84  1.37 |  0.93  15.31
 
-segments: 15 exhaustive (generation-end), 6 stop-at-first
-  exhaustive, actual shares:    CR 33.2% / LR 42.7% / HR 20.8% / UN 3.3%
-  exhaustive, to-first shares:  CR 34.5% / LR 5.6% / HR 56.0% / UN 3.9%
-  stop-at-first (UN=0), actual: CR 10.1% / LR 7.4% / HR 82.6% / UN 0.0%
+identity |M - (1 + tau_L + tau_H + tau_U)| worst abs err: 4.55e-13
+members where transcript identity (no tau_UN) suffices: 18/21
+authored-join problems (unmapped tasks or height mismatch): none
+realized-vs-authored classification mismatches (rows, per member): {'94f9d214-nor-halves': 4, '94f9d214-nor-merged': 19, '94f9d214-nor-recolor': 22, 'al21-dag-siblings': 5, 'dae9d2b5-half-param': 5, 'dae9d2b5-split-asym-lean': 9, 'dae9d2b5-split-halves-lean': 5, 'dae9d2b5-split-recolor': 13, 'dae9d2b5-split-recolor-lean': 13, 'fafffa47-nor-halves': 4, 'fafffa47-nor-merged': 19, 'fafffa47-nor-recolor': 22}
 
-store-wide climb spend by class (actual accounting), grand total 19,456,316:
-  CR:    1,859,842 (9.6%)
-  LR:    2,139,513 (11.0%)
-  HR:    8,296,978 (42.6%)
-  UN:    7,159,983 (36.8%)
+exhaustive members (15), per-class ACTUAL cost across all rows:
+  CR: n= 95  mean=       8,979  median=       3,909  geomean=       2,851
+  LR: n=134  mean=      10,217  median=       3,951  geomean=       4,031
+  HR: n= 75  mean=       8,170  median=       4,889  geomean=       3,923
+  UN: n=  1  mean=           7  median=           7  geomean=           7
 
-CR+LR-to-first counterfactual total: 2,141,733 -> removable factor 9.1x
+stop-first members (6), per-class ACTUAL cost across all rows:
+  CR: n= 38  mean=      26,496  median=         284  geomean=       1,948
+  LR: n= 88  mean=       8,755  median=         266  geomean=         387
+  HR: n=  4  mean=   1,921,056  median=   1,947,664  geomean=   1,919,033
+  UN: n=  4  mean=   1,789,994  median=   1,788,974  geomean=   1,788,474
 
-churn / regressions / censoring / invocation-identity deviations:
-  94f9d214-nor-halves          churn=4 tasks
-  94f9d214-nor-merged          churn=10 tasks
-  94f9d214-nor-recolor         churn=8 tasks
-  al1-mirror                   churn=4 tasks
-  al15-shift-frame             churn=4 tasks
-  al16-layout-nest             churn=4 tasks
-  al17-shift-frame-tall        churn=6 tasks
-  al18-fanin-rotate            churn=4 tasks
-  al19-fanin-recolor           churn=4 tasks
-  al2-rot90-calibration        churn=2 tasks
-  al20-recolor-telescope       churn=4 tasks
-  al21-dag-siblings            churn=4 tasks
-  dae9d2b5-half-param          churn=8 tasks
-  dae9d2b5-split-asym-lean     churn=6 tasks; CENSORED-CELLS
-  dae9d2b5-split-halves-lean   churn=4 tasks; CENSORED-CELLS
-  dae9d2b5-split-recolor       churn=8 tasks
-  dae9d2b5-split-recolor-lean  churn=8 tasks
-  fafffa47-nor-halves          churn=4 tasks
-  fafffa47-nor-merged          churn=10 tasks
-  fafffa47-nor-recolor         churn=8 tasks
+exhaustive: pooled mu_LR(d) (rho medians by wakes-since-solve) and mu_HR(d) (by wakes-until-solve):
+  LR d=1: n= 80  median considered=     3,940  median rho=1.035
+  LR d=2: n= 44  median considered=     4,041  median rho=1.012
+  LR d=3: n= 10  median considered=     4,131  median rho=1.012
+  HR until=1: n= 54  median considered=     4,889
+  HR until=2: n= 18  median considered=     5,343
+  HR until=3: n=  3  median considered=     4,889
+
+stop-first: pooled mu_LR(d) (rho medians by wakes-since-solve) and mu_HR(d) (by wakes-until-solve):
+  LR d=1: n= 36  median considered=       258  median rho=0.878
+  LR d=2: n= 18  median considered=       271  median rho=0.926
+  LR d=3: n= 18  median considered=       271  median rho=0.926
+  LR d=4: n= 16  median considered=       268  median rho=0.465
+  HR until=1: n=  4  median considered= 1,947,664
+
+binding counts by class (guard = censored at considered_limit; space = exhausted depth-limited space): {'UN': {'space': 5}, 'CR': {'solution': 38, 'space': 95}, 'LR': {'solution': 88, 'space': 134}, 'HR': {'space': 77, 'guard': 2}}
+guard-bound cells (u_guard = 1 by construction): [('dae9d2b5-split-asym-lean', 'dae9d2b5', 0, 1.0), ('dae9d2b5-split-halves-lean', 'dae9d2b5', 0, 1.0)]

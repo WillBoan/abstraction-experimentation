@@ -1,0 +1,31 @@
+r_1 `recolored_north` over `nor-L0` — OK
+
+| probe | task               | verdict     | gen | considered | depth (found/intended) |
+| ----- | ------------------ | ----------- | --- | ---------- | ---------------------- |
+| wake  | recolored_north-00 | alternative | 3   | 66298      | 3/3                    |
+| wake  | recolored_north-01 | alternative | 3   | 66340      | 3/3                    |
+| skip  | 94f9d214           | no-skip     | -   | 1788899    | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 4): ~55,722 considered, calibrated on this cell's funnel; dominated by overlay: color(5)
+
+- floor tax (recolored_north-00): pruned 17 vs full 66,298 = **3,900x** [clean]
+  kept ['map_color', 'nth', 'split_v']; dropped ['overlay', 'swap_colors']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 66,296 (100.0%), map_color 65,527 (98.8%), overlay 59,830 (90.2%), swap_colors 18,293 (27.6%), split_v 250 (0.4%), nth 150 (0.2%)
+
+r_2 `recolored_south` over `nor-L0+recolored_north` — OK
+
+| probe | task               | verdict     | gen | considered | depth (found/intended) |
+| ----- | ------------------ | ----------- | --- | ---------- | ---------------------- |
+| wake  | recolored_south-00 | alternative | 3   | 72125      | 3/3                    |
+| wake  | recolored_south-01 | alternative | 3   | 72101      | 3/3                    |
+| skip  | 94f9d214           | no-skip     | -   | 1737296    | -                      |
+
+- sleep: recovered; minted ['abs0'] at arity 1 (intended 1)
+- one round deeper (depth_limit 4): ~55,130 considered, calibrated on this cell's funnel; dominated by overlay: color(5)
+
+- floor tax (recolored_south-00): pruned 17 vs full 72,125 = **4,243x** [clean]
+  kept ['map_color', 'nth', 'split_v']; dropped ['overlay', 'recolored_north', 'swap_colors']
+  full spend by primitive (shares OVERLAP, not a partition): __const__ 72,119 (100.0%), map_color 71,017 (98.5%), overlay 65,440 (90.7%), swap_colors 19,357 (26.8%), recolored_north 5,873 (8.1%), split_v 231 (0.3%)
+
+2/2 rungs probe clean

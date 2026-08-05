@@ -35,15 +35,11 @@ ladder 94f9d214-nor-recolor
 # ``dae9d2b5-split-recolor`` / ``-lean`` pair, which reproduced its parent's verdict profile
 # exactly at 25.4x less spend.
 
-# **Stop limit (2026-07-27).** `solution_limit: 1` at `immediate` mode: a cell stops at its first
-# solution instead of enumerating the rest of its budget. Measured 19.5x-63x on these cells, and
-# `first_solution_index` is IDENTICAL either way -- so cost-to-first, the currency every rung-value
-# and RQ1 comparison is read in, is exactly preserved. Skip searches are unaffected: they do not
-# solve, so they exhaust regardless, which is what `no_skip_paths` requires. Validated as a PAIR
-# with the per-level pool against `dae9d2b5-split-recolor`'s certified profile (identical verdicts,
-# identical rung recovery). A registered Compromise Option -- `compromises_in(config)` detects it
-# from the config and banners the report; it forfeits `cheapest_solution_index`, cost-to-exhaust
-# and complete `by_primitive`.
+# **Stop limit removed (2026-08-05).** The 2026-07-27 `solution_limit: 1` compromise (exhaust
+# semantics unaffordable at depth 3) was re-tested after the canonical-order fill: an exhaustive
+# arm (`--set budget.solution_limit=null`) ran every carrier's cells to generation-end within the
+# UNCHANGED 2M guard -- identical verdicts, identical rung recovery, zero compromises. The fill's
+# ~4.4x discount is what made exhaustion fit; see experiments/2026-08-04-postfill-rescreen/.
 
 config {
     ladder.task: '94f9d214'
@@ -51,8 +47,6 @@ config {
     budget.max_arity: 3
     budget.max_pool: 30
     budget.considered_limit: 2000000
-    budget.solution_limit: 1
-    budget.solution_limit_mode: 'immediate'
     search_engine.constant_sources: ['finite-enumerate-scalars']
 }
 

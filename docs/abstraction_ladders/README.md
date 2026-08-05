@@ -29,6 +29,7 @@ The hand-maintained register (`LADDERS.md`), its worksheet template, and the six
 
 | Doc | What it is |
 | --- | --- |
+| [AL-PLAN-2026-08-04.md](AL-PLAN-2026-08-04.md) | **The active plan of record** — premises, parking decisions, the RQ portfolio, and the phased program that follows the completed MVE lineage. Consult before starting multi-step experimental work; supersede by writing the next one. |
 | [LADDER-PROCESS.md](LADDER-PROCESS.md) | How to build a Ladder: order, judgement, and what each instrument can and cannot prove. The part machinery cannot enforce. |
 | [BATCH-OF-RECORD.md](BATCH-OF-RECORD.md) | **The register, and it is generated** (`arc-lab run-batch`; never hand-edit). Every Ladder ever run in ONE pass: per-member verdict, rung recovery, top reachability, compromises — plus what the set **samples** on each axis, which cohorts license which comparisons, and the coherence checks. Read it before quoting any number, and before any cross-member comparison. |
 | [ladders/](ladders/) | Per-Ladder committed artifacts: `spec.md` + `report.json`, both generated. (`results.md` is `report.json` rendered, so it is generated on demand and not committed.) |
