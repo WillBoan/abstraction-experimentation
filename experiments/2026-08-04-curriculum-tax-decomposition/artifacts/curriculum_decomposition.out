@@ -1,0 +1,60 @@
+decomposed 21 climbs (0 errors, 12 never climbed)
+
+member                       wk    N C/L/H/U |      shares actual C/L/H/U |    shares to-first C/L/H/U |  M_act   M_tf | rho_med
+--------------------------------------------------------------------------------------------------------------------------------
+94f9d214-nor-halves           2  4/ 4/ 0/ 2    |   0.0   0.0   0.0  99.9     |   0.0   0.0   0.0  99.9     | 3066.80 3066.80 |   0.894
+94f9d214-nor-merged           4 11/22/11/ 0    |  25.0  47.6  27.4   0.0     |  23.2   6.7  70.1   0.0     |   4.01   4.31 |   1.006
+94f9d214-nor-recolor          5  9/35/ 1/ 0    |  15.2  15.0  69.8   0.0     |  15.2  15.0  69.8   0.0     |   6.56   6.56 |   0.926
+al1-mirror                    3  5/ 6/ 4/ 0    |  26.8  59.6  13.6   0.0     |  23.1   2.0  74.9   0.0     |   3.73   4.33 |   3.820
+al12-unlearnable              1  1/ 0/ 0/ 1    |  50.0   0.0   0.0  50.0     |  41.7   0.0   0.0  58.3     |   2.00   2.40 |     nan
+al15-shift-frame              3  5/ 6/ 4/ 0    |  33.0  41.2  25.7   0.0     |  36.0   2.3  61.7   0.0     |   3.03   2.77 |   1.048
+al16-layout-nest              3  5/ 6/ 4/ 0    |  32.2  44.6  23.2   0.0     |  21.7  10.9  67.5   0.0     |   3.11   4.62 |   1.198
+al17-shift-frame-tall         4  7/12/ 9/ 0    |  24.8  44.5  30.8   0.0     |  30.2   2.2  67.6   0.0     |   4.04   3.31 |   1.071
+al18-fanin-rotate             3  5/ 6/ 4/ 0    |  32.3  44.2  23.5   0.0     |  38.9   7.4  53.7   0.0     |   3.10   2.57 |   1.181
+al19-fanin-recolor            3  5/ 6/ 4/ 0    |  33.1  41.0  25.9   0.0     |  25.2   1.7  73.1   0.0     |   3.02   3.97 |   1.037
+al2-rot90-calibration         2  3/ 2/ 1/ 0    |  45.0  43.3  11.7   0.0     |  60.5  21.1  18.4   0.0     |   2.22   1.65 |   1.857
+al20-recolor-telescope        3  5/ 6/ 4/ 0    |  33.1  40.9  26.0   0.0     |  31.6   2.0  66.4   0.0     |   3.02   3.17 |   1.035
+al21-dag-siblings             2  5/ 4/ 1/ 0    |  39.5  54.0   6.5   0.0     |  60.3  11.9  27.9   0.0     |   2.53   1.66 |   2.082
+dae9d2b5-half-param           3  9/12/ 6/ 0    |  33.3  42.0  24.7   0.0     |  29.4   5.0  65.7   0.0     |   3.00   3.41 |   1.006
+dae9d2b5-split-asym-lean      2  7/ 6/ 1/ 0    |   7.5   0.0  92.5   0.0     |   7.5   0.0  92.5   0.0     |  13.42  13.42 |   0.850
+dae9d2b5-split-halves-lean    2  5/ 4/ 1/ 0    |   3.0   0.0  96.9   0.0     |   3.0   0.0  96.9   0.0     |  32.88  32.88 |   0.850
+dae9d2b5-split-recolor        3  9/12/ 6/ 0    |  31.3  49.8  18.9   0.0     |  42.5   0.4  57.2   0.0     |   3.20   2.35 |   1.207
+dae9d2b5-split-recolor-lean   3  9/12/ 6/ 0    |  33.3  42.0  24.7   0.0     |  29.4   5.0  65.7   0.0     |   3.00   3.41 |   1.006
+fafffa47-nor-halves           2  4/ 4/ 0/ 2    |   0.0   0.0   0.0  99.9     |   0.0   0.0   0.0  99.9     | 3250.90 3250.90 |   0.894
+fafffa47-nor-merged           4 11/22/11/ 0    |  25.0  45.8  29.2   0.0     |  23.3   6.1  70.6   0.0     |   4.01   4.29 |   1.006
+fafffa47-nor-recolor          5  9/35/ 1/ 0    |  14.6  14.3  71.0   0.0     |  14.6  14.3  71.0   0.0     |   6.84   6.84 |   0.926
+
+segments: 15 exhaustive (generation-end), 6 stop-at-first
+  exhaustive, actual shares:    CR 33.2% / LR 42.7% / HR 20.8% / UN 3.3%
+  exhaustive, to-first shares:  CR 34.5% / LR 5.6% / HR 56.0% / UN 3.9%
+  stop-at-first (UN=0), actual: CR 10.1% / LR 7.4% / HR 82.6% / UN 0.0%
+
+store-wide climb spend by class (actual accounting), grand total 19,456,316:
+  CR:    1,859,842 (9.6%)
+  LR:    2,139,513 (11.0%)
+  HR:    8,296,978 (42.6%)
+  UN:    7,159,983 (36.8%)
+
+CR+LR-to-first counterfactual total: 2,141,733 -> removable factor 9.1x
+
+churn / regressions / censoring / invocation-identity deviations:
+  94f9d214-nor-halves          churn=4 tasks
+  94f9d214-nor-merged          churn=10 tasks
+  94f9d214-nor-recolor         churn=8 tasks
+  al1-mirror                   churn=4 tasks
+  al15-shift-frame             churn=4 tasks
+  al16-layout-nest             churn=4 tasks
+  al17-shift-frame-tall        churn=6 tasks
+  al18-fanin-rotate            churn=4 tasks
+  al19-fanin-recolor           churn=4 tasks
+  al2-rot90-calibration        churn=2 tasks
+  al20-recolor-telescope       churn=4 tasks
+  al21-dag-siblings            churn=4 tasks
+  dae9d2b5-half-param          churn=8 tasks
+  dae9d2b5-split-asym-lean     churn=6 tasks; CENSORED-CELLS
+  dae9d2b5-split-halves-lean   churn=4 tasks; CENSORED-CELLS
+  dae9d2b5-split-recolor       churn=8 tasks
+  dae9d2b5-split-recolor-lean  churn=8 tasks
+  fafffa47-nor-halves          churn=4 tasks
+  fafffa47-nor-merged          churn=10 tasks
+  fafffa47-nor-recolor         churn=8 tasks
