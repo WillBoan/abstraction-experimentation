@@ -4,9 +4,11 @@
 - **Experiments:** `e8-mirror-index-sub`, `e9-mirror-index-affine`
 - **Status:** done
 - **Commits:** `5f48bda` (add/mul) · `9554a78` (primitive-driven search) · `8051ad4` (proposer + E8/E9) · `b5268b5` (docs)
-- **EXPERIMENTS.md:** [the curated abstract](../../EXPERIMENTS.md) — entry "pixels→D4 compresses …" (anchored `8051ad4`)
+- **Historical entry:** [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md) — "pixels→D4 compresses …" (anchored `8051ad4`)
 
-> This is the full write-up + data appendix. The `artifacts/` folder holds the probe scripts and their outputs; EXPERIMENTS.md has the terse version.
+> **Reviewed interpretation (2026-08-12).** This is a historically traceable configured case, not a modern `RunSpec` result. E8 varied the proposal set while holding the corpus, MDL selector, and downstream consumer fixed: the training-compressing proposal enabled 0/6 held-out tasks and the coordinate-oriented proposal enabled 5/6. It therefore demonstrates a proposal–governance–consumer interaction, not a selector-only ablation or a general compression-versus-reusability law. E9 compares only two configured grammars and is not a robustness result. See the current [reviewed synthesis](../../EXPERIMENTS.md).
+
+> This is the full write-up + data appendix. The `artifacts/` folder holds the probe scripts and their outputs; [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md) preserves the terse historical entry.
 
 ## Goal
 
@@ -39,7 +41,7 @@ On affine, a reflection is solvable only at **beam ≥ 224** (≤192 fails). Chi
 
 First E8 run learned **nothing**. The wake corpus is perfect (6 distinct members, all reflections in the consistent `sub(sub(n,k),1)` form) and `mirror_index` _is_ proposed — but `GreedyMDL.select` returned `None`. `dl_probe` showed why: **`folds?`=0 for every candidate**, program*bits pinned at 288 — `rewrite_with` wasn't descending into `Lam` bodies, so the mirror (which lives \_inside* the coordinate lambda) never folded. Fixed: `rewrite_with` now recurses into `Lam.body`. _(dl_probe.out is the pre-fix output — the historical bug-discovery run.)_
 
-### 5. The divergence — the load-bearing finding
+### 5. The divergence — historical configured finding
 
 Post-fix, the naïve proposer + greedy MDL mints two **unreusable `COLOR` read-body idioms**, not mirror_index (see wake_corpus_and_divergence.out: `chosen: read(#0, #1, sub(sub(width(#0), #2), 1))`):
 
@@ -58,7 +60,7 @@ Built four pluggable `AbstractionProposer`s (naïve `FrequentSubtree`, `TypeScop
 
 E8 (sub, beam 128) and E9 (affine, beam 224) both invent mirror_index and the search reuses it.
 
-## Findings
+## Historical findings, read with the review note above
 
 |  | invented | compression (L1→L2 DL) | speedup (considered) | enablement | base blowup (L1 considered) |
 | --- | --- | --- | --- | --- | --- |

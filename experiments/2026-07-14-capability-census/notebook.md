@@ -4,13 +4,13 @@ Shared home for the three queued "census" experiments (EXPERIMENT_QUEUE.md Activ
 
 ## Experiment 1 — arc1 preset partition census (`d4`, `synth`; `sym` deferred)
 
-**Goal:** read the partition (solve count, `by_category`/`by_provenance`, outcome mix) for the `d4` and `synth` presets over full `arc1-train`, as a sanity-anchored baseline before the region-logic/perceiver-recolor censuses. `sym` deferred to a follow-up (full-corpus cost ~32 CPU-min per EXPERIMENTS.md 2026-07-08).
+**Goal:** read the partition (solve count, `by_category`/`by_provenance`, outcome mix) for the `d4` and `synth` presets over full `arc1-train`, as a sanity-anchored baseline before the region-logic/perceiver-recolor censuses. `sym` deferred to a follow-up (full-corpus cost ~32 CPU-min per EXPERIMENT_LOG.md 2026-07-08).
 
 **Runs:**
 - `d4` search, `arc1-train` (400 tasks): [runs/2026-07-14/20260714_205844_18e7562f44036326/](../../runs/2026-07-14/20260714_205844_18e7562f44036326/) — [analyze-run output](artifacts/d4_analysis.json)
 - `synth` search, `arc1-train` (400 tasks): [runs/2026-07-14/20260714_205849_6ef6f65b7e10d299/](../../runs/2026-07-14/20260714_205849_6ef6f65b7e10d299/) — [analyze-run output](artifacts/synth_analysis.json)
 
-**Sanity check:** both match the locks exactly — `d4` 7/400, `synth` 11/400, and `synth`'s solved set is a strict superset of `d4`'s (the same 7 D4 tasks + 4 atomic tasks), reproducing the EXPERIMENTS.md 2026-07-08 finding byte-for-byte.
+**Sanity check:** both match the locks exactly — `d4` 7/400, `synth` 11/400, and `synth`'s solved set is a strict superset of `d4`'s (the same 7 D4 tasks + 4 atomic tasks), reproducing the EXPERIMENT_LOG.md 2026-07-08 finding byte-for-byte.
 
 **Findings:**
 
@@ -21,6 +21,6 @@ Shared home for the three queued "census" experiments (EXPERIMENT_QUEUE.md Activ
 
 **Decisions / open questions:**
 - "Dead primitive" needs a sharper definition before the region-logic/perceiver-recolor censuses: *zero-accepted-but-considered* (this run's `anti_transpose`/`rot270`) is a different, weaker claim than *zero-considered* (true Table-A island dead weight, not observed in either run here). Use the empirical `by_primitive` `accepted` count as the signal, and only reach for `check-library-coherence` if a primitive shows zero `considered` entirely (a structural, not corpus-outcome, question).
-- `sym` (harvest constants, arity 4, full `arc1-train`) still queued — expect the `by_category` story to be dominated by geometry x combinator (`overlay`/`tile`) arity blowup rather than constant-leaf multiplicity, per the existing "missing nine are exactly the TILE tasks" finding (EXPERIMENTS.md 2026-07-13).
+- `sym` (harvest constants, arity 4, full `arc1-train`) still queued — expect the `by_category` story to be dominated by geometry x combinator (`overlay`/`tile`) arity blowup rather than constant-leaf multiplicity, per the existing "missing nine are exactly the TILE tasks" historical finding (EXPERIMENT_LOG.md 2026-07-13).
 
 **Next:** run `sym` full-corpus (background, ~32 CPU-min) and append its partition here; then region-logic (`MASK_BASIC`) and perceiver-recolor (`PERCEIVE_TRANSFORM`) censuses land in this same folder once their `Config`/bundle-search machinery gap is closed.

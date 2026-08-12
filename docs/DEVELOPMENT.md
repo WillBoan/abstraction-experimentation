@@ -132,7 +132,8 @@ Details live in the canonical files, not here:
 | [ONTOLOGY.md](ONTOLOGY.md) | map of the primitive / abstraction space (the vocabulary lever) |
 | [MACHINERY.md](MACHINERY.md) | map of the search / scoring / learning mechanisms (the machinery lever) |
 | [SEARCH-SPACE.md](SEARCH-SPACE.md) | map of the search-space-control levers |
-| [EXPERIMENTS.md](../EXPERIMENTS.md) | the experiment event log — findings, including dead ends |
+| [EXPERIMENTS.md](../EXPERIMENTS.md) | the current rigor-reviewed findings synthesis and evidence index |
+| [EXPERIMENT_LOG.md](../EXPERIMENT_LOG.md) | chronological experiment record, including dead ends and later-corrected interpretations |
 | [experiments/](../experiments/) | lab notebooks: full write-ups, probe scripts, and their raw outputs |
 | [EXPERIMENT_QUEUE.md](EXPERIMENT_QUEUE.md) | planned experiments (drain-only backlog) |
 | [archive/RESEARCH-2026-07-08.md](archive/RESEARCH-2026-07-08.md) | the research frame — the dated snapshot the maps are read against |

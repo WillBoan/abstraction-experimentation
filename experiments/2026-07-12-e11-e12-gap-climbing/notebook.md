@@ -1,9 +1,9 @@
 # Gap-climbing: perceive→transform (E11) & layered abstraction (E12)
 
-Investigation, not a single experiment — this folder holds two of the three queued gap-climbing rows (`RESEARCH-2026-07-08.md`'s axis 1 priority spine); the third, **learned intermediate type**, is still queued and will land here too once it runs. See each experiment's full `EXPERIMENTS.md` entry for the write-up; this notebook is the run index + cross-experiment comparison.
+Investigation, not a single experiment — this folder holds two of the three queued gap-climbing rows (`RESEARCH-2026-07-08.md`'s axis 1 priority spine); the third, **learned intermediate type**, is still queued and will land here too once it runs. See each experiment's full `EXPERIMENT_LOG.md` entry for the historical write-up; this notebook is the run index + cross-experiment comparison.
 
-- **E11:** [EXPERIMENTS.md](../../EXPERIMENTS.md) — entry "E11: perceive→transform …" — `recolor_bg(g,c) = map_color(g, most_common_color(g), c)` derived from `{map_color, most_common_color}`.
-- **E12:** [EXPERIMENTS.md](../../EXPERIMENTS.md) — entry "E12: layered abstraction …" — `abs1 = recolor_flipped(g,a,b)` built on `abs0 = rot180`, learned in the same LEARN run.
+- **E11:** [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md) — entry "E11: perceive→transform …" — `recolor_bg(g,c) = map_color(g, most_common_color(g), c)` derived from `{map_color, most_common_color}`.
+- **E12:** [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md) — entry "E12: layered abstraction …" — `abs1 = recolor_flipped(g,a,b)` built on `abs0 = rot180`, learned in the same LEARN run.
 
 ## E11 — perceive→transform: runs
 
@@ -51,7 +51,7 @@ L2 and L3 are identical at both budgets (learned library == hand-written target 
 
 ## Cross-experiment: the cost-of-growing-vocabulary signal
 
-E11's learned primitive **replaces** search depth at negligible cost (L1 590 → L2 640 considered at the shallow budget, a ~1.1x delta). E12's two learned primitives are **additive** vocabulary that every task's round-0 leaf set now carries, including tasks that don't use them — L1 183,648 → L2 644,864 at the shared learn budget (~3.5x), similarly ~2.3x at the deep budget (279,208 → 644,864). This is the first measured instance of the "growing library costs search" tradeoff flagged as an open question in E12's `EXPERIMENTS.md` entry; worth watching whether it keeps compounding once **learned intermediate type** (the third queued row here) adds a third generation.
+E11's learned primitive **replaces** search depth at negligible cost (L1 590 → L2 640 considered at the shallow budget, a ~1.1x delta). E12's two learned primitives are **additive** vocabulary that every task's round-0 leaf set now carries, including tasks that don't use them — L1 183,648 → L2 644,864 at the shared learn budget (~3.5x), similarly ~2.3x at the deep budget (279,208 → 644,864). This is the first measured instance of the "growing library costs search" tradeoff flagged as an open question in E12's `EXPERIMENT_LOG.md` entry; worth watching whether it keeps compounding once **learned intermediate type** (the third queued row here) adds a third generation.
 
 ## Retrofit note
 

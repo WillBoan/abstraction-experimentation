@@ -1,7 +1,7 @@
 # dae9d2b5: plumbing depth, and an abstraction that typed itself out of its own search
 
 **Investigation:** can the first real-ARC ladder be made tractable by redesign rather than by budget?
-**Abstract:** [EXPERIMENTS.md](../../EXPERIMENTS.md), entry `2026-07-27 — The first certified real-ARC ladder`.
+**Historical abstract:** [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md), entry `2026-07-27 — The first certified real-ARC ladder`.
 **Outcome:** yes — `dae9d2b5-split-recolor` is **ADMITTED**, the program's first certified ladder on a real ARC task. Two machinery defects found on the way, one of them a silent unclimbability bug that no lint could see.
 
 ---

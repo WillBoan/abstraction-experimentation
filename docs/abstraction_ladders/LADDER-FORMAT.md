@@ -37,7 +37,7 @@ Rules are numbered per section for referenceability. Where a rule says **delegat
   - `alN-<slug>` for a **synthetic** ladder, where `<slug>` is the anchor competence (`al17-shift-frame-tall`). `N` is minted when the ladder is first committed and is an **identifier, not a ranking** — gaps left by rejected or retired ladders are expected and are never reused, since the rejection is itself a finding and its file stays as a lint fixture.
   - `<task-id>-<slug>` for a ladder targeting an external task (`dae9d2b5-split-recolor`), matching its `ladder.task` (CFG-7).
   - **A rebuild gets a new identity, never the old one.** No fix-and-rerun under an existing `alN`: the old file and its verdict stay put as the record of what failed, and the successor is a new ladder. This is what `arc-lab new-ladder`'s refusal to overwrite enforces mechanically.
-  - Distinct from E-numbers, which are minted per _run_ in `EXPERIMENTS.md` — one ladder may carry many.
+  - Distinct from E-numbers, which are minted per _run_ in `EXPERIMENT_LOG.md` — one ladder may carry many.
 - **STR-4** Section order is fixed; nothing else, nothing twice, nothing missing:
   - `ladder <name>` header
   - `config`

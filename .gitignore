@@ -47,7 +47,7 @@ build/
 # Run artifacts: a local cache, gitignored. A run is a pure function of its coordinates
 # (deterministic, no RNG), so artifacts regenerate exactly via `arc-lab analyze`/`learn`
 # and would otherwise churn on every code change. The durable record lives elsewhere: the
-# committed testbeds/ (inputs) + EXPERIMENTS.md (findings). Inspect locally with `arc-lab runs`.
+# committed testbeds/ (inputs) + EXPERIMENT_LOG.md / EXPERIMENTS.md (history / reviewed findings). Inspect locally with `arc-lab runs`.
 runs/
 
 # Private working notes (also denied to Claude via .claude/settings.json)

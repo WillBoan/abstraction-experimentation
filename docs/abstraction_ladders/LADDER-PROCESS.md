@@ -4,7 +4,7 @@ How to build a ladder: what to do, in what order, with which instrument — and 
 
 **What this is not.** It is not a list of checks: [LINT-CHECKS.md](LINT-CHECKS.md) is generated from the code and is the authority on what fires and why. It is not the format spec ([LADDER-FORMAT.md](LADDER-FORMAT.md)) or the register ([BATCH-OF-RECORD.md](BATCH-OF-RECORD.md), which is generated). What lives here is the part machinery cannot enforce — **order, judgement, and inference** — which is why it is short: nearly everything else became a check.
 
-Written after the first real-ARC ladder ([`dae9d2b5-halves-union`](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-halves-union.ladder)) cost far more than it should have. The machinery half of that response is [2026-07-26-AL-PLAN.md](../archive/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md); the failures are in [EXPERIMENTS.md](../../EXPERIMENTS.md) under 2026-07-25/26. Almost every rule below is a scar.
+Written after the first real-ARC ladder ([`dae9d2b5-halves-union`](../../src/arc_lab/program_search/ladders/registry/dae9d2b5-halves-union.ladder)) cost far more than it should have. The machinery half of that response is [2026-07-26-AL-PLAN.md](../archive/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md); the failures are in [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md) under 2026-07-25/26. Almost every rule below is a scar.
 
 ---
 
@@ -45,7 +45,7 @@ A floor designed around a known solution **manufactures** raw-intractability. Th
 
 ### Done looks like
 
-Certificate admitted (or deliberately not, with the reason) · artifacts written (`arc-lab run-batch --artifacts`, which re-generates [BATCH-OF-RECORD.md](BATCH-OF-RECORD.md) — there is no register row to add by hand) · an [EXPERIMENTS.md](../../EXPERIMENTS.md) entry, including if it failed.
+Certificate admitted (or deliberately not, with the reason) · artifacts written (`arc-lab run-batch --artifacts`, which re-generates [BATCH-OF-RECORD.md](BATCH-OF-RECORD.md) — there is no register row to add by hand) · an [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md) entry, including if it failed.
 
 ## 3. Which instrument, in which order
 
@@ -160,7 +160,7 @@ General habits, listed because these are the ones that cost real time here.
 - **A rejected ladder's file persists as the finding**, and the finding is written in the file's own header — that is what makes the `.ladder` its single source of truth. Retired ladders are never fixed under their own ID ([LADDER-FORMAT.md](LADDER-FORMAT.md) STR-3a): rebuilds get new IDs, and the old file stays as a lint-lock fixture.
 - **The `.ladder` file is the source of truth**; generated artifacts are derived and never hand-edited. Do **not** write measured costs into a `.ladder`: [LADDER-FORMAT](LADDER-FORMAT.md) keeps chosen and derived separate, and a stale cost comment is worse than none. The exception is a retired draft, whose header carries the verdict that is the reason the file exists.
 - **Committed generators** live under `experiments/<date>-<topic>/artifacts/`; the `.ladder` is authoritative and regeneration is explicitly not the workflow.
-- **Create an `experiments/` folder for any non-trivial investigation** — read [experiments/README.md](../../experiments/README.md) first. EXPERIMENTS.md is the terse abstract; the notebook is the appendix.
+- **Create an `experiments/` folder for any non-trivial investigation** — read [experiments/README.md](../../experiments/README.md) first. `EXPERIMENT_LOG.md` is the terse chronological record; the notebook is the appendix.
 
 ## 9. Glossary
 
@@ -183,5 +183,6 @@ General habits, listed because these are the ones that cost real time here.
 - Format: [LADDER-FORMAT.md](LADDER-FORMAT.md) · Register (generated): [BATCH-OF-RECORD.md](BATCH-OF-RECORD.md) · Checks: [LINT-CHECKS.md](LINT-CHECKS.md)
 - Verdict profile, not a sandwich gate: [CERTIFICATE-PROFILE-2026-07-24.md](CERTIFICATE-PROFILE-2026-07-24.md) · The two cost axes: [BREADTH-AXIS-2026-07-24.md](BREADTH-AXIS-2026-07-24.md)
 - Set structure: [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md) · Full-set plan (Phase 2+ entry gates): [LADDER-SET-PLAN-2026-07-24.md](../archive/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md) · Comparison licenses: [LADDER-RELATIONSHIPS-2026-07-23.md](LADDER-RELATIONSHIPS-2026-07-23.md)
-- Active plans: [MVE-PLAN-2026-07-25.md](../archive/abstraction_ladders/MVE-PLAN-2026-07-25.md) · [AL-PLAN-2026-07-23.md](../archive/abstraction_ladders/AL-PLAN-2026-07-23.md) · [2026-07-26-AL-PLAN.md](../archive/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md)
+- Current planning-state authority: [AL-RESEARCH-STATE-2026-08-12.md](AL-RESEARCH-STATE-2026-08-12.md) — no active multi-step plan is selected; resumed work requires a new dated, prediction-first plan.
+- Archived plan lineage: [MVE-PLAN-2026-07-25.md](../archive/abstraction_ladders/MVE-PLAN-2026-07-25.md) · [AL-PLAN-2026-07-23.md](../archive/abstraction_ladders/AL-PLAN-2026-07-23.md) · [2026-07-26-AL-PLAN.md](../archive/abstraction_ladders/AL-PLAN-PROCESS-2026-07-26.md)
 - Run model: [EXECUTION.md](../EXECUTION.md) · Engine: [ARCHITECTURE.md](../ARCHITECTURE.md) · Notebooks: [experiments/README.md](../../experiments/README.md)

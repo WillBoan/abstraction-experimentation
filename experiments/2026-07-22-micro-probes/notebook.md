@@ -1,5 +1,7 @@
 # Micro-probe batteries — what actually makes a jump expensive? (2026-07-22)
 
+> **Reviewed interpretation (2026-08-12).** The exact result here is the round-1 composition identity for the stated pool census. Later-round counts condition on the surviving pools and configuration. The 404× contrast is one synthetic configured cell; the 21,149,854-versus-4 oracle-pruned contrast is a diagnostic selected with solution knowledge. Neither licenses a universal arity, residual-depth, pool, or search-cost law. See the [reviewed synthesis](../../EXPERIMENTS.md).
+
 **Goal.** Attribute jump cost to single factors, by construction rather than by inference.
 
 The 2026-07-21 read-across ranked the factors by comparing ladders that differed in several ways
@@ -25,7 +27,7 @@ type populations whose ratio does most of the work below. Pool 20,000, guard 2,0
 Artifacts: `artifacts/micro_probes.py` (+`.out`) — batteries A, A2, B, C, D;
 `artifacts/hof_probe.py` (+`.out`) — battery E.
 
-## Result 1 — the product law is not approximately right, it is exact
+## Result 1 — exact round-1 composition accounting in this enumerator
 
 Round 1 is where the composition law is testable without survival entering: the pool is exactly the
 round-0 leaves, so the prediction is arithmetic. Across **all 24 cells of batteries A/A2/B/C/D**,
@@ -48,7 +50,7 @@ exist among the candidates), must be measured, and cannot be projected far: the 
 projection ranged 0.04x–1.24x across floors. So the law supports *attribution and guards*, not
 cost prediction — a rung's cost is known by running the cell, not by computing it.
 
-## Result 2 — arity is not the driver; the product of type populations is
+## Result 2 — configured type populations explain this controlled contrast
 
 Battery A walks arity 1 -> 5 with one added GRID -> GRID primitive per cell. The naive reading
 ("cost grows with arity") fails outright at the top of the ladder:

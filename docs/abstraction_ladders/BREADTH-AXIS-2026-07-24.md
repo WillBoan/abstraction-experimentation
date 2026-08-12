@@ -1,6 +1,6 @@
 # The breadth axis: constants, parameterization, and specialization abstractions (2026-07-24)
 
-Search cost has two axes; the ladder formalism instruments one of them. A dated snapshot of the 2026-07-24 analysis, with the measurements that ground it (EXPERIMENTS.md 2026-07-24, "The breadth axis"). Consumed by [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md) and [LADDER-SET-PLAN-2026-07-24.md](../archive/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md).
+Search cost has two axes; the ladder formalism instruments one of them. A dated snapshot of the 2026-07-24 analysis, with the measurements that ground it (EXPERIMENT_LOG.md 2026-07-24, "The breadth axis"). Consumed by [LADDER-SET-DESIGN-2026-07-24.md](LADDER-SET-DESIGN-2026-07-24.md) and [LADDER-SET-PLAN-2026-07-24.md](../archive/abstraction_ladders/LADDER-SET-PLAN-2026-07-24.md).
 
 ## The two axes
 

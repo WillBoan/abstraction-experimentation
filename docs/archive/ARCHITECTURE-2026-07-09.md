@@ -59,7 +59,7 @@ There is exactly one solver class (`ProgramSearchSolver`); the config-as-subclas
 | `learned_library.json` | the grown library (Synthesize only) | last |
 | `trace.jsonl` | per-task records — a **gitignored, regenerable cache** | streamed |
 
-Runs are idempotent (a present `results.json` is served from cache) and resumable (a partial `trace.jsonl` is continued). `runs/` is fully gitignored; the durable record is `testbeds/` + `EXPERIMENTS.md`.
+Runs are idempotent (a present `results.json` is served from cache) and resumable (a partial `trace.jsonl` is continued). `runs/` is fully gitignored; the durable record is `testbeds/` + `EXPERIMENT_LOG.md`.
 
 ## The library store
 

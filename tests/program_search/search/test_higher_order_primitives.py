@@ -465,7 +465,7 @@ def _next_color(c: int) -> int:
 
 #: A plain COLOR -> COLOR primitive, not eq/if — a conditional recolor body (`if(eq($0,3),7,$0)`) was
 #: tried here first and, even at depth_limit=5, didn't solve inside a tractable search (empirically
-#: confirmed: ~10M candidates considered, no solution — see EXPERIMENTS.md). That's a real cost-vs-
+#: confirmed: ~10M candidates considered, no solution — see EXPERIMENT_LOG.md). That's a real cost-vs-
 #: depth finding about eager_grounding_over_universe, not a mechanism bug (the target program was
 #: hand-verified to evaluate correctly); it's tracked there rather than chased further in this test.
 #: This body still exercises the same real mechanism (map's unshared codomain resolved via

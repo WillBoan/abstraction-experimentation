@@ -1,6 +1,6 @@
 # Post-fill re-screen: what the commutative dedup reopened (2026-08-04)
 
-Executes AL-PLAN-2026-08-04 **Phase 0 items 2 and 3**. The [canonical-order fill](../../EXPERIMENTS.md) (commit 69a5368) re-priced every `overlay`-carrying member 2.7–5.1x; two register claims were made under the old prices and flagged as possibly stale: the three `recolor-first` exclusions ("probe INCONCLUSIVE at the cohort guard") and the accounting-mode compromise on six members ("exhaust semantics unaffordable"). This session re-tested both, and re-ran the S13 cut-set screen under the post-fill boundary.
+Executes the now-archived AL-PLAN-2026-08-04 **Phase 0 items 2 and 3**. The [canonical-order fill](../../EXPERIMENT_LOG.md) (commit 69a5368) re-priced every `overlay`-carrying member 2.7–5.1x; two register claims were made under the old prices and flagged as possibly stale: the three `recolor-first` exclusions ("probe INCONCLUSIVE at the cohort guard") and the accounting-mode compromise on six members ("exhaust semantics unaffordable"). This session re-tested both, and re-ran the S13 cut-set screen under the post-fill boundary.
 
 ## Item 2a — the three `recolor-first` exclusions are all false post-fill
 

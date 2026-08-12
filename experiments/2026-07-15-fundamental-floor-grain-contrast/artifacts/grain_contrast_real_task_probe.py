@@ -16,7 +16,7 @@ from arc_lab.program_search.execution.presets import PRESETS
 TASK_ID = "3c9b0459"
 
 #: Match the diagnostic depth used on the designed testbed (universal-floor/minimal-complete-floor
-#: were probed at depth=4, not their full depth=6 preset -- see EXPERIMENTS.md E13).
+#: were probed at depth=4, not their full depth=6 preset -- see EXPERIMENT_LOG.md E13).
 DEPTH_OVERRIDE = {"budget.max_depth": 4, "budget.max_pool": 200}
 
 

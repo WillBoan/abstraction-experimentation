@@ -18,7 +18,7 @@ Non-goals for this plan: breadth-cashing machinery (weighting, normal-form pruni
 - **Start simpler and tractable; expand only if the simple set runs well** (Phase 1 -> Phase 2).
 - **Cohort economics shape the set**: raw cancels within a cohort, so skips/sub-cohorts are cheap; every cohort is a new raw arm, so cohorts and tasks are the paid dimensions. Few tasks, 1-2 cohorts each, 1-2 sub-cohorts per cohort, members populated by skips.
 - **Spine-as-generator**: author one finest ladder (spine) per sub-cohort + cut-sets; derive coarser members; demos via the propose-check loop (Claude proposes; S-B law + `free-params-covary` + discriminating grids + `probe-ladder` check, seconds per iteration).
-- **Everything gated before it runs**: `lint-ladder` -> `probe-ladder` -> `diff-ladder` (membership/equivalence) -> `taskgen` commit -> `run-ladder` + raw arm. EXPERIMENTS.md entry per batch; a cohort is a report, not a folder.
+- **Everything gated before it runs**: `lint-ladder` -> `probe-ladder` -> `diff-ladder` (membership/equivalence) -> `taskgen` commit -> `run-ladder` + raw arm. EXPERIMENT_LOG.md entry per batch; a cohort is a report, not a folder.
 
 ### Design disciplines (from the 2026-07-24 findings; binding for Phase 1)
 
@@ -71,4 +71,4 @@ Weighted/probabilistic enumeration -> neural-guided search; type invention as a 
 
 ## Instruments (pointers, not duplicates)
 
-`lint-ladder` (incl. `--draft` structural tier) · `probe-ladder` (joint-budget, per-rung, seconds) · `diff-ladder` (static/observational equivalence; membership checks) · `run-ladder` / `run-study` · the checks register ([LINT-CHECKS.md](../../abstraction_ladders/LINT-CHECKS.md)) · EXPERIMENTS.md discipline for every batch.
+`lint-ladder` (incl. `--draft` structural tier) · `probe-ladder` (joint-budget, per-rung, seconds) · `diff-ladder` (static/observational equivalence; membership checks) · `run-ladder` / `run-study` · the checks register ([LINT-CHECKS.md](../../abstraction_ladders/LINT-CHECKS.md)) · EXPERIMENT_LOG.md discipline for every batch.

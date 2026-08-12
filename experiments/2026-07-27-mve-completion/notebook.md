@@ -1,5 +1,15 @@
 # Completing the MVE: validity inventory, curve semantics, and the report (2026-07-27)
 
+> **Reviewed interpretation (2026-08-12).** This long notebook contains both corrections and claims later narrowed. The current durable readings are: Top reachability is separate from rung admission; real-task depth/cost observations are configured patterns over three related tasks; 43/43 recovery is the `AntiunifyPairs` baseline and proposer/governance failures are co-equal evidence; held-out results concern unseen instances of authored competences; `half-param` is a metric/corpus economics case, not a general greedy pathology. Universal formulas, rung-count rules, cut-set closure, and broad cost laws in the historical log are retired. See [EXPERIMENTS.md](../../EXPERIMENTS.md) for the reviewed synthesis.
+
+### Map of later-reviewed sections
+
+- S2 and S9 establish the Top-reachability correction and its guards.
+- S10/S13 cost and cut-set discussions are diagnostic within their configured registry and do not prove universal closure or laws.
+- S14 supports held-out instance generalization only.
+- S15–S17 define proposal and governance boundaries; they do not overturn the narrower clean-set baseline.
+- The final curriculum section predates the later same-trace accounting review and is not a causal tax decomposition.
+
 Picks up the gaps handed forward by [2026-07-27-mve-batch-analysis](../2026-07-27-mve-batch-analysis/notebook.md): no valid granularity curve, only 2 measurement-valid real ladders, no `top-reachable` check, no written report. Goal: reach the MVE's exit criteria (MVE-PLAN-2026-07-25) today, on proven numbers only.
 
 ## Log
@@ -82,7 +92,7 @@ runs), each turning an "unknown cost" in the options table into a number:
   having; cost-to-first is the only curve currency the budget supports.** (It also means the
   recorded immediate-stop runs forfeited nothing that 10M would have bought back.)
 
-Also fixed in [LADDERS.md](../../docs/abstraction_ladders/LADDERS.md) while runs execute: the NOR
+Also fixed in the former hand-maintained register (replaced by [BATCH-OF-RECORD.md](../../docs/abstraction_ladders/BATCH-OF-RECORD.md)) while runs execute: the NOR
 section still asserted the retracted "both cohorts reproduce the curve's shape / monotone" claim
 below the file's own retraction banner — struck with a dated retraction, and the NOR cost columns
 bannered as retracted first-run numbers.
@@ -412,7 +422,7 @@ cohort-template claim confirmed exactly, not just structurally, on the recolor-f
 All four candidates kept in `registry/` with committed testbeds (`taskgen`), none run (all
 INCONCLUSIVE at the cohort's standard 2M guard; per LADDER-PROCESS an inconclusive probe is a
 non-result, not chased with a bigger guard). LADDERS.md gained a "Decomposition-strategy siblings"
-section; EXPERIMENTS.md carries the full entry (defects + findings). **`make check` green: 1003
+section; EXPERIMENT_LOG.md carries the full historical entry (defects + findings). **`make check` green: 1003
 tests** (994 -> 1003, +9: three new `test_probe.py` cases pinning both machinery fixes, plus the
 suite picking up the four new registry ladders' batch-wide checks), ruff + mypy `--strict` clean.
 
@@ -427,7 +437,7 @@ location; not a new axis of variation so much as the SAME axis read from the oth
 ([`cut_set_enumeration.py`](artifacts/cut_set_enumeration.py) · [`.out`](artifacts/cut_set_enumeration.out))
 
 The first of the systematic methods (now recorded in
-[LADDER-IDEAS.md](../../docs/abstraction_ladders/LADDER-IDEAS.md)). A spine's intermediate terms are
+[archived LADDER-IDEAS snapshot](../../docs/archive/abstraction_ladders/LADDER-IDEAS-2026-08-03.md)). A spine's intermediate terms are
 a finite set, so its cut-sets are `2^n` — enumerate them ALL, render a draft `.ladder` each, lint
 in-process, read the derived depth schedule, filter. Demo blocks are reusable **verbatim** across
 cut-sets (a rung's demonstrating tasks are a property of the FUNCTION, not of which lower terms are
@@ -762,7 +772,7 @@ what makes the task laddered rather than trivial:
 
 **Stopping here deliberately.** The gate is passed and pinned, which is the durable result; the
 2-rung variant's wrapper demos are the known-expensive authoring case and deserve a clean run at it
-rather than a rushed one. Design recorded in [LADDER-IDEAS.md](../../docs/abstraction_ladders/LADDER-IDEAS.md).
+rather than a rushed one. Design recorded in the [archived LADDER-IDEAS snapshot](../../docs/archive/abstraction_ladders/LADDER-IDEAS-2026-08-03.md).
 
 ---
 

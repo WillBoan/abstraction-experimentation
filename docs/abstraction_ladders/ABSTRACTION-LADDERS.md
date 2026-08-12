@@ -109,8 +109,8 @@ arc-lab run-ladder <name>
 
 Lint settles static questions cheaply. The probe drives the real engine to detect tractability failures, skip paths, task collisions, and mismatches between authored targets and what the learner can mint. The recorded run then supplies the oracle-chain, learned-climb, recovery, and held-out evaluation data. See the generated [check register](LINT-CHECKS.md), the generated [batch of record](BATCH-OF-RECORD.md), and the [activity model](../EXECUTION.md) for the concrete interfaces.
 
-## Scope and Next Step
+## Scope and open directions
 
 Ladders currently make authored program-learning trajectories inspectable. They do not yet constitute a benchmark in which a system discovers its own intermediate routines, nor do they by themselves test the full lifecycle of revision, merging, pruning, retirement, or distractor-task behavior.
 
-The immediate benchmark-shaped extension keeps the declared floor and Top but removes prescribed rungs. A system must then discover a useful trajectory, while the same validity and cost instruments evaluate what it found.
+A discovery-shaped extension could keep the declared floor and Top while removing prescribed rungs, requiring a system to discover a useful trajectory. It is one of several unselected directions; controlled schedule/accounting arms, better-isolated search-cost studies, new task and floor families, and proposal/governance/refactoring/guidance work are also open. See the dated [research state](AL-RESEARCH-STATE-2026-08-12.md).

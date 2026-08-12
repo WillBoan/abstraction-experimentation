@@ -3,7 +3,7 @@
 The investigation that took `dae9d2b5` from one expensive, uncertified ladder to a set of eight
 across three real ARC tasks — and the two machinery defects found on the way.
 
-Abstract entries in [EXPERIMENTS.md](../../EXPERIMENTS.md): "The first certified real-ARC ladder…",
+Historical entries in [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md): "The first certified real-ARC ladder…",
 "A ladder run is 25x cheaper…", "The MVE's ladder set…". The follow-on analysis (and the corrections
 it forced) is a separate investigation: [2026-07-27-mve-batch-analysis](../2026-07-27-mve-batch-analysis/notebook.md).
 

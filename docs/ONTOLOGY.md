@@ -1,6 +1,6 @@
 # ONTOLOGY.md
 
-A living catalog of the **primitives / abstractions** that are — or might be — at play in this system and the ARC task space. Sibling to [EXPERIMENTS.md](../EXPERIMENTS.md): that file logs _what we tried_; this file maps _the space of things there are to try_. This maps lever 1 (the primitive vocabulary / Floor); its siblings [MACHINERY.md](MACHINERY.md) (lever 3, the search / scoring / learning Machinery) and [SEARCH-SPACE.md](SEARCH-SPACE.md) (the expressibility-control levers) map the rest; [RESEARCH-2026-07-08.md](archive/RESEARCH-2026-07-08.md) is the frame all three are read against.
+A living catalog of the **primitives / abstractions** that are — or might be — at play in this system and the ARC task space. Sibling to [EXPERIMENT_LOG.md](../EXPERIMENT_LOG.md), which records what we tried; [EXPERIMENTS.md](../EXPERIMENTS.md) holds the reviewed findings, while this file maps the space of things there are to try. This maps lever 1 (the primitive vocabulary / Floor); its siblings [MACHINERY.md](MACHINERY.md) (lever 3, the search / scoring / learning Machinery) and [SEARCH-SPACE.md](SEARCH-SPACE.md) (the expressibility-control levers) map the rest; [RESEARCH-2026-07-08.md](archive/RESEARCH-2026-07-08.md) is the historical frame all three were read against.
 
 It exists because the substrate today is a tiny, coarse slice of that space (almost everything shipped is a whole-grid transform), and the research direction is to descend to **more fundamental primitives** and study how the machinery composes them into higher abstractions. You can't chart that climb without a map of the terrain. This is the map.
 
@@ -8,7 +8,7 @@ It exists because the substrate today is a tiny, coarse slice of that space (alm
 
 - **One row = one primitive / abstraction.** Grouped into sub-tables by _level_ only for readability; treat it as a single logical table.
 - The **Description** is a one-line gloss of what it is / how it'd be used — kept terse on purpose.
-- Add rows as we imagine them and flip **Status** as they ship. Negative findings ("tried, not worth it") get a note here _and_ an entry in `EXPERIMENTS.md`.
+- Add rows as we imagine them and flip **Status** as they ship. Negative findings ("tried, not worth it") get a note here _and_ an entry in `EXPERIMENT_LOG.md`.
 - Keep signatures honest — the **Signature** column is how `search` would type the primitive, and it's the most load-bearing attribute (see `substrate/library.py`).
 - This is a catalog of _possibilities_, deliberately over-complete. Most rows are `cand` and may never be built. That's the point: the gaps and the shape matter more than any single row.
 
@@ -188,7 +188,7 @@ The bridge from "grid" to "object". Cheap, high-value, small search cost — lik
 
 ## L4 — object (types: **Object, ObjectSet** — reserved, unbuilt)
 
-Where most of ARC lives. The big unlock — and the big search cost: `ObjectSet` is a variable-length collection the current Cartesian `Enumerate` will choke on, so this layer likely needs a beam / frontier search _first_ — **that prerequisite is now shipped** (`BeamSearch`, MACHINERY F1); what remains is the `ObjectSet` type + `segment` (intro) / `render_objects` (elim) and the algebra between (see the search notes in `EXPERIMENTS.md`).
+Where most of ARC lives. The big unlock — and the big search cost: `ObjectSet` is a variable-length collection the current Cartesian `Enumerate` will choke on, so this layer likely needs a beam / frontier search _first_ — **that prerequisite is now shipped** (`BeamSearch`, MACHINERY F1); what remains is the `ObjectSet` type + `segment` (intro) / `render_objects` (elim) and the algebra between (see the historical search notes in `EXPERIMENT_LOG.md`).
 
 **Intro — segmentation (`Grid → ObjectSet`)**
 

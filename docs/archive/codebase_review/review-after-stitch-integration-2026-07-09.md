@@ -69,9 +69,9 @@ default beam is a *minimum*, not research-grade). Two principled reductions, ⚪
 
 ---
 
-## Record correction (for EXPERIMENTS.md)
+## Record correction (for EXPERIMENT_LOG.md)
 
-The committed **Phases G + H** EXPERIMENTS.md entry (in `6f38706`) called the stack "compromise-free
+The committed **Phases G + H** EXPERIMENT_LOG.md entry (in `6f38706`) called the stack "compromise-free
 within its scope." That is **overstated**: finding **A** showed the function-dedup battery was actually
 *unsound* (now fixed), and even fixed it remains a **finite-battery observational-equivalence heuristic**
 (standard, sound-in-practice, but not complete). Worth a terse walk-back entry that points here.

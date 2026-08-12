@@ -1,8 +1,10 @@
 # 2026-07-08 — Stitch spike: does library-refactoring recover `mirror_index`?
 
-Full write-up for the terse [EXPERIMENTS.md](../../EXPERIMENTS.md) entry
+Full write-up for the terse [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md) entry
 *"Stitch spike: two orthogonal ways it dissolves the E8 divergence"* (commit `b5268b5`).
 Verbatim scripts + captured outputs in [`artifacts/`](artifacts/).
+
+> **Reviewed interpretation (2026-08-12).** Raw first-order Stitch output over the original corpus has a non-unary interface and is not callable as an AE `Grid → Grid` transform; it cannot serve as independent evidence for a reusable AE abstraction. The valid historical probes are (a) first-order refactoring over learned definitions, which extracts a callable coordinate routine, and (b) higher-order invention, which can preserve the reusable structure. These are historically traceable probes without modern `RunSpec` identity. See the [reviewed synthesis](../../EXPERIMENTS.md).
 
 ## The question
 
@@ -10,7 +12,7 @@ Two of the repo's own docs disagreed about what adopting Stitch would do for the
 compression/reusability divergence:
 
 - **MACHINERY.md F4** — library refactoring "≈ Stitch's core … the open-ended general fix" (`🔜 via Stitch`).
-- **EXPERIMENTS.md E8** — *"Train-DL ≠ reusability — and a compression-optimal inventor (Stitch) would hit this too."*
+- **Historical E8 log entry** — *"Train-DL ≠ reusability — and a compression-optimal inventor (Stitch) would hit this too."*
 
 Load-bearing because the answer decides whether the `🔜 via Stitch` arrow is real. An offline spike could
 settle it cheaply: the substrate was built Stitch-compatible (`$i`/`#j`/`lam` already print), so
@@ -37,7 +39,7 @@ Corpus throughout: the 6 `_d4_targets(Input())` `build_grid` programs (5 contain
    first-order `(sub (sub #0 #1) 1)` = `mirror_index(n,k)` — **no higher-order needed**, because once the
    read-body *is* the definition, the bigger competing subtree is gone.
 
-## Findings
+## Historical findings, subject to the arity correction above
 
 Two **orthogonal axes** (I initially conflated them):
 
@@ -59,7 +61,7 @@ Two **orthogonal axes** (I initially conflated them):
 My first synthesis — *"neither library refactoring nor governance is the root fix; higher-order invention
 is"* — was **wrong / overstated**, from testing on the *raw corpus* only. The user pushed back (the whole
 point of Stitch was walking definitions), and `stitch_refactor.py` confirmed first-order refactoring alone
-recovers the clean `mirror_index`. The EXPERIMENTS.md entry was corrected to the two-axis framing.
+recovers the clean `mirror_index`. The historical log entry was corrected to the two-axis framing.
 
 ## Decisions this drove
 

@@ -1,5 +1,7 @@
 # Loop overhead, decomposed — the flavor gap is zero; scheduling buys 1.8-2.5x and dirties the library (2026-07-23)
 
+> **Reviewed interpretation (2026-08-12).** The durable loop-overhead evidence is four descriptive values—3.00, 3.08, 4.00, and 4.00—on four fully valid, uncompromised related cases. They are oracle-relative configured observations, not a general overhead factor or additive causal decomposition. The learned-versus-oracle zero gap belongs to the clean `AntiunifyPairs` set; later proposer and governance cases produced nonzero gaps. See the [MVE completion](../2026-07-27-mve-completion/notebook.md) and [reviewed synthesis](../../EXPERIMENTS.md).
+
 **Goal.** Two questions left open by the clean-set re-run, both about the gap between the marginal
 accounting (al1 3.59x) and the achieved one (al1 0.96x):
 

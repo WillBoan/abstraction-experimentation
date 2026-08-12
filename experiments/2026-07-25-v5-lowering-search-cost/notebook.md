@@ -1,6 +1,12 @@
 # v5 floor-lowering: how far can we lower a ladder's floor before search goes intractable?
 
-Investigation, 2026-07-25. Curated abstract: the `## 2026-07-25` entry in [EXPERIMENTS.md](../../EXPERIMENTS.md). Anchor commit: `c6b19bb` (all work on the same uncommitted branch; the lint-severity change below is part of it).
+Investigation, 2026-07-25. Historical abstract: the `## 2026-07-25` entry in [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md). Anchor commit: `c6b19bb` (all work on the same uncommitted branch; the lint-severity change below is part of it).
+
+> **Reviewed interpretation (2026-08-12).** This investigation supports a configured diagnosis: different retained primitives and typed pools can dominate enumeration cost, and solution-informed pruning can expose that mechanism. It does not establish a universal cost formula, residual-depth threshold, pool law, or achievable pruning policy. The 21,149,854-versus-4 contrast is explicitly oracle-pruned. The historical thresholds and broad laws below are retired; the current synthesis treats them as diagnostics of these cells.
+
+## Current synthesis
+
+Three authored lowering attempts encountered three different configured bottlenecks—coordinate constructors, a three-Grid-argument placement primitive, and color-producing combinations. That sequence is useful evidence against attributing intractability to depth alone. The controlled pruning sweep localized cost to solution-irrelevant vocabulary in the tested cells, but it chose the reduced library using knowledge of the target program. A deployable method would need to select or guide vocabulary without that oracle.
 
 ## The question
 
@@ -62,7 +68,7 @@ For each censored rung, re-ran its **exact wake search** over controlled librari
 
 Depth sweep on `first_target_color` (target depth 4): dL3 unsolved (unreachable), **dL4 solved 4,720**, dL5 censored — proving depth, not library/constants, was the dominant factor at dL5.
 
-## The finding
+## Historical finding (superseded by the current synthesis above)
 
 **Search cost ≈ (primitives × constants)^depth.** The three "different breadth drivers" across the iterations (coord constructors → `write_relative_tile` grid³ → `map_color` color²) were all the same thing: the **base** of that exponent, with a different primitive dominating each time.
 

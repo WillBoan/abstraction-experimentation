@@ -1,5 +1,7 @@
 # The clean-set re-run — first trustworthy aggregates (2026-07-23)
 
+> **Reviewed interpretation (2026-08-12).** These are configured historical estimands, not population aggregates. Keep raw-to-marginal and raw-to-end-to-end ratios separate; censoring yields lower bounds only. The 43/43 recovery result is specific to the `AntiunifyPairs` baseline and its corpus, governance, engine, and budget. The retired 78–530× presentation is not a current finding. See the [reviewed synthesis](../../EXPERIMENTS.md).
+
 **Goal.** Re-run the 8 admitted ladders through the current pipeline end to end — probe-gated,
 staged (`run_ladder_chain` → certificate → climb), raw arms per decision 1 — and write out the
 artifacts that were missing. AL-PLAN-2026-07-23 Phase 2 item 4, first half. Everything the

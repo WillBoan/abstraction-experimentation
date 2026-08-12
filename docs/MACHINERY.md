@@ -1,6 +1,6 @@
 # MACHINERY.md
 
-A living catalog of the **machinery** — the mechanisms that search, score, match, and learn — that are, or might be, at play in this system. One of three lever maps: [ONTOLOGY.md](ONTOLOGY.md) maps the **primitives / abstractions** the system _knows_ (lever 1, the Floor); [SEARCH-SPACE.md](SEARCH-SPACE.md) maps the **expressibility-control** levers; this file maps _how the search-and-learning machinery works_ (lever 3, the Machinery). [EXPERIMENTS.md](../EXPERIMENTS.md) logs what we tried, and [RESEARCH-2026-07-08.md](archive/RESEARCH-2026-07-08.md) is the frame all three are read against.
+A living catalog of the **machinery** — the mechanisms that search, score, match, and learn — that are, or might be, at play in this system. One of three lever maps: [ONTOLOGY.md](ONTOLOGY.md) maps the **primitives / abstractions** the system _knows_ (lever 1, the Floor); [SEARCH-SPACE.md](SEARCH-SPACE.md) maps the **expressibility-control** levers; this file maps _how the search-and-learning machinery works_ (lever 3, the Machinery). [EXPERIMENT_LOG.md](../EXPERIMENT_LOG.md) logs what we tried, [EXPERIMENTS.md](../EXPERIMENTS.md) holds the reviewed findings, and [RESEARCH-2026-07-08.md](archive/RESEARCH-2026-07-08.md) is the historical frame all three were read against.
 
 > **Grounding pass 2026-07-13:** every file/class/preset reference below re-verified against the post-overhaul tree (`src/arc_lab/program_search/` + the execution layer of [EXECUTION.md](EXECUTION.md)). The old `solvers/dsl/` names (bespoke search classes, `ProgramSearchSolver`, `Config.search.kind`) are gone from this doc; where a mechanism's _finding_ predates the overhaul, the finding stays and the mechanism's current home is named.
 
@@ -11,7 +11,7 @@ It exists because the machinery is not one thing. A flat label like "abstraction
 - **One row = one mechanism.** Grouped into **families** (F0–F5) for readability; treat it as one logical table. Each family answers a distinct question (see Mental model).
 - The **Interface** column is the most load-bearing attribute after Status: it's the _experiment surface_ — what you can swap and compare **today** (`ABC`/`param`) vs. what's welded shut (`baked`) or absent (`unbuilt`/`learned`).
 - The **Gates** column is the point of the doc: what a mechanism blocks or enables. Most `🔜/⚪` rows are gated by exactly one other row — this is a dependency graph, not a flat catalog.
-- Add rows as we imagine them; flip **Status** as they ship. Negative findings ("tried, not worth it") get a note here _and_ an entry in `EXPERIMENTS.md`.
+- Add rows as we imagine them; flip **Status** as they ship. Negative findings ("tried, not worth it") get a note here _and_ an entry in `EXPERIMENT_LOG.md`.
 - Deliberately **over-complete**: most rows are `⚪ cand` and may never be built. The gaps and the couplings matter more than any single row.
 
 ## Terminology (the words we're using)

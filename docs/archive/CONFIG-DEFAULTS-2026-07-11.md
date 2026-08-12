@@ -21,7 +21,7 @@ A structural note: several fields deliberately have **no default** (marked *requ
 | Param | Description | Cost impact |
 |---|---|---|
 | `max_depth` | Enumeration rounds **including round-0 leaves** (so old "single apply" = 2); strictly decrements into lambda bodies (the termination guarantee) | Exponential-ish: each round composes over the whole pool. The #1 lever |
-| `max_arity` | Variadic fan-out cap | Combinations grow ~`pool_grids^arity` — measured wall at arity 4 × wide constants (the sym 6M-candidate task, EXPERIMENTS.md 2026-07-11) |
+| `max_arity` | Variadic fan-out cap | Combinations grow ~`pool_grids^arity` — measured wall at arity 4 × wide constants (the sym 6M-candidate task, EXPERIMENT_LOG.md 2026-07-11) |
 | `max_pool` | Per-round frontier cap (cheapest-first) | Linear-ish brake on everything downstream; too low silently drops solutions |
 
 ## `BottomUpSearchEngine` (`search/search_engine.py`)
@@ -31,7 +31,7 @@ A structural note: several fields deliberately have **no default** (marked *requ
 | `constant_sources` | Which `Const` leaves are seeded | `()` → `("parameterize",)` (mints nothing) → `("harvest-from-instance",)` (colors present ≤10 + 2 dims) → `("finite-enumerate",)` (all 10 colors + INT 0..max-dim — up to ~43 leaves, **multiplicative** under variadics) | *required* | — (presets: `d4`=`()`, `sym`/`beam`=harvest, `synth`=finite) |
 | `function_hole_fill_mode` | How arrow-typed holes are filled | `"none"` → `"point-free"` (adds `PrimRef` leaves + `AppFn` composition) → `"lambda-synthesis"` (recursive body enumeration per hole — most expensive) | *required* | — (all presets: `"none"` — dormant capability) |
 | `polymorphism_instantiation` | How type-variable signatures instantiate | `"monomorphize"` → `"bounded"` (closes a monotype universe first) → `"unrestricted"` (free vars flow; widest pool) | *required* | — (all presets: `"monomorphize"`) |
-| `function_sample_size` | Probe values per param when deduping *function values* by behavior (cost grows `size^arity`) | any int ≥ 1 | `4` | **no** — deliberate: smaller batteries were measured **unsound** (the height-collapse bug, EXPERIMENTS.md 2026-07 review); 4 buys dedup soundness-in-practice |
+| `function_sample_size` | Probe values per param when deduping *function values* by behavior (cost grows `size^arity`) | any int ≥ 1 | `4` | **no** — deliberate: smaller batteries were measured **unsound** (the height-collapse bug, EXPERIMENT_LOG.md 2026-07 review); 4 buys dedup soundness-in-practice |
 | `beam_width` (Beam subclass) | Keep only k cheapest per round | any int | *required* | — (gotcha, documented in `presets.py`: must exceed the leaf-constant count or constants starve the GRID type — the beam-16 = 0/400 finding) |
 
 ## `LearnSpec` (`execution/model/learn_spec.py`)

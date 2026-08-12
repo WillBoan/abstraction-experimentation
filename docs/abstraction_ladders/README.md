@@ -9,7 +9,7 @@ An Abstraction Ladder is an authored, measurable learning trajectory: a declared
 - **What it is and why** — its `.ladder` file ([registry/](../../src/arc_lab/program_search/ladders/registry/)), including the finding when it was rejected.
 - **What happened when it ran** — [BATCH-OF-RECORD.md](BATCH-OF-RECORD.md), generated from the runs.
 
-The hand-maintained register (`LADDERS.md`), its worksheet template, and the six surviving worksheets were **deleted** on 2026-08-03: every fact in them was already in one of the two above, in `README.md`'s synthesis, in `EXPERIMENTS.md`'s event log, or executable in `ladders/batch.py` — while the worksheet discipline the register mandated was being honoured by 6 of 32 folders. A doc nobody reconciles is a doc that misinforms.
+The hand-maintained register (`LADDERS.md`), its worksheet template, and the six surviving worksheets were **deleted** on 2026-08-03: every fact in them was already in one of the two above, in the reviewed synthesis or chronological experiment log, or executable in `ladders/batch.py` — while the worksheet discipline the register mandated was being honoured by 6 of 32 folders. A doc nobody reconciles is a doc that misinforms.
 
 ## Start here
 
@@ -29,7 +29,7 @@ The hand-maintained register (`LADDERS.md`), its worksheet template, and the six
 
 | Doc | What it is |
 | --- | --- |
-| [AL-PLAN-2026-08-04.md](AL-PLAN-2026-08-04.md) | **The active plan of record** — premises, parking decisions, the RQ portfolio, and the phased program that follows the completed MVE lineage. Consult before starting multi-step experimental work; supersede by writing the next one. |
+| [AL-RESEARCH-STATE-2026-08-12.md](AL-RESEARCH-STATE-2026-08-12.md) | **Current research state** — what was executed, which premises were narrowed, open directions, and the absence of a selected active multi-step plan. |
 | [LADDER-PROCESS.md](LADDER-PROCESS.md) | How to build a Ladder: order, judgement, and what each instrument can and cannot prove. The part machinery cannot enforce. |
 | [BATCH-OF-RECORD.md](BATCH-OF-RECORD.md) | **The register, and it is generated** (`arc-lab run-batch`; never hand-edit). Every Ladder ever run in ONE pass: per-member verdict, rung recovery, top reachability, compromises — plus what the set **samples** on each axis, which cohorts license which comparisons, and the coherence checks. Read it before quoting any number, and before any cross-member comparison. |
 | [ladders/](ladders/) | Per-Ladder committed artifacts: `spec.md` + `report.json`, both generated. (`results.md` is `report.json` rendered, so it is generated on demand and not committed.) |
@@ -47,6 +47,6 @@ Each records a design discussion on the date it names. Still cited by the living
 
 ## Elsewhere
 
-- **Findings** — [EXPERIMENTS.md](../../EXPERIMENTS.md) (the event log) and [experiments/](../../experiments/) (notebooks and raw outputs).
-- **Completed plans and superseded snapshots** — [`../archive/abstraction_ladders/`](../archive/abstraction_ladders/), including the plan lineage that produced the results in [README.md](../../README.md): `AL-PLAN-2026-07-23` → `LADDER-SET-PLAN-2026-07-24` → `MVE-PLAN-2026-07-25`.
+- **Findings and history** — [EXPERIMENTS.md](../../EXPERIMENTS.md) (reviewed synthesis), [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md) (chronological working record), and [experiments/](../../experiments/) (notebooks and raw outputs).
+- **Completed plans and superseded snapshots** — [`../archive/abstraction_ladders/`](../archive/abstraction_ladders/), including the 2026-08-04 plan and the earlier lineage that produced the results in [README.md](../../README.md): `AL-PLAN-2026-07-23` → `LADDER-SET-PLAN-2026-07-24` → `MVE-PLAN-2026-07-25`.
 - **Running it** — [DEVELOPMENT.md](../DEVELOPMENT.md); the implementation is `src/arc_lab/program_search/ladders/`.

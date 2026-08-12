@@ -1,7 +1,9 @@
 # Census of the run store: what we have actually run (2026-08-03)
 
+> **Reviewed interpretation (2026-08-12).** This is a read-side audit of the store as it existed on 2026-08-03. Its provenance defects remain historical facts, but later re-baselining and the generated [batch of record](../../docs/abstraction_ladders/BATCH-OF-RECORD.md) changed the current state. In particular, F4 must not be read as saying the current findings rest on an unreadable format. Old experiments do not acquire modern `RunSpec` identity retroactively. See the [reviewed synthesis](../../EXPERIMENTS.md).
+
 A planning question — "what are the best next experiment runs?" — that turned into an audit when
-the planning kept having to be done from prose. `LADDERS.md` says which ladders ran; `EXPERIMENTS.md`
+the planning kept having to be done from prose. `LADDERS.md` said which ladders ran; `EXPERIMENT_LOG.md`
 says what they showed. Neither is derived from `runs/`. This walks the store itself.
 
 The intent was to size the next batch. What it found is that **the batch cannot currently be sized,
@@ -143,7 +145,7 @@ in the right file, and the runs went the other way anyway.
 The single largest duplicate group is not a ladder at all: `quick-check-d511f180` at 14.3M redundant
 considered, plus `arc1-train` at 5.3M and the `grain-contrast` pair at 3.8M.
 
-### F4 — the runs behind README finding #2 are in an unreadable format
+### F4 — historical runs behind the then-current README finding were not readable by the modern census
 
 34 run dirs have no `runspec.json` — the pre-`RunSpec` layout (`library.json`, `summary.json`,
 `trace.jsonl`), all dated 2026-07-08, all from the `L1/L2/L3` study era:
@@ -153,14 +155,12 @@ considered, plus `arc1-train` at 5.3M and the `grain-contrast` pair at 3.8M.
 5x e2-swap-cells         5x e3-swap-cols          5x e4-swap-cols-mdl
 ```
 
-`e8-mirror-index-sub` and `e10-stitch-refactor` are the compression-versus-reuse experiments —
-[README](../../README.md) key finding #2, the divergence between what compresses the training set
-and what the search can later use. It is the finding with the most conceptual weight in the report
-and the origin of the whole governance thread, and it is backed by runs the current reader cannot
-parse and the current machinery cannot reproduce.
-
-Not a claim that the finding is wrong. A claim that it is currently **unverifiable from the store**,
-and that this was invisible until something walked the directory.
+`e8-mirror-index-sub` and `e10-stitch-refactor` were used by the then-current report's
+compression-versus-reuse presentation. The modern reader could not parse those 34 directories,
+and no later documentation can give them `RunSpec` identity retroactively. They remain historically
+traceable through committed notebooks, scripts, and outputs. The current generated batch of record
+and modern reports are a different provenance class; this F4 finding describes the 2026-08-03 store,
+not the repository's current generated state.
 
 ### F5 — compute has never been the constraint
 

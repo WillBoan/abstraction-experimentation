@@ -123,7 +123,7 @@ class RefactoringLearnEngine(LearnEngine):
     is the refactor engine wired in here: it *antiunifies* the differing perceiver into the general
     (first-order, search-composable) ``mirror_index``. This refactor is **not** intrinsically Stitch's —
     the in-house ``FrequentSubtree`` antiunifies too and would recover ``mirror_index`` if fed the same
-    definitions (EXPERIMENTS.md records exactly this). The load-bearing seam is *call-sites vs
+    definitions (EXPERIMENT_LOG.md records exactly this). The load-bearing seam is *call-sites vs
     definitions*: phase 1 mines call-sites, where the shared factor is still split across concrete
     perceivers; it surfaces only once the *definitions* are refactored, which is phase 2's job. Stitch
     invents; our ``metric`` governs (full cost control). Superseded once higher-order Stitch mines the

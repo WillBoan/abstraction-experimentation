@@ -1,6 +1,8 @@
 # Abstraction Ladder batch: reading all 20 ladders, and the al14 diagnosis
 
-**Date:** 2026-07-21 · **Commit:** `f0fe2e1` · Abstract: [EXPERIMENTS.md](../../EXPERIMENTS.md) entries of 2026-07-21 · Register: [LADDERS.md](../../docs/abstraction_ladders/LADDERS.md) · Design: [ABSTRACTION-LADDERS-SPEC.md](../../docs/abstraction_ladders/ABSTRACTION-LADDERS-SPEC.md)
+**Date:** 2026-07-21 · **Commit:** `f0fe2e1` · Historical entries: [EXPERIMENT_LOG.md](../../EXPERIMENT_LOG.md), 2026-07-21 · Current register: [BATCH-OF-RECORD.md](../../docs/abstraction_ladders/BATCH-OF-RECORD.md) · Design: [ABSTRACTION-LADDERS-SPEC.md](../../docs/abstraction_ladders/ABSTRACTION-LADDERS-SPEC.md)
+
+> **Reviewed interpretation (2026-08-12).** This notebook is an early read of the authored batch. Later work corrected the estimator framing, separated rung admission from oracle and learned Top reachability, replaced retired cost-law claims with configured measurements, and re-established the generated batch state. Read it through the later [micro-probes](../2026-07-22-micro-probes/notebook.md), [MVE completion](../2026-07-27-mve-completion/notebook.md), [run-store census](../2026-08-03-run-store-census/notebook.md), and [reviewed synthesis](../../EXPERIMENTS.md). The 20 authored Ladders are a development set, not a prevalence sample.
 
 ## Goal
 

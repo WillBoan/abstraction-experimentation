@@ -155,7 +155,7 @@ PRESETS: dict[str, Config] = {
     # MINIMAL_COMPLETE_FLOOR: build_grid + read + if + eq only (no arithmetic, no width/height)
     # -- the "zero added prior" completeness witness. Same budget as `universal-floor`
     # deliberately: whether it solves at this depth (and how expensive) IS the grain-contrast
-    # measurement, not a known input (see EXPERIMENT_QUEUE.md / EXPERIMENTS.md E13).
+    # measurement, not a known input (see EXPERIMENT_QUEUE.md / EXPERIMENT_LOG.md E13).
     "minimal-complete-floor": Config(
         library=MINIMAL_COMPLETE_FLOOR_LIBRARY,
         search_engine=BottomUpSearchEngine(
